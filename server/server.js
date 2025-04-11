@@ -4,7 +4,7 @@ import 'dotenv/config';
 import cokkieParser from 'cookie-parser';
 import mongoose from 'mongoose';
 import connectDB from './config/mongodb.js';
-import authRouter from './routes/authRoutes.js'; // Use default import
+import authRouter from './routes/authRoutes.js'; // Correct relative path
 
 const app = express();
 const PORT = process.env.PORT || 4000;
@@ -21,7 +21,6 @@ app.use('/api/auth', authRouter);
 app.get('/', (req, res) => {
   res.send('Hello World!!!');
 });
-
 
 
 app.listen(PORT, () => {
