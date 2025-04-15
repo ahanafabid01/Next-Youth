@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import axios from "axios";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 import "./Auth.css";
 
 const Login = () => {
@@ -33,38 +33,40 @@ const Login = () => {
     };
 
     return (
-        <div className="auth-container">
-            <h2 className="auth-title">Welcome Back</h2>
-            <form onSubmit={handleSubmit} className="auth-form">
-                <div className="form-group">
-                    <label>Email</label>
-                    <input
-                        type="email"
-                        value={email}
-                        onChange={(e) => setEmail(e.target.value)}
-                        placeholder="Enter your email"
-                        required
-                    />
-                </div>
-                <div className="form-group">
-                    <label>Password</label>
-                    <input
-                        type="password"
-                        value={password}
-                        onChange={(e) => setPassword(e.target.value)}
-                        placeholder="Enter your password"
-                        required
-                    />
-                </div>
-                {error && <p className="error">{error}</p>}
-                <button type="submit" className="btn">Login</button>
-            </form>
-            <p className="auth-link">
-                <a href="/forgot-password">Forgot Password?</a>
-            </p>
-            <p className="auth-link">
-                Don't have an account? <a href="/register">Register</a>
-            </p>
+        <div className="auth-page">
+            <div className="auth-container">
+                <h2 className="auth-title">Welcome Back</h2>
+                <form onSubmit={handleSubmit} className="auth-form">
+                    <div className="form-group">
+                        <label>Email</label>
+                        <input
+                            type="email"
+                            value={email}
+                            onChange={(e) => setEmail(e.target.value)}
+                            placeholder="Enter your email"
+                            required
+                        />
+                    </div>
+                    <div className="form-group">
+                        <label>Password</label>
+                        <input
+                            type="password"
+                            value={password}
+                            onChange={(e) => setPassword(e.target.value)}
+                            placeholder="Enter your password"
+                            required
+                        />
+                    </div>
+                    {error && <p className="error">{error}</p>}
+                    <button type="submit" className="btn">Login</button>
+                </form>
+                <p className="auth-link">
+                    <Link to="/forgot-password">Forgot Password?</Link>
+                </p>
+                <p className="auth-link">
+                    Don't have an account? <Link to="/register">Register</Link>
+                </p>
+            </div>
         </div>
     );
 };

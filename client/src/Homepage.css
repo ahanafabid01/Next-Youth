@@ -1,0 +1,269 @@
+/* Reset global styles */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+}
+
+/* Ensure no background color is applied globally */
+html, body {
+    background-color: white; /* Set to white or any desired color */
+    color: black; /* Ensure text color is readable */
+    font-family: Arial, sans-serif; /* Optional: Set a default font */
+}
+
+body {
+    line-height: 1.4;
+}
+
+a {
+    text-decoration: none;
+    color: inherit;
+}
+
+ul {
+    list-style: none;
+}
+
+/* Header styles */
+header {
+    background-color: white;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    padding: 15px 0;
+}
+
+.header-container {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 20px;
+    background-color: #f8f9fa; /* Example header background */
+}
+
+.logo {
+    color: #1dbf73;
+    font-weight: 700;
+    font-size: 24px;
+}
+
+nav ul {
+    display: flex;
+    gap: 20px;
+}
+
+nav a:hover {
+    color: #1dbf73;
+}
+
+.auth-buttons a {
+    padding: 8px 16px;
+    border-radius: 4px;
+}
+
+.login {
+    color: #1dbf73;
+}
+
+.signup {
+    background-color: #1dbf73;
+    color: white;
+}
+
+/* Hero section */
+.hero {
+    text-align: center;
+    padding: 50px 20px;
+    background-color: #ffffff; /* Ensure hero section has no green background */
+}
+
+.hero h1 {
+    font-size: 40px;
+    margin-bottom: 20px;
+}
+
+.hero p {
+    font-size: 20px;
+    max-width: 700px;
+    margin: 0 auto 30px;
+    color: #62646a;
+}
+
+.search-bar {
+    margin-top: 20px;
+    max-width: 700px;
+    margin: 0 auto;
+    display: flex;
+}
+
+.search-bar input {
+    flex: 1;
+    padding: 15px;
+    border: 1px solid #1dbf73;
+    border-radius: 4px 0 0 4px;
+    font-size: 16px;
+}
+
+.search-bar button {
+    background-color: #1dbf73;
+    color: white;
+    border: none;
+    padding: 0 20px;
+    border-radius: 0 4px 4px 0;
+    font-weight: bold;
+    cursor: pointer;
+}
+
+/* Categories section */
+.categories {
+    max-width: 1400px;
+    margin: 40px auto;
+    padding: 0 20px;
+}
+
+.section-title {
+    font-size: 28px;
+    margin-bottom: 20px;
+}
+
+.category-grid {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 20px;
+    justify-content: center;
+}
+
+.category-card {
+    border: 1px solid #e4e5e7;
+    border-radius: 4px;
+    padding: 20px;
+    transition: all 0.3s ease;
+}
+
+.category-card:hover {
+    box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+}
+
+.category-card h3 {
+    margin: 10px 0;
+}
+
+/* Popular services section */
+.popular-services {
+    background-color: #f5f5f5;
+    padding: 60px 20px;
+}
+
+.services-container {
+    max-width: 1400px;
+    margin: 0 auto;
+}
+
+.services-grid {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 20px;
+    justify-content: center;
+}
+
+.service-card {
+    background-color: white;
+    border-radius: 4px;
+    overflow: hidden;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+}
+
+.service-image {
+    height: 200px;
+    background-color: #ddd;
+    background-size: cover;
+    background-position: center;
+}
+
+.service-info {
+    padding: 15px;
+}
+
+.seller-info {
+    display: flex;
+    align-items: center;
+    margin-bottom: 10px;
+}
+
+.seller-avatar {
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    background-color: #ccc;
+    margin-right: 10px;
+}
+
+.service-title {
+    font-weight: 500;
+    margin-bottom: 10px;
+}
+
+.rating {
+    color: #ffb33e;
+    font-weight: bold;
+    margin-bottom: 10px;
+    display: flex;
+    align-items: center;
+}
+
+.price {
+    font-weight: bold;
+    font-size: 18px;
+}
+
+/* Footer */
+footer {
+    background-color: #0f0f0f;
+    color: white;
+    padding: 60px 20px;
+}
+
+.footer-container {
+    display: flex;
+    justify-content: space-between;
+    padding: 20px;
+    background-color: #f8f9fa; /* Example footer background */
+}
+
+.footer-column h3 {
+    margin-bottom: 20px;
+    font-size: 18px;
+}
+
+.footer-column ul li {
+    margin-bottom: 10px;
+    color: #b5b6ba;
+}
+
+.footer-column ul li:hover {
+    color: white;
+}
+
+.copyright {
+    max-width: 1400px;
+    margin: 40px auto 0;
+    padding-top: 20px;
+    border-top: 1px solid #2d2d2d;
+    color: #b5b6ba;
+    display: flex;
+    justify-content: space-between;
+}
+
+.social-icons {
+    display: flex;
+    gap: 15px;
+}
+
+.social-icons a {
+    margin-right: 10px;
+    text-decoration: none;
+    color: black;
+}
