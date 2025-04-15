@@ -1,91 +1,97 @@
+/* Auth.css */
+
+* {
+    box-sizing: border-box;
+}
+
 body {
-    font-family: 'Poppins', sans-serif;
-    background-color: #f9f9f9;
-    color: #333;
     margin: 0;
     padding: 0;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background: linear-gradient(135deg, #0f5132, #14532d);
+    min-height: 100vh;
     display: flex;
     justify-content: center;
     align-items: center;
-    height: 100vh;
+    padding: 1rem;
 }
 
 .auth-container {
-    max-width: 400px;
+    background: #1e3a2f;
+    color: #ffffff;
+    padding: 2rem;
+    border-radius: 15px;
     width: 100%;
-    padding: 20px;
-    background-color: #ffffff;
-    border-radius: 8px;
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    max-width: 450px;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    margin: auto;
 }
 
 .auth-title {
     text-align: center;
-    font-size: 24px;
-    font-weight: 600;
-    margin-bottom: 20px;
-    color: #333;
-}
-
-.auth-form {
-    display: flex;
-    flex-direction: column;
-}
-
-.form-group {
-    margin-bottom: 15px;
-}
-
-label {
-    font-size: 14px;
-    font-weight: 500;
-    margin-bottom: 5px;
-    display: block;
-    color: #555;
-}
-
-input {
-    padding: 10px;
-    border: 1px solid #ddd;
-    border-radius: 4px;
-    background-color: #f9f9f9;
-    color: #333;
-    font-size: 14px;
-}
-
-input::placeholder {
-    color: #aaa;
-}
-
-input:focus {
-    outline: none;
-    border-color: #007bff;
-}
-
-.btn {
-    padding: 10px;
-    background-color: #007bff;
+    margin-bottom: 2rem;
+    font-size: 1.8rem;
     color: #ffffff;
-    border: none;
-    border-radius: 4px;
-    cursor: pointer;
-    font-size: 16px;
-    font-weight: 500;
-    margin-top: 10px;
 }
 
-.btn:hover {
-    background-color: #0056b3;
+.auth-form .form-group {
+    margin-bottom: 1.5rem;
+}
+
+.auth-form label {
+    display: block;
+    margin-bottom: 0.5rem;
+    color: #cbd5cb;
+    font-weight: 500;
+}
+
+.auth-form input[type="text"],
+.auth-form input[type="email"],
+.auth-form input[type="password"] {
+    width: 100%;
+    padding: 0.75rem 1rem;
+    border-radius: 10px;
+    border: none;
+    background-color: #2f4f41;
+    color: #ffffff;
+    font-size: 1rem;
+    outline: none;
+    transition: 0.3s ease;
+}
+
+.auth-form input:focus {
+    background-color: #365c4b;
+    box-shadow: 0 0 0 2px #4ade80;
+}
+
+.auth-form .btn {
+    width: 100%;
+    padding: 0.75rem;
+    border: none;
+    border-radius: 10px;
+    background: linear-gradient(90deg, #16a34a, #22c55e);
+    color: white;
+    font-size: 1.1rem;
+    cursor: pointer;
+    transition: background 0.3s ease;
+}
+
+.auth-form .btn:hover {
+    background: linear-gradient(90deg, #15803d, #16a34a);
 }
 
 .auth-link {
     text-align: center;
-    margin-top: 10px;
-    font-size: 14px;
+    margin-top: 1rem;
+    color: #d1fae5;
+    font-size: 0.9rem;
 }
 
 .auth-link a {
-    color: #007bff;
+    color: #6ee7b7;
     text-decoration: none;
 }
 
@@ -94,30 +100,111 @@ input:focus {
 }
 
 .error {
-    color: #ff4d4d;
-    font-size: 14px;
+    color: #f87171;
     margin-top: -10px;
-    margin-bottom: 10px;
+    margin-bottom: 15px;
+    font-size: 0.9rem;
 }
 
 .otp-container {
     display: flex;
     justify-content: space-between;
-    margin-bottom: 15px;
+    gap: 8px;
+    margin: 20px 0;
+    flex-wrap: wrap;
 }
 
 .otp-input {
-    width: 40px;
-    height: 40px;
+    width: 45px;
+    height: 55px;
+    font-size: 1.5rem;
     text-align: center;
-    font-size: 18px;
-    border: 1px solid #ddd;
-    border-radius: 4px;
-    background-color: #f9f9f9;
-    color: #333;
+    border: none;
+    border-radius: 10px;
+    background-color: #2f4f41;
+    color: #ffffff;
+    outline: none;
+    transition: background 0.3s ease;
+    flex: 1 1 45px;
 }
 
 .otp-input:focus {
-    outline: none;
-    border-color: #007bff;
+    background-color: #365c4b;
+    box-shadow: 0 0 0 2px #4ade80;
+}
+
+/* Media Queries for Responsive Design */
+
+@media (max-width: 768px) {
+    .auth-container {
+        padding: 1.5rem;
+        max-width: 90%;
+    }
+
+    .auth-title {
+        font-size: 1.5rem;
+    }
+
+    .auth-form .btn {
+        font-size: 1rem;
+    }
+
+    .otp-container {
+        justify-content: center;
+        gap: 6px;
+    }
+
+    .otp-input {
+        width: 40px;
+        height: 50px;
+        font-size: 1.3rem;
+    }
+}
+
+@media (max-width: 480px) {
+    .auth-container {
+        padding: 1.2rem;
+        max-width: 100%;
+    }
+
+    .auth-title {
+        font-size: 1.3rem;
+    }
+
+    .otp-container {
+        gap: 5px;
+    }
+
+    .otp-input {
+        width: 35px;
+        height: 45px;
+        font-size: 1.2rem;
+    }
+
+    .auth-form label {
+        font-size: 0.95rem;
+    }
+
+    .auth-form input {
+        font-size: 0.95rem;
+    }
+
+    .auth-link {
+        font-size: 0.85rem;
+    }
+}
+
+@media (min-width: 1024px) {
+    .auth-container {
+        max-width: 520px;
+        padding: 2.5rem;
+    }
+
+    .auth-title {
+        font-size: 2rem;
+    }
+
+    .auth-form .btn {
+        font-size: 1.2rem;
+    }
 }

@@ -1,0 +1,51 @@
+.dashboard-container {
+    text-align: center;
+    margin-top: 50px;
+    background-color: #e0f7fa;
+    padding: 20px;
+    border-radius: 10px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+.dashboard-container h1 {
+    color: #00796b;
+}
+
+.dashboard-container p {
+    color: #004d40;
+}
+
+.job-postings {
+    margin-top: 20px;
+}
+
+.job-postings ul {
+    list-style-type: none;
+    padding: 0;
+}
+
+.job-postings li {
+    margin: 5px 0;
+    color: #004d40;
+}
+
+.job-postings input {
+    padding: 10px;
+    width: 300px;
+    border: 1px solid #004d40;
+    border-radius: 5px;
+}
+
+.job-postings button {
+    padding: 10px 20px;
+    margin-left: 10px;
+    background-color: #00796b;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+}
+
+.job-postings button:hover {
+    background-color: #004d40;
+}

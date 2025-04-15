@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import axios from "axios";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom"; // Import Link
 import "./Auth.css";
 
 const Register = () => {
@@ -128,6 +128,9 @@ const Register = () => {
                         {error && <p className="error">{error}</p>}
                         <button type="submit" className="btn">Register</button>
                     </form>
+                    <p className="auth-link">
+                        Already have an account? <Link to="/login">Login</Link>
+                    </p>
                 </>
             ) : (
                 <>

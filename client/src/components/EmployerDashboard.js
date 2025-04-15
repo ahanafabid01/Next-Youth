@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
+import "./EmployerDashboard.css"; // Import the CSS file
 
 const EmployerDashboard = () => {
     const [jobPostings, setJobPostings] = useState([]);
@@ -37,11 +38,11 @@ const EmployerDashboard = () => {
     };
 
     return (
-        <div style={{ textAlign: "center", marginTop: "50px" }}>
+        <div className="dashboard-container">
             <h1>Welcome to the Employer Dashboard</h1>
             <p>Here you can manage your job postings and find the best candidates.</p>
 
-            <div>
+            <div className="job-postings">
                 <h2>Your Job Postings</h2>
                 <ul>
                     {jobPostings.length > 0 ? (
@@ -57,11 +58,8 @@ const EmployerDashboard = () => {
                         value={newJob}
                         onChange={(e) => setNewJob(e.target.value)}
                         placeholder="Enter job title"
-                        style={{ padding: "10px", width: "300px" }}
                     />
-                    <button onClick={handleAddJob} style={{ padding: "10px 20px", marginLeft: "10px" }}>
-                        Add Job
-                    </button>
+                    <button onClick={handleAddJob}>Add Job</button>
                 </div>
             </div>
         </div>

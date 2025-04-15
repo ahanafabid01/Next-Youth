@@ -1,0 +1,16 @@
+.dashboard-container {
+    text-align: center;
+    margin-top: 50px;
+    background-color: #fef3c7;
+    padding: 20px;
+    border-radius: 10px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+.dashboard-container h1 {
+    color: #b45309;
+}
+
+.dashboard-container p {
+    color: #92400e;
+}
