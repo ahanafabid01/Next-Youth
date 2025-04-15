@@ -20,7 +20,10 @@ connectDB();
 // Middleware
 app.use(express.json());
 app.use(cookieParser());
-app.use(cors({ credentials: true, origin: process.env.CLIENT_URL || '*' })); // Allow credentials and specify origin
+app.use(cors({
+    credentials: true,
+    origin: process.env.CLIENT_URL || "http://localhost:3000", // Frontend URL
+})); // Allow credentials and specify origin
 
 // API routes
 app.use('/api/auth', authRouter);

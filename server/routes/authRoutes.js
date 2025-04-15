@@ -1,16 +1,13 @@
-import express from 'express';
-import { Login, Logout, register, sendVerifyOtp, verifyEmail } from '../controllers/authController.js';
-import userAuth from '../middleware/userAuth.js';
+import express from "express";
+import { register, Login, Logout, verifyEmail, resendOtp, resetPassword } from "../controllers/authController.js";
 
 const authRouter = express.Router();
 
-// Authentication routes
-authRouter.post('/register', register);
-authRouter.post('/login', Login);
-authRouter.post('/logout', Logout);
-
-// OTP and account verification routes
-authRouter.post('/send-verify-otp', sendVerifyOtp); // Removed userAuth middleware
-authRouter.post('/verify-account', verifyEmail); // Removed userAuth middleware
+authRouter.post("/register", register);
+authRouter.post("/login", Login);
+authRouter.post("/logout", Logout);
+authRouter.post("/verify-email", verifyEmail);
+authRouter.post("/resend-otp", resendOtp);
+authRouter.post("/reset-password", resetPassword);
 
 export default authRouter;
