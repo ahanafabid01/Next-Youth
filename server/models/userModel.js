@@ -31,6 +31,19 @@ const userSchema = new mongoose.Schema({
         type: Boolean,
         default: false,
     },
+    profilePicture: { // New field for profile picture URL
+        type: String,
+        default: "",
+    },
+    dateOfBirth: { // New field for date of birth
+        type: Date,
+    },
+    linkedInId: { // New field for LinkedIn ID
+        type: String,
+    },
+    otherInfo: { // New field for additional information
+        type: String,
+    },
 }, { timestamps: true });
 
 const userModel = mongoose.models.user || mongoose.model("user", userSchema);

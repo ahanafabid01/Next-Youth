@@ -7,6 +7,7 @@ import AdminDashboard from "./components/AdminDashboard";
 import EmployeeDashboard from "./components/EmployeeDashboard";
 import EmployerDashboard from "./components/EmployerDashboard";
 import ForgotPassword from "./components/ForgotPassword";
+import Profile from "./components/Profile";
 
 const App = () => {
     return (
@@ -19,6 +20,7 @@ const App = () => {
                 <Route path="/employee-dashboard" element={<EmployeeDashboard />} />
                 <Route path="/employer-dashboard" element={<EmployerDashboard />} />
                 <Route path="/forgot-password" element={<ForgotPassword />} />
+                <Route path="/profile" element={<Profile />} />
             </Routes>
         </Router>
     );

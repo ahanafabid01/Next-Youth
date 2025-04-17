@@ -4,6 +4,7 @@ import 'dotenv/config';
 import cookieParser from 'cookie-parser'; // Fixed typo
 import connectDB from './config/mongodb.js';
 import authRouter from './routes/authRoutes.js';
+import path from "path";
 
 const app = express();
 const PORT = process.env.PORT || 4000;
@@ -22,8 +23,10 @@ app.use(express.json());
 app.use(cookieParser());
 app.use(cors({
     credentials: true,
-    origin: process.env.CLIENT_URL || "http://localhost:3000", // Frontend URL
+    origin: process.env.CLIENT_URL || "http://localhost:3000",
 })); // Allow credentials and specify origin
+
+app.use("/uploads", express.static(path.join(path.resolve(), "uploads")));
 
 // API routes
 app.use('/api/auth', authRouter);

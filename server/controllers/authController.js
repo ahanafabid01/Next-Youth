@@ -336,3 +336,42 @@ export const resetPassword = async (req, res) => {
         return res.status(500).json({ success: false, message: "Internal server error" });
     }
 };
+
+export const getUserProfile = async (req, res) => {
+    try {
+        const user = await userModel.findById(req.user.id).select(
+            "name email user_type profilePicture dateOfBirth linkedInId otherInfo"
+        );
+        if (!user) {
+            return res.status(404).json({ success: false, message: "User not found" });
+        }
+        res.status(200).json({ success: true, user });
+    } catch (error) {
+        console.error("Error fetching user profile:", error);
+        res.status(500).json({ success: false, message: "Internal server error" });
+    }
+};
+
+export const updateUserProfile = async (req, res) => {
+    try {
+        console.log("Request Body:", req.body); // Debugging line
+        console.log("User ID:", req.user.id); // Debugging line
+
+        const { name, email, profilePicture, dateOfBirth, linkedInId, otherInfo } = req.body;
+
+        const updatedUser = await userModel.findByIdAndUpdate(
+            req.user.id,
+            { name, email, profilePicture, dateOfBirth, linkedInId, otherInfo },
+            { new: true }
+        );
+
+        if (!updatedUser) {
+            return res.status(404).json({ success: false, message: "User not found" });
+        }
+
+        res.status(200).json({ success: true, user: updatedUser });
+    } catch (error) {
+        console.error("Error updating profile:", error);
+        res.status(500).json({ success: false, message: "Internal server error" });
+    }
+};

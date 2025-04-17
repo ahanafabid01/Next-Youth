@@ -70,72 +70,100 @@ const Register = () => {
             <div className="auth-container">
                 {step === 1 ? (
                     <>
-                        <h2 className="auth-title">Create an Account</h2>
+                        <h2 className="auth-title">
+                            <i className="fas fa-user-plus"></i>
+                            Create Account
+                        </h2>
                         <form onSubmit={handleRegister} className="auth-form">
                             <div className="form-group">
-                                <label>Name</label>
+                                <label>Full Name</label>
+                                <div className="input-icon">
+                                    <i className="fas fa-user"></i>
+                                </div>
                                 <input
                                     type="text"
                                     value={name}
                                     onChange={(e) => setName(e.target.value)}
-                                    placeholder="Enter your name"
+                                    placeholder="John Doe"
                                     required
                                 />
                             </div>
                             <div className="form-group">
-                                <label>Email</label>
+                                <label>Email Address</label>
+                                <div className="input-icon">
+                                    <i className="fas fa-envelope"></i>
+                                </div>
                                 <input
                                     type="email"
                                     value={email}
                                     onChange={(e) => setEmail(e.target.value)}
-                                    placeholder="Enter your email"
+                                    placeholder="john@example.com"
                                     required
                                 />
                             </div>
                             <div className="form-group">
                                 <label>Password</label>
+                                <div className="input-icon">
+                                    <i className="fas fa-lock"></i>
+                                </div>
                                 <input
                                     type="password"
                                     value={password}
                                     onChange={(e) => setPassword(e.target.value)}
-                                    placeholder="Enter a strong password"
+                                    placeholder="••••••••"
                                     required
                                 />
                             </div>
                             <div className="form-group">
-                                <label>Role</label>
-                                <div>
-                                    <label>
+                                <label>Select Role</label>
+                                <div className="role-options">
+                                    <label className={`role-option ${userType === "employee" ? "active" : ""}`}>
                                         <input
                                             type="radio"
                                             value="employee"
                                             checked={userType === "employee"}
                                             onChange={(e) => setUserType(e.target.value)}
                                         />
-                                        Are you looking for a job?
+                                        <i className="fas fa-briefcase"></i>
+                                        <span>Client</span>
                                     </label>
-                                    <label>
+                                    <label className={`role-option ${userType === "employer" ? "active" : ""}`}>
                                         <input
                                             type="radio"
                                             value="employer"
                                             checked={userType === "employer"}
                                             onChange={(e) => setUserType(e.target.value)}
                                         />
-                                        Are you hiring people?
+                                        <i className="fas fa-code"></i>
+                                        <span>Freelancer</span>
                                     </label>
                                 </div>
                             </div>
-                            {error && <p className="error">{error}</p>}
-                            <button type="submit" className="btn">Register</button>
+                            {error && (
+                                <div className="error">
+                                    <i className="fas fa-exclamation-circle"></i>
+                                    {error}
+                                </div>
+                            )}
+                            <button type="submit" className="btn">
+                                Continue
+                                <i className="fas fa-arrow-right"></i>
+                            </button>
                         </form>
                         <p className="auth-link">
-                            Already have an account? <Link to="/login">Login</Link>
+                            Already registered? <Link to="/login">Sign In</Link>
                         </p>
                     </>
                 ) : (
                     <>
-                        <h2 className="auth-title">Verify Your Email</h2>
+                        <h2 className="auth-title">
+                            <i className="fas fa-shield-check"></i>
+                            Verify Email
+                        </h2>
                         <form onSubmit={handleVerifyOtp} className="auth-form">
+                            <p className="otp-instruction">
+                                Enter the 6-digit code sent to {email}
+                            </p>
                             <div className="otp-container">
                                 {otp.map((data, index) => (
                                     <input
@@ -145,11 +173,20 @@ const Register = () => {
                                         value={data}
                                         onChange={(e) => handleOtpChange(e.target, index)}
                                         className="otp-input"
+                                        autoFocus={index === 0}
                                     />
                                 ))}
                             </div>
-                            {error && <p className="error">{error}</p>}
-                            <button type="submit" className="btn">Verify</button>
+                            {error && (
+                                <div className="error">
+                                    <i className="fas fa-exclamation-circle"></i>
+                                    {error}
+                                </div>
+                            )}
+                            <button type="submit" className="btn">
+                                Verify Account
+                                <i className="fas fa-check-circle"></i>
+                            </button>
                         </form>
                     </>
                 )}

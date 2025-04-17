@@ -35,37 +35,63 @@ const Login = () => {
     return (
         <div className="auth-page">
             <div className="auth-container">
-                <h2 className="auth-title">Welcome Back</h2>
+                <h2 className="auth-title">
+                    <i className="fas fa-hand-wave"></i>
+                    Welcome Back!
+                </h2>
                 <form onSubmit={handleSubmit} className="auth-form">
                     <div className="form-group">
-                        <label>Email</label>
+                        <label>Email Address</label>
+                        <div className="input-icon">
+                            <i className="fas fa-envelope"></i>
+                        </div>
                         <input
                             type="email"
                             value={email}
                             onChange={(e) => setEmail(e.target.value)}
-                            placeholder="Enter your email"
+                            placeholder="john@example.com"
                             required
                         />
                     </div>
                     <div className="form-group">
                         <label>Password</label>
+                        <div className="input-icon">
+                            <i className="fas fa-lock"></i>
+                        </div>
                         <input
                             type="password"
                             value={password}
                             onChange={(e) => setPassword(e.target.value)}
-                            placeholder="Enter your password"
+                            placeholder="••••••••"
                             required
                         />
                     </div>
-                    {error && <p className="error">{error}</p>}
-                    <button type="submit" className="btn">Login</button>
+                    {error && (
+                        <div className="error">
+                            <i className="fas fa-exclamation-circle"></i>
+                            {error}
+                        </div>
+                    )}
+                    <button type="submit" className="btn">
+                        Sign In
+                        <i className="fas fa-arrow-right-to-bracket"></i>
+                    </button>
                 </form>
-                <p className="auth-link">
-                    <Link to="/forgot-password">Forgot Password?</Link>
-                </p>
-                <p className="auth-link">
-                    Don't have an account? <Link to="/register">Register</Link>
-                </p>
+                <div className="auth-links">
+                    <p className="auth-link">
+                        <Link to="/forgot-password">
+                            <i className="fas fa-key"></i>
+                            Forgot Password?
+                        </Link>
+                    </p>
+                    <p className="auth-link">
+                        Don't have an account?{" "}
+                        <Link to="/register">
+                            <i className="fas fa-user-plus"></i>
+                            Register Now
+                        </Link>
+                    </p>
+                </div>
             </div>
         </div>
     );
