@@ -32,26 +32,28 @@ const MyJobs = () => {
 
     const handleDeleteJob = async (jobId) => {
         if (!window.confirm("Are you sure you want to delete this job?")) return;
-        
+
         try {
             const response = await axios.delete(
-                `http://localhost:4000/api/jobs/${jobId}`, 
+                `http://localhost:4000/api/jobs/${jobId}`,
                 { withCredentials: true }
             );
             if (response.data.success) {
                 setJobs(jobs.filter((job) => job._id !== jobId));
                 alert("Job deleted successfully!");
+            } else {
+                alert(response.data.message || "Failed to delete the job.");
             }
         } catch (error) {
-            console.error("Error deleting job:", error);
-            alert("An error occurred while deleting the job.");
+            console.error("Error deleting job:", error.response?.data || error.message);
+            alert(error.response?.data?.message || "An error occurred while deleting the job.");
         }
     };
 
     const handleUpdateJobStatus = async (jobId, newStatus) => {
         try {
             const response = await axios.put(
-                `http://localhost:4000/api/jobs/${jobId}`,
+                `http://localhost:4000/api/jobs/${jobId}/status`, // Corrected endpoint
                 { status: newStatus },
                 { withCredentials: true }
             );
@@ -59,10 +61,13 @@ const MyJobs = () => {
                 setJobs(jobs.map((job) =>
                     job._id === jobId ? { ...job, status: newStatus } : job
                 ));
+                alert("Job status updated successfully!");
+            } else {
+                alert(response.data.message || "Failed to update job status.");
             }
         } catch (error) {
-            console.error("Error updating job status:", error);
-            alert("Error updating job status");
+            console.error("Error updating job status:", error.response?.data || error.message);
+            alert(error.response?.data?.message || "An error occurred while updating the job status.");
         }
     };
 
@@ -163,10 +168,10 @@ const MyJobs = () => {
                                     onChange={(e) => handleUpdateJobStatus(job._id, e.target.value)}
                                     className="status-select"
                                 >
-                                    <option value="Available">🟢 Open</option>
-                                    <option value="In Progress">🟡 In Progress</option>
-                                    <option value="On Hold">🔴 On Hold</option>
-                                    <option value="Completed">✅ Completed</option>
+                                    <option value="Available">Available</option>
+                                    <option value="In Progress">In Progress</option>
+                                    <option value="On Hold">On Hold</option>
+                                    <option value="Completed">Completed</option>
                                 </select>
                                 
                                 <button 

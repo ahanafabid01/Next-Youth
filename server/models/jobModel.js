@@ -11,8 +11,8 @@ const jobSchema = new mongoose.Schema({
         required: true,
     },
     skills: {
-        type: [String], // Array of strings
-        default: [],    // Default to an empty array
+        type: [String],
+        default: [],
     },
     scope: {
         type: String,
@@ -51,6 +51,11 @@ const jobSchema = new mongoose.Schema({
             path: { type: String },
         },
     ],
+    status: {
+        type: String,
+        enum: ["Available", "In Progress", "On Hold", "Completed"],
+        default: "Available",
+    },
 }, { timestamps: true });
 
 const jobModel = mongoose.models.job || mongoose.model("job", jobSchema);
