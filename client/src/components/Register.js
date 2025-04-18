@@ -125,7 +125,7 @@ const Register = () => {
                                             onChange={(e) => setUserType(e.target.value)}
                                         />
                                         <i className="fas fa-briefcase"></i>
-                                        <span>Client</span>
+                                        <span>Freelancer</span>
                                     </label>
                                     <label className={`role-option ${userType === "employer" ? "active" : ""}`}>
                                         <input
@@ -135,7 +135,7 @@ const Register = () => {
                                             onChange={(e) => setUserType(e.target.value)}
                                         />
                                         <i className="fas fa-code"></i>
-                                        <span>Freelancer</span>
+                                        <span>Client</span>
                                     </label>
                                 </div>
                             </div>

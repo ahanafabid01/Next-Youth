@@ -1,10 +1,11 @@
 import express from "express";
-import { getJobs, addJob } from "../controllers/jobController.js";
-import { protect } from "../middleware/authMiddleware.js";
+import { addJob, getJobs } from "../controllers/jobController.js";
+import userAuth from "../middleware/userAuth.js";
+import upload from "../middleware/uploadMiddleware.js";
 
 const router = express.Router();
 
-router.get("/", protect, getJobs); // Fetch jobs for the logged-in employer
-router.post("/", protect, addJob); // Add a new job posting
+router.get("/", userAuth, getJobs); // Protect the GET /api/jobs route
+router.post("/", userAuth, upload.array("files", 5), addJob); // Protect the POST /api/jobs route
 
 export default router;

@@ -4,7 +4,9 @@ import 'dotenv/config';
 import cookieParser from 'cookie-parser'; // Fixed typo
 import connectDB from './config/mongodb.js';
 import authRouter from './routes/authRoutes.js';
+import jobRoutes from './routes/jobRoutes.js';
 import path from "path";
+import bodyParser from "body-parser";
 
 const app = express();
 const PORT = process.env.PORT || 4000;
@@ -26,10 +28,15 @@ app.use(cors({
     origin: process.env.CLIENT_URL || "http://localhost:3000",
 })); // Allow credentials and specify origin
 
+// Use body-parser for JSON requests only
+app.use(bodyParser.json());
+app.use(bodyParser.urlencoded({ extended: true }));
+
 app.use("/uploads", express.static(path.join(path.resolve(), "uploads")));
 
 // API routes
 app.use('/api/auth', authRouter);
+app.use("/api/jobs", jobRoutes); // Multer will handle multipart/form-data for this route
 
 // Default route
 app.get('/', (req, res) => {

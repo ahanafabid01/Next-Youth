@@ -10,21 +10,20 @@
 
 body {
     font-family: 'Poppins', sans-serif;
-    background: white;
+    background: #0a0a0a;
     color: black;
 }
 
 .auth-page {
     margin: 0;
-    padding: 0;
-    background: linear-gradient(135deg, #4F46E5, #10B981, #3B82F6);
+    padding: 20px 0;
+    background: linear-gradient(135deg, #1a1a1a, #2d2d2d, #101010);
     min-height: 100vh;
     display: flex;
     justify-content: center;
     align-items: center;
-    padding: 1rem;
     position: relative;
-    overflow: hidden;
+    overflow-y: auto;
 }
 
 .auth-page::before {
@@ -32,7 +31,7 @@ body {
     position: absolute;
     width: 200%;
     height: 200%;
-    background: radial-gradient(circle, rgba(79, 70, 229, 0.15) 0%, rgba(16, 185, 129, 0.1) 50%, rgba(59, 130, 246, 0.05) 100%);
+    background: radial-gradient(circle, rgba(45,45,45,0.15) 0%, rgba(26,26,26,0.25) 50%, rgba(16,16,16,0.35) 100%);
     animation: float 12s infinite linear;
 }
 
@@ -45,18 +44,18 @@ body {
 .auth-container {
     background: rgba(255, 255, 255, 0.95);
     color: #2d3748;
-    padding: 2.5rem;
+    padding: 2rem;
     border-radius: 20px;
     width: 100%;
     max-width: 480px;
-    box-shadow: 0 12px 32px rgba(0, 0, 0, 0.15);
+    box-shadow: 0 12px 32px rgba(0, 0, 0, 0.3);
     position: relative;
     z-index: 1;
     backdrop-filter: blur(8px);
     border: 1px solid rgba(255, 255, 255, 0.2);
+    margin: 20px;
 }
 
-/* All other styles remain exactly the same below this line */
 .auth-title {
     text-align: center;
     margin-bottom: 2rem;
@@ -200,14 +199,15 @@ body {
 .otp-container {
     display: flex;
     justify-content: center;
-    gap: 12px;
+    gap: 10px;
     margin: 25px 0;
+    flex-wrap: wrap;
 }
 
 .otp-input {
-    width: 55px;
-    height: 65px;
-    font-size: 1.6rem;
+    width: 50px;
+    height: 60px;
+    font-size: 1.5rem;
     text-align: center;
     border: 2px solid #e2e8f0;
     border-radius: 12px;
@@ -274,31 +274,19 @@ body {
     color: #718096;
     margin-bottom: 1.5rem;
     font-size: 0.95rem;
+    line-height: 1.4;
 }
 
-.auth-links {
-    margin-top: 1.5rem;
-    display: flex;
-    flex-direction: column;
-    gap: 0.75rem;
-}
-
-.fa-hand-wave {
-    transform: rotate(-20deg);
-    margin-right: 8px;
-}
-
-/* Media Queries */
 @media (max-width: 768px) {
     .auth-container {
-        padding: 2rem;
+        padding: 1.5rem;
         max-width: 90%;
     }
 
     .otp-input {
-        width: 50px;
-        height: 60px;
-        font-size: 1.5rem;
+        width: 45px;
+        height: 55px;
+        font-size: 1.4rem;
     }
 
     .auth-title {
@@ -308,25 +296,42 @@ body {
 
 @media (max-width: 480px) {
     .auth-container {
-        padding: 1.5rem;
+        padding: 1.25rem;
+        margin: 10px;
     }
 
     .auth-title {
-        font-size: 1.6rem;
+        font-size: 1.5rem;
+        gap: 8px;
+    }
+
+    .auth-title i {
+        font-size: 1.4rem;
     }
 
     .otp-input {
-        width: 45px;
-        height: 55px;
-        font-size: 1.4rem;
+        width: 40px;
+        height: 50px;
+        font-size: 1.3rem;
     }
 
     .auth-form input {
         padding: 0.75rem 1rem 0.75rem 38px;
+        font-size: 0.95rem;
     }
 
     .role-options {
         grid-template-columns: 1fr;
+        gap: 0.75rem;
+    }
+
+    .role-option {
+        padding: 0.75rem;
+    }
+
+    .btn {
+        padding: 0.9rem;
+        font-size: 1rem;
     }
 }
 
@@ -338,5 +343,13 @@ body {
 
     .auth-title {
         font-size: 2.2rem;
+    }
+}
+
+@media (max-height: 700px) {
+    .auth-page {
+        align-items: flex-start;
+        padding-top: 30px;
+        padding-bottom: 30px;
     }
 }
