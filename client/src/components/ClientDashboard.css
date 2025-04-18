@@ -1,0 +1,82 @@
+/* ClientDashboard.css */
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap');
+
+:root {
+  --color-bg: #f5f7fa;
+  --color-card-bg: #ffffff;
+  --color-primary: #4e89ae;
+  --color-secondary: #f3a683;
+  --color-text: #2d3436;
+  --color-muted: #636e72;
+}
+
+.client-dashboard {
+  font-family: 'Poppins', sans-serif;
+  background: var(--color-bg);
+  color: var(--color-text);
+  padding: 2rem;
+  min-height: 100vh;
+}
+
+.client-dashboard h1 {
+  font-size: 2rem;
+  margin-bottom: 0.5rem;
+}
+
+.client-dashboard p {
+  color: var(--color-muted);
+  margin-bottom: 1.5rem;
+}
+
+.dashboard-stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 1.5rem;
+}
+
+.stat-card {
+  background: var(--color-card-bg);
+  border-radius: 1rem;
+  box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+  padding: 1.5rem;
+  display: flex;
+  align-items: center;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.stat-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 8px 12px rgba(0,0,0,0.15);
+}
+
+.stat-icon {
+  font-size: 2.5rem;
+  margin-right: 1rem;
+  color: var(--color-primary);
+}
+
+.stat-text h3 {
+  font-size: 1.1rem;
+  font-weight: 600;
+  margin: 0;
+}
+
+.stat-text p {
+  font-size: 1.5rem;
+  font-weight: 700;
+  margin: 0.2rem 0 0;
+  color: var(--color-secondary);
+}
+
+@media (max-width: 600px) {
+  .client-dashboard {
+    padding: 1rem;
+  }
+  .stat-card {
+    padding: 1rem;
+  }
+  .stat-icon {
+    font-size: 2rem;
+    margin-right: 0.75rem;
+  }
+}

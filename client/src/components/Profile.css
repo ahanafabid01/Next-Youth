@@ -169,17 +169,18 @@
 }
 
 .edit-btn {
-  background: var(--gradient);
-  color: white;
+  background: var(--primary);
+  color: white; /* Ensure text is visible on the primary background */
   border: none;
   padding: 1rem 2rem;
   border-radius: 8px;
   font-weight: 600;
   cursor: pointer;
-  transition: transform 0.3s ease;
+  transition: transform 0.3s ease, background 0.3s ease;
 }
 
 .edit-btn:hover {
+  background: var(--hover-color); /* Slightly darker shade for hover effect */
   transform: translateY(-2px);
 }
 

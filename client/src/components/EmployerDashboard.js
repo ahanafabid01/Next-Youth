@@ -20,6 +20,7 @@ import "./EmployerDashboard.css";
 import Profile from "./Profile"; // Import the Profile component
 import PostJob from "./PostJob"; // Import the PostJob component
 import MyJobs from "./MyJobs"; // Import the MyJobs component
+import ClientDashboard from "./ClientDashboard"; // Add this import
 
 ChartJS.register(ArcElement, Tooltip, Legend, CategoryScale, LinearScale, BarElement);
 
@@ -123,94 +124,13 @@ const EmployerDashboard = () => {
     const renderContent = () => {
         switch (activeTab) {
             case "dashboard":
-                return (
-                    <div className="dashboard-main">
-                        <header className="dashboard-header">
-                            <h1>Employer Dashboard</h1>
-                            <p>Overview of your job postings and applications</p>
-                        </header>
-
-                        {jobStats && monthlyTrends ? (
-                            <div className="dashboard-charts">
-                                {/* Pie Chart for Job Status */}
-                                <div className="chart-container">
-                                    <h3>Job Status Distribution</h3>
-                                    <Pie
-                                        data={{
-                                            labels: ["Open", "Completed", "On Hold"],
-                                            datasets: [
-                                                {
-                                                    data: [
-                                                        jobStats.openJobs,
-                                                        jobStats.completedJobs,
-                                                        jobStats.onHoldJobs,
-                                                    ],
-                                                    backgroundColor: ["#4caf50", "#2196f3", "#ff9800"],
-                                                    hoverBackgroundColor: ["#45a049", "#1e88e5", "#fb8c00"],
-                                                },
-                                            ],
-                                        }}
-                                        options={{
-                                            responsive: true,
-                                            plugins: {
-                                                legend: {
-                                                    position: "bottom",
-                                                },
-                                            },
-                                        }}
-                                    />
-                                </div>
-
-                                {/* Bar Chart for Monthly Trends */}
-                                <div className="chart-container">
-                                    <h3>Monthly Job Posting Trends</h3>
-                                    <Bar
-                                        data={{
-                                            labels: monthlyTrends.months,
-                                            datasets: [
-                                                {
-                                                    label: "Jobs Posted",
-                                                    data: monthlyTrends.jobCounts,
-                                                    backgroundColor: "#2196f3",
-                                                },
-                                            ],
-                                        }}
-                                        options={{
-                                            responsive: true,
-                                            plugins: {
-                                                legend: {
-                                                    display: false,
-                                                },
-                                            },
-                                            scales: {
-                                                x: {
-                                                    title: {
-                                                        display: true,
-                                                        text: "Months",
-                                                    },
-                                                },
-                                                y: {
-                                                    title: {
-                                                        display: true,
-                                                        text: "Jobs Posted",
-                                                    },
-                                                },
-                                            },
-                                        }}
-                                    />
-                                </div>
-                            </div>
-                        ) : (
-                            <p>Loading dashboard data...</p>
-                        )}
-                    </div>
-                );
+                return <ClientDashboard />; // Fix the component name
             case "profile":
                 return <Profile />;
             case "post-job":
                 return <PostJob />;
             case "jobs":
-                return <MyJobs />; // Render the MyJobs component
+                return <MyJobs />;
             default:
                 return <div className="dashboard-main">Default Content</div>;
         }
