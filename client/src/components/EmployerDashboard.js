@@ -11,16 +11,18 @@ import {
   FaSignOutAlt,
   FaUser,
   FaPlus,
-  FaTimes
+  FaTimes,
+  FaMoon,
+  FaSun
 } from "react-icons/fa";
 import { Bar, Pie } from "react-chartjs-2";
 import { Chart as ChartJS, ArcElement, Tooltip, Legend, CategoryScale, LinearScale, BarElement } from "chart.js";
 import { useNavigate } from "react-router-dom";
 import "./EmployerDashboard.css";
-import Profile from "./Profile"; // Import the Profile component
-import PostJob from "./PostJob"; // Import the PostJob component
-import MyJobs from "./MyJobs"; // Import the MyJobs component
-import ClientDashboard from "./ClientDashboard"; // Add this import
+import Profile from "./Profile";
+import PostJob from "./PostJob";
+import MyJobs from "./MyJobs";
+import ClientDashboard from "./ClientDashboard";
 
 ChartJS.register(ArcElement, Tooltip, Legend, CategoryScale, LinearScale, BarElement);
 
@@ -34,6 +36,31 @@ const EmployerDashboard = () => {
     const [activeTab, setActiveTab] = useState("dashboard");
     const [jobStats, setJobStats] = useState(null);
     const [monthlyTrends, setMonthlyTrends] = useState(null);
+    const [darkMode, setDarkMode] = useState(false);
+
+    // Check for saved theme preference when component mounts
+    useEffect(() => {
+        const savedTheme = localStorage.getItem("theme");
+        if (savedTheme === "dark") {
+            setDarkMode(true);
+            document.body.classList.add("dark-mode");
+        }
+    }, []);
+
+    // Apply theme changes when darkMode state changes
+    useEffect(() => {
+        if (darkMode) {
+            document.body.classList.add("dark-mode");
+            localStorage.setItem("theme", "dark");
+        } else {
+            document.body.classList.remove("dark-mode");
+            localStorage.setItem("theme", "light");
+        }
+    }, [darkMode]);
+
+    const toggleTheme = () => {
+        setDarkMode(prevMode => !prevMode);
+    };
 
     useEffect(() => {
         const fetchJobs = async () => {
@@ -124,7 +151,7 @@ const EmployerDashboard = () => {
     const renderContent = () => {
         switch (activeTab) {
             case "dashboard":
-                return <ClientDashboard />; // Fix the component name
+                return <ClientDashboard />;
             case "profile":
                 return <Profile />;
             case "post-job":
@@ -137,13 +164,16 @@ const EmployerDashboard = () => {
     };
 
     return (
-        <div className="dashboard-wrapper">
+        <div className={`dashboard-wrapper ${darkMode ? 'dark-theme' : 'light-theme'}`}>
             {/* Mobile Header */}
             <div className="mobile-header">
                 <button className="hamburger" onClick={() => setMenuOpen(!menuOpen)}>
                     {menuOpen ? <FaTimes size={24} /> : <FaBars size={24} />}
                 </button>
                 <div className="logo">Next Youth</div>
+                <div className="theme-toggle-mobile" onClick={toggleTheme}>
+                    {darkMode ? <FaSun size={20} /> : <FaMoon size={20} />}
+                </div>
             </div>
 
             {/* Sidebar */}
@@ -212,6 +242,11 @@ const EmployerDashboard = () => {
                         >
                             <FaCog className="nav-icon" />
                             <span className="nav-text">Settings</span>
+                        </li>
+
+                        <li className="theme-toggle-item" onClick={toggleTheme}>
+                            {darkMode ? <FaSun className="nav-icon" /> : <FaMoon className="nav-icon" />}
+                            <span className="nav-text">{darkMode ? "Light Mode" : "Dark Mode"}</span>
                         </li>
 
                         <li className="nav-item logout-item" onClick={handleLogout}>

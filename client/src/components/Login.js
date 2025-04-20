@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import axios from "axios";
 import { useNavigate, Link } from "react-router-dom";
 import "./Auth.css";
@@ -7,7 +7,64 @@ const Login = () => {
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
     const [error, setError] = useState("");
+    const [isDarkMode, setIsDarkMode] = useState(() => {
+        return localStorage.getItem("theme") === "dark";
+    });
     const navigate = useNavigate();
+
+    // Apply dark mode on initial load
+    useEffect(() => {
+        document.body.classList.toggle("dark-mode", isDarkMode);
+    }, []);
+
+    // Create background particles effect
+    useEffect(() => {
+        createParticles();
+        // Cleanup function
+        return () => {
+            const container = document.querySelector('.background-animation');
+            if (container) {
+                container.innerHTML = '';
+            }
+        };
+    }, [isDarkMode]);
+
+    const createParticles = () => {
+        const container = document.querySelector('.background-animation') || document.createElement('div');
+        
+        if (!container.classList.contains('background-animation')) {
+            container.className = 'background-animation';
+            document.body.appendChild(container);
+        }
+        
+        // Clear existing particles
+        container.innerHTML = '';
+        
+        // Create new particles
+        for (let i = 0; i < 40; i++) {
+            const particle = document.createElement('div');
+            particle.className = 'particle';
+            
+            // Random properties
+            const size = Math.random() * 80 + 20;
+            const posX = Math.random() * window.innerWidth;
+            const posY = Math.random() * window.innerHeight;
+            const delay = Math.random() * 5;
+            const duration = Math.random() * 10 + 10;
+            const color = i % 2 === 0 ? 'var(--particles-color)' : 'var(--particles-color-alt)';
+            
+            // Apply styles
+            particle.style.width = `${size}px`;
+            particle.style.height = `${size}px`;
+            particle.style.left = `${posX}px`;
+            particle.style.top = `${posY}px`;
+            particle.style.animationDelay = `${delay}s`;
+            particle.style.animationDuration = `${duration}s`;
+            particle.style.backgroundColor = color;
+            
+            container.appendChild(particle);
+        }
+    };
 
     const handleSubmit = async (e) => {
         e.preventDefault();
@@ -32,19 +89,34 @@ const Login = () => {
         }
     };
 
+    const toggleDarkMode = () => {
+        setIsDarkMode(!isDarkMode);
+        document.body.classList.toggle("dark-mode", !isDarkMode);
+        localStorage.setItem("theme", !isDarkMode ? "dark" : "light");
+    };
+
     return (
-        <div className="auth-page">
+        <div className={`auth-page ${isDarkMode ? "dark-mode" : ""}`}>
+            <header className="auth-header">
+                <Link to="/">
+                    <h1>Next <span className="text-gradient">Youth</span></h1>
+                </Link>
+                <button className="theme-toggle" onClick={toggleDarkMode}>
+                    <i className="fas fa-sun"></i>
+                    <i className="fas fa-moon"></i>
+                    {isDarkMode ? "Light Mode" : "Dark Mode"}
+                </button>
+            </header>
             <div className="auth-container">
                 <h2 className="auth-title">
                     <i className="fas fa-hand-wave"></i>
-                    Welcome Back!
+                    Welcome <span className="text-gradient">Back!</span>
                 </h2>
                 <form onSubmit={handleSubmit} className="auth-form">
                     <div className="form-group">
-                        <label>Email Address</label>
-                        <div className="input-icon">
-                            <i className="fas fa-envelope"></i>
-                        </div>
+                        <label>
+                            <i className="fas fa-envelope"></i> Email Address
+                        </label>
                         <input
                             type="email"
                             value={email}
@@ -54,10 +126,9 @@ const Login = () => {
                         />
                     </div>
                     <div className="form-group">
-                        <label>Password</label>
-                        <div className="input-icon">
-                            <i className="fas fa-lock"></i>
-                        </div>
+                        <label>
+                            <i className="fas fa-lock"></i> Password
+                        </label>
                         <input
                             type="password"
                             value={password}
@@ -93,6 +164,9 @@ const Login = () => {
                     </p>
                 </div>
             </div>
+            <footer className="auth-footer">
+                <p>© 2025 Next Youth</p>
+            </footer>
         </div>
     );
 };

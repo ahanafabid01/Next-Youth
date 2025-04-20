@@ -4,13 +4,54 @@ import "./Homepage.css";
 
 const Homepage = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [isDarkMode, setIsDarkMode] = useState(() => {
+    return localStorage.getItem("theme") === "dark";
+  });
+  const [showToast, setShowToast] = useState(false);
+  const [toastMessage, setToastMessage] = useState("");
   const hamburgerRef = useRef(null);
   const menuRef = useRef(null);
+  const heroRef = useRef(null);
 
-  const toggleMenu = () => {
-    setIsMenuOpen(!isMenuOpen);
-  };
+  // Create particles for hero section
+  useEffect(() => {
+    if (!heroRef.current) return;
+    
+    const heroSection = heroRef.current;
+    const particlesContainer = document.createElement('div');
+    particlesContainer.className = 'hero-particles';
+    heroSection.appendChild(particlesContainer);
+    
+    // Create particles
+    for (let i = 0; i < 50; i++) {
+      const particle = document.createElement('div');
+      particle.className = 'particle';
+      
+      // Random particle properties
+      const size = Math.random() * 5 + 2;
+      const posX = Math.random() * 100;
+      const posY = Math.random() * 100;
+      const delay = Math.random() * 5;
+      const duration = Math.random() * 10 + 10;
+      
+      particle.style.width = `${size}px`;
+      particle.style.height = `${size}px`;
+      particle.style.left = `${posX}%`;
+      particle.style.top = `${posY}%`;
+      particle.style.opacity = Math.random() * 0.5 + 0.1;
+      particle.style.animation = `float ${duration}s ease-in-out ${delay}s infinite`;
+      
+      particlesContainer.appendChild(particle);
+    }
+    
+    return () => {
+      if (heroSection.contains(particlesContainer)) {
+        heroSection.removeChild(particlesContainer);
+      }
+    };
+  }, []);
 
+  // Handle click outside menu
   useEffect(() => {
     const handleClickOutside = (event) => {
       if (menuRef.current && !menuRef.current.contains(event.target)) {
@@ -24,35 +65,185 @@ const Homepage = () => {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
+  // Theme mode effect
   useEffect(() => {
-    if (isMenuOpen) {
-      document.body.classList.add("menu-open");
+    document.body.classList.toggle("dark-mode", isDarkMode);
+    localStorage.setItem("theme", isDarkMode ? "dark" : "light");
+    
+    // Show toast when theme changes
+    if (isDarkMode) {
+      showToastNotification("Dark mode activated");
     } else {
-      document.body.classList.remove("menu-open");
+      showToastNotification("Light mode activated");
     }
+  }, [isDarkMode]);
+  
+  // Scroll animation
+  useEffect(() => {
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach((entry, index) => {
+        if (entry.isIntersecting) {
+          // Add staggered delay based on index
+          setTimeout(() => {
+            entry.target.classList.add('visible');
+          }, index * 100);
+        }
+      });
+    }, { threshold: 0.1 });
+    
+    document.querySelectorAll('.category-card, .service-card, .section-title').forEach(el => {
+      el.classList.add('fade-in');
+      observer.observe(el);
+    });
+    
+    return () => observer.disconnect();
+  }, []);
+
+  // Add parallax effect to service cards
+  useEffect(() => {
+    const handleMouseMove = (e) => {
+      document.querySelectorAll('.service-card').forEach(card => {
+        const rect = card.getBoundingClientRect();
+        const x = e.clientX - rect.left;
+        const y = e.clientY - rect.top;
+        
+        const centerX = rect.width / 2;
+        const centerY = rect.height / 2;
+        
+        const tiltX = (x - centerX) / centerX;
+        const tiltY = (y - centerY) / centerY;
+        
+        if (rect.left <= e.clientX && e.clientX <= rect.right &&
+            rect.top <= e.clientY && e.clientY <= rect.bottom) {
+          card.style.transform = `perspective(1000px) rotateX(${tiltY * 3}deg) rotateY(${-tiltX * 3}deg) scale3d(1.02, 1.02, 1.02)`;
+        } else {
+          card.style.transform = '';
+        }
+      });
+    };
+    
+    window.addEventListener('mousemove', handleMouseMove);
+    return () => window.removeEventListener('mousemove', handleMouseMove);
+  }, []);
+
+  // Add scroll progress indicator
+  useEffect(() => {
+    const progressBar = document.createElement('div');
+    progressBar.className = 'scroll-progress';
+    document.body.appendChild(progressBar);
+    
+    const updateProgress = () => {
+      const scrollPosition = window.scrollY;
+      const totalHeight = document.body.scrollHeight - window.innerHeight;
+      const progress = (scrollPosition / totalHeight) * 100;
+      progressBar.style.width = `${progress}%`;
+    };
+    
+    window.addEventListener('scroll', updateProgress);
+    
+    return () => {
+      window.removeEventListener('scroll', updateProgress);
+      if (progressBar.parentNode) {
+        document.body.removeChild(progressBar);
+      }
+    };
+  }, []);
+
+  // Add typing effect to hero heading
+  useEffect(() => {
+    const heroHeading = document.querySelector('.hero h1');
+    if (!heroHeading) return;
+    
+    const originalText = heroHeading.textContent;
+    heroHeading.textContent = '';
+    heroHeading.classList.add('typing-effect');
+    
+    let index = 0;
+    const typeInterval = setInterval(() => {
+      if (index < originalText.length) {
+        heroHeading.textContent += originalText.charAt(index);
+        index++;
+      } else {
+        clearInterval(typeInterval);
+        setTimeout(() => {
+          heroHeading.classList.remove('typing-effect');
+        }, 1000);
+      }
+    }, 50);
+    
+    return () => clearInterval(typeInterval);
+  }, []);
+
+  // Add ripple effect to buttons
+  useEffect(() => {
+    const buttons = document.querySelectorAll('.search-button, .signup, .login');
+    
+    const createRipple = (event) => {
+      const button = event.currentTarget;
+      
+      const circle = document.createElement('span');
+      const diameter = Math.max(button.clientWidth, button.clientHeight);
+      const radius = diameter / 2;
+      
+      const rect = button.getBoundingClientRect();
+      
+      circle.style.width = circle.style.height = `${diameter}px`;
+      circle.style.left = `${event.clientX - rect.left - radius}px`;
+      circle.style.top = `${event.clientY - rect.top - radius}px`;
+      circle.classList.add('ripple');
+      
+      const ripple = button.querySelector('.ripple');
+      if (ripple) {
+        ripple.remove();
+      }
+      
+      button.appendChild(circle);
+      
+      // Remove ripple after animation
+      setTimeout(() => {
+        if (circle.parentNode) {
+          circle.parentNode.removeChild(circle);
+        }
+      }, 600);
+    };
+    
+    buttons.forEach(button => {
+      button.addEventListener('click', createRipple);
+    });
+    
+    return () => {
+      buttons.forEach(button => {
+        button.removeEventListener('click', createRipple);
+      });
+    };
+  }, []);
+
+  // Add staggered animation to nav items
+  useEffect(() => {
+    const navItems = document.querySelectorAll('.desktop-nav ul li, .mobile-menu ul li');
+    
+    navItems.forEach((item, index) => {
+      item.style.animation = `navFadeIn 0.4s forwards ${index * 0.1}s`;
+    });
   }, [isMenuOpen]);
 
-  const handleMenuClick = () => {
-    setIsMenuOpen(false);
+  const showToastNotification = (message) => {
+    setToastMessage(message);
+    setShowToast(true);
+    
+    setTimeout(() => {
+      setShowToast(false);
+    }, 3000);
   };
 
+  const toggleMenu = () => setIsMenuOpen(!isMenuOpen);
+  const handleMenuClick = () => setIsMenuOpen(false);
+
   return (
-    <div className="homepage-container">
-      {/* Header */}
+    <div className={`homepage-container ${isDarkMode ? 'dark-mode' : ''}`}>
       <header>
         <div className="header-container">
-          <div className="logo">Next Youth</div>
-          
-          <button 
-            ref={hamburgerRef}
-            className={`hamburger-menu ${isMenuOpen ? 'open' : ''}`} 
-            onClick={toggleMenu}
-            aria-label="Toggle navigation menu"
-          >
-            <span></span>
-            <span></span>
-            <span></span>
-          </button>
+          <div className="logo float">Next Youth</div>
           
           <nav className="desktop-nav">
             <ul>
@@ -60,36 +251,70 @@ const Homepage = () => {
               <li><a href="#"><i className="fas fa-compass"></i>Explore</a></li>
               <li><a href="#"><i className="fas fa-globe"></i>English</a></li>
               <li><a href="#"><i className="fas fa-store"></i>Become a Seller</a></li>
+              <li>
+                <button 
+                  className="theme-toggle"
+                  onClick={() => setIsDarkMode(!isDarkMode)}
+                >
+                  <i className={`fas ${isDarkMode ? 'fa-sun' : 'fa-moon'}`}></i>
+                  {isDarkMode ? ' Light Mode' : ' Dark Mode'}
+                </button>
+              </li>
             </ul>
           </nav>
-          
-          <div className="auth-buttons">
-            <Link to="/login" className="login"><i className="fas fa-sign-in-alt"></i>Log In</Link>
-            <Link to="/register" className="signup"><i className="fas fa-user-plus"></i>Sign Up</Link>
+
+          <div className="nav-controls">
+            <div className="auth-buttons">
+              <Link to="/login" className="login glow-on-hover">
+                <i className="fas fa-sign-in-alt"></i>Log In
+              </Link>
+              <Link to="/register" className="signup glow-on-hover">
+                <i className="fas fa-user-plus"></i>Sign Up
+              </Link>
+            </div>
+            
+            <button 
+              ref={hamburgerRef}
+              className={`hamburger-menu ${isMenuOpen ? 'open' : ''}`} 
+              onClick={toggleMenu}
+              aria-label="Toggle navigation menu"
+            >
+              <span></span>
+              <span></span>
+              <span></span>
+            </button>
           </div>
         </div>
-        
+
         <div 
           ref={menuRef}
           className={`mobile-menu ${isMenuOpen ? 'open' : ''}`}
           aria-hidden={!isMenuOpen}
         >
           <ul onClick={handleMenuClick}>
-            <li><a href="#"><i className="fas fa-briefcase"></i>Business Solutions</a></li>
-            <li><a href="#"><i className="fas fa-compass"></i>Explore</a></li>
-            <li><a href="#"><i className="fas fa-globe"></i>English</a></li>
-            <li><a href="#"><i className="fas fa-store"></i>Become a Seller</a></li>
-            <li><Link to="/login" className="login"><i className="fas fa-sign-in-alt"></i>Log In</Link></li>
-            <li><Link to="/register" className="signup"><i className="fas fa-user-plus"></i>Sign Up</Link></li>
+            <li className="nav-fade-in"><a href="#"><i className="fas fa-briefcase"></i>Business Solutions</a></li>
+            <li className="nav-fade-in"><a href="#"><i className="fas fa-compass"></i>Explore</a></li>
+            <li className="nav-fade-in"><a href="#"><i className="fas fa-globe"></i>English</a></li>
+            <li className="nav-fade-in"><a href="#"><i className="fas fa-store"></i>Become a Seller</a></li>
+            <li className="nav-fade-in"><Link to="/login" className="login"><i className="fas fa-sign-in-alt"></i>Log In</Link></li>
+            <li className="nav-fade-in"><Link to="/register" className="signup"><i className="fas fa-user-plus"></i>Sign Up</Link></li>
+            <li className="nav-fade-in">
+              <button 
+                className="theme-toggle"
+                onClick={() => setIsDarkMode(!isDarkMode)}
+              >
+                <i className={`fas ${isDarkMode ? 'fa-sun' : 'fa-moon'}`}></i>
+                {isDarkMode ? ' Light Mode' : ' Dark Mode'}
+              </button>
+            </li>
           </ul>
         </div>
       </header>
 
-      {/* Hero Section */}
-      <section className="hero">
+      <section className="hero" ref={heroRef}>
         <div className="hero-content">
           <h1>Find the perfect freelance services for your business</h1>
-          <p>Join millions of people who commission freelancers on the world's most popular freelance services website.</p>
+          <p className="float">Join millions of people who commission freelancers on the world's most popular freelance services website.</p>
           <div className="search-bar">
             <input 
               type="text" 
@@ -103,14 +328,13 @@ const Homepage = () => {
         </div>
       </section>
 
-      {/* Categories Section */}
       <section className="categories">
         <h2 className="section-title">Popular professional services</h2>
         <div className="category-grid">
-          {['Logo Design', 'WordPress', 'Voice Over', 'Video Explainer', 'Social Media', 'SEO'].map((service, index) => (
-            <div className="category-card" key={index}>
+          {['Logo Design', 'WordPress', 'Voice Over', 'Video Explainer', 'Social Media', 'SEO', 'App Design', 'Video Editing', 'Web Design', 'Digital Marketing'].map((service, index) => (
+            <div className="category-card glow-on-hover" key={index}>
               <div className="category-icon">
-                <i className={`fas fa-${['pencil-alt', 'wordpress', 'microphone', 'video', 'hashtag', 'chart-line'][index]}`}></i>
+                <i className={`fas fa-${['pencil-alt', 'wordpress', 'microphone', 'video', 'hashtag', 'chart-line', 'mobile-alt', 'film', 'desktop', 'bullhorn'][index]}`}></i>
               </div>
               <h3>{service}</h3>
               <p>{[
@@ -119,20 +343,23 @@ const Homepage = () => {
                 'Share your message',
                 'Engage your audience',
                 'Reach more customers',
-                'Unlock growth online'
+                'Unlock growth online',
+                'Design your app',
+                'Edit your videos',
+                'Create your website',
+                'Promote your business'
               ][index]}</p>
             </div>
           ))}
         </div>
       </section>
 
-      {/* Popular Services Section */}
       <section className="popular-services">
         <div className="services-container">
           <h2 className="section-title">Popular services</h2>
-          <div className="services-grid">
+          <div className="services-grid parallax-container">
             {[1, 2, 3].map((item) => (
-              <div className="service-card" key={item}>
+              <div className="service-card parallax-layer" key={item}>
                 <div className="service-image" style={{ backgroundImage: "url('https://source.unsplash.com/random/800x600')" }}>
                   <div className="service-overlay"></div>
                 </div>
@@ -153,7 +380,6 @@ const Homepage = () => {
         </div>
       </section>
 
-      {/* Footer */}
       <footer>
         <div className="footer-container">
           <div className="footer-column">
@@ -199,6 +425,8 @@ const Homepage = () => {
           </div>
         </div>
       </footer>
+
+
     </div>
   );
 };
