@@ -152,29 +152,70 @@ const Homepage = () => {
     };
   }, []);
 
-  // Add typing effect to hero heading
+  // Improved typing effect implementation
   useEffect(() => {
     const heroHeading = document.querySelector('.hero h1');
     if (!heroHeading) return;
     
-    const originalText = heroHeading.textContent;
+    // First make sure text is visible immediately for users who prefer reduced motion
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+      heroHeading.textContent = "Find the perfect freelance services for your business";
+      heroHeading.classList.remove('typing-effect');
+      return;
+    }
+    
+    // Store the original text and clear it
+    const originalText = "Find the perfect freelance services for your business";
     heroHeading.textContent = '';
     heroHeading.classList.add('typing-effect');
     
-    let index = 0;
-    const typeInterval = setInterval(() => {
-      if (index < originalText.length) {
-        heroHeading.textContent += originalText.charAt(index);
-        index++;
-      } else {
-        clearInterval(typeInterval);
-        setTimeout(() => {
-          heroHeading.classList.remove('typing-effect');
-        }, 1000);
-      }
-    }, 50);
+    // Track animation state to prevent duplicate animations
+    let isAnimating = true;
+    let animationFrame = null;
     
-    return () => clearInterval(typeInterval);
+    // Use a more controlled typing approach
+    let index = 0;
+    let lastTypingTime = 0;
+    const typingSpeed = 40; // ms per character
+    
+    const typeCharacter = (timestamp) => {
+      if (!isAnimating) return;
+      
+      if (!lastTypingTime) lastTypingTime = timestamp;
+      
+      // Only type a new character if enough time has passed
+      if (timestamp - lastTypingTime >= typingSpeed) {
+        if (index < originalText.length) {
+          // Add exactly one character at a time
+          heroHeading.textContent = originalText.substring(0, index + 1);
+          index++;
+          lastTypingTime = timestamp;
+        } else {
+          // Typing finished - remove typing effect after a delay
+          setTimeout(() => {
+            heroHeading.classList.remove('typing-effect');
+          }, 1000);
+          isAnimating = false;
+          return; // Stop animation
+        }
+      }
+      
+      // Continue animation
+      animationFrame = requestAnimationFrame(typeCharacter);
+    };
+    
+    // Start animation
+    animationFrame = requestAnimationFrame(typeCharacter);
+    
+    return () => {
+      // Clean up - cancel animation and set full text if component unmounts during animation
+      isAnimating = false;
+      if (animationFrame) {
+        cancelAnimationFrame(animationFrame);
+      }
+      heroHeading.textContent = originalText;
+      heroHeading.classList.remove('typing-effect');
+    };
   }, []);
 
   // Add ripple effect to buttons
@@ -336,7 +377,7 @@ const Homepage = () => {
 
       <section className="hero" ref={heroRef}>
         <div className="hero-content">
-          <h1>Find the perfect freelance services for your business</h1>
+          <h1 className="hero-heading visible-heading">Find the perfect freelance services for your business</h1>
           <p className="float">Join millions of people who commission freelancers on the world's most popular freelance services website.</p>
           <div className="search-bar">
             <input 

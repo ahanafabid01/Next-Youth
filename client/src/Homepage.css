@@ -435,26 +435,66 @@ header {
   font-weight: 800;
   margin-bottom: 1.5rem;
   color: white;
-  text-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+  text-shadow: 0 2px 8px rgba(0, 0, 0, 0.2); /* Softer shadow */
   line-height: 1.2;
+  opacity: 0; /* Start invisible */
+  position: relative;
+  z-index: 20;
+  animation: reveal 1s ease forwards;
+}
+
+.hero h1::before {
+  content: '';
+  position: absolute;
+  top: -10px;
+  left: -15px;
+  right: -15px;
+  bottom: -10px;
+  background-color: rgba(0, 0, 0, 0.15); /* More transparent for light mode */
+  border-radius: 10px;
+  z-index: -1;
+  opacity: 0.5; /* Reduced opacity */
+  transition: background-color 0.3s ease, opacity 0.3s ease;
+}
+
+.dark-mode .hero h1::before {
+  background-color: rgba(0, 0, 0, 0.3); /* Darker for dark mode */
+  opacity: 0.7;
 }
 
 @media (max-width: 576px) {
   .hero h1 {
-    font-size: 2.2rem;
+    font-size: 1.8rem;
     line-height: 1.3;
+    margin-bottom: 1rem;
+    padding: 0 10px;
   }
   
   .hero p {
     font-size: 1rem;
+    padding: 0 10px;
   }
-  
-  .section-title {
-    font-size: 1.8rem;
+}
+
+@media (min-width: 577px) and (max-width: 768px) {
+  .hero h1 {
+    font-size: 2.2rem;
+    line-height: 1.3;
   }
-  
-  .footer-container {
-    grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+}
+
+@media (min-width: 769px) and (max-width: 1023px) {
+  .hero h1 {
+    font-size: 2.8rem;
+  }
+}
+
+@media (min-width: 1024px) {
+  .hero h1 {
+    font-size: 3.5rem;
+    max-width: 900px;
+    margin-left: auto;
+    margin-right: auto;
   }
 }
 
@@ -1106,17 +1146,71 @@ body:not(.dark-mode) .toast.show {
 }
 
 /* Typing Effect */
-.typing-effect::after {
-  content: '|';
-  animation: blink 1s step-end infinite;
+.typing-effect {
+  border-right: 3px solid rgba(255, 255, 255, 0.8);
+  white-space: pre-wrap; /* Allow wrapping on smaller screens */
+  overflow: visible; /* Allow content to be visible while typing */
+  display: inline-block;
+  animation: cursor-blink 1s step-end infinite;
+  position: relative;
+  width: 100%; /* Allow full width */
+  text-align: center;
+  font-family: var(--font-main);
+  /* Ensure no text transformation is applied */
+  text-transform: none;
+  letter-spacing: normal;
+  text-shadow: none;
 }
 
-@keyframes blink {
-  from, to {
-    opacity: 1;
-  }
-  50% {
+/* Debug styles to ensure visibility */
+.visible-heading {
+  display: block !important;
+  visibility: visible !important;
+  opacity: 1 !important;
+  pointer-events: auto !important;
+  font-kerning: normal;
+  font-feature-settings: normal;
+  text-rendering: optimizeLegibility;
+  transform: translateZ(0); /* Force hardware acceleration */
+}
+
+/* Separate the cursor blinking from the typing effect */
+@keyframes cursor-blink {
+  from, to { border-color: transparent; }
+  50% { border-color: white; }
+}
+
+/* Debug styles to ensure visibility */
+.visible-heading {
+  display: block !important;
+  visibility: visible !important;
+  opacity: 1 !important;
+}
+
+/* Make heading more visible and responsive */
+.hero-heading {
+  background-color: rgba(0, 0, 0, 0.2); /* More transparent background */
+  padding: 15px 20px;
+  border-radius: 12px;
+  box-shadow: 0 0 25px rgba(0, 0, 0, 0.15); /* Softer shadow */
+  display: block;
+  width: fit-content;
+  margin: 0 auto 1.5rem auto;
+  max-width: 90%;
+  transition: transform 0.5s ease, opacity 0.5s ease, background-color 0.3s ease;
+  backdrop-filter: blur(2px); /* Add subtle blur effect */
+  -webkit-backdrop-filter: blur(2px);
+}
+
+/* Add reveal animation for the heading */
+@keyframes reveal {
+  0% {
     opacity: 0;
+    transform: translateY(20px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
   }
 }
 
@@ -1225,6 +1319,77 @@ body:not(.dark-mode) .toast.show {
     line-height: 1.7;
     max-width: 800px;
     margin-bottom: 3rem;
+  }
+}
+
+/* Improved responsive styles for hero heading */
+@media (max-width: 480px) {
+  .hero h1 {
+    font-size: 1.6rem;
+    line-height: 1.3;
+    padding: 15px;
+  }
+  
+  .hero-heading {
+    padding: 12px 15px;
+    margin-bottom: 1rem;
+  }
+  
+  .typing-effect {
+    max-width: 95%;
+  }
+}
+
+@media (min-width: 481px) and (max-width: 576px) {
+  .hero h1 {
+    font-size: 1.8rem;
+    line-height: 1.3;
+  }
+  
+  .hero-heading {
+    max-width: 85%;
+  }
+}
+
+@media (min-width: 577px) and (max-width: 768px) {
+  .hero h1 {
+    font-size: 2.2rem;
+    line-height: 1.3;
+  }
+  
+  .hero-heading {
+    max-width: 80%;
+  }
+}
+
+@media (min-width: 769px) and (max-width: 992px) {
+  .hero h1 {
+    font-size: 2.6rem;
+  }
+  
+  .hero-heading {
+    max-width: 75%;
+  }
+}
+
+@media (min-width: 993px) and (max-width: 1200px) {
+  .hero h1 {
+    font-size: 3.2rem;
+  }
+  
+  .hero-heading {
+    max-width: 70%;
+  }
+}
+
+@media (min-width: 1201px) {
+  .hero h1 {
+    font-size: 3.8rem;
+    max-width: 80%;
+  }
+  
+  .hero-heading {
+    padding: 20px 30px;
   }
 }
 
