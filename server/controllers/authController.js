@@ -52,12 +52,30 @@ export const register = async (req, res) => {
             VerifyOtpExpireAt: Date.now() + 10 * 60 * 1000, // OTP valid for 10 minutes
         };
 
-        // Send verification email (existing logic)
+        // Send verification email (updated logic)
         const mailOptions = {
             from: process.env.SENDER_EMAIL,
             to: email,
             subject: "Verify Your Email",
             text: `Your OTP for email verification is ${otp}. It is valid for 10 minutes.`,
+            html: `
+            <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e0e0e0; border-radius: 10px; background: linear-gradient(to right, #f8f9fa, #e9ecef);">
+                <div style="text-align: center; margin-bottom: 20px;">
+                    <h1 style="color: #0062cc; margin-bottom: 5px;">Email Verification</h1>
+                    <p style="color: #6c757d; font-size: 16px;">Welcome to Next Youth!</p>
+                </div>
+                <div style="background-color: white; padding: 20px; border-radius: 8px; box-shadow: 0 4px 8px rgba(0,0,0,0.1);">
+                    <p style="font-size: 16px; color: #343a40; margin-bottom: 20px;">Thank you for registering. Please verify your email address using the OTP below:</p>
+                    <div style="background-color: #f8f9fa; padding: 15px; border-radius: 5px; text-align: center; margin: 20px 0;">
+                        <h2 style="letter-spacing: 5px; color: #0062cc; margin: 0; font-size: 28px;">${otp}</h2>
+                    </div>
+                    <p style="font-size: 14px; color: #6c757d;">This OTP is valid for 10 minutes only. If you didn't create an account, please ignore this email.</p>
+                </div>
+                <div style="text-align: center; margin-top: 20px; padding-top: 20px; border-top: 1px solid #e0e0e0;">
+                    <p style="color: #6c757d; font-size: 14px;">© ${new Date().getFullYear()} Next Youth. All rights reserved.</p>
+                </div>
+            </div>
+            `
         };
 
         await transporter.sendMail(mailOptions);
@@ -226,6 +244,24 @@ export const resendVerifyOtp = async (req, res) => {
             to: user.email,
             subject: "Resend Account Verification OTP",
             text: `Your OTP for account verification is ${otp}. It is valid for 10 minutes.`,
+            html: `
+            <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e0e0e0; border-radius: 10px; background: linear-gradient(to right, #f8f9fa, #e9ecef);">
+                <div style="text-align: center; margin-bottom: 20px;">
+                    <h1 style="color: #0062cc; margin-bottom: 5px;">Email Verification</h1>
+                    <p style="color: #6c757d; font-size: 16px;">Your verification code has been resent</p>
+                </div>
+                <div style="background-color: white; padding: 20px; border-radius: 8px; box-shadow: 0 4px 8px rgba(0,0,0,0.1);">
+                    <p style="font-size: 16px; color: #343a40; margin-bottom: 20px;">You requested a new verification code. Please use the OTP below to verify your email:</p>
+                    <div style="background-color: #f8f9fa; padding: 15px; border-radius: 5px; text-align: center; margin: 20px 0;">
+                        <h2 style="letter-spacing: 5px; color: #0062cc; margin: 0; font-size: 28px;">${otp}</h2>
+                    </div>
+                    <p style="font-size: 14px; color: #6c757d;">This OTP is valid for 10 minutes only.</p>
+                </div>
+                <div style="text-align: center; margin-top: 20px; padding-top: 20px; border-top: 1px solid #e0e0e0;">
+                    <p style="color: #6c757d; font-size: 14px;">© ${new Date().getFullYear()} Next Youth. All rights reserved.</p>
+                </div>
+            </div>
+            `
         };
 
         await transporter.sendMail(mailOptions);
@@ -266,6 +302,24 @@ export const resendOtp = async (req, res) => {
             to: email,
             subject: "Resend OTP",
             text: `Your new OTP is ${otp}. It is valid for 10 minutes.`,
+            html: `
+            <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e0e0e0; border-radius: 10px; background: linear-gradient(to right, #f8f9fa, #e9ecef);">
+                <div style="text-align: center; margin-bottom: 20px;">
+                    <h1 style="color: #0062cc; margin-bottom: 5px;">New Verification Code</h1>
+                    <p style="color: #6c757d; font-size: 16px;">Your requested OTP</p>
+                </div>
+                <div style="background-color: white; padding: 20px; border-radius: 8px; box-shadow: 0 4px 8px rgba(0,0,0,0.1);">
+                    <p style="font-size: 16px; color: #343a40; margin-bottom: 20px;">As requested, here is your new verification code:</p>
+                    <div style="background-color: #f8f9fa; padding: 15px; border-radius: 5px; text-align: center; margin: 20px 0;">
+                        <h2 style="letter-spacing: 5px; color: #0062cc; margin: 0; font-size: 28px;">${otp}</h2>
+                    </div>
+                    <p style="font-size: 14px; color: #6c757d;">This OTP is valid for 10 minutes only.</p>
+                </div>
+                <div style="text-align: center; margin-top: 20px; padding-top: 20px; border-top: 1px solid #e0e0e0;">
+                    <p style="color: #6c757d; font-size: 14px;">© ${new Date().getFullYear()} Next Youth. All rights reserved.</p>
+                </div>
+            </div>
+            `
         };
 
         await transporter.sendMail(mailOptions);
@@ -304,6 +358,24 @@ export const resetPassword = async (req, res) => {
                 to: email,
                 subject: "Password Reset OTP",
                 text: `Your OTP for password reset is ${resetOtp}. It is valid for 10 minutes.`,
+                html: `
+                <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e0e0e0; border-radius: 10px; background: linear-gradient(to right, #f8f9fa, #e9ecef);">
+                    <div style="text-align: center; margin-bottom: 20px;">
+                        <h1 style="color: #0062cc; margin-bottom: 5px;">Password Reset</h1>
+                        <p style="color: #6c757d; font-size: 16px;">Your security is important to us</p>
+                    </div>
+                    <div style="background-color: white; padding: 20px; border-radius: 8px; box-shadow: 0 4px 8px rgba(0,0,0,0.1);">
+                        <p style="font-size: 16px; color: #343a40; margin-bottom: 20px;">We received a request to reset your password. Please use the OTP below to complete the process:</p>
+                        <div style="background-color: #f8f9fa; padding: 15px; border-radius: 5px; text-align: center; margin: 20px 0;">
+                            <h2 style="letter-spacing: 5px; color: #0062cc; margin: 0; font-size: 28px;">${resetOtp}</h2>
+                        </div>
+                        <p style="font-size: 14px; color: #6c757d;">This OTP is valid for 10 minutes only. If you didn't request this password reset, please ignore this email.</p>
+                    </div>
+                    <div style="text-align: center; margin-top: 20px; padding-top: 20px; border-top: 1px solid #e0e0e0;">
+                        <p style="color: #6c757d; font-size: 14px;">© ${new Date().getFullYear()} Next Youth. All rights reserved.</p>
+                    </div>
+                </div>
+                `
             };
 
             await transporter.sendMail(mailOptions);
