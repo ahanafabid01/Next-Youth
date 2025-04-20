@@ -358,7 +358,7 @@ const Homepage = () => {
         <div className="services-container">
           <h2 className="section-title">Popular services</h2>
           <div className="services-grid parallax-container">
-            {[1, 2, 3].map((item) => (
+            {[1, 2, 3, 4].map((item) => (
               <div className="service-card parallax-layer" key={item}>
                 <div className="service-image" style={{ backgroundImage: "url('https://source.unsplash.com/random/800x600')" }}>
                   <div className="service-overlay"></div>
@@ -371,8 +371,10 @@ const Homepage = () => {
                       <span className="seller-rating"><i className="fas fa-star"></i>5.0</span>
                     </div>
                   </div>
-                  <h3 className="service-title">Professional {['Logo Design', 'Website Development', 'Voice Over'][item-1]}</h3>
-                  <div className="price">From ${[20, 50, 10][item-1]}</div>
+                  <h3 className="service-title">Professional {['Logo Design', 'Website Development', 'Voice Over', 'Video Editing'][item-1]}</h3>
+
+                 
+                  <div className="price">From ${[20, 50, 10, 35][item-1]}</div>
                 </div>
               </div>
             ))}
