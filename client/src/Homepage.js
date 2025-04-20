@@ -99,8 +99,11 @@ const Homepage = () => {
     return () => observer.disconnect();
   }, []);
 
-  // Add parallax effect to service cards
+  // Add parallax effect to service cards - Only on desktop devices
   useEffect(() => {
+    const isMobile = window.matchMedia('(max-width: 768px)').matches;
+    if (isMobile) return; // Skip parallax effect on mobile
+    
     const handleMouseMove = (e) => {
       document.querySelectorAll('.service-card').forEach(card => {
         const rect = card.getBoundingClientRect();
@@ -201,7 +204,7 @@ const Homepage = () => {
       
       // Remove ripple after animation
       setTimeout(() => {
-        if (circle.parentNode) {
+        if (circle && circle.parentNode) {
           circle.parentNode.removeChild(circle);
         }
       }, 600);
@@ -237,7 +240,24 @@ const Homepage = () => {
   };
 
   const toggleMenu = () => setIsMenuOpen(!isMenuOpen);
-  const handleMenuClick = () => setIsMenuOpen(false);
+  
+  // Improved menu handling
+  const handleMenuClick = () => {
+    // Small delay to ensure the click registers before closing menu
+    setTimeout(() => setIsMenuOpen(false), 150);
+  };
+  
+  // Fix for missing toast body click handling
+  useEffect(() => {
+    const handleBodyScroll = () => {
+      document.body.style.overflow = isMenuOpen ? 'hidden' : '';
+    };
+    
+    handleBodyScroll();
+    return () => {
+      document.body.style.overflow = '';
+    };
+  }, [isMenuOpen]);
 
   return (
     <div className={`homepage-container ${isDarkMode ? 'dark-mode' : ''}`}>
@@ -291,17 +311,20 @@ const Homepage = () => {
           className={`mobile-menu ${isMenuOpen ? 'open' : ''}`}
           aria-hidden={!isMenuOpen}
         >
-          <ul onClick={handleMenuClick}>
-            <li className="nav-fade-in"><a href="#"><i className="fas fa-briefcase"></i>Business Solutions</a></li>
-            <li className="nav-fade-in"><a href="#"><i className="fas fa-compass"></i>Explore</a></li>
-            <li className="nav-fade-in"><a href="#"><i className="fas fa-globe"></i>English</a></li>
-            <li className="nav-fade-in"><a href="#"><i className="fas fa-store"></i>Become a Seller</a></li>
-            <li className="nav-fade-in"><Link to="/login" className="login"><i className="fas fa-sign-in-alt"></i>Log In</Link></li>
-            <li className="nav-fade-in"><Link to="/register" className="signup"><i className="fas fa-user-plus"></i>Sign Up</Link></li>
+          <ul>
+            <li className="nav-fade-in"><a href="#" onClick={handleMenuClick}><i className="fas fa-briefcase"></i>Business Solutions</a></li>
+            <li className="nav-fade-in"><a href="#" onClick={handleMenuClick}><i className="fas fa-compass"></i>Explore</a></li>
+            <li className="nav-fade-in"><a href="#" onClick={handleMenuClick}><i className="fas fa-globe"></i>English</a></li>
+            <li className="nav-fade-in"><a href="#" onClick={handleMenuClick}><i className="fas fa-store"></i>Become a Seller</a></li>
+            <li className="nav-fade-in"><Link to="/login" className="login" onClick={handleMenuClick}><i className="fas fa-sign-in-alt"></i>Log In</Link></li>
+            <li className="nav-fade-in"><Link to="/register" className="signup" onClick={handleMenuClick}><i className="fas fa-user-plus"></i>Sign Up</Link></li>
             <li className="nav-fade-in">
               <button 
                 className="theme-toggle"
-                onClick={() => setIsDarkMode(!isDarkMode)}
+                onClick={() => {
+                  setIsDarkMode(!isDarkMode);
+                  handleMenuClick();
+                }}
               >
                 <i className={`fas ${isDarkMode ? 'fa-sun' : 'fa-moon'}`}></i>
                 {isDarkMode ? ' Light Mode' : ' Dark Mode'}
@@ -372,8 +395,6 @@ const Homepage = () => {
                     </div>
                   </div>
                   <h3 className="service-title">Professional {['Logo Design', 'Website Development', 'Voice Over', 'Video Editing'][item-1]}</h3>
-
-                 
                   <div className="price">From ${[20, 50, 10, 35][item-1]}</div>
                 </div>
               </div>
@@ -420,15 +441,19 @@ const Homepage = () => {
         <div className="copyright">
           <span>© 2025 Next-Youth Marketplace</span>
           <div className="social-icons">
-            <a href="https://facebook.com"><i className="fab fa-facebook"></i></a>
-            <a href="https://twitter.com"><i className="fab fa-twitter"></i></a>
-            <a href="https://instagram.com"><i className="fab fa-instagram"></i></a>
-            <a href="https://linkedin.com"><i className="fab fa-linkedin"></i></a>
+            <a href="https://facebook.com" aria-label="Facebook"><i className="fab fa-facebook"></i></a>
+            <a href="https://twitter.com" aria-label="Twitter"><i className="fab fa-twitter"></i></a>
+            <a href="https://instagram.com" aria-label="Instagram"><i className="fab fa-instagram"></i></a>
+            <a href="https://linkedin.com" aria-label="LinkedIn"><i className="fab fa-linkedin"></i></a>
           </div>
         </div>
       </footer>
 
-
+      {/* Toast Notification Component */}
+      <div className={`toast ${showToast ? 'show' : ''}`}>
+        <i className="fas fa-info-circle"></i>
+        <span>{toastMessage}</span>
+      </div>
     </div>
   );
 };
