@@ -1,15 +1,25 @@
 import mongoose from "mongoose";
 
 const userSchema = new mongoose.Schema({
-    name: {
-        type: String,
-        required: true,
+    name: { type: String, required: true },
+    email: { type: String, required: true, unique: true },
+    bio: { type: String },
+    education: {
+        school: { name: String, enteringYear: String, passingYear: String },
+        college: { name: String, enteringYear: String, passingYear: String },
+        university: { name: String, enteringYear: String, passingYear: String },
     },
-    email: {
-        type: String,
-        required: true,
-        unique: true,
-    },
+    skills: [String],
+    languageSkills: [{ language: String, proficiency: String }],
+    profilePic: { type: String },
+    address: { type: String },
+    country: { type: String },
+    phoneNumber: { type: String },
+    goals: { type: String },
+    questions: [String],
+    resume: { type: String },
+    linkedInProfile: { type: String },
+    socialMediaLink: { type: String },
     password: {
         type: String,
         required: true,
@@ -44,6 +54,27 @@ const userSchema = new mongoose.Schema({
     otherInfo: { // New field for additional information
         type: String,
     },
+    appliedJobs: [{
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'job'
+    }],
+    savedJobs: [{
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'job'
+    }],
+    // Add ID verification fields
+    idVerification: {
+        frontImage: { type: String },
+        backImage: { type: String },
+        status: { 
+            type: String, 
+            enum: ['pending', 'verified', 'rejected'],
+            default: 'pending'
+        },
+        submittedAt: { type: Date },
+        verifiedAt: { type: Date },
+        notes: { type: String } // Admin notes about verification
+    }
 }, { timestamps: true });
 
 const userModel = mongoose.models.user || mongoose.model("user", userSchema);

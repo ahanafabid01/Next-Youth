@@ -8,6 +8,10 @@ import EmployeeDashboard from "./components/EmployeeDashboard";
 import EmployerDashboard from "./components/EmployerDashboard";
 import ForgotPassword from "./components/ForgotPassword";
 import Profile from "./components/Profile";
+import EmployeeProfile from "./components/EmployeeProfile"; // Updated import
+import FindJobs from "./components/FindJobs"; // Import FindJobs component
+import VerifyAccount from './components/VerifyAccount'; // Add this import
+
 
 const App = () => {
     return (
@@ -21,6 +25,12 @@ const App = () => {
                 <Route path="/employer-dashboard" element={<EmployerDashboard />} />
                 <Route path="/forgot-password" element={<ForgotPassword />} />
                 <Route path="/profile" element={<Profile />} />
+                <Route path="/employee-profile" element={<EmployeeProfile />} /> {/* Route for Employee Profile */}
+                <Route path="/find-jobs" element={<FindJobs />} /> {/* Route for FindJobs */}
+                <Route path="/find-jobs/saved" element={<FindJobs />} /> {/* Route for FindJobs saved */}
+                <Route path="/find-jobs/proposals" element={<FindJobs />} /> {/* Route for FindJobs proposals */}
+                <Route path="/find-jobs/details/:jobId" element={<FindJobs />} /> {/* Route for FindJobs details */}
+                <Route path="/verify-account" element={<VerifyAccount />} /> {/* Add this route */}
             </Routes>
         </Router>
     );

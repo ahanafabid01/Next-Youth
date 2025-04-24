@@ -447,3 +447,54 @@ export const updateUserProfile = async (req, res) => {
         res.status(500).json({ success: false, message: "Internal server error" });
     }
 };
+
+export const verifyIdentity = async (req, res) => {
+    try {
+        // Check if files exist in the request
+        if (!req.files || !req.files.frontImage || !req.files.backImage) {
+            return res.status(400).json({
+                success: false,
+                message: "Please upload both front and back images of your ID"
+            });
+        }
+
+        const frontImagePath = req.files.frontImage[0].path;
+        const backImagePath = req.files.backImage[0].path;
+
+        // Convert local file path to URL
+        const frontImageUrl = `${req.protocol}://${req.get("host")}/${frontImagePath.replace(/\\/g, '/')}`;
+        const backImageUrl = `${req.protocol}://${req.get("host")}/${backImagePath.replace(/\\/g, '/')}`;
+
+        // Update user's verification status in the database
+        const updatedUser = await userModel.findByIdAndUpdate(
+            req.user.id,
+            {
+                idVerification: {
+                    frontImage: frontImageUrl,
+                    backImage: backImageUrl,
+                    status: 'pending',
+                    submittedAt: new Date()
+                }
+            },
+            { new: true }
+        );
+
+        if (!updatedUser) {
+            return res.status(404).json({
+                success: false,
+                message: "User not found"
+            });
+        }
+
+        return res.status(200).json({
+            success: true,
+            message: "ID verification submitted successfully. Our team will review it shortly."
+        });
+    } catch (error) {
+        console.error("Error in ID verification:", error);
+        return res.status(500).json({
+            success: false,
+            message: "Internal server error"
+        });
+    }
+};

@@ -18,7 +18,8 @@
           "backdrop-filter",
           "-webkit-overflow-scrolling",
           "overscroll-behavior",
-          "user-select"
+          "user-select",
+          "hyphens"
         ]
       }
     ]

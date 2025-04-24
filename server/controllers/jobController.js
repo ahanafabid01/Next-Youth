@@ -91,3 +91,132 @@ export const updateJobStatus = async (req, res) => {
         res.status(500).json({ success: false, message: "Internal server error" });
     }
 };
+
+// Add this new controller function
+export const getAvailableJobs = async (req, res) => {
+    try {
+        // Find jobs that are marked as "Available" status
+        const jobs = await jobModel.find({ status: "Available" })
+            .select('-employer') // Exclude employer details for security
+            .sort({ createdAt: -1 }); // Sort by newest first
+        
+        res.status(200).json({ success: true, jobs });
+    } catch (error) {
+        console.error("Error fetching available jobs:", error);
+        res.status(500).json({ success: false, message: "Internal server error" });
+    }
+};
+
+// Add these new functions
+
+export const applyForJob = async (req, res) => {
+    try {
+        const jobId = req.params.id;
+        const userId = req.user.id;
+        
+        // Check if job exists
+        const job = await jobModel.findById(jobId);
+        if (!job) {
+            return res.status(404).json({ success: false, message: "Job not found" });
+        }
+        
+        // Check if user has already applied
+        const userModel = await import("../models/userModel.js").then(module => module.default);
+        const user = await userModel.findById(userId);
+        
+        if (!user.appliedJobs) {
+            user.appliedJobs = [];
+        }
+        
+        if (user.appliedJobs.includes(jobId)) {
+            return res.status(400).json({ success: false, message: "You have already applied to this job" });
+        }
+        
+        // Add job to user's applied jobs
+        user.appliedJobs.push(jobId);
+        await user.save();
+        
+        return res.status(200).json({ success: true, message: "Successfully applied for job" });
+    } catch (error) {
+        console.error("Error applying for job:", error);
+        return res.status(500).json({ success: false, message: "Internal server error" });
+    }
+};
+
+export const saveJob = async (req, res) => {
+    try {
+        const jobId = req.params.id;
+        const userId = req.user.id;
+        
+        // Check if job exists
+        const job = await jobModel.findById(jobId);
+        if (!job) {
+            return res.status(404).json({ success: false, message: "Job not found" });
+        }
+        
+        // Check if user has already saved this job
+        const userModel = await import("../models/userModel.js").then(module => module.default);
+        const user = await userModel.findById(userId);
+        
+        if (!user.savedJobs) {
+            user.savedJobs = [];
+        }
+        
+        if (user.savedJobs.includes(jobId)) {
+            return res.status(400).json({ success: false, message: "Job already saved" });
+        }
+        
+        // Add job to user's saved jobs
+        user.savedJobs.push(jobId);
+        await user.save();
+        
+        return res.status(200).json({ success: true, message: "Job saved successfully" });
+    } catch (error) {
+        console.error("Error saving job:", error);
+        return res.status(500).json({ success: false, message: "Internal server error" });
+    }
+};
+
+export const getSavedJobs = async (req, res) => {
+    try {
+        const userId = req.user.id;
+        
+        // Get user's saved jobs
+        const userModel = await import("../models/userModel.js").then(module => module.default);
+        const user = await userModel.findById(userId);
+        
+        if (!user.savedJobs || user.savedJobs.length === 0) {
+            return res.status(200).json({ success: true, jobs: [] });
+        }
+        
+        // Fetch all saved job details
+        const savedJobs = await jobModel.find({ _id: { $in: user.savedJobs } });
+        
+        return res.status(200).json({ success: true, jobs: savedJobs });
+    } catch (error) {
+        console.error("Error fetching saved jobs:", error);
+        return res.status(500).json({ success: false, message: "Internal server error" });
+    }
+};
+
+export const getAppliedJobs = async (req, res) => {
+    try {
+        const userId = req.user.id;
+        
+        // Get user's applied jobs
+        const userModel = await import("../models/userModel.js").then(module => module.default);
+        const user = await userModel.findById(userId);
+        
+        if (!user.appliedJobs || user.appliedJobs.length === 0) {
+            return res.status(200).json({ success: true, jobs: [] });
+        }
+        
+        // Fetch all applied job details
+        const appliedJobs = await jobModel.find({ _id: { $in: user.appliedJobs } });
+        
+        return res.status(200).json({ success: true, jobs: appliedJobs });
+    } catch (error) {
+        console.error("Error fetching applied jobs:", error);
+        return res.status(500).json({ success: false, message: "Internal server error" });
+    }
+};

@@ -1,5 +1,5 @@
 import express from "express";
-import { register, Login, Logout, verifyEmail, resendOtp, resetPassword, getUserProfile, updateUserProfile } from "../controllers/authController.js";
+import { register, Login, Logout, verifyEmail, resendOtp, resetPassword, getUserProfile, updateUserProfile, verifyIdentity } from "../controllers/authController.js";
 import userAuth from "../middleware/userAuth.js"; // Import userAuth middleware
 import upload from "../middleware/uploadMiddleware.js"; // Import upload middleware
 
@@ -14,6 +14,12 @@ authRouter.post("/reset-password", resetPassword);
 authRouter.get("/me", userAuth, getUserProfile); // Use userAuth middleware here
 authRouter.put("/profile", userAuth, updateUserProfile); // Add this route
 
+// Add the new route for ID verification
+authRouter.post("/verify-identity", userAuth, upload.fields([
+    { name: 'frontImage', maxCount: 1 },
+    { name: 'backImage', maxCount: 1 }
+]), verifyIdentity);
+
 authRouter.post("/upload-profile-picture", userAuth, upload.single("file"), (req, res) => {
     try {
         if (!req.file) {
@@ -27,5 +33,7 @@ authRouter.post("/upload-profile-picture", userAuth, upload.single("file"), (req
         res.status(500).json({ success: false, message: "Internal server error" });
     }
 });
+
+authRouter.put('/update-profile', userAuth, updateUserProfile); // Add this route
 
 export default authRouter;
