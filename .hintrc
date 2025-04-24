@@ -17,7 +17,8 @@
         "ignore": [
           "backdrop-filter",
           "-webkit-overflow-scrolling",
-          "overscroll-behavior"
+          "overscroll-behavior",
+          "user-select"
         ]
       }
     ]

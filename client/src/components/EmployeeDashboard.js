@@ -1,256 +1,264 @@
-import React, { useState, useEffect, useRef } from "react";
-import axios from "axios";
-import { 
-  FaBars, 
-  FaHome, 
-  FaBriefcase, 
-  FaUserFriends, 
-  FaFileUpload, 
-  FaEnvelope, 
-  FaCog, 
-  FaSignOutAlt,
-  FaUser,
-  FaPlus,
-  FaTimes
-} from "react-icons/fa";
-import { useNavigate, Routes, Route } from "react-router-dom";
-import "./EmployerDashboard.css";
+import React, { useEffect, useState, useRef } from 'react';
+import { useNavigate } from 'react-router-dom';
+import axios from 'axios';
+import { FaRegFileAlt, FaChevronDown } from 'react-icons/fa';
+import './EmployeeDashboard.css';
 
-const EmployerDashboard = () => {
-    const [jobPostings, setJobPostings] = useState([]);
-    const [newJob, setNewJob] = useState("");
-    const [menuOpen, setMenuOpen] = useState(false);
-    const [userName, setUserName] = useState("");
-    const sidebarRef = useRef(null);
+const EmployeeDashboard = () => {
     const navigate = useNavigate();
+    const [showJobsDropdown, setShowJobsDropdown] = useState(false);
+    const [availableJobs, setAvailableJobs] = useState([]);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState('');
+    const jobsDropdownRef = useRef(null);
 
-    useEffect(() => {
-        const fetchJobs = async () => {
-            try {
-                const response = await axios.get("http://localhost:4000/api/jobs", { withCredentials: true });
-                setJobPostings(response.data.jobs);
-            } catch (error) {
-                console.error("Error fetching jobs:", error);
-            }
-        };
+    // State to store user data
+    const [user, setUser] = useState({ 
+        name: '', 
+        profilePicture: '' // Add profilePicture to state
+    });
 
-        const fetchUserProfile = async () => {
-            try {
-                const response = await axios.get("http://localhost:4000/api/auth/me", { withCredentials: true });
-                if (response.data.success) {
-                    setUserName(response.data.user.name);
-                }
-            } catch (error) {
-                console.error("Error fetching user profile:", error);
-            }
-        };
-
-        fetchJobs();
-        fetchUserProfile();
-    }, []);
-
-    useEffect(() => {
-        const handleClickOutside = (event) => {
-            if (sidebarRef.current && !sidebarRef.current.contains(event.target)) {
-                if (window.innerWidth <= 1024) {
-                    setMenuOpen(false);
-                }
-            }
-        };
-        document.addEventListener("mousedown", handleClickOutside);
-        return () => document.removeEventListener("mousedown", handleClickOutside);
-    }, []);
-
-    const handleAddJob = async () => {
-        if (!newJob.trim()) return alert("Please enter a valid job title!");
+    // Fetch user data from the server
+    const fetchUserData = async () => {
         try {
-            const response = await axios.post(
-                "http://localhost:4000/api/jobs",
-                { title: newJob },
-                { withCredentials: true }
-            );
+            const response = await axios.get('http://localhost:4000/api/auth/me', { withCredentials: true });
             if (response.data.success) {
-                setJobPostings([...jobPostings, response.data.job]);
-                setNewJob("");
+                setUser(response.data.user); // Update state with fetched user data
             }
         } catch (error) {
-            console.error("Error adding job:", error);
+            console.error('Error fetching user data:', error);
         }
     };
 
+    // Fetch available jobs
+    const fetchAvailableJobs = async () => {
+        setLoading(true);
+        try {
+            // Get available jobs
+            const jobsResponse = await axios.get("http://localhost:4000/api/jobs/available", { 
+                withCredentials: true 
+            });
+            
+            // Get applied jobs to filter them out
+            const appliedResponse = await axios.get("http://localhost:4000/api/jobs/applied", { 
+                withCredentials: true 
+            });
+            
+            if (jobsResponse.data.success) {
+                const allJobs = jobsResponse.data.jobs;
+                
+                // Get list of applied job IDs
+                const appliedJobIds = appliedResponse.data.success 
+                    ? appliedResponse.data.jobs.map(job => job._id)
+                    : [];
+                
+                // Filter out jobs that have been applied to
+                const unappliedJobs = allJobs.filter(job => !appliedJobIds.includes(job._id));
+                
+                // Display only the first 3 available jobs that haven't been applied to
+                setAvailableJobs(unappliedJobs.slice(0, 3));
+            } else {
+                setError("Failed to fetch available jobs.");
+            }
+        } catch (err) {
+            console.error("Error fetching jobs:", err);
+            setError("An error occurred while fetching available jobs.");
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    // Close dropdown when clicking outside
+    useEffect(() => {
+        const handleOutsideClick = (event) => {
+            if (jobsDropdownRef.current && !jobsDropdownRef.current.contains(event.target)) {
+                setShowJobsDropdown(false);
+            }
+        };
+
+        document.addEventListener('click', handleOutsideClick);
+        return () => {
+            document.removeEventListener('click', handleOutsideClick);
+        };
+    }, []);
+
+    useEffect(() => {
+        fetchUserData();
+        fetchAvailableJobs();
+    }, []);
+
+    const toggleJobsDropdown = (e) => {
+        e.stopPropagation(); // Prevent the outside click handler from firing
+        setShowJobsDropdown(!showJobsDropdown);
+    };
+
+    // Navigate to job details page
+    const viewJobDetails = (jobId) => {
+        navigate(`/find-jobs/details/${jobId}`);
+    };
+
+    // Handle navigation to different job sections
+    const navigateToJobSection = (section) => {
+        setShowJobsDropdown(false);
+        switch(section) {
+            case 'find-work':
+                navigate('/find-jobs');
+                break;
+            case 'saved-jobs':
+                navigate('/find-jobs/saved');
+                break;
+            case 'proposals':
+                navigate('/find-jobs/proposals');
+                break;
+            default:
+                navigate('/find-jobs');
+        }
+    };
+
+    // Handle logout
     const handleLogout = async () => {
         try {
-            await axios.post("http://localhost:4000/api/auth/logout", null, { withCredentials: true });
-            navigate("/login");
+            const response = await axios.post('http://localhost:4000/api/auth/logout', {}, { withCredentials: true });
+            if (response.data.success) {
+                alert('You have been logged out.');
+                navigate('/login');
+            }
         } catch (error) {
-            console.error("Logout failed:", error);
-        }
-    };
-
-    const handleNavigation = (path) => {
-        navigate(path);
-        if (window.innerWidth <= 1024) {
-            setMenuOpen(false);
+            console.error('Error logging out:', error);
+            alert('Logout failed. Please try again.');
         }
     };
 
     return (
-        <div className="dashboard-wrapper">
-            {/* Mobile Header */}
-            <div className="mobile-header">
-                <button className="hamburger" onClick={() => setMenuOpen(!menuOpen)}>
-                    {menuOpen ? <FaTimes className="hamburger-icon" /> : <FaBars className="hamburger-icon" />}
+        <div className="dashboard-container">
+            <div className="dashboard-header">
+                {/* Profile picture */}
+                {user.profilePicture ? (
+                    <img 
+                        src={user.profilePicture} 
+                        alt="Profile" 
+                        className="dashboard-profile-pic" 
+                    />
+                ) : (
+                    <div className="dashboard-profile-placeholder">
+                        {user.name ? user.name.charAt(0).toUpperCase() : "U"}
+                    </div>
+                )}
+                <h1>Welcome, {user.name || 'User'}!</h1>
+            </div>
+            
+            <p>Welcome to your dashboard! Use the options below to navigate.</p>
+            
+            <div className="button-group">
+                <button
+                    className="action-button"
+                    onClick={() => navigate('/employee-profile')}
+                >
+                    My Profile
                 </button>
-                <div className="logo">Next Youth</div>
+
+                {/* Find Jobs dropdown */}
+                <div className="dropdown-container" ref={jobsDropdownRef}>
+                    <button
+                        className="action-button dropdown-toggle"
+                        onClick={toggleJobsDropdown}
+                    >
+                        Find Jobs <FaChevronDown className={`dropdown-icon ${showJobsDropdown ? 'rotate' : ''}`} />
+                    </button>
+                    {showJobsDropdown && (
+                        <div className="dropdown-menu">
+                            <button 
+                                className="dropdown-item"
+                                onClick={() => navigateToJobSection('find-work')}
+                            >
+                                Find Work
+                            </button>
+                            <button 
+                                className="dropdown-item"
+                                onClick={() => navigateToJobSection('saved-jobs')}
+                            >
+                                Saved Jobs
+                            </button>
+                            <button 
+                                className="dropdown-item"
+                                onClick={() => navigateToJobSection('proposals')}
+                            >
+                                Proposals
+                            </button>
+                        </div>
+                    )}
+                </div>
+
+                <button
+                    className="action-button logout-btn"
+                    onClick={handleLogout}
+                >
+                    Logout
+                </button>
             </div>
 
-            {/* Sidebar */}
-            <div className={`sidebar ${menuOpen ? "open" : ""}`} ref={sidebarRef}>
-                <div className="sidebar-header">
-                    <h2 className="logo">Next Youth</h2>
-                    <div className="sidebar-profile-info">
-                        <FaUser className="profile-icon" />
-                        <span className="profile-name">{userName || "Employer"}</span>
-                    </div>
+            <div className="available-jobs-section">
+                <div className="section-header">
+                    <h2>Available Jobs</h2>
+                    <button 
+                        className="see-all-button" 
+                        onClick={() => navigate('/find-jobs')}
+                    >
+                        See All
+                    </button>
                 </div>
                 
-                <nav className="sidebar-nav">
-                    <ul className="nav-list">
-                        <li className="nav-item" onClick={() => handleNavigation("/dashboard")}>
-                            <FaHome className="nav-icon" />
-                            <span className="nav-text">Dashboard</span>
-                        </li>
-
-                        <li className="nav-item" onClick={() => handleNavigation("/profile")}>
-                            <FaUser className="nav-icon" />
-                            <span className="nav-text">My Profile</span>
-                        </li>
-                        
-                        <li className="nav-item" onClick={() => handleNavigation("/jobs")}>
-                            <FaBriefcase className="nav-icon" />
-                            <span className="nav-text">My Jobs</span>
-                        </li>
-
-                        <li className="nav-item" onClick={() => handleNavigation("/applications")}>
-                            <FaUserFriends className="nav-icon" />
-                            <span className="nav-text">Applications</span>
-                        </li>
-
-                        <li className="nav-item" onClick={() => handleNavigation("/post-job")}>
-                            <FaFileUpload className="nav-icon" />
-                            <span className="nav-text">Post a Job</span>
-                        </li>
-
-                        <li className="nav-item" onClick={() => handleNavigation("/messages")}>
-                            <FaEnvelope className="nav-icon" />
-                            <span className="nav-text">Messages</span>
-                        </li>
-
-                        <li className="nav-item" onClick={() => handleNavigation("/settings")}>
-                            <FaCog className="nav-icon" />
-                            <span className="nav-text">Settings</span>
-                        </li>
-
-                        <li className="nav-item logout-item" onClick={handleLogout}>
-                            <FaSignOutAlt className="nav-icon" />
-                            <span className="nav-text">Logout</span>
-                        </li>
-                    </ul>
-                </nav>
-            </div>
-
-            {/* Main Content */}
-            <div className="dashboard-content">
-                {menuOpen && <div className="sidebar-overlay" onClick={() => setMenuOpen(false)}></div>}
-
-                <Routes>
-                    <Route 
-                        path="/" 
-                        element={
-                            <>
-                                <header className="content-header">
-                                    <div className="header-left">
-                                        <h1>Welcome back, {userName || "Employer"}!</h1>
-                                        <p>Manage your job postings and applicant pipeline</p>
+                {loading ? (
+                    <p>Loading available jobs...</p>
+                ) : error ? (
+                    <p className="error-message">{error}</p>
+                ) : availableJobs.length === 0 ? (
+                    <p>No available jobs at the moment.</p>
+                ) : (
+                    <div className="available-jobs-preview">
+                        {availableJobs.map((job) => (
+                            <div key={job._id} className="job-preview-card">
+                                <h3>{job.title}</h3>
+                                <p className="job-description-preview">
+                                    {job.description.length > 100 
+                                        ? `${job.description.substring(0, 100)}...` 
+                                        : job.description}
+                                </p>
+                                <div className="job-preview-details">
+                                    <div className="job-skills-preview">
+                                        {job.skills.slice(0, 3).map((skill, index) => (
+                                            <span key={index} className="skill-tag-preview">
+                                                {skill}
+                                            </span>
+                                        ))}
+                                        {job.skills.length > 3 && <span className="more-skills">+{job.skills.length - 3}</span>}
                                     </div>
-                                </header>
-
-                                <div className="dashboard-stats">
-                                    <div className="stat-card">
-                                        <h3>Active Jobs</h3>
-                                        <p className="stat-value">{jobPostings.length}</p>
-                                        <div className="stat-progress">
-                                            <div className="progress-bar" style={{ width: `${(jobPostings.length / 15) * 100}%` }}></div>
-                                        </div>
-                                    </div>
-                                    <div className="stat-card">
-                                        <h3>New Applications</h3>
-                                        <p className="stat-value">24</p>
-                                        <span className="stat-trend positive">+12%</span>
-                                    </div>
-                                    <div className="stat-card">
-                                        <h3>Open Positions</h3>
-                                        <p className="stat-value">8</p>
-                                        <span className="stat-trend negative">-5%</span>
-                                    </div>
+                                    <p className="job-budget">
+                                        {job.budgetType === "hourly"
+                                            ? `$${job.hourlyFrom} - $${job.hourlyTo}/hr`
+                                            : `$${job.fixedAmount} Fixed`}
+                                    </p>
                                 </div>
-
-                                <div className="job-postings">
-                                    <div className="section-header">
-                                        <h2>Job Postings</h2>
-                                        <div className="job-input-container">
-                                            <input
-                                                type="text"
-                                                value={newJob}
-                                                onChange={(e) => setNewJob(e.target.value)}
-                                                placeholder="Enter new job title"
-                                                className="job-input"
-                                                onKeyPress={(e) => e.key === 'Enter' && handleAddJob()}
-                                            />
-                                            <button onClick={handleAddJob} className="add-job-btn">
-                                                <FaPlus /> Create Job
-                                            </button>
+                                <div className="job-preview-footer">
+                                    <button 
+                                        className="view-job-button" 
+                                        onClick={() => viewJobDetails(job._id)}
+                                    >
+                                        View Details
+                                    </button>
+                                    {job.files?.length > 0 && (
+                                        <div className="job-attachments-preview">
+                                            <FaRegFileAlt /> {job.files.length} attachment{job.files.length > 1 ? 's' : ''}
                                         </div>
-                                    </div>
-                                    
-                                    <div className="jobs-grid">
-                                        {jobPostings.length > 0 ? (
-                                            jobPostings.map((job) => (
-                                                <div key={job._id} className="job-card">
-                                                    <div className="job-header">
-                                                        <h3>{job.title}</h3>
-                                                        <span className="job-status active">Active</span>
-                                                    </div>
-                                                    <div className="job-meta">
-                                                        <div className="meta-item">
-                                                            <span className="meta-label">Applications</span>
-                                                            <span className="meta-value">24</span>
-                                                        </div>
-                                                        <div className="meta-item">
-                                                            <span className="meta-label">Posted</span>
-                                                            <span className="meta-value">3d ago</span>
-                                                        </div>
-                                                    </div>
-                                                    <div className="job-actions">
-                                                        <button className="view-btn">View Details</button>
-                                                        <button className="edit-btn">Edit</button>
-                                                    </div>
-                                                </div>
-                                            ))
-                                        ) : (
-                                            <div className="empty-state">
-                                                <p>No active job postings. Create your first job!</p>
-                                            </div>
-                                        )}
-                                    </div>
+                                    )}
                                 </div>
-                            </>
-                        } 
-                    />
-                </Routes>
+                            </div>
+                        ))}
+                    </div>
+                )}
             </div>
         </div>
     );
 };
 
-export default EmployerDashboard;
+export default EmployeeDashboard;
