@@ -538,3 +538,70 @@ export const getVerificationStatus = async (req, res) => {
         });
     }
 };
+
+export const updateEmployeeProfile = async (req, res) => {
+    try {
+        console.log("Updating Employee Profile - Request Body:", req.body);
+        console.log("User ID:", req.user.id);
+
+        const { 
+            name, 
+            bio, 
+            profilePicture,
+            education,
+            skills,
+            languageSkills,
+            address,
+            country,
+            phoneNumber,
+            email,
+            linkedInProfile,
+            socialMediaLink,
+            goals,
+            questions,
+            resumeUrl  // This comes from frontend as resumeUrl
+        } = req.body;
+
+        // Find user and update all profile fields
+        const updatedUser = await userModel.findByIdAndUpdate(
+            req.user.id,
+            { 
+                name, 
+                bio, 
+                profilePicture,
+                education,
+                skills,
+                languageSkills,
+                address,
+                country,
+                phoneNumber,
+                email: email || undefined, // Only update if provided
+                linkedInProfile,
+                socialMediaLink,
+                goals,
+                questions,
+                resume: resumeUrl  // Map to 'resume' field in database
+            },
+            { new: true }
+        );
+
+        if (!updatedUser) {
+            return res.status(404).json({ 
+                success: false, 
+                message: "User not found" 
+            });
+        }
+
+        res.status(200).json({ 
+            success: true, 
+            message: "Profile updated successfully",
+            user: updatedUser 
+        });
+    } catch (error) {
+        console.error("Error updating employee profile:", error);
+        res.status(500).json({ 
+            success: false, 
+            message: "Internal server error" 
+        });
+    }
+};

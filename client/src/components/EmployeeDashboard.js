@@ -282,7 +282,7 @@ const EmployeeDashboard = () => {
   }, [navigate]);
 
   const handleNavigateToProfile = useCallback(() => {
-    navigate('/employee-profile');
+    navigate('/my-profile');
   }, [navigate]);
 
   const toggleDarkMode = useCallback(() => {
@@ -354,9 +354,12 @@ const EmployeeDashboard = () => {
   }, [fetchAllAvailableJobs, currentPage]);
 
   useEffect(() => {
-    document.body.classList.toggle('dark-mode', isDarkMode);
+    // Change from document.body to the dashboard element
+    const dashboardElement = document.querySelector('.employee-dashboard');
+    if (dashboardElement) {
+      dashboardElement.classList.toggle('dark-mode', isDarkMode);
+    }
     localStorage.setItem("dashboard-theme", isDarkMode ? "dark" : "light");
-    return () => document.body.classList.remove('dark-mode');
   }, [isDarkMode]);
 
   const currentYear = new Date().getFullYear();

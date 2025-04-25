@@ -19,7 +19,8 @@
   --hover-bg: #f3f4f6;
 }
 
-.dark-mode {
+/* Fix: Change dark-mode global selector to scoped class */
+.employee-dashboard.dark-mode {
   /* Dark Theme Colors - Enhanced for Professional Look */
   --primary-color: #3b82f6;
   --primary-light: #60a5fa;
@@ -32,6 +33,15 @@
   --border-color: #374151;
   --hover-bg: #2d3748;
   --shadow: 0 4px 6px rgba(0, 0, 0, 0.2);
+}
+
+/* Fix: Add explicit background to employee-dashboard */
+.employee-dashboard {
+  background-color: var(--bg-color);
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  margin: 0;
 }
 
 /* Scoping all styles to the dashboard to avoid affecting other pages */
@@ -48,13 +58,6 @@
 }
 
 /* Footer positioning fix */
-.employee-dashboard body {
-  min-height: 100vh;
-  display: flex;
-  flex-direction: column;
-  margin: 0;
-}
-
 .employee-dashboard #root {
   flex: 1;
   display: flex;
@@ -195,7 +198,7 @@
   transition: background 0.5s ease;
 }
 
-.dark-mode .employee-dashboard .dashboard-welcome-section {
+.employee-dashboard.dark-mode .dashboard-welcome-section {
   background: linear-gradient(135deg, #1e3a8a 0%, #3b82f6 100%);
 }
 
@@ -273,7 +276,7 @@
   transition: background-color 0.5s ease, color 0.5s ease;
 }
 
-.dark-mode .employee-dashboard .stat-icon {
+.employee-dashboard.dark-mode .stat-icon {
   background-color: rgba(59, 130, 246, 0.2);
 }
 
@@ -283,7 +286,7 @@
   color: var(--text-secondary);
 }
 
-.dark-mode .employee-dashboard .stat-content h3 {
+.employee-dashboard.dark-mode .stat-content h3 {
   color: #cbd5e1;
 }
 
@@ -344,7 +347,7 @@
               background-color 0.5s ease;
 }
 
-.dark-mode .employee-dashboard .job-card {
+.employee-dashboard.dark-mode .job-card {
   background-color: #1a2533;
   border-color: #2d3748;
 }
@@ -355,7 +358,7 @@
   border-color: var(--primary-light);
 }
 
-.dark-mode .employee-dashboard .job-card:hover {
+.employee-dashboard.dark-mode .job-card:hover {
   box-shadow: 0 6px 12px rgba(0, 0, 0, 0.2);
 }
 
@@ -366,7 +369,7 @@
   transition: color 0.5s ease;
 }
 
-.dark-mode .employee-dashboard .job-title {
+.employee-dashboard.dark-mode .job-title {
   color: #e5e7eb;
 }
 
@@ -378,7 +381,7 @@
   transition: color 0.5s ease;
 }
 
-.dark-mode .employee-dashboard .job-description {
+.employee-dashboard.dark-mode .job-description {
   color: #9ca3af;
 }
 
@@ -399,7 +402,7 @@
   transition: background-color 0.5s ease;
 }
 
-.dark-mode .employee-dashboard .skill-tag {
+.employee-dashboard.dark-mode .skill-tag {
   background-color: rgba(59, 130, 246, 0.25);
   color: #93c5fd;
 }
@@ -411,7 +414,7 @@
   align-items: center;
 }
 
-.dark-mode .employee-dashboard .more-skills {
+.employee-dashboard.dark-mode .more-skills {
   color: #6b7280;
 }
 
@@ -445,7 +448,7 @@
   background-color: var(--primary-dark);
 }
 
-.dark-mode .employee-dashboard .view-job-button:hover {
+.employee-dashboard.dark-mode .view-job-button:hover {
   background-color: #2563eb;
 }
 
@@ -491,7 +494,7 @@
   transition: border-color 0.2s ease, background-color 0.5s ease;
 }
 
-.dark-mode .employee-dashboard .filter-select {
+.employee-dashboard.dark-mode .filter-select {
   background-color: var(--card-bg);
   border-color: var(--border-color);
 }
@@ -524,7 +527,7 @@
   border-color: var(--primary-light);
 }
 
-.dark-mode .employee-dashboard .job-list-item:hover {
+.employee-dashboard.dark-mode .job-list-item:hover {
   box-shadow: 0 6px 12px rgba(0, 0, 0, 0.2);
 }
 
@@ -548,7 +551,7 @@
   color: var(--primary-color);
 }
 
-.dark-mode .employee-dashboard .job-budget {
+.employee-dashboard.dark-mode .job-budget {
   color: #60a5fa;
 }
 
@@ -556,7 +559,7 @@
   color: var(--text-muted);
 }
 
-.dark-mode .employee-dashboard .job-posted {
+.employee-dashboard.dark-mode .job-posted {
   color: #9ca3af;
 }
 
@@ -625,7 +628,7 @@
   transition: all 0.2s ease;
 }
 
-.dark-mode .employee-dashboard .pagination-button {
+.employee-dashboard.dark-mode .pagination-button {
   background-color: var(--card-bg);
   border-color: var(--border-color);
 }
@@ -804,7 +807,7 @@
   background-color: rgba(59, 130, 246, 0.05);
 }
 
-.dark-mode .employee-dashboard .notification-item.unread {
+.employee-dashboard.dark-mode .notification-item.unread {
   background-color: rgba(59, 130, 246, 0.1);
 }
 
@@ -1057,11 +1060,11 @@
   transform: translateY(-3px);
 }
 
-.dark-mode .employee-dashboard .footer-social a {
+.employee-dashboard.dark-mode .footer-social a {
   background-color: rgba(255, 255, 255, 0.08);
 }
 
-.dark-mode .employee-dashboard .footer-social a:hover {
+.employee-dashboard.dark-mode .footer-social a:hover {
   background-color: var(--primary-color);
 }
 

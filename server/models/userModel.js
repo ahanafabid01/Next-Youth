@@ -78,3 +78,16 @@ const userSchema = new mongoose.Schema({
 
 const userModel = mongoose.models.user || mongoose.model("user", userSchema);
 export default userModel;
+
+// Update the updateEmployeeProfile controller function
+const updateEmployeeProfile = async (req, res) => {
+    try {
+        const { resumeUrl } = req.body;
+        const updatedProfile = {
+            resume: resumeUrl
+        };
+        // Other update logic here
+    } catch (error) {
+        res.status(500).send({ error: "An error occurred while updating the profile." });
+    }
+};
