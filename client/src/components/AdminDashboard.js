@@ -144,12 +144,6 @@ const AdminDashboard = () => {
                                         {getVerificationBadge(user.idVerification?.status)}
                                     </td>
                                     <td>
-                                        <button 
-                                            className="action-btn view-btn"
-                                            onClick={() => window.location.href = `/admin/user/${user._id}`}
-                                        >
-                                            View
-                                        </button>
                                         {user.idVerification?.frontImage && user.idVerification?.backImage && (
                                             <button 
                                                 className="action-btn id-btn"
