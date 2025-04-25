@@ -220,3 +220,33 @@ export const getAppliedJobs = async (req, res) => {
         return res.status(500).json({ success: false, message: "Internal server error" });
     }
 };
+
+export const removeSavedJob = async (req, res) => {
+    try {
+        const jobId = req.params.id;
+        const userId = req.user.id;
+        
+        // Check if job exists
+        const job = await jobModel.findById(jobId);
+        if (!job) {
+            return res.status(404).json({ success: false, message: "Job not found" });
+        }
+        
+        // Get user and remove job from savedJobs array
+        const userModel = await import("../models/userModel.js").then(module => module.default);
+        const user = await userModel.findById(userId);
+        
+        if (!user.savedJobs || !user.savedJobs.includes(jobId)) {
+            return res.status(400).json({ success: false, message: "Job is not in saved list" });
+        }
+        
+        // Remove job from user's saved jobs
+        user.savedJobs = user.savedJobs.filter(id => id.toString() !== jobId);
+        await user.save();
+        
+        return res.status(200).json({ success: true, message: "Job removed from saved list" });
+    } catch (error) {
+        console.error("Error removing saved job:", error);
+        return res.status(500).json({ success: false, message: "Internal server error" });
+    }
+};
