@@ -633,3 +633,91 @@ export const updateEmployeeProfile = async (req, res) => {
         });
     }
 };
+
+export const getAllUsers = async (req, res) => {
+    try {
+        // Check if user is admin
+        if (req.user.user_type !== 'admin') {
+            return res.status(403).json({ 
+                success: false, 
+                message: "Unauthorized. Only admin can access this resource." 
+            });
+        }
+        
+        // Find all users and select relevant fields
+        const users = await userModel.find({})
+            .select('name email phoneNumber user_type idVerification');
+        
+        console.log(`Retrieved ${users.length} users`); // Add logging for debugging
+        
+        return res.status(200).json({
+            success: true,
+            users: users
+        });
+    } catch (error) {
+        console.error("Error fetching all users:", error);
+        return res.status(500).json({
+            success: false,
+            message: "Internal server error"
+        });
+    }
+};
+
+export const verifyUserIdentity = async (req, res) => {
+    try {
+        const { userId, status, notes } = req.body;
+        
+        // Validate required fields
+        if (!userId || !status) {
+            return res.status(400).json({
+                success: false,
+                message: "User ID and verification status are required"
+            });
+        }
+        
+        // Check if status is valid
+        if (!['verified', 'rejected'].includes(status)) {
+            return res.status(400).json({
+                success: false,
+                message: "Invalid verification status"
+            });
+        }
+        
+        // Make sure the requester is an admin
+        if (req.user.user_type !== 'admin') {
+            return res.status(403).json({
+                success: false,
+                message: "You don't have permission to perform this action"
+            });
+        }
+        
+        // Update the user's verification status
+        const updatedUser = await userModel.findByIdAndUpdate(
+            userId,
+            {
+                'idVerification.status': status,
+                'idVerification.notes': notes,
+                'idVerification.verifiedAt': status === 'verified' ? new Date() : null
+            },
+            { new: true }
+        );
+        
+        if (!updatedUser) {
+            return res.status(404).json({
+                success: false,
+                message: "User not found"
+            });
+        }
+        
+        return res.status(200).json({
+            success: true,
+            message: `User verification ${status === 'verified' ? 'approved' : 'rejected'} successfully`
+        });
+    } catch (error) {
+        console.error("Error updating verification status:", error);
+        return res.status(500).json({
+            success: false,
+            message: "Internal server error"
+        });
+    }
+};

@@ -1,6 +1,6 @@
 import express from "express";
 import { register, Login, Logout, verifyEmail, resendOtp, resetPassword, getUserProfile, updateUserProfile, verifyIdentity,
-    getVerificationStatus, updateEmployeeProfile, getEmployeeProfile } from "../controllers/authController.js";
+    getVerificationStatus, updateEmployeeProfile, getEmployeeProfile, getAllUsers, verifyUserIdentity } from "../controllers/authController.js";
 import userAuth from "../middleware/userAuth.js"; // Import userAuth middleware
 import upload from "../middleware/uploadMiddleware.js"; // Import upload middleware
 import userModel from "../models/userModel.js"; // Add this import
@@ -75,5 +75,10 @@ authRouter.put('/update-profile', userAuth, updateUserProfile); // Add this rout
 authRouter.get('/employee-profile', userAuth, getEmployeeProfile); // Add this route
 
 authRouter.put('/update-employee-profile', userAuth, updateEmployeeProfile); // Add this route
+
+authRouter.get('/admin/users', userAuth, getAllUsers); // Add this route
+
+// Admin verification route
+authRouter.post('/admin/verify-user', userAuth, verifyUserIdentity);
 
 export default authRouter;
