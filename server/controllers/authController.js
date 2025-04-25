@@ -539,6 +539,34 @@ export const getVerificationStatus = async (req, res) => {
     }
 };
 
+export const getEmployeeProfile = async (req, res) => {
+    try {
+        // Find user with complete profile information
+        const user = await userModel.findById(req.user.id).select(
+            "name bio profilePicture education skills languageSkills address country phoneNumber " +
+            "email linkedInProfile socialMediaLink goals questions resume"
+        );
+
+        if (!user) {
+            return res.status(404).json({ 
+                success: false, 
+                message: "User not found" 
+            });
+        }
+
+        return res.status(200).json({ 
+            success: true, 
+            profile: user 
+        });
+    } catch (error) {
+        console.error("Error fetching employee profile:", error);
+        return res.status(500).json({ 
+            success: false, 
+            message: "Internal server error" 
+        });
+    }
+};
+
 export const updateEmployeeProfile = async (req, res) => {
     try {
         console.log("Updating Employee Profile - Request Body:", req.body);

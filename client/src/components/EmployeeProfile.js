@@ -87,6 +87,7 @@ const EmployeeProfile = () => {
   const [selectedProficiency, setSelectedProficiency] = useState('');
   const [selectedSkill, setSelectedSkill] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [isInitialLoading, setIsInitialLoading] = useState(true);
   const navigate = useNavigate();
   const profileDropdownRef = useRef(null);
   const notificationsRef = useRef(null);
@@ -94,13 +95,15 @@ const EmployeeProfile = () => {
 
   const fetchUserData = useCallback(async () => {
     try {
-      const [userResponse, verificationResponse] = await Promise.all([
-        axios.get(`${API_BASE_URL}/auth/me`, { withCredentials: true }),
+      setIsInitialLoading(true);
+      const [employeeResponse, verificationResponse] = await Promise.all([
+        axios.get(`${API_BASE_URL}/auth/employee-profile`, { withCredentials: true }),
         axios.get(`${API_BASE_URL}/auth/verification-status`, { withCredentials: true })
       ]);
       
-      if (userResponse.data.success) {
-        const userData = userResponse.data.user;
+      if (employeeResponse.data.success) {
+        const userData = employeeResponse.data.profile;
+        
         let verificationData = null;
         let verificationStatus = null;
         
@@ -111,12 +114,30 @@ const EmployeeProfile = () => {
         
         setOriginalUserData(userData);
         
-        setFormData(prevData => ({
-          ...prevData,
+        // Create a new formData object with explicit mapping of all fields
+        setFormData({
           bio: userData.bio || '',
-          education: userData.education || prevData.education,
+          education: {
+            school: {
+              name: userData.education?.school?.name || '',
+              enteringYear: userData.education?.school?.enteringYear || '',
+              passingYear: userData.education?.school?.passingYear || ''
+            },
+            college: {
+              name: userData.education?.college?.name || '',
+              enteringYear: userData.education?.college?.enteringYear || '',
+              passingYear: userData.education?.college?.passingYear || ''
+            },
+            university: {
+              name: userData.education?.university?.name || '',
+              enteringYear: userData.education?.university?.enteringYear || '',
+              passingYear: userData.education?.university?.passingYear || ''
+            }
+          },
           skills: userData.skills || [],
           languageSkills: userData.languageSkills || [],
+          profilePic: null,
+          profilePicPreview: null,
           profilePicture: userData.profilePicture || '',
           address: userData.address || '',
           country: userData.country || '',
@@ -125,16 +146,20 @@ const EmployeeProfile = () => {
           email: userData.email || '',
           goals: userData.goals || '',
           questions: userData.questions || [],
+          resume: null,
           linkedInProfile: userData.linkedInProfile || '',
           socialMediaLink: userData.socialMediaLink || '',
-          resumeUrl: userData.resume || '',
           idVerification: verificationData,
-          isVerified: verificationStatus === 'verified'
-        }));
+          isVerified: verificationStatus === 'verified',
+          resumeUrl: userData.resume || ''
+        });
       }
     } catch (error) {
-      console.error('Error fetching user data:', error);
+      console.error('Error fetching employee profile data:', error);
+      toast.error('Failed to load your profile data');
       if (error.response?.status === 401) navigate('/login');
+    } finally {
+      setIsInitialLoading(false);
     }
   }, [API_BASE_URL, navigate]);
 

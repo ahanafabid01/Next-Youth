@@ -454,6 +454,30 @@
   flex: 1;
 }
 
+/* Current Resume Section */
+.current-resume {
+  margin-bottom: 10px;
+  padding: 8px 12px;
+  background-color: rgba(0, 0, 0, 0.05);
+  border-radius: 4px;
+}
+
+.resume-info {
+  display: flex;
+  align-items: center;
+  margin: 0;
+}
+
+.view-resume-link {
+  margin-left: auto;
+  color: var(--primary-color);
+  text-decoration: underline;
+}
+
+.dark-mode .current-resume {
+  background-color: rgba(255, 255, 255, 0.1);
+}
+
 /* Responsive Adjustments */
 @media (max-width: 768px) {
   .profile-form-steps {
