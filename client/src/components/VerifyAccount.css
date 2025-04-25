@@ -423,3 +423,447 @@
   .upload-area:focus-within {
     animation: pulse 1.5s infinite;
   }
+  
+  /* Verification Status Messages */
+  .pending-verification,
+  .verified-status,
+  .rejected-status {
+    display: flex;
+    align-items: flex-start;
+    gap: 1.25rem;
+    padding: 1.5rem;
+    border-radius: 0.5rem;
+    margin-bottom: 2rem;
+    animation: fadeIn 0.5s ease;
+  }
+  
+  .pending-verification {
+    background-color: rgba(245, 158, 11, 0.1);
+    border-left: 4px solid var(--verify-warning-color);
+  }
+  
+  .verified-status {
+    background-color: rgba(16, 185, 129, 0.1);
+    border-left: 4px solid var(--verify-success-color);
+  }
+  
+  .rejected-status {
+    background-color: rgba(239, 68, 68, 0.1);
+    border-left: 4px solid var(--verify-danger-color);
+  }
+  
+  .verification-status-message h2 {
+    font-size: 1.25rem;
+    font-weight: 600;
+    margin: 0 0 0.75rem 0;
+    color: var(--verify-text-primary);
+  }
+  
+  .verification-status-message p {
+    margin: 0 0 0.5rem 0;
+    color: var(--verify-text-secondary);
+    line-height: 1.5;
+    font-size: 0.9375rem;
+  }
+  
+  .status-note {
+    margin-top: 1rem;
+    font-weight: 500;
+  }
+  
+  .status-pending {
+    color: var(--verify-warning-color);
+    font-weight: 600;
+  }
+  
+  .rejection-reason {
+    background-color: rgba(239, 68, 68, 0.05);
+    padding: 0.75rem;
+    border-radius: 0.25rem;
+    font-style: italic;
+    margin: 0.75rem 0 !important;
+  }
+  
+  .instruction-icon.rejected {
+    color: var(--verify-danger-color);
+  }
+  
+  .dark-mode .pending-verification {
+    background-color: rgba(245, 158, 11, 0.15);
+  }
+  
+  .dark-mode .verified-status {
+    background-color: rgba(16, 185, 129, 0.15);
+  }
+  
+  .dark-mode .rejected-status {
+    background-color: rgba(239, 68, 68, 0.15);
+  }
+  .verify-account-page {
+    padding: 2rem 0;
+    background-color: var(--bg-light, #f5f7fa);
+    min-height: calc(100vh - 60px);
+  }
+  
+  .verify-account-container {
+    max-width: 1000px;
+    margin: 0 auto;
+    padding: 2rem;
+    background-color: var(--bg-white, #ffffff);
+    border-radius: 8px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+  }
+  
+  .verify-header {
+    display: flex;
+    align-items: center;
+    margin-bottom: 2rem;
+    position: relative;
+  }
+  
+  .back-button {
+    position: absolute;
+    left: 0;
+    top: 0;
+    background: none;
+    border: none;
+    color: var(--text-primary, #333);
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    cursor: pointer;
+    font-weight: 500;
+    padding: 0.5rem 0;
+  }
+  
+  .back-button:hover {
+    color: var(--primary-color, #0062cc);
+  }
+  
+  .verify-header h1 {
+    margin: 0 auto;
+    color: var(--text-primary, #333);
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    font-size: 1.75rem;
+  }
+  
+  .loading-spinner {
+    text-align: center;
+    padding: 2rem 0;
+    color: var(--primary-color, #0062cc);
+  }
+  
+  .error-message, .success-message {
+    padding: 1rem;
+    border-radius: 4px;
+    margin-bottom: 1.5rem;
+    text-align: center;
+  }
+  
+  .error-message {
+    background-color: rgba(255, 0, 0, 0.1);
+    color: darkred;
+    border: 1px solid rgba(255, 0, 0, 0.3);
+  }
+  
+  .success-message {
+    background-color: rgba(0, 128, 0, 0.1);
+    color: darkgreen;
+    border: 1px solid rgba(0, 128, 0, 0.3);
+  }
+  
+  /* Verification Status Styles */
+  .verification-status {
+    display: flex;
+    gap: 1.5rem;
+    padding: 2rem;
+    border-radius: 8px;
+    margin-bottom: 2rem;
+  }
+  
+  .verification-status.pending {
+    background-color: rgba(255, 193, 7, 0.1);
+    border: 1px solid rgba(255, 193, 7, 0.3);
+  }
+  
+  .verification-status.verified {
+    background-color: rgba(40, 167, 69, 0.1);
+    border: 1px solid rgba(40, 167, 69, 0.3);
+  }
+  
+  .verification-status.rejected {
+    background-color: rgba(220, 53, 69, 0.1);
+    border: 1px solid rgba(220, 53, 69, 0.3);
+  }
+  
+  .status-icon {
+    display: flex;
+    align-items: flex-start;
+    justify-content: center;
+    color: var(--primary-color, #0062cc);
+  }
+  
+  .verification-status.pending .status-icon {
+    color: #f0ad4e;
+  }
+  
+  .verification-status.verified .status-icon {
+    color: #28a745;
+  }
+  
+  .verification-status.rejected .status-icon {
+    color: #dc3545;
+  }
+  
+  .status-content {
+    flex: 1;
+  }
+  
+  .status-content h2 {
+    margin-top: 0;
+    margin-bottom: 1rem;
+    font-size: 1.5rem;
+  }
+  
+  .submission-date, .verification-date {
+    font-style: italic;
+    color: var(--text-secondary, #6c757d);
+    margin: 1rem 0;
+  }
+  
+  .id-previews {
+    display: flex;
+    gap: 1.5rem;
+    margin-top: 1.5rem;
+  }
+  
+  .id-preview {
+    flex: 1;
+  }
+  
+  .id-preview h3 {
+    font-size: 1rem;
+    margin-bottom: 0.5rem;
+  }
+  
+  .id-preview img {
+    width: 100%;
+    max-height: 200px;
+    object-fit: cover;
+    border-radius: 4px;
+    border: 1px solid var(--border-color, #dee2e6);
+  }
+  
+  .rejection-reason {
+    background-color: rgba(0, 0, 0, 0.05);
+    padding: 1rem;
+    border-radius: 4px;
+    margin: 1rem 0;
+  }
+  
+  .rejection-reason h3 {
+    margin-top: 0;
+    margin-bottom: 0.5rem;
+    font-size: 1rem;
+  }
+  
+  /* Verification Info Styles */
+  .verification-info {
+    display: flex;
+    gap: 1.5rem;
+    padding: 1.5rem;
+    border-radius: 8px;
+    background-color: rgba(0, 123, 255, 0.05);
+    border: 1px solid rgba(0, 123, 255, 0.1);
+    margin-bottom: 2rem;
+  }
+  
+  .info-icon {
+    color: var(--primary-color, #0062cc);
+    font-size: 2rem;
+    display: flex;
+    align-items: flex-start;
+  }
+  
+  .info-content h2 {
+    margin-top: 0;
+    margin-bottom: 1rem;
+    font-size: 1.25rem;
+  }
+  
+  .info-content h3 {
+    font-size: 1rem;
+    margin: 1rem 0 0.5rem;
+  }
+  
+  .info-content ul {
+    margin: 0.5rem 0;
+    padding-left: 1.5rem;
+  }
+  
+  .info-content li {
+    margin-bottom: 0.5rem;
+  }
+  
+  /* Form Styles */
+  .verify-form {
+    margin-top: 2rem;
+  }
+  
+  .form-fields {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 1.5rem;
+    margin-bottom: 1.5rem;
+  }
+  
+  .form-group label {
+    display: block;
+    margin-bottom: 0.5rem;
+    font-weight: 500;
+  }
+  
+  .upload-container {
+    border: 2px dashed var(--border-color, #dee2e6);
+    border-radius: 8px;
+    overflow: hidden;
+    position: relative;
+    height: 250px;
+  }
+  
+  .upload-prompt {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 100%;
+    padding: 2rem;
+    text-align: center;
+    cursor: pointer;
+    transition: background-color 0.3s;
+  }
+  
+  .upload-prompt:hover {
+    background-color: rgba(0, 0, 0, 0.02);
+  }
+  
+  .upload-icon {
+    font-size: 2.5rem;
+    margin-bottom: 1rem;
+    color: var(--text-secondary, #6c757d);
+  }
+  
+  .file-input {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    opacity: 0;
+    cursor: pointer;
+  }
+  
+  .image-preview {
+    height: 100%;
+    position: relative;
+  }
+  
+  .image-preview img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+  
+  .change-image {
+    position: absolute;
+    bottom: 10px;
+    left: 50%;
+    transform: translateX(-50%);
+    background-color: rgba(0, 0, 0, 0.7);
+    color: white;
+    border: none;
+    padding: 0.5rem 1rem;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: background-color 0.3s;
+  }
+  
+  .change-image:hover {
+    background-color: rgba(0, 0, 0, 0.9);
+  }
+  
+  .form-actions {
+    display: flex;
+    justify-content: center;
+    margin-top: 2rem;
+  }
+  
+  .submit-button {
+    background-color: var(--primary-color, #0062cc);
+    color: white;
+    border: none;
+    border-radius: 4px;
+    padding: 0.75rem 2rem;
+    font-size: 1rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background-color 0.3s;
+  }
+  
+  .submit-button:hover {
+    background-color: var(--primary-dark, #0050a3);
+  }
+  
+  .submit-button:disabled {
+    background-color: var(--text-secondary, #6c757d);
+    cursor: not-allowed;
+  }
+  
+  /* Dark Mode Adjustments */
+  .dark-mode .verify-account-container {
+    background-color: var(--dark-bg-secondary, #2d3748);
+    color: var(--dark-text, #e2e8f0);
+  }
+  
+  .dark-mode .back-button,
+  .dark-mode .verify-header h1 {
+    color: var(--dark-text, #e2e8f0);
+  }
+  
+  .dark-mode .upload-container {
+    border-color: var(--dark-border-color, #4a5568);
+  }
+  
+  .dark-mode .upload-prompt:hover {
+    background-color: rgba(255, 255, 255, 0.05);
+  }
+  
+  .dark-mode .upload-icon {
+    color: var(--dark-text-secondary, #a0aec0);
+  }
+  
+  /* Responsive Adjustments */
+  @media (max-width: 768px) {
+    .verify-account-container {
+      padding: 1.5rem;
+    }
+    
+    .verification-status {
+      flex-direction: column;
+      padding: 1.5rem;
+    }
+    
+    .id-previews {
+      flex-direction: column;
+    }
+    
+    .form-fields {
+      grid-template-columns: 1fr;
+    }
+    
+    .status-icon {
+      margin-bottom: 1rem;
+    }
+  }

@@ -18,6 +18,7 @@ import {
   FaTwitter,
   FaLinkedin,
   FaInstagram,
+  FaClock,
 } from 'react-icons/fa';
 import './EmployeeDashboard.css';
 
@@ -58,9 +59,31 @@ const EmployeeDashboard = () => {
 
   const fetchUserData = useCallback(async () => {
     try {
-      const response = await axios.get(`${API_BASE_URL}/auth/me`, { withCredentials: true });
-      if (response.data.success) {
-        setUser(response.data.user);
+      const [userResponse, verificationResponse] = await Promise.all([
+        axios.get(`${API_BASE_URL}/auth/me`, { withCredentials: true }),
+        axios.get(`${API_BASE_URL}/auth/verification-status`, { withCredentials: true })
+      ]);
+      
+      if (userResponse.data.success) {
+        const userData = userResponse.data.user;
+        
+        // Check if verification endpoint returned success AND has verification data
+        let verificationData = null;
+        let verificationStatus = null;
+        
+        if (verificationResponse.data.success) {
+          // If verification record exists in database
+          if (verificationResponse.data.verification) {
+            verificationData = verificationResponse.data.verification;
+            verificationStatus = verificationData.status;
+          }
+        }
+        
+        setUser({
+          ...userData,
+          idVerification: verificationData,
+          isVerified: verificationStatus === 'verified'
+        });
       }
     } catch (error) {
       console.error('Error fetching user data:', error);
@@ -68,7 +91,7 @@ const EmployeeDashboard = () => {
         navigate('/login');
       }
     }
-  }, [navigate]);
+  }, [API_BASE_URL, navigate]);
 
   const fetchAvailableJobs = useCallback(async () => {
     setLoading(true);
@@ -512,9 +535,17 @@ const EmployeeDashboard = () => {
                     <div className="profile-dropdown-info">
                       <h4>{user.name || 'User'}</h4>
                       <span className="profile-status">
-                        {user.idVerification ? 
-                          <><FaCheckCircle className="verified-icon" /> Verified</> : 
-                          'Not Verified'}
+                        {!user.idVerification ? (
+                          'Not Verified'
+                        ) : user.idVerification.status === 'verified' ? (
+                          <><FaCheckCircle className="verified-icon" /> Verified</>
+                        ) : user.idVerification.status === 'pending' && user.idVerification.frontImage && user.idVerification.backImage ? (
+                          <><FaClock className="pending-icon" /> Verification Pending</>
+                        ) : user.idVerification.status === 'rejected' ? (
+                          <>Verification Rejected</>
+                        ) : (
+                          'Not Verified'
+                        )}
                       </span>
                     </div>
                   </div>
@@ -525,6 +556,20 @@ const EmployeeDashboard = () => {
                     >
                       <FaUserCircle /> View Profile
                     </button>
+                    
+                    {/* Show verify account option when appropriate */}
+                    {(!user.idVerification || 
+                      !user.idVerification.frontImage || 
+                      !user.idVerification.backImage || 
+                      user.idVerification.status === 'rejected') && (
+                      <button 
+                        className="profile-dropdown-link"
+                        onClick={handleVerifyAccount}
+                      >
+                        Verify Account
+                      </button>
+                    )}
+                    
                     <button 
                       className="profile-dropdown-link"
                       onClick={() => navigate('/settings')}
@@ -552,13 +597,28 @@ const EmployeeDashboard = () => {
               <h1>Welcome back, {user.name || 'User'}!</h1>
               <p>Here's what's happening with your job search today</p>
             </div>
-            {!user.isVerified && (
+
+            {/* Show verification button if user hasn't submitted verification or was rejected */}
+            {(!user.idVerification || 
+              !user.idVerification.frontImage || 
+              !user.idVerification.backImage || 
+              user.idVerification.status === 'rejected') && (
               <button 
                 className="verify-account-button"
                 onClick={handleVerifyAccount}
               >
                 Verify Your Account
               </button>
+            )}
+
+            {/* Show pending badge only if verification exists with images and status is pending */}
+            {user.idVerification && 
+              user.idVerification.frontImage && 
+              user.idVerification.backImage && 
+              user.idVerification.status === 'pending' && (
+              <div className="verification-pending-badge">
+                <FaClock /> Verification Pending
+              </div>
             )}
           </div>
         </div>

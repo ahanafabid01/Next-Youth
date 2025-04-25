@@ -14,7 +14,8 @@ import {
     FaFacebook,
     FaTwitter,
     FaLinkedin,
-    FaInstagram
+    FaInstagram,
+    FaClock // Add this import
 } from 'react-icons/fa';
 import './VerifyAccount.css';
 import './EmployeeDashboard.css'; // Assuming you have a CSS file for the dashboard styles
@@ -36,7 +37,8 @@ const VerifyAccount = () => {
     const [user, setUser] = useState({ 
         name: '', 
         profilePicture: '',
-        isVerified: false 
+        isVerified: false,
+        idVerification: null
     });
     const [isDarkMode, setIsDarkMode] = useState(() => {
         return localStorage.getItem("dashboard-theme") === "dark";
@@ -123,9 +125,31 @@ const VerifyAccount = () => {
     // Header functions
     const fetchUserData = useCallback(async () => {
         try {
-            const response = await axios.get(`${API_BASE_URL}/auth/me`, { withCredentials: true });
-            if (response.data.success) {
-                setUser(response.data.user);
+            const [userResponse, verificationResponse] = await Promise.all([
+                axios.get(`${API_BASE_URL}/auth/me`, { withCredentials: true }),
+                axios.get(`${API_BASE_URL}/auth/verification-status`, { withCredentials: true })
+            ]);
+            
+            if (userResponse.data.success) {
+                const userData = userResponse.data.user;
+                
+                // Check if verification endpoint returned success AND has verification data
+                let verificationData = null;
+                let verificationStatus = null;
+                
+                if (verificationResponse.data.success) {
+                    // If verification record exists in database
+                    if (verificationResponse.data.verification) {
+                        verificationData = verificationResponse.data.verification;
+                        verificationStatus = verificationData.status;
+                    }
+                }
+                
+                setUser({
+                    ...userData,
+                    idVerification: verificationData,
+                    isVerified: verificationStatus === 'verified'
+                });
             }
         } catch (error) {
             console.error('Error fetching user data:', error);
@@ -133,7 +157,7 @@ const VerifyAccount = () => {
                 navigate('/login');
             }
         }
-    }, [navigate, API_BASE_URL]);
+    }, [API_BASE_URL, navigate]);
 
     const handleOutsideClick = useCallback((event) => {
         if (notificationsRef.current && !notificationsRef.current.contains(event.target)) {
@@ -303,9 +327,17 @@ const VerifyAccount = () => {
                                         <div className="profile-dropdown-info">
                                             <h4>{user.name || 'User'}</h4>
                                             <span className="profile-status">
-                                                {user.isVerified ? 
-                                                    <><FaCheck className="verified-icon" /> Verified</> : 
-                                                    'Not Verified'}
+                                                {!user.idVerification ? (
+                                                    'Not Verified'
+                                                ) : user.idVerification.status === 'verified' ? (
+                                                    <><FaCheck className="verified-icon" /> Verified</>
+                                                ) : user.idVerification.status === 'pending' && user.idVerification.frontImage && user.idVerification.backImage ? (
+                                                    <><FaClock className="pending-icon" /> Verification Pending</>
+                                                ) : user.idVerification.status === 'rejected' ? (
+                                                    <>Verification Rejected</>
+                                                ) : (
+                                                    'Not Verified'
+                                                )}
                                             </span>
                                         </div>
                                     </div>
@@ -316,6 +348,9 @@ const VerifyAccount = () => {
                                         >
                                             <FaUserCircle /> View Profile
                                         </button>
+                                        
+                                        {/* Show verify account option when appropriate */}
+                                        
                                         <button 
                                             className="profile-dropdown-link"
                                             onClick={() => navigate('/settings')}

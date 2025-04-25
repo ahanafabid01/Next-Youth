@@ -450,6 +450,22 @@ export const updateUserProfile = async (req, res) => {
 
 export const verifyIdentity = async (req, res) => {
     try {
+        // Get the user from the database with verification information
+        const user = await userModel.findById(req.user.id);
+        
+        // Only check if verification exists AND has both images AND status is pending or verified
+        if (user.idVerification && 
+            user.idVerification.frontImage && 
+            user.idVerification.backImage && 
+            (user.idVerification.status === 'pending' || user.idVerification.status === 'verified')) {
+            return res.status(400).json({
+                success: false,
+                message: user.idVerification.status === 'pending'
+                    ? "Your ID verification is already submitted and pending review. Please wait for our team to complete the verification process."
+                    : "Your ID is already verified. No need to submit again."
+            });
+        }
+
         // Check if files exist in the request
         if (!req.files || !req.files.frontImage || !req.files.backImage) {
             return res.status(400).json({
@@ -492,6 +508,30 @@ export const verifyIdentity = async (req, res) => {
         });
     } catch (error) {
         console.error("Error in ID verification:", error);
+        return res.status(500).json({
+            success: false,
+            message: "Internal server error"
+        });
+    }
+};
+
+export const getVerificationStatus = async (req, res) => {
+    try {
+        const user = await userModel.findById(req.user.id).select('idVerification');
+        
+        if (!user) {
+            return res.status(404).json({
+                success: false,
+                message: "User not found"
+            });
+        }
+        
+        return res.status(200).json({
+            success: true,
+            verification: user.idVerification || null
+        });
+    } catch (error) {
+        console.error("Error fetching verification status:", error);
         return res.status(500).json({
             success: false,
             message: "Internal server error"

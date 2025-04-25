@@ -68,8 +68,7 @@ const userSchema = new mongoose.Schema({
         backImage: { type: String },
         status: { 
             type: String, 
-            enum: ['pending', 'verified', 'rejected'],
-            default: 'pending'
+            enum: ['pending', 'verified', 'rejected']
         },
         submittedAt: { type: Date },
         verifiedAt: { type: Date },
