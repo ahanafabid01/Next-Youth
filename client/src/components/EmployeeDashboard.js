@@ -472,10 +472,30 @@ const EmployeeDashboard = () => {
                   <div className="notification-list">
                     <div className="notification-item unread">
                       <div className="notification-icon">
-                        <FaCheckCircle />
+                        {(!user.idVerification || 
+                          !user.idVerification.frontImage || 
+                          !user.idVerification.backImage || 
+                          user.idVerification.status === 'rejected') ? (
+                          <FaRegFileAlt />
+                        ) : user.idVerification.status === 'verified' ? (
+                          <FaCheckCircle />
+                        ) : (
+                          <FaClock />
+                        )}
                       </div>
                       <div className="notification-content">
-                        <p>Your profile has been verified!</p>
+                        <p>
+                          {(!user.idVerification || 
+                            !user.idVerification.frontImage || 
+                            !user.idVerification.backImage || 
+                            user.idVerification.status === 'rejected') ? (
+                            "Please verify your account"
+                          ) : user.idVerification.status === 'verified' ? (
+                            "Your profile has been verified!"
+                          ) : (
+                            "Your verification is pending approval"
+                          )}
+                        </p>
                         <span className="notification-time">2 hours ago</span>
                       </div>
                     </div>
