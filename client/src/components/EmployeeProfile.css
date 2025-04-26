@@ -718,65 +718,65 @@
 }
 
 .rate-input-container {
-  position: relative;
   display: flex;
   align-items: center;
-  max-width: 250px;
+  position: relative;
+  width: 100%;
+  max-width: 400px;
 }
 
 .currency-symbol {
   position: absolute;
   left: 12px;
-  font-size: 16px;
+  font-size: 1rem;
   color: var(--text-color);
-  font-weight: 500;
+  opacity: 0.8;
+  z-index: 1;
 }
 
 .rate-input {
-  padding-left: 25px !important;
-  font-size: 18px !important;
-  font-weight: 500;
+  padding-left: 28px !important;
+  width: 100% !important;
+  font-size: 1rem !important;
+  height: auto !important;
+  min-height: 48px !important;
 }
 
 .increment-buttons {
+  position: absolute;
+  right: 0;
   display: flex;
   flex-direction: column;
-  margin-left: 10px;
+  border-left: 1px solid var(--border-color);
+  height: 100%;
 }
 
 .increment-button {
-  background-color: #f2f2f2;
-  border: 1px solid #ddd;
-  color: #666;
-  width: 24px;
-  height: 18px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  height: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
-  cursor: pointer;
-  font-size: 12px;
+  width: 32px;
   padding: 0;
-  line-height: 1;
-  transition: all 0.2s;
+  color: var(--text-color);
+  transition: background-color 0.2s;
 }
 
 .increment-button:hover {
-  background-color: #e6e6e6;
+  background-color: var(--bg-hover);
 }
 
 .increment-button:first-child {
-  border-radius: 3px 3px 0 0;
-}
-
-.increment-button:last-child {
-  border-radius: 0 0 3px 3px;
-  border-top: none;
+  border-bottom: 1px solid var(--border-color);
 }
 
 .rate-hint {
   margin-top: 8px;
-  color: var(--text-muted);
-  font-size: 14px;
+  font-size: 0.85rem;
+  color: var(--text-light);
 }
 
 .availability-label {

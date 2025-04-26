@@ -20,6 +20,12 @@ const userSchema = new mongoose.Schema({
     resume: { type: String },
     linkedInProfile: { type: String },
     socialMediaLink: { type: String },
+    freelanceExperience: { type: String }, // Added field for freelance experience
+    paymentType: { type: String }, // Added field for payment type preference
+    fixedRate: { type: String }, // Added field for fixed rate
+    hourlyRate: { type: String }, // Added field for hourly rate
+    weeklyAvailability: { type: String }, // Added field for weekly availability
+    openToContractToHire: { type: Boolean, default: false }, // Added field for contract-to-hire preference
     password: {
         type: String,
         required: true,

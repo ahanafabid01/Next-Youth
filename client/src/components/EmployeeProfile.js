@@ -480,6 +480,22 @@ const EmployeeProfile = () => {
       } else if (formData.resumeUrl && formData.resumeUrl !== originalUserData?.resume) {
         payload.resumeUrl = formData.resumeUrl;
       }
+
+      // Add this to the payload construction section in handleSubmit
+      if (shouldIncludeField(formData.freelanceExperience, originalUserData?.freelanceExperience)) 
+        payload.freelanceExperience = formData.freelanceExperience;
+
+      // Also add the other payment/rate fields
+      if (shouldIncludeField(formData.paymentType, originalUserData?.paymentType)) 
+        payload.paymentType = formData.paymentType;
+      if (shouldIncludeField(formData.fixedRate, originalUserData?.fixedRate)) 
+        payload.fixedRate = formData.fixedRate;
+      if (shouldIncludeField(formData.hourlyRate, originalUserData?.hourlyRate)) 
+        payload.hourlyRate = formData.hourlyRate;
+      if (shouldIncludeField(formData.weeklyAvailability, originalUserData?.weeklyAvailability))
+        payload.weeklyAvailability = formData.weeklyAvailability;
+      if (formData.openToContractToHire !== originalUserData?.openToContractToHire)
+        payload.openToContractToHire = formData.openToContractToHire;
       
       // Only make the API call if there are changes to send
       if (Object.keys(payload).length > 0) {
