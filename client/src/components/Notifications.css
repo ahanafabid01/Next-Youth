@@ -616,3 +616,78 @@
     border-bottom: 1px solid var(--border-color);
   }
 }
+
+/* Add or update these styles */
+
+.back-to-dashboard-button {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  background-color: var(--primary-color);
+  color: white;
+  border: none;
+  border-radius: 6px;
+  padding: 0.6rem 1rem;
+  font-size: 0.95rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.back-to-dashboard-button:hover {
+  background-color: var(--primary-dark);
+  transform: translateY(-1px);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.back-to-dashboard-button svg {
+  font-size: 0.9rem;
+}
+
+/* Update header to better align elements */
+.notifications-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1.5rem 2rem;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.notifications-header h1 {
+  font-size: 1.75rem;
+  font-weight: 600;
+  margin: 0;
+  color: var(--text-primary);
+}
+
+/* Keep responsive styles */
+@media (max-width: 768px) {
+  .notifications-header {
+    flex-direction: column;
+    gap: 1rem;
+    align-items: flex-start;
+  }
+  
+  .notifications-header h1 {
+    font-size: 1.5rem;
+  }
+  
+  .back-button-container {
+    margin-bottom: 0.5rem;
+    width: 100%;
+  }
+  
+  .back-to-dashboard-button {
+    width: 100%;
+    justify-content: center;
+  }
+  
+  .notifications-actions {
+    align-self: flex-end;
+    width: 100%;
+  }
+  
+  .mark-all-read-button {
+    width: 100%;
+  }
+}
