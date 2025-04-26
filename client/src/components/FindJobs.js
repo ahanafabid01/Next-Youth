@@ -532,21 +532,17 @@ const FindJobs = () => {
         
         // Apply search term filter
         if (searchTerm.trim()) {
-            const term = searchTerm.toLowerCase();
+            const term = searchTerm.toLowerCase().trim();
             filteredJobs = filteredJobs.filter(job => {
-                // Check if any letter in the search term matches the job title
+                // Only check if the job title contains the search term (anywhere in the title)
                 const jobTitle = job.title.toLowerCase();
                 
-                // Match if any letter from the search term is found in the title
-                for (let i = 0; i < term.length; i++) {
-                    if (jobTitle.includes(term[i])) {
-                        return true;
-                    }
-                }
+                // Match if the job title contains the search term anywhere
+                return jobTitle.includes(term);
                 
-                // Also check full word matches in description and skills
-                return job.description.toLowerCase().includes(term) || 
-                      job.skills.some(skill => skill.toLowerCase().includes(term));
+                // Remove the secondary checks for description and skills
+                // No longer checking: job.description.toLowerCase().includes(term) || 
+                //                     job.skills.some(skill => skill.toLowerCase().includes(term));
             });
         }
         
