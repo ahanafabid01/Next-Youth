@@ -41,6 +41,7 @@ const Notifications = () => {
 
   const API_BASE_URL = 'http://localhost:4000/api';
 
+  // Update the fetchUserData function to check localStorage for read status
   const fetchUserData = useCallback(async () => {
     try {
       const [userResponse, verificationResponse] = await Promise.all([
@@ -102,6 +103,27 @@ const Notifications = () => {
           }
         ];
         
+        // Get read status from localStorage
+        try {
+          const readStatusJSON = localStorage.getItem("read-notifications-status");
+          if (readStatusJSON) {
+            const readStatus = JSON.parse(readStatusJSON);
+            // Apply read status to notifications
+            notificationsData.forEach(notification => {
+              if (readStatus[notification.id]) {
+                notification.isRead = true;
+              }
+            });
+          }
+        } catch (err) {
+          console.error('Error parsing read status from localStorage:', err);
+        }
+        
+        // Count unread notifications
+        const unreadCount = notificationsData.filter(n => !n.isRead).length;
+        setUnreadNotifications(unreadCount);
+        localStorage.setItem("unread-notifications", unreadCount.toString());
+        
         setNotifications(notificationsData);
       }
     } catch (error) {
@@ -137,14 +159,24 @@ const Notifications = () => {
     setIsDarkMode(prev => !prev);
   }, []);
 
+  // Update the handleMarkAllAsRead function
   const handleMarkAllAsRead = useCallback(() => {
     setNotifications(prevNotifications => 
       prevNotifications.map(notification => ({ ...notification, isRead: true }))
     );
+    
     setUnreadNotifications(0);
     localStorage.setItem("unread-notifications", "0");
-  }, []);
+    
+    // Save read status to localStorage
+    const readStatus = {};
+    notifications.forEach(notification => {
+      readStatus[notification.id] = true;
+    });
+    localStorage.setItem("read-notifications-status", JSON.stringify(readStatus));
+  }, [notifications]);
 
+  // Update the handleMarkAsRead function
   const handleMarkAsRead = useCallback((id) => {
     setNotifications(prevNotifications => 
       prevNotifications.map(notification => 
@@ -155,6 +187,16 @@ const Notifications = () => {
     const unreadCount = notifications.filter(notification => !notification.isRead && notification.id !== id).length;
     setUnreadNotifications(unreadCount);
     localStorage.setItem("unread-notifications", unreadCount.toString());
+    
+    // Update read status in localStorage
+    try {
+      const readStatusJSON = localStorage.getItem("read-notifications-status");
+      const readStatus = readStatusJSON ? JSON.parse(readStatusJSON) : {};
+      readStatus[id] = true;
+      localStorage.setItem("read-notifications-status", JSON.stringify(readStatus));
+    } catch (err) {
+      console.error('Error updating read status in localStorage:', err);
+    }
   }, [notifications]);
 
   const formatTimestamp = (timestamp) => {
