@@ -1,13 +1,19 @@
 import express from "express";
-import { addJob, getJobs, deleteJob, updateJobStatus } from "../controllers/jobController.js";
+import { addJob, getJobs, deleteJob, updateJobStatus, getAvailableJobs, saveJob, applyForJob, getSavedJobs, getAppliedJobs, removeSavedJob } from "../controllers/jobController.js";
 import userAuth from "../middleware/userAuth.js";
 import upload from "../middleware/uploadMiddleware.js";
 
 const router = express.Router();
 
-router.get("/", userAuth, getJobs); // Protect the GET /api/jobs route
-router.post("/", userAuth, upload.array("files", 5), addJob); // Protect the POST /api/jobs route
-router.delete("/:id", userAuth, deleteJob); // Add DELETE /api/jobs/:id route
-router.put("/:id/status", userAuth, updateJobStatus); // Add PUT /api/jobs/:id/status route
+router.get("/", userAuth, getJobs); // Get employer's own jobs
+router.get("/available", userAuth, getAvailableJobs); // Get all available jobs
+router.post("/", userAuth, upload.array("files", 5), addJob);
+router.delete("/:id", userAuth, deleteJob);
+router.put("/:id/status", userAuth, updateJobStatus);
+router.post("/:id/save", userAuth, saveJob); // Save a job endpoint
+router.post("/:id/apply", userAuth, applyForJob);
+router.get("/saved", userAuth, getSavedJobs);
+router.get("/applied", userAuth, getAppliedJobs);
+router.post('/:id/save/remove', userAuth, removeSavedJob);
 
 export default router;

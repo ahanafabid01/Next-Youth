@@ -447,3 +447,277 @@ export const updateUserProfile = async (req, res) => {
         res.status(500).json({ success: false, message: "Internal server error" });
     }
 };
+
+export const verifyIdentity = async (req, res) => {
+    try {
+        // Get the user from the database with verification information
+        const user = await userModel.findById(req.user.id);
+        
+        // Only check if verification exists AND has both images AND status is pending or verified
+        if (user.idVerification && 
+            user.idVerification.frontImage && 
+            user.idVerification.backImage && 
+            (user.idVerification.status === 'pending' || user.idVerification.status === 'verified')) {
+            return res.status(400).json({
+                success: false,
+                message: user.idVerification.status === 'pending'
+                    ? "Your ID verification is already submitted and pending review. Please wait for our team to complete the verification process."
+                    : "Your ID is already verified. No need to submit again."
+            });
+        }
+
+        // Check if files exist in the request
+        if (!req.files || !req.files.frontImage || !req.files.backImage) {
+            return res.status(400).json({
+                success: false,
+                message: "Please upload both front and back images of your ID"
+            });
+        }
+
+        const frontImagePath = req.files.frontImage[0].path;
+        const backImagePath = req.files.backImage[0].path;
+
+        // Convert local file path to URL
+        const frontImageUrl = `${req.protocol}://${req.get("host")}/${frontImagePath.replace(/\\/g, '/')}`;
+        const backImageUrl = `${req.protocol}://${req.get("host")}/${backImagePath.replace(/\\/g, '/')}`;
+
+        // Update user's verification status in the database
+        const updatedUser = await userModel.findByIdAndUpdate(
+            req.user.id,
+            {
+                idVerification: {
+                    frontImage: frontImageUrl,
+                    backImage: backImageUrl,
+                    status: 'pending',
+                    submittedAt: new Date()
+                }
+            },
+            { new: true }
+        );
+
+        if (!updatedUser) {
+            return res.status(404).json({
+                success: false,
+                message: "User not found"
+            });
+        }
+
+        return res.status(200).json({
+            success: true,
+            message: "ID verification submitted successfully. Our team will review it shortly."
+        });
+    } catch (error) {
+        console.error("Error in ID verification:", error);
+        return res.status(500).json({
+            success: false,
+            message: "Internal server error"
+        });
+    }
+};
+
+export const getVerificationStatus = async (req, res) => {
+    try {
+        const user = await userModel.findById(req.user.id).select('idVerification');
+        
+        if (!user) {
+            return res.status(404).json({
+                success: false,
+                message: "User not found"
+            });
+        }
+        
+        return res.status(200).json({
+            success: true,
+            verification: user.idVerification || null
+        });
+    } catch (error) {
+        console.error("Error fetching verification status:", error);
+        return res.status(500).json({
+            success: false,
+            message: "Internal server error"
+        });
+    }
+};
+
+export const getEmployeeProfile = async (req, res) => {
+    try {
+        // Find user with complete profile information
+        const user = await userModel.findById(req.user.id).select(
+            "name bio profilePicture education skills languageSkills address country phoneNumber " +
+            "email linkedInProfile socialMediaLink goals questions resume"
+        );
+
+        if (!user) {
+            return res.status(404).json({ 
+                success: false, 
+                message: "User not found" 
+            });
+        }
+
+        return res.status(200).json({ 
+            success: true, 
+            profile: user 
+        });
+    } catch (error) {
+        console.error("Error fetching employee profile:", error);
+        return res.status(500).json({ 
+            success: false, 
+            message: "Internal server error" 
+        });
+    }
+};
+
+export const updateEmployeeProfile = async (req, res) => {
+    try {
+        console.log("Updating Employee Profile - Request Body:", req.body);
+        console.log("User ID:", req.user.id);
+
+        const { 
+            name, 
+            bio, 
+            profilePicture,
+            education,
+            skills,
+            languageSkills,
+            address,
+            country,
+            phoneNumber,
+            email,
+            linkedInProfile,
+            socialMediaLink,
+            goals,
+            questions,
+            resumeUrl  // This comes from frontend as resumeUrl
+        } = req.body;
+
+        // Find user and update all profile fields
+        const updatedUser = await userModel.findByIdAndUpdate(
+            req.user.id,
+            { 
+                name, 
+                bio, 
+                profilePicture,
+                education,
+                skills,
+                languageSkills,
+                address,
+                country,
+                phoneNumber,
+                email: email || undefined, // Only update if provided
+                linkedInProfile,
+                socialMediaLink,
+                goals,
+                questions,
+                resume: resumeUrl  // Map to 'resume' field in database
+            },
+            { new: true }
+        );
+
+        if (!updatedUser) {
+            return res.status(404).json({ 
+                success: false, 
+                message: "User not found" 
+            });
+        }
+
+        res.status(200).json({ 
+            success: true, 
+            message: "Profile updated successfully",
+            user: updatedUser 
+        });
+    } catch (error) {
+        console.error("Error updating employee profile:", error);
+        res.status(500).json({ 
+            success: false, 
+            message: "Internal server error" 
+        });
+    }
+};
+
+export const getAllUsers = async (req, res) => {
+    try {
+        // Check if user is admin
+        if (req.user.user_type !== 'admin') {
+            return res.status(403).json({ 
+                success: false, 
+                message: "Unauthorized. Only admin can access this resource." 
+            });
+        }
+        
+        // Find all users and select relevant fields
+        const users = await userModel.find({})
+            .select('name email phoneNumber user_type idVerification');
+        
+        console.log(`Retrieved ${users.length} users`); // Add logging for debugging
+        
+        return res.status(200).json({
+            success: true,
+            users: users
+        });
+    } catch (error) {
+        console.error("Error fetching all users:", error);
+        return res.status(500).json({
+            success: false,
+            message: "Internal server error"
+        });
+    }
+};
+
+export const verifyUserIdentity = async (req, res) => {
+    try {
+        const { userId, status, notes } = req.body;
+        
+        // Validate required fields
+        if (!userId || !status) {
+            return res.status(400).json({
+                success: false,
+                message: "User ID and verification status are required"
+            });
+        }
+        
+        // Check if status is valid
+        if (!['verified', 'rejected'].includes(status)) {
+            return res.status(400).json({
+                success: false,
+                message: "Invalid verification status"
+            });
+        }
+        
+        // Make sure the requester is an admin
+        if (req.user.user_type !== 'admin') {
+            return res.status(403).json({
+                success: false,
+                message: "You don't have permission to perform this action"
+            });
+        }
+        
+        // Update the user's verification status
+        const updatedUser = await userModel.findByIdAndUpdate(
+            userId,
+            {
+                'idVerification.status': status,
+                'idVerification.notes': notes,
+                'idVerification.verifiedAt': status === 'verified' ? new Date() : null
+            },
+            { new: true }
+        );
+        
+        if (!updatedUser) {
+            return res.status(404).json({
+                success: false,
+                message: "User not found"
+            });
+        }
+        
+        return res.status(200).json({
+            success: true,
+            message: `User verification ${status === 'verified' ? 'approved' : 'rejected'} successfully`
+        });
+    } catch (error) {
+        console.error("Error updating verification status:", error);
+        return res.status(500).json({
+            success: false,
+            message: "Internal server error"
+        });
+    }
+};
