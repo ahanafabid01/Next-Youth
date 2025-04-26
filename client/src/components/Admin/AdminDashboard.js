@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import { FaUsers, FaChartBar, FaClipboardList, FaEnvelope, FaSearch, FaCalendarAlt, FaFileAlt } from "react-icons/fa"; // Import icons
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend } from "recharts"; // Import for graph
 import './AdminDashboard.css';  // Import the CSS file for styling
+import { Link } from "react-router-dom"; // Import Link from react-router-dom
 
 const AdminDashboard = () => {
   const [stats] = useState({
@@ -34,11 +35,31 @@ const AdminDashboard = () => {
         </div>
         <div className="menu">
           <ul>
-            <li><FaSearch /> Dashboard</li>
-            <li><FaUsers /> Users</li>
-            <li><FaEnvelope /> Messages</li>
-            <li><FaClipboardList /> Applications</li>
-            <li><FaChartBar /> Statistics</li>
+            <li>
+              <Link to="/admin-dashboard/dashboard">
+                <FaSearch /> Dashboard
+              </Link>
+            </li>
+            <li>
+              <Link to="/admin-dashboard/users">
+                <FaUsers /> Users
+              </Link>
+            </li>
+            <li>
+              <Link to="/admin-dashboard/messages">
+                <FaEnvelope /> Messages
+              </Link>
+            </li>
+            <li>
+              <Link to="/admin-dashboard/applications">
+                <FaClipboardList /> Applications
+              </Link>
+            </li>
+            <li>
+              <Link to="/admin-dashboard/statistics">
+                <FaChartBar /> Statistics
+              </Link>
+            </li>
           </ul>
         </div>
       </div>

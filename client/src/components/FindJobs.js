@@ -1,9 +1,12 @@
-import React, { useState, useEffect, useRef } from 'react';
-import { useNavigate, useLocation, useParams } from 'react-router-dom';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
+import { useNavigate, useLocation, useParams, Link } from 'react-router-dom';
 import axios from 'axios';
 import { FaRegFileAlt, FaSpinner, FaExclamationCircle, FaClock, FaCheckCircle, FaRegBookmark,
-         FaBookmark, FaSearch, FaChevronDown, FaArrowLeft } from 'react-icons/fa';
+         FaBookmark, FaSearch, FaChevronDown, FaArrowLeft, FaSun, FaMoon, FaUserCircle, 
+         FaBell, FaHome, FaQuestionCircle, FaBriefcase, FaLinkedinIn, FaGlobe, 
+         FaFacebook, FaTwitter, FaInstagram } from 'react-icons/fa';
 import './FindJobs.css';
+import './EmployeeDashboard.css'; // Import the EmployeeDashboard styles
 
 const FindJobs = () => {
     const navigate = useNavigate();
@@ -30,6 +33,21 @@ const FindJobs = () => {
     const [showFiltersDropdown, setShowFiltersDropdown] = useState(false);
     const filtersDropdownRef = useRef(null);
 
+    // Header and footer state variables
+    const [showProfileDropdown, setShowProfileDropdown] = useState(false);
+    const [showNotifications, setShowNotifications] = useState(false);
+    const [showMobileNav, setShowMobileNav] = useState(false);
+    const [isDarkMode, setIsDarkMode] = useState(() => {
+        return localStorage.getItem("dashboard-theme") === "dark";
+    });
+    const [userData, setUserData] = useState({
+        name: '',
+        profilePicture: '',
+        idVerification: null
+    });
+    const profileDropdownRef = useRef(null);
+    const notificationsRef = useRef(null);
+
     // Close dropdown when clicking outside
     useEffect(() => {
         const handleOutsideClick = (event) => {
@@ -39,6 +57,12 @@ const FindJobs = () => {
             if (filtersDropdownRef.current && !filtersDropdownRef.current.contains(event.target)) {
                 setShowFiltersDropdown(false);
             }
+            if (notificationsRef.current && !notificationsRef.current.contains(event.target)) {
+                setShowNotifications(false);
+            }
+            if (profileDropdownRef.current && !profileDropdownRef.current.contains(event.target)) {
+                setShowProfileDropdown(false);
+            }
         };
 
         document.addEventListener('click', handleOutsideClick);
@@ -46,6 +70,67 @@ const FindJobs = () => {
             document.removeEventListener('click', handleOutsideClick);
         };
     }, []);
+
+    // Apply dark mode
+    useEffect(() => {
+        document.body.classList.toggle('dark-mode', isDarkMode);
+        localStorage.setItem("dashboard-theme", isDarkMode ? "dark" : "light");
+    }, [isDarkMode]);
+
+    // Fetch user data for header
+    useEffect(() => {
+        const fetchUserData = async () => {
+            try {
+                const employeeResponse = await axios.get("http://localhost:4000/api/auth/employee-profile", { 
+                    withCredentials: true 
+                });
+                
+                if (employeeResponse.data.success) {
+                    const userData = employeeResponse.data.profile;
+                    setUserData({
+                        name: userData.name || '',
+                        profilePicture: userData.profilePicture || '',
+                        idVerification: userData.idVerification || null
+                    });
+                }
+            } catch (error) {
+                console.error('Error fetching user data:', error);
+            }
+        };
+
+        fetchUserData();
+    }, []);
+
+    // Header functions
+    const toggleMobileNav = (e) => {
+        e.stopPropagation();
+        setShowMobileNav(prev => !prev);
+    };
+
+    const toggleProfileDropdown = (e) => {
+        e.stopPropagation();
+        setShowProfileDropdown(prev => !prev);
+    };
+
+    const toggleNotifications = (e) => {
+        e.stopPropagation();
+        setShowNotifications(prev => !prev);
+    };
+
+    const toggleDarkMode = () => {
+        setIsDarkMode(prev => !prev);
+    };
+
+    const handleLogout = async () => {
+        try {
+            const response = await axios.post("http://localhost:4000/api/auth/logout", {}, { 
+                withCredentials: true 
+            });
+            if (response.data.success) navigate('/login');
+        } catch (error) {
+            console.error('Error logging out:', error);
+        }
+    };
 
     // Handle URL params and navigation
     useEffect(() => {
@@ -409,7 +494,7 @@ const FindJobs = () => {
             });
         }
     }, [activeTab, viewMode]);
-    // Add this function right next to your getCurrentTabName function
+
     // Get page title based on active tab
     const getPageTitle = () => {
         switch(activeTab) {
@@ -420,7 +505,6 @@ const FindJobs = () => {
         }
     };
     
-    // Add this function before the getPageTitle function
     // Get the current tab name for dropdown display
     const getCurrentTabName = () => {
         switch(activeTab) {
@@ -641,328 +725,559 @@ const FindJobs = () => {
 
     // Render either job list or job detail based on viewMode
     return (
-        <div className="find-jobs-container">
-            {viewMode === 'detail' ? (
-                renderJobDetail()
-            ) : (
-                <>
-                    <div className="header">
-                        <div className="page-title">
-                            <h1>{getPageTitle()}</h1>
-                        </div>
-                        
-                        <div className="job-nav-dropdown" ref={dropdownRef}>
-                            <button 
-                                className="dropdown-toggle"
-                                onClick={toggleDropdown}
-                            >
-                                {getCurrentTabName()}
-                                <FaChevronDown className={`dropdown-icon ${showDropdown ? 'rotate' : ''}`} />
-                            </button>
-                            {showDropdown && (
-                                <div className="job-dropdown-menu">
-                                    <button 
-                                        className={activeTab === 'available' ? 'active' : ''}
-                                        onClick={() => navigate('/find-jobs')}
-                                    >
-                                        Find Work
-                                    </button>
-                                    <button 
-                                        className={activeTab === 'saved' ? 'active' : ''}
-                                        onClick={() => navigate('/find-jobs/saved')}
-                                    >
-                                        Saved Jobs
-                                    </button>
-                                    <button 
-                                        className={activeTab === 'proposals' ? 'active' : ''}
-                                        onClick={() => navigate('/find-jobs/proposals')}
-                                    >
-                                        My Proposals
-                                    </button>
-                                </div>
-                            )}
-                        </div>
-
-                        {/* Back to Dashboard button */}
+        <div className={`employee-dashboard ${isDarkMode ? 'dark-mode' : ''}`}>
+            {/* Header with Navigation */}
+            <header className="dashboard-header">
+                <div className="dashboard-header-container">
+                    <div className="dashboard-header-left">
                         <button 
-                            className="back-to-dashboard-button"
-                            onClick={() => navigate('/employee-dashboard')}
+                            className="dashboard-nav-toggle"
+                            onClick={toggleMobileNav}
+                            aria-label="Toggle navigation"
                         >
-                            Go Back to Dashboard
+                            ☰
                         </button>
+                        <Link to="/" className="dashboard-logo">Next Youth</Link>
+                        
+                        <nav className={`dashboard-nav ${showMobileNav ? 'active' : ''}`}>
+                            <Link to="/find-jobs" className="nav-link">Find Work</Link>
+                            <Link to="/find-jobs/saved" className="nav-link">Saved Jobs</Link>
+                            <Link to="/find-jobs/proposals" className="nav-link">Proposals</Link>
+                            <Link to="/help" className="nav-link">Help</Link>
+                        </nav>
                     </div>
-
-                    {/* Search and filter section - only show on available and saved tabs */}
-                    <div className="search-filter-container">
-                        <div className="search-bar">
-                            <FaSearch className="search-icon" />
-                            <input 
-                                type="text"
-                                placeholder="Search jobs..."
-                                value={searchTerm}
-                                onChange={handleSearch}
-                                onKeyPress={(e) => e.key === 'Enter' && performSearch()}
-                            />
+                    
+                    <div className="dashboard-header-right">
+                        <div className="notification-container" ref={notificationsRef}>
                             <button 
-                                className="search-button"
-                                onClick={performSearch}
+                                className="notification-button"
+                                onClick={toggleNotifications}
+                                aria-label="Notifications"
                             >
-                                Search
+                                <FaBell />
+                                <span className="notification-badge">2</span>
                             </button>
-                        </div>
-
-                        {/* Additional filters - only show for available and saved tabs */}
-                        {(activeTab === 'available' || activeTab === 'saved') && (
-                            <div className="additional-filters">
-                                <div className="filters-dropdown" ref={filtersDropdownRef}>
-                                    <button 
-                                        className="filters-dropdown-toggle"
-                                        onClick={toggleFiltersDropdown}
-                                    >
-                                        Filters
-                                        <FaChevronDown className={`dropdown-icon ${showFiltersDropdown ? 'rotate' : ''}`} />
-                                    </button>
-                                    {showFiltersDropdown && (
-                                        <div className="filters-dropdown-menu">
-                                            {/* Your filter options here */}
-                                            <div className="filter-section">
-                                                <h4>Budget Type</h4>
-                                                <div className="filter-options">
-                                                    <label>
-                                                        <input 
-                                                            type="radio"
-                                                            name="budgetType"
-                                                            value="hourly"
-                                                            checked={filters.budgetType === 'hourly'}
-                                                            onChange={() => setFilters({...filters, budgetType: 'hourly'})}
-                                                        />
-                                                        Hourly
-                                                    </label>
-                                                    <label>
-                                                        <input 
-                                                            type="radio"
-                                                            name="budgetType"
-                                                            value="fixed"
-                                                            checked={filters.budgetType === 'fixed'}
-                                                            onChange={() => setFilters({...filters, budgetType: 'fixed'})}
-                                                        />
-                                                        Fixed
-                                                    </label>
-                                                </div>
+                            
+                            {showNotifications && (
+                                <div className="notifications-dropdown">
+                                    <div className="notification-header">
+                                        <h3>Notifications</h3>
+                                        <button className="mark-all-read">Mark all as read</button>
+                                    </div>
+                                    <div className="notification-list">
+                                        <div className="notification-item unread">
+                                            <div className="notification-icon">
+                                                <FaCheckCircle />
                                             </div>
-
-                                            {/* Add budget range inputs */}
-                                            <div className="filter-section">
-                                                <h4>Budget Range</h4>
-                                                <div className="budget-inputs">
-                                                    <input 
-                                                        type="number"
-                                                        placeholder="Min $"
-                                                        value={filters.budgetMin}
-                                                        onChange={(e) => setFilters({...filters, budgetMin: e.target.value})}
-                                                    />
-                                                    <span>to</span>
-                                                    <input 
-                                                        type="number"
-                                                        placeholder="Max $"
-                                                        value={filters.budgetMax}
-                                                        onChange={(e) => setFilters({...filters, budgetMax: e.target.value})}
-                                                    />
-                                                </div>
-                                            </div>
-
-                                            {/* Add skills filter */}
-                                            <div className="filter-section">
-                                                <h4>Skills</h4>
-                                                <div className="skills-filter">
-                                                    {/* A simple implementation - in a real app you'd have a more dynamic skills selector */}
-                                                    <div className="skill-options">
-                                                        {['JavaScript', 'React', 'Node.js', 'Python', 'Design'].map(skill => (
-                                                            <label key={skill}>
-                                                                <input 
-                                                                    type="checkbox"
-                                                                    checked={filters.skills.includes(skill)}
-                                                                    onChange={() => {
-                                                                        if (filters.skills.includes(skill)) {
-                                                                            setFilters({
-                                                                                ...filters, 
-                                                                                skills: filters.skills.filter(s => s !== skill)
-                                                                            });
-                                                                        } else {
-                                                                            setFilters({
-                                                                                ...filters,
-                                                                                skills: [...filters.skills, skill]
-                                                                            });
-                                                                        }
-                                                                    }}
-                                                                />
-                                                                {skill}
-                                                            </label>
-                                                        ))}
-                                                    </div>
-                                                </div>
-                                            </div>
-
-                                            <div className="filter-actions">
-                                                <button 
-                                                    className="apply-filters"
-                                                    onClick={() => {
-                                                        performSearch();
-                                                        setShowFiltersDropdown(false);
-                                                    }}
-                                                >
-                                                    Apply Filters
-                                                </button>
-                                                <button 
-                                                    className="clear-filters"
-                                                    onClick={() => {
-                                                        setFilters({
-                                                            skills: [],
-                                                            budgetType: '',
-                                                            budgetMin: '',
-                                                            budgetMax: ''
-                                                        });
-                                                        setShowFiltersDropdown(false);
-                                                        performSearch();
-                                                    }}
-                                                >
-                                                    Clear All
-                                                </button>
+                                            <div className="notification-content">
+                                                <p>Your profile has been verified!</p>
+                                                <span className="notification-time">2 hours ago</span>
                                             </div>
                                         </div>
-                                    )}
+                                        <div className="notification-item unread">
+                                            <div className="notification-icon">
+                                                <FaRegFileAlt />
+                                            </div>
+                                            <div className="notification-content">
+                                                <p>New job matching your skills is available</p>
+                                                <span className="notification-time">1 day ago</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div className="notification-footer">
+                                        <Link to="/notifications">View all notifications</Link>
+                                    </div>
                                 </div>
-                            </div>
-                        )}
-                    </div>
-
-                    {/* Job listings */}
-                    {filteredJobs.length === 0 ? (
-                        <div className="empty-state">
-                            {activeTab === 'available' && (
-                                <>
-                                    <img src="/empty-jobs.svg" alt="No jobs" />
-                                    <p>No jobs matching your criteria</p>
-                                </>
-                            )}
-                            {activeTab === 'saved' && (
-                                <>
-                                    <img src="/empty-saved.svg" alt="No saved jobs" />
-                                    <p>You haven't saved any jobs yet</p>
-                                </>
-                            )}
-                            {activeTab === 'proposals' && (
-                                <>
-                                    <img src="/empty-proposals.svg" alt="No applications" />
-                                    <p>You haven't applied to any jobs yet</p>
-                                </>
                             )}
                         </div>
-                    ) : (
-                        <div className="job-grid">
-                            {filteredJobs.map((job) => (
-                                <div key={job._id} className="job-card">
-                                    <div className="card-header">
-                                        <h3>{job.title}</h3>
+                        
+                        <button
+                            className="theme-toggle-button"
+                            onClick={toggleDarkMode}
+                            aria-label={isDarkMode ? "Switch to light mode" : "Switch to dark mode"}
+                        >
+                            {isDarkMode ? <FaSun /> : <FaMoon />}
+                        </button>
+
+                        <div className="profile-dropdown-container" ref={profileDropdownRef}>
+                            <button 
+                                className="profile-button" 
+                                onClick={toggleProfileDropdown}
+                                aria-label="User profile"
+                            >
+                                {userData.profilePicture ? (
+                                    <img 
+                                        src={userData.profilePicture}
+                                        alt="Profile"
+                                        className="profile-avatar"
+                                    />
+                                ) : (
+                                    <FaUserCircle className="profile-avatar-icon" />
+                                )}
+                                <FaChevronDown className={`dropdown-icon ${showProfileDropdown ? 'rotate' : ''}`} />
+                            </button>
+                            
+                            {showProfileDropdown && (
+                                <div className="profile-dropdown">
+                                    <div className="profile-dropdown-header">
+                                        <div className="profile-dropdown-avatar">
+                                            {userData.profilePicture ? (
+                                                <img 
+                                                    src={userData.profilePicture}
+                                                    alt={`${userData.name}'s profile`}
+                                                />
+                                            ) : (
+                                                <FaUserCircle />
+                                            )}
+                                        </div>
+                                        <div className="profile-dropdown-info">
+                                            <h4>{userData.name || 'User'}</h4>
+                                            <span className="profile-status">
+                                                {!userData.idVerification ? (
+                                                    'Not Verified'
+                                                ) : userData.idVerification.status === 'verified' ? (
+                                                    <><FaCheckCircle className="verified-icon" /> Verified</>
+                                                ) : userData.idVerification.status === 'pending' ? (
+                                                    <><FaClock className="pending-icon" /> Verification Pending</>
+                                                ) : userData.idVerification.status === 'rejected' ? (
+                                                    <>Verification Rejected</>
+                                                ) : (
+                                                    'Not Verified'
+                                                )}
+                                            </span>
+                                        </div>
+                                    </div>
+                                    <div className="profile-dropdown-links">
+                                        <button 
+                                            className="profile-dropdown-link"
+                                            onClick={() => navigate('/my-profile')}
+                                        >
+                                            <FaUserCircle /> View Profile
+                                        </button>
                                         
-                                        {/* Show application status for proposals tab */}
-                                        {activeTab === 'proposals' && (
-                                            <div className="application-status">
-                                                <FaClock />
-                                                <span>Pending Review</span>
+                                        <button 
+                                            className="profile-dropdown-link"
+                                            onClick={() => navigate('/verify-account')}
+                                        >
+                                            Verify Account
+                                        </button>
+                                        
+                                        <button 
+                                            className="profile-dropdown-link"
+                                            onClick={() => navigate('/settings')}
+                                        >
+                                            Settings
+                                        </button>
+                                        <button 
+                                            className="profile-dropdown-link"
+                                            onClick={handleLogout}
+                                        >
+                                            Logout
+                                        </button>
+                                    </div>
+                                </div>
+                            )}
+                        </div>
+                    </div>
+                </div>
+            </header>
+
+            {/* Main Content - Find Jobs Container */}
+            <div className="find-jobs-container">
+                {viewMode === 'detail' ? (
+                    renderJobDetail()
+                ) : (
+                    <>
+                        <div className="header">
+                            <div className="page-title">
+                                <h1>{getPageTitle()}</h1>
+                            </div>
+                            
+                            <div className="job-nav-dropdown" ref={dropdownRef}>
+                                <button 
+                                    className="dropdown-toggle"
+                                    onClick={toggleDropdown}
+                                >
+                                    {getCurrentTabName()}
+                                    <FaChevronDown className={`dropdown-icon ${showDropdown ? 'rotate' : ''}`} />
+                                </button>
+                                {showDropdown && (
+                                    <div className="job-dropdown-menu">
+                                        <button 
+                                            className={activeTab === 'available' ? 'active' : ''}
+                                            onClick={() => navigate('/find-jobs')}
+                                        >
+                                            Find Work
+                                        </button>
+                                        <button 
+                                            className={activeTab === 'saved' ? 'active' : ''}
+                                            onClick={() => navigate('/find-jobs/saved')}
+                                        >
+                                            Saved Jobs
+                                        </button>
+                                        <button 
+                                            className={activeTab === 'proposals' ? 'active' : ''}
+                                            onClick={() => navigate('/find-jobs/proposals')}
+                                        >
+                                            My Proposals
+                                        </button>
+                                    </div>
+                                )}
+                            </div>
+
+                            {/* Back to Dashboard button */}
+                            <button 
+                                className="back-to-dashboard-button"
+                                onClick={() => navigate('/employee-dashboard')}
+                            >
+                                Go Back to Dashboard
+                            </button>
+                        </div>
+
+                        {/* Search and filter section - only show on available and saved tabs */}
+                        <div className="search-filter-container">
+                            <div className="search-bar">
+                                <FaSearch className="search-icon" />
+                                <input 
+                                    type="text"
+                                    placeholder="Search jobs..."
+                                    value={searchTerm}
+                                    onChange={handleSearch}
+                                    onKeyPress={(e) => e.key === 'Enter' && performSearch()}
+                                />
+                                <button 
+                                    className="search-button"
+                                    onClick={performSearch}
+                                >
+                                    Search
+                                </button>
+                            </div>
+
+                            {/* Additional filters - only show for available and saved tabs */}
+                            {(activeTab === 'available' || activeTab === 'saved') && (
+                                <div className="additional-filters">
+                                    <div className="filters-dropdown" ref={filtersDropdownRef}>
+                                        <button 
+                                            className="filters-dropdown-toggle"
+                                            onClick={toggleFiltersDropdown}
+                                        >
+                                            Filters
+                                            <FaChevronDown className={`dropdown-icon ${showFiltersDropdown ? 'rotate' : ''}`} />
+                                        </button>
+                                        {showFiltersDropdown && (
+                                            <div className="filters-dropdown-menu">
+                                                {/* Your filter options here */}
+                                                <div className="filter-section">
+                                                    <h4>Budget Type</h4>
+                                                    <div className="filter-options">
+                                                        <label>
+                                                            <input 
+                                                                type="radio"
+                                                                name="budgetType"
+                                                                value="hourly"
+                                                                checked={filters.budgetType === 'hourly'}
+                                                                onChange={() => setFilters({...filters, budgetType: 'hourly'})}
+                                                            />
+                                                            Hourly
+                                                        </label>
+                                                        <label>
+                                                            <input 
+                                                                type="radio"
+                                                                name="budgetType"
+                                                                value="fixed"
+                                                                checked={filters.budgetType === 'fixed'}
+                                                                onChange={() => setFilters({...filters, budgetType: 'fixed'})}
+                                                            />
+                                                            Fixed
+                                                        </label>
+                                                    </div>
+                                                </div>
+
+                                                {/* Add budget range inputs */}
+                                                <div className="filter-section">
+                                                    <h4>Budget Range</h4>
+                                                    <div className="budget-inputs">
+                                                        <input 
+                                                            type="number"
+                                                            placeholder="Min $"
+                                                            value={filters.budgetMin}
+                                                            onChange={(e) => setFilters({...filters, budgetMin: e.target.value})}
+                                                        />
+                                                        <span>to</span>
+                                                        <input 
+                                                            type="number"
+                                                            placeholder="Max $"
+                                                            value={filters.budgetMax}
+                                                            onChange={(e) => setFilters({...filters, budgetMax: e.target.value})}
+                                                        />
+                                                    </div>
+                                                </div>
+
+                                                {/* Add skills filter */}
+                                                <div className="filter-section">
+                                                    <h4>Skills</h4>
+                                                    <div className="skills-filter">
+                                                        {/* A simple implementation - in a real app you'd have a more dynamic skills selector */}
+                                                        <div className="skill-options">
+                                                            {['JavaScript', 'React', 'Node.js', 'Python', 'Design'].map(skill => (
+                                                                <label key={skill}>
+                                                                    <input 
+                                                                        type="checkbox"
+                                                                        checked={filters.skills.includes(skill)}
+                                                                        onChange={() => {
+                                                                            if (filters.skills.includes(skill)) {
+                                                                                setFilters({
+                                                                                    ...filters, 
+                                                                                    skills: filters.skills.filter(s => s !== skill)
+                                                                                });
+                                                                            } else {
+                                                                                setFilters({
+                                                                                    ...filters,
+                                                                                    skills: [...filters.skills, skill]
+                                                                                });
+                                                                            }
+                                                                        }}
+                                                                    />
+                                                                    {skill}
+                                                                </label>
+                                                            ))}
+                                                        </div>
+                                                    </div>
+                                                </div>
+
+                                                <div className="filter-actions">
+                                                    <button 
+                                                        className="apply-filters"
+                                                        onClick={() => {
+                                                            performSearch();
+                                                            setShowFiltersDropdown(false);
+                                                        }}
+                                                    >
+                                                        Apply Filters
+                                                    </button>
+                                                    <button 
+                                                        className="clear-filters"
+                                                        onClick={() => {
+                                                            setFilters({
+                                                                skills: [],
+                                                                budgetType: '',
+                                                                budgetMin: '',
+                                                                budgetMax: ''
+                                                            });
+                                                            setShowFiltersDropdown(false);
+                                                            performSearch();
+                                                        }}
+                                                    >
+                                                        Clear All
+                                                    </button>
+                                                </div>
                                             </div>
                                         )}
                                     </div>
-                                    <p className="description">{job.description}</p>
-                                        
-                                    <div className="job-details">
-                                        <div className="detail-item">
-                                            <span>Skills:</span>
-                                            <div className="skills">
-                                                {job.skills?.map((skill, index) => (
-                                                    <span key={index} className="skill-tag">
-                                                        {skill}
-                                                    </span>
-                                                ))}
-                                            </div>
+                                </div>
+                            )}
+                        </div>
+
+                        {/* Job listings */}
+                        {filteredJobs.length === 0 ? (
+                            <div className="empty-state">
+                                {activeTab === 'available' && (
+                                    <>
+                                        <img src="/empty-jobs.svg" alt="No jobs" />
+                                        <p>No jobs matching your criteria</p>
+                                    </>
+                                )}
+                                {activeTab === 'saved' && (
+                                    <>
+                                        <img src="/empty-saved.svg" alt="No saved jobs" />
+                                        <p>You haven't saved any jobs yet</p>
+                                    </>
+                                )}
+                                {activeTab === 'proposals' && (
+                                    <>
+                                        <img src="/empty-proposals.svg" alt="No applications" />
+                                        <p>You haven't applied to any jobs yet</p>
+                                    </>
+                                )}
+                            </div>
+                        ) : (
+                            <div className="job-grid">
+                                {filteredJobs.map((job) => (
+                                    <div key={job._id} className="job-card">
+                                        <div className="card-header">
+                                            <h3>{job.title}</h3>
+                                            
+                                            {/* Show application status for proposals tab */}
+                                            {activeTab === 'proposals' && (
+                                                <div className="application-status">
+                                                    <FaClock />
+                                                    <span>Pending Review</span>
+                                                </div>
+                                            )}
                                         </div>
-                                        <div className="detail-grid">
+                                        <p className="description">{job.description}</p>
+                                            
+                                        <div className="job-details">
                                             <div className="detail-item">
-                                                <span>Scope:</span>
-                                                <span className="highlight">{job.scope}</span>
-                                            </div>
-                                            <div className="detail-item">
-                                                <span>Budget:</span>
-                                                <span className="highlight">
-                                                    {job.budgetType === "hourly"
-                                                        ? `$${job.hourlyFrom} - $${job.hourlyTo}/hr`
-                                                        : `$${job.fixedAmount} Fixed`}
-                                                </span>
-                                            </div>
-                                        </div>
-                                        {job.files?.length > 0 && (
-                                            <div className="detail-item">
-                                                <span>Attachments:</span>
-                                                <div className="attachments">
-                                                    {job.files.map((file, index) => (
-                                                        <a 
-                                                            key={index}
-                                                            href={file.path} 
-                                                            target="_blank" 
-                                                            rel="noopener noreferrer"
-                                                            className="file-link"
-                                                        >
-                                                            <FaRegFileAlt />
-                                                            {file.filename}
-                                                        </a>
+                                                <span>Skills:</span>
+                                                <div className="skills">
+                                                    {job.skills?.map((skill, index) => (
+                                                        <span key={index} className="skill-tag">
+                                                            {skill}
+                                                        </span>
                                                     ))}
                                                 </div>
                                             </div>
-                                        )}
-                                    </div>
-
-                                    {/* Application info for proposals tab */}
-                                    {activeTab === 'proposals' && (
-                                        <div className="application-info">
-                                            <p>Applied on: {new Date(job.createdAt).toLocaleDateString()}</p>
+                                            <div className="detail-grid">
+                                                <div className="detail-item">
+                                                    <span>Scope:</span>
+                                                    <span className="highlight">{job.scope}</span>
+                                                </div>
+                                                <div className="detail-item">
+                                                    <span>Budget:</span>
+                                                    <span className="highlight">
+                                                        {job.budgetType === "hourly"
+                                                            ? `$${job.hourlyFrom} - $${job.hourlyTo}/hr`
+                                                            : `$${job.fixedAmount} Fixed`}
+                                                    </span>
+                                                </div>
+                                            </div>
+                                            {job.files?.length > 0 && (
+                                                <div className="detail-item">
+                                                    <span>Attachments:</span>
+                                                    <div className="attachments">
+                                                        {job.files.map((file, index) => (
+                                                            <a 
+                                                                key={index}
+                                                                href={file.path} 
+                                                                target="_blank" 
+                                                                rel="noopener noreferrer"
+                                                                className="file-link"
+                                                            >
+                                                                <FaRegFileAlt />
+                                                                {file.filename}
+                                                            </a>
+                                                        ))}
+                                                    </div>
+                                                </div>
+                                            )}
                                         </div>
-                                    )}
 
-                                    <div className="job-actions">
-                                        <button 
-                                            className="view-details-button" 
-                                            onClick={() => navigate(`/find-jobs/details/${job._id}`)}
-                                        >
-                                            View Details
-                                        </button>
-
-                                        {/* Save button - only for available tab */}
-                                        {activeTab === 'available' && (
-                                            job.isSaved ? (
-                                                <button 
-                                                    className="save-button-inline saved"
-                                                    onClick={() => toggleSaveJob(job._id, true)}
-                                                >
-                                                    <FaBookmark />
-                                                    <span>Saved</span>
-                                                </button>
-                                            ) : (
-                                                <button 
-                                                    className="save-button-inline"
-                                                    onClick={() => toggleSaveJob(job._id, false)}
-                                                >
-                                                    <FaRegBookmark />
-                                                    <span>Save</span>
-                                                </button>
-                                            )
+                                        {/* Application info for proposals tab */}
+                                        {activeTab === 'proposals' && (
+                                            <div className="application-info">
+                                                <p>Applied on: {new Date(job.createdAt).toLocaleDateString()}</p>
+                                            </div>
                                         )}
+
+                                        <div className="job-actions">
+                                            <button 
+                                                className="view-details-button" 
+                                                onClick={() => navigate(`/find-jobs/details/${job._id}`)}
+                                            >
+                                                View Details
+                                            </button>
+
+                                            {/* Save button - only for available tab */}
+                                            {activeTab === 'available' && (
+                                                job.isSaved ? (
+                                                    <button 
+                                                        className="save-button-inline saved"
+                                                        onClick={() => toggleSaveJob(job._id, true)}
+                                                    >
+                                                        <FaBookmark />
+                                                        <span>Saved</span>
+                                                    </button>
+                                                ) : (
+                                                    <button 
+                                                        className="save-button-inline"
+                                                        onClick={() => toggleSaveJob(job._id, false)}
+                                                    >
+                                                        <FaRegBookmark />
+                                                        <span>Save</span>
+                                                    </button>
+                                                )
+                                            )}
+                                        </div>
                                     </div>
-                                </div>
-                            ))}
+                                ))}
+                            </div>
+                        )}
+                    </>
+                )}
+            </div>
+
+            {/* Footer Section */}
+            <footer className="dashboard-footer">
+                <div className="footer-grid">
+                    <div className="footer-column">
+                        <h3>For Freelancers</h3>
+                        <ul>
+                            <li><Link to="/find-jobs">Find Work</Link></li>
+                            <li><Link to="/resources">Resources</Link></li>
+                            <li><Link to="/freelancer-tips">Tips & Guides</Link></li>
+                            <li><Link to="/freelancer-forum">Community Forum</Link></li>
+                            <li><Link to="/freelancer-stories">Success Stories</Link></li>
+                        </ul>
+                    </div>
+                    
+                    <div className="footer-column">
+                        <h3>Resources</h3>
+                        <ul>
+                            <li><Link to="/help-center">Help Center</Link></li>
+                            <li><Link to="/webinars">Webinars</Link></li>
+                            <li><Link to="/blog">Blog</Link></li>
+                            <li><Link to="/api-docs">Developer API</Link></li>
+                            <li><Link to="/partner-program">Partner Program</Link></li>
+                        </ul>
+                    </div>
+                    
+                    <div className="footer-column">
+                        <h3>Company</h3>
+                        <ul>
+                            <li><Link to="/about">About Us</Link></li>
+                            <li><Link to="/leadership">Leadership</Link></li>
+                            <li><Link to="/careers">Careers</Link></li>
+                            <li><Link to="/press">Press</Link></li>
+                            <li><Link to="/contact">Contact Us</Link></li>
+                        </ul>
+                    </div>
+                </div>
+                
+                <div className="footer-bottom">
+                    <div className="footer-bottom-container">
+                        <div className="footer-logo">
+                            <Link to="/">Next Youth</Link>
                         </div>
-                    )}
-                </>
-            )}
+                        
+                        <div className="footer-legal-links">
+                            <Link to="/terms">Terms of Service</Link>
+                            <Link to="/privacy">Privacy Policy</Link>
+                            <Link to="/accessibility">Accessibility</Link>
+                            <Link to="/sitemap">Site Map</Link>
+                        </div>
+                        
+                        <div className="footer-social">
+                            <a href="https://facebook.com" aria-label="Facebook">
+                                <FaFacebook />
+                            </a>
+                            <a href="https://twitter.com" aria-label="Twitter">
+                                <FaTwitter />
+                            </a>
+                            <a href="https://linkedin.com" aria-label="LinkedIn">
+                                <FaLinkedinIn />
+                            </a>
+                            <a href="https://instagram.com" aria-label="Instagram">
+                                <FaInstagram />
+                            </a>
+                        </div>
+                    </div>
+                    
+                    <div className="footer-copyright">
+                        <p>&copy; {new Date().getFullYear()} Next Youth. All rights reserved.</p>
+                    </div>
+                </div>
+            </footer>
         </div>
     );
 };
