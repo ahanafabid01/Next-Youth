@@ -29,7 +29,12 @@ import {
   FaBriefcase,
   FaBookmark,
   FaRegFileAlt,
-  FaCheckCircle
+  FaCheckCircle,
+  FaDollarSign,
+  FaCommentDots,
+  FaTimes,
+  FaInfoCircle,
+  FaArrowLeft
 } from 'react-icons/fa';
 import './EmployeeProfile.css';
 import './EmployeeDashboard.css';
@@ -73,7 +78,13 @@ const EmployeeProfile = () => {
     socialMediaLink: '',
     idVerification: null,
     isVerified: false,
-    resumeUrl: ''
+    resumeUrl: '',
+    freelanceExperience: '',
+    paymentType: '',
+    fixedRate: '',
+    hourlyRate: '',
+    weeklyAvailability: '',
+    openToContractToHire: false
   });
 
   const [originalUserData, setOriginalUserData] = useState(null);
@@ -151,7 +162,13 @@ const EmployeeProfile = () => {
           socialMediaLink: userData.socialMediaLink || '',
           idVerification: verificationData,
           isVerified: verificationStatus === 'verified',
-          resumeUrl: userData.resume || ''
+          resumeUrl: userData.resume || '',
+          freelanceExperience: userData.freelanceExperience || '',
+          paymentType: userData.paymentType || '',
+          fixedRate: userData.fixedRate || '',
+          hourlyRate: userData.hourlyRate || '',
+          weeklyAvailability: userData.weeklyAvailability || '',
+          openToContractToHire: userData.openToContractToHire || false
         });
       }
     } catch (error) {
@@ -677,8 +694,11 @@ const EmployeeProfile = () => {
               <div className={`step-indicator ${step === 4 ? 'active' : step > 4 ? 'completed' : ''}`}>
                 4. Contact
               </div>
-              <div className={`step-indicator ${step === 5 ? 'active' : ''}`}>
+              <div className={`step-indicator ${step === 5 ? 'active' : step > 5 ? 'completed' : ''}`}>
                 5. Goals
+              </div>
+              <div className={`step-indicator ${step === 6 ? 'active' : ''}`}>
+                6. Price Preference
               </div>
             </div>
             
@@ -925,6 +945,51 @@ const EmployeeProfile = () => {
                   </div>
                 </div>
                 
+                {/* Other Skills */}
+                <div className="form-group">
+                  <label>Other Skills</label>
+                  <div className="skill-selection-container">
+                    <input 
+                      type="text" 
+                      id="otherSkill"
+                      name="otherSkill"
+                      className="form-select"
+                      placeholder="Enter a custom skill"
+                      onKeyPress={(e) => {
+                        if (e.key === 'Enter') {
+                          e.preventDefault();
+                          const customSkill = e.target.value.trim();
+                          if (customSkill && !formData.skills.includes(customSkill)) {
+                            setFormData({ 
+                              ...formData, 
+                              skills: [...formData.skills, customSkill] 
+                            });
+                            e.target.value = '';
+                          }
+                        }
+                      }}
+                    />
+                    <button 
+                      type="button" 
+                      className="add-button" 
+                      onClick={(e) => {
+                        const input = document.getElementById('otherSkill');
+                        const customSkill = input.value.trim();
+                        if (customSkill && !formData.skills.includes(customSkill)) {
+                          setFormData({ 
+                            ...formData, 
+                            skills: [...formData.skills, customSkill] 
+                          });
+                          input.value = '';
+                        }
+                      }}
+                    >
+                      Add
+                    </button>
+                  </div>
+                  <p className="form-hint">Type a skill and press Enter or click Add</p>
+                </div>
+                
                 {/* Languages */}
                 <div className="form-group">
                   <label>Add Languages</label>
@@ -1079,6 +1144,56 @@ const EmployeeProfile = () => {
                 <h2 className="section-title"><FaBullseye /> Career Goals & Questions</h2>
                 
                 <div className="form-group">
+                  <label>Have you freelanced before?</label>
+                  <div className="freelance-experience-options">
+                    <label className="option-card">
+                      <input
+                        type="radio"
+                        name="freelanceExperience"
+                        value="Yes, I have some experiences"
+                        checked={formData.freelanceExperience === "Yes, I have some experiences"}
+                        onChange={handleInputChange}
+                      />
+                      <div className="option-content">
+                        <div className="option-icon"><FaBriefcase /></div>
+                        <span className="option-title">Yes, I have some experiences</span>
+                        <span className="option-description">I've completed a few freelance projects before</span>
+                      </div>
+                    </label>
+                    
+                    <label className="option-card">
+                      <input
+                        type="radio"
+                        name="freelanceExperience"
+                        value="No, I have never"
+                        checked={formData.freelanceExperience === "No, I have never"}
+                        onChange={handleInputChange}
+                      />
+                      <div className="option-content">
+                        <div className="option-icon"><FaRegFileAlt /></div>
+                        <span className="option-title">No, I have never</span>
+                        <span className="option-description">This will be my first time freelancing</span>
+                      </div>
+                    </label>
+                    
+                    <label className="option-card">
+                      <input
+                        type="radio"
+                        name="freelanceExperience"
+                        value="I'm an expert"
+                        checked={formData.freelanceExperience === "I'm an expert"}
+                        onChange={handleInputChange}
+                      />
+                      <div className="option-content">
+                        <div className="option-icon"><FaCheckCircle /></div>
+                        <span className="option-title">I'm an expert</span>
+                        <span className="option-description">I have extensive freelancing experience</span>
+                      </div>
+                    </label>
+                  </div>
+                </div>
+                
+                <div className="form-group">
                   <label htmlFor="goals">Your Career Goals</label>
                   <textarea
                     id="goals"
@@ -1144,8 +1259,237 @@ const EmployeeProfile = () => {
                   <button className="secondary-button" onClick={handlePrevious}>
                     Back: Contact
                   </button>
+                  <button className="action-button" onClick={handleNext}>
+                    Next: Price Preference
+                  </button>
+                </div>
+              </div>
+            )}
+
+            {/* Step 6: Price Preference */}
+            {step === 6 && (
+              <div className="profile-form-section">
+                <h2 className="section-title"><FaDollarSign /> Price Preference</h2>
+                
+                <div className="pricing-intro">
+                  <div className="pricing-icon">
+                    <FaDollarSign />
+                  </div>
+                  <p className="pricing-description">
+                    Set your rates and availability to help clients find you for projects that match your expectations.
+                  </p>
+                </div>
+                
+                <div className="form-group pricing-options">
+                  <label>How would you like to be paid?</label>
+                  <div className="payment-type-cards">
+                    <label className={`payment-type-card ${formData.paymentType === "fixed" ? "selected" : ""}`}>
+                      <input
+                        type="radio"
+                        name="paymentType"
+                        value="fixed"
+                        checked={formData.paymentType === "fixed"}
+                        onChange={handleInputChange}
+                      />
+                      <div className="payment-card-content">
+                        <div className="payment-card-icon"><FaRegFileAlt /></div>
+                        <div className="payment-card-info">
+                          <h4>Fixed Rate</h4>
+                          <p>Get paid a set price for the entire project</p>
+                        </div>
+                      </div>
+                    </label>
+                    
+                    <label className={`payment-type-card ${formData.paymentType === "hourly" ? "selected" : ""}`}>
+                      <input
+                        type="radio"
+                        name="paymentType"
+                        value="hourly"
+                        checked={formData.paymentType === "hourly"}
+                        onChange={handleInputChange}
+                      />
+                      <div className="payment-card-content">
+                        <div className="payment-card-icon"><FaClock /></div>
+                        <div className="payment-card-info">
+                          <h4>Hourly Rate</h4>
+                          <p>Get paid for the time you put into the project</p>
+                        </div>
+                      </div>
+                    </label>
+                  </div>
+                </div>
+                
+                {formData.paymentType === "fixed" && (
+                  <div className="form-group rate-setting">
+                    <label htmlFor="fixedRate">Your Fixed Rate (USD)</label>
+                    <div className="rate-input-container">
+                      <span className="currency-symbol">$</span>
+                      <input
+                        type="number"
+                        id="fixedRate"
+                        name="fixedRate"
+                        value={formData.fixedRate}
+                        onChange={handleInputChange}
+                        className="form-input rate-input"
+                        min="0"
+                        step="1"
+                        placeholder="Enter your fixed rate"
+                      />
+                      <div className="increment-buttons">
+                        <button 
+                          type="button" 
+                          onClick={() => setFormData({...formData, fixedRate: (parseInt(formData.fixedRate) || 0) + 1})}
+                          className="increment-button"
+                        >
+                          ▲
+                        </button>
+                        <button 
+                          type="button" 
+                          onClick={() => setFormData({...formData, fixedRate: Math.max((parseInt(formData.fixedRate) || 0) - 1, 0)})}
+                          className="increment-button"
+                        >
+                          ▼
+                        </button>
+                      </div>
+                    </div>
+                    <p className="rate-hint">Set your average price for a typical project</p>
+                  </div>
+                )}
+                
+                {formData.paymentType === "hourly" && (
+                  <div className="form-group rate-setting">
+                    <label htmlFor="hourlyRate">Your Hourly Rate (USD)</label>
+                    <div className="rate-input-container">
+                      <span className="currency-symbol">$</span>
+                      <input
+                        type="number"
+                        id="hourlyRate"
+                        name="hourlyRate"
+                        value={formData.hourlyRate}
+                        onChange={handleInputChange}
+                        className="form-input rate-input"
+                        min="0"
+                        step="0.5"
+                        placeholder="Enter your hourly rate"
+                      />
+                      <div className="increment-buttons">
+                        <button 
+                          type="button" 
+                          onClick={() => setFormData({...formData, hourlyRate: ((parseFloat(formData.hourlyRate) || 0) + 0.5).toFixed(1)})}
+                          className="increment-button"
+                        >
+                          ▲
+                        </button>
+                        <button 
+                          type="button" 
+                          onClick={() => setFormData({...formData, hourlyRate: Math.max((parseFloat(formData.hourlyRate) || 0) - 0.5, 0).toFixed(1)})}
+                          className="increment-button"
+                        >
+                          ▼
+                        </button>
+                      </div>
+                    </div>
+                    <p className="rate-hint">Clients will see this rate on your profile</p>
+                  </div>
+                )}
+                
+                <div className="form-group">
+                  <label className="availability-label">How many hours will you be available per week?</label>
+                  <div className="availability-options">
+                    <label className="option-card">
+                      <input
+                        type="radio"
+                        name="weeklyAvailability"
+                        value="more than 30 hours/week"
+                        checked={formData.weeklyAvailability === "more than 30 hours/week"}
+                        onChange={handleInputChange}
+                      />
+                      <div className="option-content">
+                        <div className="option-icon"><FaClock /></div>
+                        <span className="option-title">More than 30 hours/week</span>
+                        <span className="option-description">I can work full-time hours</span>
+                      </div>
+                    </label>
+                    
+                    <label className="option-card">
+                      <input
+                        type="radio"
+                        name="weeklyAvailability"
+                        value="less than 30 hours/week"
+                        checked={formData.weeklyAvailability === "less than 30 hours/week"}
+                        onChange={handleInputChange}
+                      />
+                      <div className="option-content">
+                        <div className="option-icon"><FaClock /></div>
+                        <span className="option-title">Less than 30 hours/week</span>
+                        <span className="option-description">I can work part-time hours</span>
+                      </div>
+                    </label>
+                    
+                    <label className="option-card">
+                      <input
+                        type="radio"
+                        name="weeklyAvailability"
+                        value="I'm open to offers"
+                        checked={formData.weeklyAvailability === "I'm open to offers"}
+                        onChange={handleInputChange}
+                      />
+                      <div className="option-content">
+                        <div className="option-icon"><FaCommentDots /></div>
+                        <span className="option-title">I'm open to offers</span>
+                        <span className="option-description">Let's discuss what works for both of us</span>
+                      </div>
+                    </label>
+                    
+                    <label className="option-card">
+                      <input
+                        type="radio"
+                        name="weeklyAvailability"
+                        value="none"
+                        checked={formData.weeklyAvailability === "none"}
+                        onChange={handleInputChange}
+                      />
+                      <div className="option-content">
+                        <div className="option-icon"><FaTimes /></div>
+                        <span className="option-title">None</span>
+                        <span className="option-description">I'm not currently available</span>
+                      </div>
+                    </label>
+                  </div>
+                </div>
+                
+                <div className="form-group contract-hire-section">
+                  <div className="contract-hire-header">
+                    <label>Contract-to-hire Opportunities</label>
+                    <FaInfoCircle className="info-icon" title="Contract-to-hire means you'll start with a contract and may later explore a full-time option" />
+                  </div>
+                  <div className="contract-to-hire-option">
+                    <label className="checkbox-option">
+                      <input
+                        type="checkbox"
+                        name="openToContractToHire"
+                        checked={formData.openToContractToHire}
+                        onChange={(e) => setFormData({...formData, openToContractToHire: e.target.checked})}
+                        className="checkbox-input"
+                      />
+                      <div className="checkbox-content">
+                        <span className="checkbox-label">
+                          I'm open to contract-to-hire opportunities
+                        </span>
+                        <p className="option-description">
+                          This means you'll start with a contract and may later explore a full-time option.
+                        </p>
+                      </div>
+                    </label>
+                  </div>
+                </div>
+                
+                <div className="profile-form-actions">
+                  <button className="secondary-button" onClick={handlePrevious}>
+                    <FaArrowLeft className="button-icon" /> Back: Goals
+                  </button>
                   <button className="action-button" onClick={handleSubmit}>
-                    Save Profile
+                    <FaCheck className="button-icon" /> Complete Profile
                   </button>
                 </div>
               </div>
