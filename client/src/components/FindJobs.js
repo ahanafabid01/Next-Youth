@@ -703,7 +703,7 @@ const FindJobs = () => {
                         ) : (
                             <button 
                                 className="apply-button" 
-                                onClick={() => applyToJob(currentJob._id)}
+                                onClick={() => navigate(`/jobs/apply/${currentJob._id}`)}
                             >
                                 Apply Now
                             </button>

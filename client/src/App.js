@@ -13,6 +13,7 @@ import FindJobs from "./components/FindJobs"; // Import FindJobs component
 import VerifyAccount from './components/VerifyAccount'; // Add this import
 import MyProfile from './components/MyProfile'; // Import MyProfile
 import Notifications from './components/Notifications'; // Import Notifications
+import JobApplication from "./components/JobApplication"; // Add this import
 
 const App = () => {
     return (
@@ -34,6 +35,7 @@ const App = () => {
                 <Route path="/verify-account" element={<VerifyAccount />} /> {/* Add this route */}
                 <Route path="/my-profile" element={<MyProfile />} /> {/* Route for MyProfile */}
                 <Route path="/notifications" element={<Notifications />} /> {/* Route for Notifications */}
+                <Route path="/jobs/apply/:jobId" element={<JobApplication />} /> {/* Add this route */}
             </Routes>
         </Router>
     );
