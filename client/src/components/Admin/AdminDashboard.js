@@ -3,6 +3,7 @@ import { FaUsers, FaChartBar, FaClipboardList, FaEnvelope, FaSearch, FaCalendarA
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend } from "recharts"; // Import for graph
 import './AdminDashboard.css';  // Import the CSS file for styling
 import { Link } from "react-router-dom"; // Import Link from react-router-dom
+import Sidebar from "./Sidebar"; // Import the Sidebar component
 
 const AdminDashboard = () => {
   const [stats] = useState({
@@ -29,40 +30,7 @@ const AdminDashboard = () => {
   return (
     <div className="admin-dashboard">
       {/* Sidebar */}
-      <div className="sidebar">
-        <div className="logo">
-          <h2>NextYouth</h2>
-        </div>
-        <div className="menu">
-          <ul>
-            <li>
-              <Link to="/admin-dashboard/dashboard">
-                <FaSearch /> Dashboard
-              </Link>
-            </li>
-            <li>
-              <Link to="/admin-dashboard/users">
-                <FaUsers /> Users
-              </Link>
-            </li>
-            <li>
-              <Link to="/admin-dashboard/messages">
-                <FaEnvelope /> Messages
-              </Link>
-            </li>
-            <li>
-              <Link to="/admin-dashboard/applications">
-                <FaClipboardList /> Applications
-              </Link>
-            </li>
-            <li>
-              <Link to="/admin-dashboard/statistics">
-                <FaChartBar /> Statistics
-              </Link>
-            </li>
-          </ul>
-        </div>
-      </div>
+      <Sidebar />
 
       {/* Main Content */}
       <div className="main-content">

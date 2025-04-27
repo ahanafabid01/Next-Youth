@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
-import Sidebar from "./Sidebar"; // Import the reusable Sidebar component
-import "./AdminDashboard.css"; // Ensure the CSS for styling is included
+import Sidebar from "./Sidebar";
+import "./AdminDashboard.css";
+import "./Users.css"; // <-- Add this line
 import axios from "axios";
 
 const AdminDashboard = () => {
@@ -11,6 +12,8 @@ const AdminDashboard = () => {
     const [selectedUser, setSelectedUser] = useState(null);
     const [verificationNote, setVerificationNote] = useState("");
     const [actionLoading, setActionLoading] = useState(false);
+    const [showDeleteModal, setShowDeleteModal] = useState(false);
+    const [userToDelete, setUserToDelete] = useState(null);
 
     useEffect(() => {
         fetchUsers();
@@ -99,6 +102,37 @@ const AdminDashboard = () => {
         }
     };
 
+    // Handle user deletion
+    const handleDeleteUser = async (userId) => {
+        try {
+            if (!userId) {
+                alert('Error: User ID is missing');
+                return;
+            }
+            
+            console.log("Attempting to delete user with ID:", userId);
+            
+            const response = await axios.delete(`http://localhost:4000/api/auth/delete-user/${userId}`, {
+                withCredentials: true, // Ensure cookies (like the auth token) are sent
+            });
+            
+            console.log("Delete response:", response.data);
+            
+            if (response.data && response.data.success) {
+                setUsers(users.filter(user => user._id !== userId));
+                setShowDeleteModal(false);
+                setUserToDelete(null);
+                alert('User deleted successfully!');
+            }
+        } catch (err) {
+            console.error("Error deleting user:", err);
+            const errorMessage = err.response?.data?.message || err.message;
+            console.log("Full error details:", err.response || err);
+            alert(`Failed to delete user: ${errorMessage}`);
+            setShowDeleteModal(false);
+        }
+    };
+
     if (loading) return <div className="loading">Loading users data...</div>;
     if (error) return <div className="error-message">{error}</div>;
 
@@ -107,7 +141,7 @@ const AdminDashboard = () => {
             <Sidebar /> {/* Add the Sidebar component */}
             <div className="main-content">
                 <div className="dashboard-container">
-                    <h1>Admin Dashboard</h1>
+                    <h1>User Dashboard</h1>
                     <div className="dashboard-stats">
                         <div className="stat-card">
                             <h3>Total Users</h3>
@@ -147,7 +181,7 @@ const AdminDashboard = () => {
                                             <td>
                                                 {getVerificationBadge(user.idVerification?.status)}
                                             </td>
-                                            <td>
+                                            <td className="action-buttons-cell">
                                                 {user.idVerification?.frontImage && user.idVerification?.backImage && (
                                                     <button 
                                                         className="action-btn id-btn"
@@ -156,6 +190,15 @@ const AdminDashboard = () => {
                                                         Review ID
                                                     </button>
                                                 )}
+                                                <button 
+                                                    className="action-btn delete-btn"
+                                                    onClick={() => {
+                                                        setUserToDelete(user);
+                                                        setShowDeleteModal(true);
+                                                    }}
+                                                >
+                                                    Delete
+                                                </button>
                                             </td>
                                         </tr>
                                     ))
@@ -224,6 +267,47 @@ const AdminDashboard = () => {
                                                 {actionLoading ? 'Processing...' : 'Approve Verification'}
                                             </button>
                                         </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    )}
+
+                    {/* Delete Confirmation Modal */}
+                    {showDeleteModal && userToDelete && (
+                        <div className="modal-overlay">
+                            <div className="delete-confirmation-modal">
+                                <div className="modal-header">
+                                    <h2>Confirm Delete</h2>
+                                    <button 
+                                        className="close-modal"
+                                        onClick={() => {
+                                            setShowDeleteModal(false);
+                                            setUserToDelete(null);
+                                        }}
+                                    >
+                                        &times;
+                                    </button>
+                                </div>
+                                <div className="modal-content">
+                                    <p>Are you sure you want to delete user <strong>{userToDelete.name}</strong>?</p>
+                                    <p className="warning-text">This action cannot be undone!</p>
+                                    <div className="action-buttons">
+                                        <button 
+                                            className="action-btn cancel-btn"
+                                            onClick={() => {
+                                                setShowDeleteModal(false);
+                                                setUserToDelete(null);
+                                            }}
+                                        >
+                                            Cancel
+                                        </button>
+                                        <button 
+                                            className="action-btn delete-btn"
+                                            onClick={() => handleDeleteUser(userToDelete._id)}
+                                        >
+                                            Delete User
+                                        </button>
                                     </div>
                                 </div>
                             </div>

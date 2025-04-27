@@ -17,6 +17,7 @@ import EmployeeProfile from "./components/EmployeeProfile";
 import FindJobs from "./components/FindJobs";
 import VerifyAccount from './components/VerifyAccount';
 import MyProfile from './components/MyProfile';
+import JobDetails from "./components/Admin/JobDetails"; // <-- Add this line
 
 const App = () => {
     return (
@@ -42,6 +43,7 @@ const App = () => {
                 <Route path="/find-jobs/details/:jobId" element={<FindJobs />} />
                 <Route path="/verify-account" element={<VerifyAccount />} />
                 <Route path="/my-profile" element={<MyProfile />} />
+                <Route path="/admin-dashboard/job-details" element={<JobDetails />} /> {/* Add this line */}
             </Routes>
         </Router>
     );

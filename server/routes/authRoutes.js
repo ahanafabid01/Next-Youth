@@ -1,6 +1,6 @@
 import express from "express";
 import { register, Login, Logout, verifyEmail, resendOtp, resetPassword, getUserProfile, updateUserProfile, verifyIdentity,
-    getVerificationStatus, updateEmployeeProfile, getEmployeeProfile, getAllUsers, verifyUserIdentity } from "../controllers/authController.js";
+    getVerificationStatus, updateEmployeeProfile, getEmployeeProfile, getAllUsers, verifyUserIdentity, deleteUser } from "../controllers/authController.js";
 import userAuth from "../middleware/userAuth.js"; // Import userAuth middleware
 import upload from "../middleware/uploadMiddleware.js"; // Import upload middleware
 import userModel from "../models/userModel.js"; // Add this import
@@ -81,4 +81,19 @@ authRouter.get('/admin/users', userAuth, getAllUsers); // Add this route
 // Admin verification route
 authRouter.post('/admin/verify-user', userAuth, verifyUserIdentity);
 
+// Add this new route
+authRouter.delete('/delete-user/:id', userAuth, deleteUser);
+
 export default authRouter;
+
+// filepath: /Users/nowrinsanjana/Next-Youth/server/controllers/authController.js
+export const Logout = (req, res) => {
+    console.log("Logout function called!"); // Add this line
+    res.clearCookie("token", {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === "production",
+        sameSite: process.env.NODE_ENV === "production" ? "none" : "strict",
+    });
+    console.log("Token cookie cleared!"); // Add this line
+    return res.status(200).json({ success: true, message: "Logged out successfully" });
+};

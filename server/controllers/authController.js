@@ -130,7 +130,11 @@ export const Login = async (req, res) => {
 
 // Logout Function
 export const Logout = (req, res) => {
-    res.clearCookie("token", { httpOnly: true, secure: process.env.NODE_ENV === "production", sameSite: "none" });
+    res.clearCookie("token", {
+        httpOnly: true,
+        secure: false, // ONLY FOR LOCAL DEVELOPMENT
+        sameSite: "strict", // Or "lax"
+    });
     return res.status(200).json({ success: true, message: "Logged out successfully" });
 };
 
@@ -719,5 +723,35 @@ export const verifyUserIdentity = async (req, res) => {
             success: false,
             message: "Internal server error"
         });
+    }
+};
+
+export const deleteUser = async (req, res) => {
+    console.log(`--- DELETE /api/auth/delete-user/:id ROUTE HIT ---`); // <-- Add this log
+    console.log(`--- User ID to delete: ${req.params.id} ---`); // <-- Add this log
+    console.log(`--- Requesting Admin User ID: ${req.user?.id} ---`); // <-- Add this log (check if userAuth middleware ran)
+    try {
+        // ... rest of your deleteUser function
+        const requestingUser = await userModel.findById(req.user.id);
+        if (!requestingUser || requestingUser.user_type !== 'admin') {
+            return res.status(403).json({ success: false, message: "Forbidden: Only admins can delete users." });
+        }
+
+        const { id } = req.params; // User ID to delete
+
+        const userToDelete = await userModel.findById(id);
+        if (!userToDelete) {
+            return res.status(404).json({ success: false, message: "User not found." });
+        }
+
+        // Optional: Add checks here if needed (e.g., prevent admin from deleting themselves)
+
+        await userModel.findByIdAndDelete(id);
+
+        res.status(200).json({ success: true, message: "User deleted successfully." });
+
+    } catch (error) {
+        console.error("Error deleting user:", error);
+        res.status(500).json({ success: false, message: "Internal server error during user deletion." });
     }
 };

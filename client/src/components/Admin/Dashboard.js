@@ -1,5 +1,6 @@
 import React from "react";
 import { Link } from "react-router-dom";
+import Sidebar from "./Sidebar";
 import { FaUsers, FaChartBar, FaClipboardList, FaEnvelope, FaSearch } from "react-icons/fa";
 import "./Dashboard.css"; // Optional: Add CSS for styling
 
