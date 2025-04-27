@@ -253,6 +253,11 @@ const JobApplication = () => {
                 formData.append('attachments', file);
             });
             
+            console.log("Submitting application with data:", {
+                jobId, bid, receivedAmount, duration, coverLetterLength: coverLetter.length,
+                filesCount: files.length
+            });
+            
             // Submit application
             const response = await axios.post(
                 'http://localhost:4000/api/jobs/apply-with-details',
@@ -262,6 +267,8 @@ const JobApplication = () => {
                     headers: { 'Content-Type': 'multipart/form-data' }
                 }
             );
+            
+            console.log("Application response:", response.data);
             
             if (response.data.success) {
                 setSuccess(true);

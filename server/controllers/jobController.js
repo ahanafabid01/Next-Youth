@@ -251,12 +251,13 @@ export const removeSavedJob = async (req, res) => {
     }
 };
 
-// Add this function to your existing jobController.js
-
+// Update the applyWithDetails function to ensure all data is saved properly
 export const applyWithDetails = async (req, res) => {
     try {
         const { jobId, bid, receivedAmount, duration, coverLetter } = req.body;
         const userId = req.user.id;
+        
+        console.log("Received application data:", { jobId, bid, receivedAmount, duration, coverLetter });
         
         // Check if job exists
         const job = await jobModel.findById(jobId);
@@ -284,6 +285,7 @@ export const applyWithDetails = async (req, res) => {
         
         // Create application record
         const applicationModel = await import("../models/applicationModel.js").then(module => module.default);
+        
         const application = await applicationModel.create({
             job: jobId,
             applicant: userId,
@@ -298,6 +300,8 @@ export const applyWithDetails = async (req, res) => {
         // Add job to user's applied jobs
         user.appliedJobs.push(jobId);
         await user.save();
+        
+        console.log("Application created successfully:", application);
         
         return res.status(200).json({ 
             success: true, 

@@ -4,40 +4,38 @@ const applicationSchema = new mongoose.Schema({
     job: {
         type: mongoose.Schema.Types.ObjectId,
         ref: "job",
-        required: true,
+        required: true
     },
     applicant: {
         type: mongoose.Schema.Types.ObjectId,
         ref: "user",
-        required: true,
+        required: true
     },
     bid: {
         type: Number,
-        required: true,
+        required: true
     },
     receivedAmount: {
         type: Number,
-        required: true,
+        required: true
     },
     duration: {
         type: String,
-        enum: ["less than 1 month", "1-3 months", "3-6 months", "more than 6 months"],
-        required: true,
+        required: true
     },
     coverLetter: {
         type: String,
-        required: true,
-        maxlength: 5000
+        required: true
     },
     attachments: [
         {
             filename: { type: String },
-            path: { type: String },
+            path: { type: String }
         }
     ],
     status: {
         type: String,
-        enum: ["pending", "shortlisted", "rejected", "accepted"],
+        enum: ["pending", "accepted", "rejected", "withdrawn"],
         default: "pending"
     },
     notes: {
