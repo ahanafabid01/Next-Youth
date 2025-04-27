@@ -646,7 +646,11 @@ const JobApplication = () => {
                                 <label>How long will this project take?</label>
                                 <div className="duration-options">
                                     {['less than 1 month', '1-3 months', '3-6 months', 'more than 6 months'].map((option) => (
-                                        <label key={option} className="duration-option">
+                                        <div
+                                            key={option}
+                                            className={`duration-option ${duration === option ? 'selected' : ''}`}
+                                            onClick={() => setDuration(option)}
+                                        >
                                             <input
                                                 type="radio"
                                                 name="duration"
@@ -655,7 +659,7 @@ const JobApplication = () => {
                                                 onChange={(e) => setDuration(e.target.value)}
                                             />
                                             <span>{option}</span>
-                                        </label>
+                                        </div>
                                     ))}
                                 </div>
                             </div>

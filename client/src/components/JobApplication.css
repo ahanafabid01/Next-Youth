@@ -247,14 +247,16 @@
 }
 
 .received-amount input {
-    background-color: var(--disabled-bg, #f0f0f0);
-    color: var(--text-primary, #333);
-    font-weight: 600;
+    background-color: var(--primary-light, rgba(67, 97, 238, 0.1));
+    border-color: var(--primary-color, #4361ee);
+    color: var(--primary-color, #4361ee);
+    font-weight: 700;
 }
 
 .dark-mode .received-amount input {
-    background-color: var(--dark-disabled-bg, #2d2d2d);
-    color: var(--dark-text-primary, #e0e0e0);
+    background-color: rgba(67, 97, 238, 0.2);
+    border-color: var(--primary-color, #4361ee);
+    color: #7b92ff;
 }
 
 .service-fee {
@@ -293,18 +295,14 @@
 .duration-option {
     display: flex;
     align-items: center;
-    gap: 0.75rem;
-    padding: 0.75rem;
-    background-color: var(--option-bg, #fff);
-    border: 1px solid var(--border-color, #ddd);
+    padding: 1rem;
+    background-color: var(--card-bg-color, #fff);
+    border: 2px solid var(--border-color, #eaeaea);
     border-radius: 8px;
     cursor: pointer;
     transition: all 0.2s ease;
-}
-
-.dark-mode .duration-option {
-    background-color: var(--dark-option-bg, #3d3d3d);
-    border-color: var(--dark-border-color, #4d4d4d);
+    /* Center text without the radio button */
+    justify-content: center;
 }
 
 .duration-option:hover {
@@ -312,18 +310,77 @@
     background-color: var(--primary-light, rgba(67, 97, 238, 0.05));
 }
 
-.duration-option input {
-    width: 18px;
-    height: 18px;
-    accent-color: var(--primary-color, #4361ee);
+/* Hide the actual radio input */
+.duration-option input[type="radio"] {
+    display: none;
 }
 
+/* Style for the text inside duration options */
 .duration-option span {
+    font-weight: 500;
     color: var(--text-primary, #333);
+    transition: all 0.2s ease;
+}
+
+/* Selected option styling with darker corners */
+.duration-option.selected {
+    border-color: var(--primary-color, #4361ee);
+    background-color: var(--primary-light, rgba(67, 97, 238, 0.1));
+    box-shadow: 
+        inset -3px -3px 6px rgba(67, 97, 238, 0.2),
+        inset 3px 3px 6px rgba(67, 97, 238, 0.2);
+}
+
+.duration-option.selected span {
+    color: var(--primary-color, #4361ee);
+    font-weight: 600;
+}
+
+/* Dark mode adjustments */
+.dark-mode .duration-option {
+    background-color: var(--dark-option-bg, #3d3d3d);
+    border-color: var(--dark-border-color, #4d4d4d);
 }
 
 .dark-mode .duration-option span {
     color: var(--dark-text-primary, #e0e0e0);
+}
+
+.dark-mode .duration-option.selected {
+    border-color: var(--primary-color, #4361ee);
+    background-color: rgba(67, 97, 238, 0.2);
+    box-shadow: 
+        inset -3px -3px 6px rgba(67, 97, 238, 0.3),
+        inset 3px 3px 6px rgba(67, 97, 238, 0.3);
+}
+
+.dark-mode .duration-option.selected span {
+    color: #7b92ff;
+}
+
+/* Update other color themes to blue */
+.terms-section {
+    border-left: 4px solid #4361ee !important;
+}
+
+.terms-section .section-icon {
+    background-color: #4361ee !important;
+}
+
+.terms-section .section-header {
+    background: linear-gradient(to right, rgba(67, 97, 238, 0.1), transparent) !important;
+}
+
+.additional-details-section {
+    border-left: 4px solid #4361ee !important;
+}
+
+.additional-details-section .section-icon {
+    background-color: #4361ee !important;
+}
+
+.additional-details-section .section-header {
+    background: linear-gradient(to right, rgba(67, 97, 238, 0.1), transparent) !important;
 }
 
 /* Additional Details Section */
@@ -543,7 +600,7 @@
 
 .dark-mode .cancel-button {
     border-color: var(--dark-border-color, #4d4d4d);
-    color: var(--dark-text-secondary, #a0a0a0);
+    color: var (--dark-text-secondary, #a0a0a0);
 }
 
 .cancel-button:hover {
@@ -1068,15 +1125,15 @@
 
 /* Terms section */
 .terms-section {
-    border-left: 4px solid #00b8d9;
+    border-left: 4px solid #4361ee !important;
 }
 
 .terms-section .section-icon {
-    background-color: #00b8d9;
+    background-color: #4361ee !important;
 }
 
 .terms-section .section-header {
-    background: linear-gradient(to right, #f0fafd, transparent);
+    background: linear-gradient(to right, rgba(67, 97, 238, 0.1), transparent) !important;
 }
 
 .bid-container {
@@ -1155,10 +1212,16 @@
 }
 
 .received-amount input {
-    background-color: var(--success-light, #f0fdf4);
-    border-color: var(--success-color, #52c41a);
-    color: var(--success-color, #52c41a);
+    background-color: var(--primary-light, rgba(67, 97, 238, 0.1));
+    border-color: var(--primary-color, #4361ee);
+    color: var(--primary-color, #4361ee);
     font-weight: 700;
+}
+
+.dark-mode .received-amount input {
+    background-color: rgba(67, 97, 238, 0.2);
+    border-color: var(--primary-color, #4361ee);
+    color: #7b92ff;
 }
 
 .duration-selection {
@@ -1184,13 +1247,14 @@
 .duration-option {
     display: flex;
     align-items: center;
-    gap: 0.75rem;
     padding: 1rem;
     background-color: var(--card-bg-color, #fff);
     border: 2px solid var(--border-color, #eaeaea);
     border-radius: 8px;
     cursor: pointer;
     transition: all 0.2s ease;
+    /* Center text without the radio button */
+    justify-content: center;
 }
 
 .duration-option:hover {
@@ -1198,14 +1262,52 @@
     background-color: var(--primary-light, rgba(67, 97, 238, 0.05));
 }
 
-.duration-option input {
-    width: 20px;
-    height: 20px;
-    accent-color: var(--primary-color, #4361ee);
+/* Hide the actual radio input */
+.duration-option input[type="radio"] {
+    display: none;
 }
 
+/* Style for the text inside duration options */
 .duration-option span {
     font-weight: 500;
+    color: var(--text-primary, #333);
+    transition: all 0.2s ease;
+}
+
+/* Selected option styling with darker corners */
+.duration-option.selected {
+    border-color: var(--primary-color, #4361ee);
+    background-color: var(--primary-light, rgba(67, 97, 238, 0.1));
+    box-shadow: 
+        inset -3px -3px 6px rgba(67, 97, 238, 0.2),
+        inset 3px 3px 6px rgba(67, 97, 238, 0.2);
+}
+
+.duration-option.selected span {
+    color: var(--primary-color, #4361ee);
+    font-weight: 600;
+}
+
+/* Dark mode adjustments */
+.dark-mode .duration-option {
+    background-color: var(--dark-option-bg, #3d3d3d);
+    border-color: var(--dark-border-color, #4d4d4d);
+}
+
+.dark-mode .duration-option span {
+    color: var(--dark-text-primary, #e0e0e0);
+}
+
+.dark-mode .duration-option.selected {
+    border-color: var(--primary-color, #4361ee);
+    background-color: rgba(67, 97, 238, 0.2);
+    box-shadow: 
+        inset -3px -3px 6px rgba(67, 97, 238, 0.3),
+        inset 3px 3px 6px rgba(67, 97, 238, 0.3);
+}
+
+.dark-mode .duration-option.selected span {
+    color: #7b92ff;
 }
 
 input[type="radio"]:checked + span {
@@ -1215,15 +1317,15 @@ input[type="radio"]:checked + span {
 
 /* Additional details section */
 .additional-details-section {
-    border-left: 4px solid #ff9500;
+    border-left: 4px solid #4361ee !important;
 }
 
 .additional-details-section .section-icon {
-    background-color: #ff9500;
+    background-color: #4361ee !important;
 }
 
 .additional-details-section .section-header {
-    background: linear-gradient(to right, #fff9f0, transparent);
+    background: linear-gradient(to right, rgba(67, 97, 238, 0.1), transparent) !important;
 }
 
 .cover-letter-container {
