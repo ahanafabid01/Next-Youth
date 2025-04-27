@@ -17,9 +17,9 @@ const JobApplication = () => {
     const [success, setSuccess] = useState(false);
     
     // Application form data
-    const [bid, setBid] = useState(0);
+    const [bid, setBid] = useState(''); // Changed from 0 to empty string
     const [receivedAmount, setReceivedAmount] = useState(0);
-    const [duration, setDuration] = useState('less than 1 month');
+    const [duration, setDuration] = useState(''); // Remove default selection
     const [coverLetter, setCoverLetter] = useState('');
     const [files, setFiles] = useState([]);
     const [fileErrors, setFileErrors] = useState([]);
@@ -137,17 +137,7 @@ const JobApplication = () => {
                     const jobData = response.data.jobs.find(j => j._id === jobId);
                     if (jobData) {
                         setJob(jobData);
-                        
-                        // Set initial bid amount based on job budget
-                        if (jobData.budgetType === 'fixed') {
-                            setBid(jobData.fixedAmount);
-                            calculateReceivedAmount(jobData.fixedAmount);
-                        } else {
-                            // For hourly jobs, set a reasonable default
-                            const avgHourly = (Number(jobData.hourlyFrom) + Number(jobData.hourlyTo)) / 2;
-                            setBid(avgHourly * 40); // Assuming 40 hours of work
-                            calculateReceivedAmount(avgHourly * 40);
-                        }
+                        // Remove the automatic bid setting code
                     } else {
                         setError("Job not found");
                     }
@@ -221,18 +211,23 @@ const JobApplication = () => {
         setFiles(prevFiles => prevFiles.filter((_, i) => i !== index));
     };
 
-    // Handle form submission
+    // Update the handleSubmit function to make cover letter and files optional
     const handleSubmit = async (e) => {
         e.preventDefault();
         
-        // Validate form
+        // Validate only the required fields
         if (coverLetter.length > 5000) {
             setError("Cover letter exceeds 5000 character limit");
             return;
         }
         
-        if (bid <= 0) {
+        if (!bid || bid <= 0) {
             setError("Please enter a valid bid amount");
+            return;
+        }
+        
+        if (!duration) {
+            setError("Please select a project duration");
             return;
         }
         
@@ -246,15 +241,18 @@ const JobApplication = () => {
             formData.append('bid', bid);
             formData.append('receivedAmount', receivedAmount);
             formData.append('duration', duration);
-            formData.append('coverLetter', coverLetter);
+            formData.append('coverLetter', coverLetter || ''); // Allow empty cover letter
             
-            // Add files to form data
-            files.forEach(file => {
-                formData.append('attachments', file);
-            });
+            // Add files to form data (if any)
+            if (files.length > 0) {
+                files.forEach(file => {
+                    formData.append('attachments', file);
+                });
+            }
             
             console.log("Submitting application with data:", {
-                jobId, bid, receivedAmount, duration, coverLetterLength: coverLetter.length,
+                jobId, bid, receivedAmount, duration, 
+                coverLetterLength: coverLetter ? coverLetter.length : 0,
                 filesCount: files.length
             });
             
@@ -616,8 +614,9 @@ const JobApplication = () => {
                                                 value={bid}
                                                 min="1"
                                                 step="0.01"
-                                                onChange={(e) => handleBidChange(Number(e.target.value))}
+                                                onChange={(e) => handleBidChange(Number(e.target.value) || '')}
                                                 required
+                                                placeholder="Enter your bid" // Remove extra "a" character
                                             />
                                         </div>
                                         <button 
@@ -664,11 +663,13 @@ const JobApplication = () => {
                                                 value={option}
                                                 checked={duration === option}
                                                 onChange={(e) => setDuration(e.target.value)}
+                                                required // Add required attribute
                                             />
                                             <span>{option}</span>
                                         </div>
                                     ))}
                                 </div>
+                                {!duration && error && <div className="error-message">Please select a project duration</div>}
                             </div>
                         </div>
                     </div>
@@ -695,7 +696,6 @@ const JobApplication = () => {
                                     onChange={(e) => setCoverLetter(e.target.value)}
                                     placeholder="Introduce yourself and explain why you're a good fit for this job..."
                                     maxLength={5000}
-                                    required
                                     className={coverLetter.length >= 5000 ? 'limit-reached' : ''}
                                 ></textarea>
                             </div>
