@@ -1,5 +1,5 @@
 import express from "express";
-import { addJob, getJobs, deleteJob, updateJobStatus, getAvailableJobs, saveJob, applyForJob, getSavedJobs, getAppliedJobs, removeSavedJob } from "../controllers/jobController.js";
+import { addJob, getJobs, deleteJob, updateJobStatus, getAvailableJobs, saveJob, applyForJob, getSavedJobs, getAppliedJobs, removeSavedJob, getAllJobs } from "../controllers/jobController.js";
 import userAuth from "../middleware/userAuth.js";
 import upload from "../middleware/uploadMiddleware.js";
 
@@ -15,5 +15,6 @@ router.post("/:id/apply", userAuth, applyForJob);
 router.get("/saved", userAuth, getSavedJobs);
 router.get("/applied", userAuth, getAppliedJobs);
 router.post('/:id/save/remove', userAuth, removeSavedJob);
+router.get("/admin/all", userAuth, getAllJobs);
 
 export default router;

@@ -130,7 +130,11 @@ export const Login = async (req, res) => {
 
 // Logout Function
 export const Logout = (req, res) => {
-    res.clearCookie("token", { httpOnly: true, secure: process.env.NODE_ENV === "production", sameSite: "none" });
+    res.clearCookie("token", {
+        httpOnly: true,
+        secure: false, // ONLY FOR LOCAL DEVELOPMENT
+        sameSite: "strict", // Or "lax"
+    });
     return res.status(200).json({ success: true, message: "Logged out successfully" });
 };
 
@@ -719,5 +723,29 @@ export const verifyUserIdentity = async (req, res) => {
             success: false,
             message: "Internal server error"
         });
+    }
+};
+
+export const deleteUser = async (req, res) => {
+    try {
+        // For admin users, we only need to check the user_type
+        if (req.user.user_type !== 'admin') {
+            return res.status(403).json({ success: false, message: "Forbidden: Only admins can delete users." });
+        }
+
+        const { id } = req.params; // User ID to delete
+
+        const userToDelete = await userModel.findById(id);
+        if (!userToDelete) {
+            return res.status(404).json({ success: false, message: "User not found." });
+        }
+
+        // Delete the user
+        await userModel.findByIdAndDelete(id);
+
+        return res.status(200).json({ success: true, message: "User deleted successfully." });
+    } catch (error) {
+        console.error("Error deleting user:", error);
+        return res.status(500).json({ success: false, message: "Internal server error during user deletion." });
     }
 };
