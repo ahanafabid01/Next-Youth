@@ -1648,3 +1648,96 @@ textarea#coverLetter:focus {
         margin-bottom: 1rem;
     }
 }
+
+/* Add these styles to highlight required fields when there's an error */
+.input-error {
+    border-color: #ff4d4f !important;
+    animation: shake 0.5s;
+}
+
+.highlight-required {
+    border: 2px solid #ff4d4f !important;
+    box-shadow: 0 0 4px rgba(255, 77, 79, 0.5);
+    animation: pulse 1.5s infinite;
+}
+
+@keyframes shake {
+    0%, 100% { transform: translateX(0); }
+    25% { transform: translateX(-5px); }
+    75% { transform: translateX(5px); }
+}
+
+@keyframes pulse {
+    0% { box-shadow: 0 0 0 rgba(255, 77, 79, 0.5); }
+    50% { box-shadow: 0 0 8px rgba(255, 77, 79, 0.8); }
+    100% { box-shadow: 0 0 0 rgba(255, 77, 79, 0.5); }
+}
+
+/* Error message styling for required fields */
+.field-error-message {
+    color: #ff4d4f;
+    font-size: 0.9rem;
+    margin-top: 0.5rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-weight: 500;
+    animation: fadeIn 0.3s;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+.required {
+    color: #ff4d4f;
+    margin-left: 3px;
+}
+
+/* Update error message containers for better positioning */
+.bid-input-group, .received-amount-group, .duration-selection {
+    position: relative;
+    margin-bottom: 1.5rem;
+}
+
+/* Add highlight animation for required fields */
+@keyframes highlight-pulse {
+    0% { box-shadow: 0 0 0 0 rgba(67, 97, 238, 0.4); }
+    70% { box-shadow: 0 0 0 10px rgba(67, 97, 238, 0); }
+    100% { box-shadow: 0 0 0 0 rgba(67, 97, 238, 0); }
+}
+
+.highlight-animation {
+    animation: highlight-pulse 1s ease-in-out 2;
+}
+
+/* Improve styling of the error message for duration */
+.field-error-message {
+    color: #ff4d4f;
+    font-size: 0.9rem;
+    margin-top: 0.5rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-weight: 500;
+    animation: fadeIn 0.3s;
+    padding: 0.5rem;
+    background-color: rgba(255, 77, 79, 0.05);
+    border-radius: 4px;
+}
+
+/* Make the duration options more visually distinct when required */
+.duration-options.highlight-required {
+    border: 2px solid #ff4d4f;
+    border-radius: 8px;
+    padding: 10px;
+    background-color: rgba(255, 77, 79, 0.05);
+}
+
+/* Make duration field error more prominent */
+.duration-selection .field-error-message {
+    font-weight: 600;
+    margin-top: 0.75rem;
+    background-color: rgba(255, 77, 79, 0.1);
+}

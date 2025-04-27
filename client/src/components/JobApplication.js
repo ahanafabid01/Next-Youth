@@ -211,29 +211,81 @@ const JobApplication = () => {
         setFiles(prevFiles => prevFiles.filter((_, i) => i !== index));
     };
 
-    // Update the handleSubmit function to make cover letter and files optional
+    // Add these state variables to track field-specific errors
+    const [bidError, setBidError] = useState('');
+    const [durationError, setDurationError] = useState('');
+
+    // Update the handleSubmit function to improve validation and field focus
     const handleSubmit = async (e) => {
         e.preventDefault();
         
-        // Validate only the required fields
-        if (coverLetter.length > 5000) {
-            setError("Cover letter exceeds 5000 character limit");
-            return;
-        }
+        // Clear any previous errors
+        setError('');
+        setBidError('');
+        setDurationError('');
         
+        let hasError = false;
+        
+        // Validate required fields with better error handling
         if (!bid || bid <= 0) {
-            setError("Please enter a valid bid amount");
-            return;
+            setBidError("Please enter your bid amount");
+            // Focus on the bid input field
+            document.getElementById('bid').focus();
+            // Scroll to the bid section
+            document.querySelector('.bid-container').scrollIntoView({ behavior: 'smooth', block: 'center' });
+            hasError = true;
         }
         
         if (!duration) {
-            setError("Please select a project duration");
+            setDurationError("Choose an option");
+            if (!hasError) {
+                // Use a more specific and reliable selector
+                const durationSection = document.querySelector('.duration-selection');
+                
+                if (durationSection) {
+                    // Add a console log to debug
+                    console.log("Duration section found:", durationSection);
+                    
+                    durationSection.classList.add('highlight-animation');
+                    
+                    // Ensure scrolling works with timeout to let the DOM update
+                    setTimeout(() => {
+                        durationSection.scrollIntoView({ 
+                            behavior: 'smooth', 
+                            block: 'center'
+                        });
+                    }, 100);
+                    
+                    // Remove highlight class after animation completes
+                    setTimeout(() => {
+                        durationSection.classList.remove('highlight-animation');
+                    }, 2000);
+                } else {
+                    // Fallback scrolling method if the element isn't found by class
+                    console.log("Duration section not found by class, trying alternative selector");
+                    const alternativeDurationSection = document.querySelector('div.duration-options').closest('.duration-selection');
+                    if (alternativeDurationSection) {
+                        alternativeDurationSection.scrollIntoView({ 
+                            behavior: 'smooth', 
+                            block: 'center'
+                        });
+                    }
+                }
+            }
+            hasError = true;
+        }
+        
+        if (hasError) return;
+        
+        // Validate optional fields only if they have content
+        if (coverLetter && coverLetter.length > 5000) {
+            setError("Cover letter exceeds 5000 character limit");
+            document.querySelector('.cover-letter-container').scrollIntoView({ behavior: 'smooth', block: 'center' });
             return;
         }
         
         try {
             setSubmitting(true);
-            setError('');
             
             // Prepare form data for file upload
             const formData = new FormData();
@@ -597,8 +649,8 @@ const JobApplication = () => {
                         <div className="section-content">
                             <div className="bid-container">
                                 <div className="bid-input-group">
-                                    <label htmlFor="bid">Your Bid (Total)</label>
-                                    <div className="amount-control">
+                                    <label htmlFor="bid">Your Bid (Total) <span className="required">*</span></label>
+                                    <div className={`amount-control ${bidError ? 'highlight-required' : ''}`}>
                                         <button 
                                             type="button" 
                                             onClick={() => adjustBid(false)}
@@ -614,9 +666,13 @@ const JobApplication = () => {
                                                 value={bid}
                                                 min="1"
                                                 step="0.01"
-                                                onChange={(e) => handleBidChange(Number(e.target.value) || '')}
+                                                onChange={(e) => {
+                                                    handleBidChange(Number(e.target.value) || '');
+                                                    if (bidError) setBidError('');
+                                                }}
                                                 required
-                                                placeholder="Enter your bid" // Remove extra "a" character
+                                                placeholder="Enter your bid"
+                                                className={bidError ? 'input-error' : ''}
                                             />
                                         </div>
                                         <button 
@@ -627,6 +683,12 @@ const JobApplication = () => {
                                             <FaPlus />
                                         </button>
                                     </div>
+                                    {bidError && (
+                                        <div className="field-error-message">
+                                            <FaExclamationCircle />
+                                            <span>{bidError}</span>
+                                        </div>
+                                    )}
                                 </div>
                                 
                                 <div className="service-fee">
@@ -646,30 +708,42 @@ const JobApplication = () => {
                                         />
                                     </div>
                                 </div>
+                                {bidError && <div className="error-message">{bidError}</div>}
                             </div>
                             
                             <div className="duration-selection">
-                                <label>How long will this project take?</label>
-                                <div className="duration-options">
+                                <label>How long will this project take? <span className="required">*</span></label>
+                                <div className={`duration-options ${durationError ? 'highlight-required' : ''}`}>
                                     {['less than 1 month', '1-3 months', '3-6 months', 'more than 6 months'].map((option) => (
                                         <div
                                             key={option}
                                             className={`duration-option ${duration === option ? 'selected' : ''}`}
-                                            onClick={() => setDuration(option)}
+                                            onClick={() => {
+                                                setDuration(option);
+                                                if (durationError) setDurationError('');
+                                            }}
                                         >
                                             <input
                                                 type="radio"
                                                 name="duration"
                                                 value={option}
                                                 checked={duration === option}
-                                                onChange={(e) => setDuration(e.target.value)}
-                                                required // Add required attribute
+                                                onChange={(e) => {
+                                                    setDuration(e.target.value);
+                                                    if (durationError) setDurationError('');
+                                                }}
+                                                required
                                             />
                                             <span>{option}</span>
                                         </div>
                                     ))}
                                 </div>
-                                {!duration && error && <div className="error-message">Please select a project duration</div>}
+                                {durationError && (
+                                    <div className="field-error-message">
+                                        <FaExclamationCircle />
+                                        <span>{durationError}</span>
+                                    </div>
+                                )}
                             </div>
                         </div>
                     </div>
