@@ -1,0 +1,28 @@
+.logout-container {
+  margin: 15px 0; /* Same margin as other list items */
+}
+
+.logout-button {
+  background-color: transparent;
+  color: #333;
+  padding: 10px 15px;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  font-size: 1rem;
+  transition: background-color 0.3s ease, color 0.3s ease; /* Smooth transition for both */
+  width: 100%;
+  text-align: left;
+}
+
+.logout-button:hover {
+  background-color: rgba(0, 0, 0, 0.1); /* Light gray background on hover */
+  color: #4f46e5;
+}
+
+.logout-icon {
+  margin-right: 8px; /* More spacing for the icon */
+  font-size: 1.2rem; /* Slightly larger icon */
+}

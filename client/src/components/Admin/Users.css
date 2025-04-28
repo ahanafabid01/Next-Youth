@@ -1,0 +1,150 @@
+.users-table-container {
+    margin-top: 30px;
+    padding: 20px;
+    background-color: #ffffff;
+    border-radius: 8px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+    overflow-x: auto; /* Allows horizontal scrolling on smaller screens */
+}
+
+.users-table-container h2 {
+    margin-bottom: 20px;
+    color: #333;
+    font-size: 1.5rem;
+}
+
+.users-table {
+    width: 100%;
+    border-collapse: collapse; /* Removes space between borders */
+    font-size: 0.9rem;
+    color: #444;
+}
+
+.users-table thead {
+    background-color: #f8f9fa; /* Light grey background for header */
+}
+
+.users-table th,
+.users-table td {
+    padding: 12px 15px; /* Add padding to cells */
+    text-align: left;
+    border-bottom: 1px solid #dee2e6; /* Light border between rows */
+    vertical-align: middle; /* Align content vertically */
+}
+
+.users-table th {
+    font-weight: 600; /* Make header text bolder */
+    color: #495057;
+    text-transform: uppercase; /* Uppercase header text */
+    font-size: 0.8rem;
+    letter-spacing: 0.5px;
+}
+
+.users-table tbody tr:hover {
+    background-color: #f1f3f5; /* Subtle hover effect for rows */
+}
+
+.users-table tbody tr:last-child td {
+    border-bottom: none; /* Remove border from last row */
+}
+
+.user-type {
+    text-transform: capitalize; /* Capitalize user type */
+    font-weight: 500;
+}
+
+/* Verification Badge Styles */
+.badge {
+    padding: 5px 10px;
+    border-radius: 12px; /* Pill shape */
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    display: inline-block; /* Ensure badges display correctly */
+}
+
+.badge.verified {
+    background-color: #d1e7dd; /* Light green */
+    color: #0f5132; /* Dark green */
+}
+
+.badge.rejected {
+    background-color: #f8d7da; /* Light red */
+    color: #842029; /* Dark red */
+}
+
+.badge.pending {
+    background-color: #fff3cd; /* Light yellow */
+    color: #664d03; /* Dark yellow */
+}
+
+/* Action Buttons Styles */
+.action-buttons-cell {
+    white-space: nowrap; /* Prevent buttons from wrapping */
+}
+
+.action-btn {
+    padding: 6px 12px;
+    margin-right: 8px;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 0.8rem;
+    font-weight: 500;
+    transition: background-color 0.2s ease, box-shadow 0.2s ease;
+    display: inline-flex; /* Align icon and text if needed */
+    align-items: center;
+    justify-content: center;
+}
+
+.action-btn:last-child {
+    margin-right: 0;
+}
+
+.action-btn.id-btn {
+    background-color: #0d6efd; /* Blue */
+    color: white;
+}
+
+.action-btn.id-btn:hover {
+    background-color: #0b5ed7;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.action-btn.delete-btn {
+    background-color: #dc3545; /* Red */
+    color: white;
+}
+
+.action-btn.delete-btn:hover {
+    background-color: #bb2d3b;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.no-data {
+    text-align: center;
+    padding: 20px;
+    color: #6c757d; /* Grey text */
+    font-style: italic;
+}
+
+/* Responsive adjustments if needed */
+@media (max-width: 768px) {
+    .users-table th,
+    .users-table td {
+        padding: 10px 8px;
+        font-size: 0.85rem;
+    }
+
+    .action-btn {
+        padding: 5px 8px;
+        font-size: 0.75rem;
+        margin-right: 5px;
+    }
+
+    .badge {
+        padding: 4px 8px;
+        font-size: 0.7rem;
+    }
+}

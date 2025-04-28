@@ -1,0 +1,65 @@
+
+
+/* General layout for the admin dashboard */
+.admin-dashboard {
+  display: flex;
+  font-family: Arial, sans-serif;
+}
+
+/* Sidebar styling */
+.sidebar {
+  width: 250px;
+  background-color: #f4f4f4;
+  padding: 20px;
+  height: 100vh;
+  box-shadow: 2px 0 5px rgba(0, 0, 0, 0.1);
+}
+
+.sidebar .logo h2 {
+  margin: 0;
+  font-size: 1.5rem;
+  color: #4f46e5;
+  text-align: center;
+  margin-bottom: 20px;
+}
+
+.sidebar .menu ul {
+  list-style: none;
+  padding: 0;
+}
+
+.sidebar .menu ul li {
+  margin: 15px 0;
+}
+
+.sidebar .menu ul li a {
+  text-decoration: none;
+  color: #333;
+  font-size: 1rem;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.sidebar .menu ul li a:hover {
+  color: #4f46e5;
+  font-weight: bold;
+}
+
+/* Main content styling */
+.main-content {
+  flex: 1;
+  padding: 20px;
+  background-color: #fff;
+}
+
+.main-content h1 {
+  font-size: 2rem;
+  color: #333;
+  margin-bottom: 10px;
+}
+
+.main-content p {
+  font-size: 1rem;
+  color: #666;
+}

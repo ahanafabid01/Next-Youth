@@ -1,6 +1,6 @@
 import express from "express";
 import { register, Login, Logout, verifyEmail, resendOtp, resetPassword, getUserProfile, updateUserProfile, verifyIdentity,
-    getVerificationStatus, updateEmployeeProfile, getEmployeeProfile, getAllUsers, verifyUserIdentity } from "../controllers/authController.js";
+    getVerificationStatus, updateEmployeeProfile, getEmployeeProfile, getAllUsers, verifyUserIdentity, deleteUser } from "../controllers/authController.js";
 import userAuth from "../middleware/userAuth.js"; // Import userAuth middleware
 import upload from "../middleware/uploadMiddleware.js"; // Import upload middleware
 import userModel from "../models/userModel.js"; // Add this import
@@ -70,15 +70,11 @@ authRouter.post("/upload-file", userAuth, upload.single("file"), (req, res) => {
     }
 });
 
-authRouter.put('/update-profile', userAuth, updateUserProfile); // Add this route
-
-authRouter.get('/employee-profile', userAuth, getEmployeeProfile); // Add this route
-
-authRouter.put('/update-employee-profile', userAuth, updateEmployeeProfile); // Add this route
-
-authRouter.get('/admin/users', userAuth, getAllUsers); // Add this route
-
-// Admin verification route
+authRouter.put('/update-profile', userAuth, updateUserProfile);
+authRouter.get('/employee-profile', userAuth, getEmployeeProfile);
+authRouter.put('/update-employee-profile', userAuth, updateEmployeeProfile);
+authRouter.get('/admin/users', userAuth, getAllUsers);
 authRouter.post('/admin/verify-user', userAuth, verifyUserIdentity);
+authRouter.delete('/delete-user/:id', userAuth, deleteUser);
 
 export default authRouter;

@@ -1,9 +1,14 @@
 import React from "react";
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
-import Homepage from "./Homepage"; // Import Homepage
+import Homepage from "./Homepage";
 import Login from "./components/Login";
 import Register from "./components/Register";
-import AdminDashboard from "./components/AdminDashboard";
+import AdminDashboard from "./components/Admin/AdminDashboard";
+import Dashboard from "./components/Admin/Dashboard";
+import Users from "./components/Admin/Users";
+import Messages from "./components/Admin/Messages";
+import Applications from "./components/Admin/Applications";
+import Statistics from "./components/Admin/Statistics";
 import EmployeeDashboard from "./components/EmployeeDashboard";
 import EmployerDashboard from "./components/EmployerDashboard";
 import ForgotPassword from "./components/ForgotPassword";
@@ -19,10 +24,15 @@ const App = () => {
     return (
         <Router>
             <Routes>
-                <Route path="/" element={<Homepage />} /> {/* Set Homepage as default */}
+                <Route path="/" element={<Homepage />} />
                 <Route path="/login" element={<Login />} />
                 <Route path="/register" element={<Register />} />
                 <Route path="/admin-dashboard" element={<AdminDashboard />} />
+                <Route path="/admin-dashboard/dashboard" element={<Dashboard />} />
+                <Route path="/admin-dashboard/users" element={<Users />} />
+                <Route path="/admin-dashboard/messages" element={<Messages />} />
+                <Route path="/admin-dashboard/applications" element={<Applications />} />
+                <Route path="/admin-dashboard/statistics" element={<Statistics />} />
                 <Route path="/employee-dashboard" element={<EmployeeDashboard />} />
                 <Route path="/employer-dashboard" element={<EmployerDashboard />} />
                 <Route path="/forgot-password" element={<ForgotPassword />} />
