@@ -3,8 +3,9 @@ import cors from 'cors';
 import 'dotenv/config';
 import cookieParser from 'cookie-parser'; // Fixed typo
 import connectDB from './config/mongodb.js';
-import authRouter from './routes/authRoutes.js';
+import authRoutes from './routes/authRoutes.js';
 import jobRoutes from './routes/jobRoutes.js';
+import contactRoutes from './routes/contactRoutes.js'; // Add this line
 import path from "path";
 import bodyParser from "body-parser";
 import { fileURLToPath } from "url";
@@ -46,8 +47,9 @@ if (!fs.existsSync(uploadDir)) {
 app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 
 // API routes
-app.use('/api/auth', authRouter);
+app.use('/api/auth', authRoutes);
 app.use("/api/jobs", jobRoutes); // Multer will handle multipart/form-data for this route
+app.use("/api/contact", contactRoutes); // Add this line
 
 // Default route
 app.get('/', (req, res) => {

@@ -19,6 +19,9 @@ import VerifyAccount from './components/VerifyAccount'; // Add this import
 import MyProfile from './components/MyProfile'; // Import MyProfile
 import Notifications from './components/Notifications'; // Import Notifications
 import JobApplication from "./components/JobApplication"; // Add this import
+import BusinessSolutions from "./BusinessSolutions"; // Import BusinessSolutions
+import ScheduleConsultation from "./contact"; // Import ScheduleConsultation
+import "./App.css"; // Import App.css
 
 const App = () => {
     return (
@@ -46,6 +49,8 @@ const App = () => {
                 <Route path="/my-profile" element={<MyProfile />} /> {/* Route for MyProfile */}
                 <Route path="/notifications" element={<Notifications />} /> {/* Route for Notifications */}
                 <Route path="/jobs/apply/:jobId" element={<JobApplication />} /> {/* Add this route */}
+                <Route path="/business-solutions" element={<BusinessSolutions />} /> {/* Route for BusinessSolutions */}
+                <Route path="/contact" element={<ScheduleConsultation />} /> {/* Route for ScheduleConsultation */}
             </Routes>
         </Router>
     );
