@@ -241,6 +241,18 @@ const ScheduleConsultation = () => {
   threeMonthsLater.setMonth(threeMonthsLater.getMonth() + 3);
   const maxDate = threeMonthsLater.toISOString().split('T')[0];
 
+  // Add this smooth scroll handler function
+  const handleSmoothScroll = (e, targetId) => {
+    e.preventDefault();
+    const targetElement = document.getElementById(targetId);
+    if (targetElement) {
+      targetElement.scrollIntoView({
+        behavior: 'smooth',
+        block: 'start'
+      });
+    }
+  };
+
   return (
     <div className={`homepage-container ${isDarkMode ? 'dark-mode' : ''}`}>
       {/* Header Section */}
@@ -328,7 +340,120 @@ const ScheduleConsultation = () => {
           <div className={`bs-hero-content ${isVisible["sc-hero"] ? "bs-animate-in" : ""}`}>
             <h1>Schedule A Consultation</h1>
             <p>Take the first step towards transforming your business with our expert consultation services</p>
+            <div className="bs-cta-buttons">
+              <a 
+                href="#sc-form" 
+                className="bs-primary-btn"
+                onClick={(e) => handleSmoothScroll(e, "sc-form")}
+              >
+                <i className="fas fa-calendar-alt"></i> Schedule Now
+              </a>
+              <a href="#sc-benefits" className="bs-secondary-btn" onClick={(e) => handleSmoothScroll(e, "sc-benefits")}>
+                <i className="fas fa-info-circle"></i> Learn More
+              </a>
+            </div>
           </div>
+        </section>
+
+        {/* What to Expect Section */}
+        <section 
+          className={`bs-process ${isDarkMode ? "dark-bg-alt" : "light-bg-alt"}`}
+          id="sc-expect"
+          ref={addToRefs}
+        >
+          <div className={`bs-section-title ${isVisible["sc-expect"] ? "bs-animate-in" : ""}`}>
+            <h2>What to Expect From Your Consultation</h2>
+            <p>Our personalized approach ensures you receive maximum value from every consultation session</p>
+          </div>
+
+          <div className={`bs-features-grid ${isVisible["sc-expect"] ? "bs-animate-in" : ""}`}>
+            <div className="bs-feature-card">
+              <div className="bs-feature-content">
+                <div className="bs-feature-icon">
+                  <i className="fas fa-handshake"></i>
+                </div>
+                <h3>Personalized Attention</h3>
+                <p>Your consultation is tailored specifically to your business needs, challenges, and goals.</p>
+              </div>
+            </div>
+
+            <div className="bs-feature-card">
+              <div className="bs-feature-content">
+                <div className="bs-feature-icon">
+                  <i className="fas fa-search"></i>
+                </div>
+                <h3>In-depth Analysis</h3>
+                <p>Our experts thoroughly analyze your current situation to identify both challenges and opportunities.</p>
+              </div>
+            </div>
+
+            <div className="bs-feature-card">
+              <div className="bs-feature-content">
+                <div className="bs-feature-icon">
+                  <i className="fas fa-file-alt"></i>
+                </div>
+                <h3>Detailed Documentation</h3>
+                <p>Receive comprehensive reports and recommendations that serve as your actionable roadmap.</p>
+              </div>
+            </div>
+
+            <div className="bs-feature-card">
+              <div className="bs-feature-content">
+                <div className="bs-feature-icon">
+                  <i className="fas fa-headset"></i>
+                </div>
+                <h3>Follow-up Support</h3>
+                <p>Our relationship doesn't end after the consultation - we provide ongoing support as you implement changes.</p>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        {/* Consultation Process Section */}
+        <section 
+          className="bs-process" 
+          id="sc-process"
+          ref={addToRefs}
+        >
+          <div className={`bs-section-title ${isVisible["sc-process"] ? "bs-animate-in" : ""}`}>
+            <h2>Our Consultation Process</h2>
+            <p>A simple four-step journey to transform your business challenges into opportunities</p>
+          </div>
+
+          <div className={`bs-timeline ${isVisible["sc-process"] ? "bs-animate-in" : ""}`}>
+            <div className="bs-timeline-item">
+              <div className="bs-timeline-marker">1</div>
+              <div className="bs-timeline-content">
+                <h4>Schedule & Prepare</h4>
+                <p>Book your consultation and complete a brief pre-consultation questionnaire to help us understand your needs.</p>
+              </div>
+            </div>
+            
+            <div className="bs-timeline-item">
+              <div className="bs-timeline-marker">2</div>
+              <div className="bs-timeline-content">
+                <h4>Discovery Session</h4>
+                <p>Meet with our expert consultants who will dive deep into your business challenges and objectives.</p>
+              </div>
+            </div>
+            
+            <div className="bs-timeline-item">
+              <div className="bs-timeline-marker">3</div>
+              <div className="bs-timeline-content">
+                <h4>Strategy Development</h4>
+                <p>Our team creates a customized action plan based on your unique situation and goals.</p>
+              </div>
+            </div>
+            
+            <div className="bs-timeline-item">
+              <div className="bs-timeline-marker">4</div>
+              <div className="bs-timeline-content">
+                <h4>Implementation Support</h4>
+                <p>Receive guidance and support as you put the recommended strategies into action within your business.</p>
+              </div>
+            </div>
+          </div>
+
         </section>
 
         {/* Form Section */}
@@ -615,7 +740,11 @@ const ScheduleConsultation = () => {
             <h2>Ready to Transform Your Business?</h2>
             <p>Our experts are waiting to help you take your business to the next level with tailored solutions.</p>
             <div className="bs-cta-buttons">
-              <a href="#sc-form" className="bs-primary-btn">
+              <a 
+                href="#sc-form" 
+                className="bs-primary-btn"
+                onClick={(e) => handleSmoothScroll(e, "sc-form")}
+              >
                 <i className="fas fa-calendar-alt"></i> Schedule Now
               </a>
               <a href="#" className="bs-secondary-btn">
