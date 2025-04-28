@@ -10,6 +10,7 @@ import path from "path";
 import bodyParser from "body-parser";
 import { fileURLToPath } from "url";
 import fs from "fs";
+import demoRoutes from './routes/demoRoutes.js'; // Import the demo routes
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -50,6 +51,7 @@ app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 app.use('/api/auth', authRoutes);
 app.use("/api/jobs", jobRoutes); // Multer will handle multipart/form-data for this route
 app.use("/api/contact", contactRoutes); // Add this line
+app.use('/api/contact', demoRoutes); // Add demo routes
 
 // Default route
 app.get('/', (req, res) => {

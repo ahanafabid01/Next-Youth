@@ -1,5 +1,5 @@
 import contactModel from "../models/contactModel.js";
-import transporter from "../config/nodemailer.js"; // Changed from named import to default import
+import { transporter } from "../config/nodemailer.js"; // Import the nodemailer transporter
 
 // Create new consultation request (public endpoint - no auth required)
 export const createConsultation = async (req, res) => {

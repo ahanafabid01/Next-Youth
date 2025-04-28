@@ -21,6 +21,7 @@ import Notifications from './components/Notifications'; // Import Notifications
 import JobApplication from "./components/JobApplication"; // Add this import
 import BusinessSolutions from "./BusinessSolutions"; // Import BusinessSolutions
 import ScheduleConsultation from "./contact"; // Import ScheduleConsultation
+import RequestDemo from "./RequestDemo"; // Import RequestDemo component
 import "./App.css"; // Import App.css
 
 const App = () => {
@@ -51,6 +52,7 @@ const App = () => {
                 <Route path="/jobs/apply/:jobId" element={<JobApplication />} /> {/* Add this route */}
                 <Route path="/business-solutions" element={<BusinessSolutions />} /> {/* Route for BusinessSolutions */}
                 <Route path="/contact" element={<ScheduleConsultation />} /> {/* Route for ScheduleConsultation */}
+                <Route path="/request-demo" element={<RequestDemo />} /> {/* Route for RequestDemo */}
             </Routes>
         </Router>
     );

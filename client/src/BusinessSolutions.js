@@ -305,7 +305,7 @@ const BusinessSolutions = () => {
             <p>Discover tailored solutions to help your business thrive in today's competitive marketplace</p>
             <div className="bs-cta-buttons">
               <Link to="/contact?type=general" className="bs-primary-btn">Get Started</Link>
-              <Link to="/demo" className="bs-secondary-btn">Request Demo</Link>
+              <Link to="/request-demo" className="bs-secondary-btn">Request Demo</Link>
             </div>
           </div>
           <div className="bs-hero-image"></div>
