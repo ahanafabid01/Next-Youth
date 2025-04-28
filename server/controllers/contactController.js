@@ -1,4 +1,5 @@
 import contactModel from "../models/contactModel.js";
+import transporter from "../config/nodemailer.js"; // Changed from named import to default import
 
 // Create new consultation request (public endpoint - no auth required)
 export const createConsultation = async (req, res) => {
@@ -36,6 +37,69 @@ export const createConsultation = async (req, res) => {
       message: message || "",
       status: "pending"
     });
+
+    // Format the date and time for the email
+    const formattedDate = new Date(preferredDate).toLocaleDateString('en-US', {
+      weekday: 'long',
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric'
+    });
+    
+    const timeSlot = preferredTime === "morning" ? "Morning (9AM - 12PM)" :
+                    preferredTime === "afternoon" ? "Afternoon (12PM - 3PM)" :
+                    "Evening (3PM - 6PM)";
+
+    // Send confirmation email to the user
+    const mailOptions = {
+      from: process.env.SENDER_EMAIL,
+      to: email,
+      subject: "Your Consultation Request Confirmation",
+      html: `
+        <div style="font-family: 'Arial', sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e0e0e0; border-radius: 10px; background: linear-gradient(to right, #f8f9fa, #e9ecef);">
+          <div style="text-align: center; padding-bottom: 20px; border-bottom: 2px solid #007bff;">
+            <h1 style="color: #007bff; margin-bottom: 5px;">Consultation Request Received</h1>
+            <p style="color: #6c757d; font-size: 16px;">Thank you for scheduling a consultation with us!</p>
+          </div>
+
+          <div style="padding: 20px 0;">
+            <p style="font-size: 16px; color: #343a40;">Hello ${fullName},</p>
+            <p style="font-size: 16px; color: #343a40; line-height: 1.5;">
+              We've received your consultation request and are excited to connect with you. Our team will review your request and contact you shortly to confirm your appointment.
+            </p>
+            
+            <div style="background-color: #f8f9fa; border-left: 4px solid #007bff; padding: 15px; margin: 20px 0;">
+              <h3 style="color: #343a40; margin-top: 0;">Your Request Details:</h3>
+              <p style="margin: 5px 0;"><strong>Company:</strong> ${company}</p>
+              <p style="margin: 5px 0;"><strong>Service Interest:</strong> ${serviceType}</p>
+              <p style="margin: 5px 0;"><strong>Preferred Date:</strong> ${formattedDate}</p>
+              <p style="margin: 5px 0;"><strong>Preferred Time:</strong> ${timeSlot}</p>
+            </div>
+            
+            <p style="font-size: 16px; color: #343a40; line-height: 1.5;">
+              If you need to make any changes to your request or have any questions, please reply to this email or contact our support team.
+            </p>
+          </div>
+          
+          <div style="text-align: center; padding: 20px; background-color: #f1f3f5; border-radius: 5px;">
+            <p style="margin: 0 0 15px 0; font-size: 16px;">Looking forward to our consultation!</p>
+            <a href="http://localhost:3000/business-solutions" style="display: inline-block; background-color: #007bff; color: white; text-decoration: none; padding: 10px 20px; border-radius: 5px; font-weight: bold;">Explore Our Services</a>
+          </div>
+          
+          <div style="text-align: center; margin-top: 20px; padding-top: 20px; border-top: 1px solid #e0e0e0;">
+            <p style="color: #6c757d; font-size: 14px;">© ${new Date().getFullYear()} Next Youth. All rights reserved.</p>
+          </div>
+        </div>
+      `
+    };
+
+    try {
+      await transporter.sendMail(mailOptions);
+      console.log("Consultation confirmation email sent successfully");
+    } catch (emailError) {
+      console.error("Error sending confirmation email:", emailError);
+      // Continue with the response even if email fails
+    }
 
     return res.status(201).json({
       success: true,

@@ -326,11 +326,8 @@ const ScheduleConsultation = () => {
           ref={addToRefs}
         >
           <div className={`bs-hero-content ${isVisible["sc-hero"] ? "bs-animate-in" : ""}`}>
-            <h1>Schedule a Consultation</h1>
+            <h1>Schedule A Consultation</h1>
             <p>Take the first step towards transforming your business with our expert consultation services</p>
-          </div>
-          <div className={`bs-hero-image ${isVisible["sc-hero"] ? "bs-animate-in" : ""}`}>
-            <div className="bs-hero-shape"></div>
           </div>
         </section>
 
