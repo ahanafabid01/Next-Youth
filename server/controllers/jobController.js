@@ -250,19 +250,3 @@ export const removeSavedJob = async (req, res) => {
         return res.status(500).json({ success: false, message: "Internal server error" });
     }
 };
-
-// Add this function at the end of the file
-export const getAllJobs = async (req, res) => {
-    try {
-        const jobs = await jobModel.find()
-            .sort({ createdAt: -1 });
-        
-        return res.status(200).json({ 
-            success: true, 
-            jobs: jobs // Make sure you're returning the jobs array here
-        });
-    } catch (error) {
-        console.error("Error fetching all jobs:", error);
-        return res.status(500).json({ success: false, message: "Internal server error" });
-    }
-};

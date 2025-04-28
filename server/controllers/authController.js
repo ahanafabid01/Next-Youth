@@ -548,7 +548,9 @@ export const getEmployeeProfile = async (req, res) => {
         // Find user with complete profile information
         const user = await userModel.findById(req.user.id).select(
             "name bio profilePicture education skills languageSkills address country phoneNumber " +
-            "email linkedInProfile socialMediaLink goals questions resume"
+            "email linkedInProfile socialMediaLink goals questions resume " +
+            // Add these fields to include price preferences
+            "freelanceExperience paymentType fixedRate hourlyRate weeklyAvailability openToContractToHire"
         );
 
         if (!user) {
@@ -573,69 +575,60 @@ export const getEmployeeProfile = async (req, res) => {
 
 export const updateEmployeeProfile = async (req, res) => {
     try {
-        console.log("Updating Employee Profile - Request Body:", req.body);
-        console.log("User ID:", req.user.id);
-
-        const { 
-            name, 
-            bio, 
-            profilePicture,
-            education,
-            skills,
-            languageSkills,
-            address,
-            country,
-            phoneNumber,
-            email,
-            linkedInProfile,
-            socialMediaLink,
-            goals,
-            questions,
-            resumeUrl  // This comes from frontend as resumeUrl
+        // Use req.user.id instead of req.userId since that's how your auth middleware populates it
+        const userId = req.user.id;
+        
+        // Extract all the fields from req.body
+        const {
+          name, bio, education, skills, languageSkills, address, country,
+          phoneNumber, email, linkedInProfile, socialMediaLink, goals,
+          questions, resumeUrl, freelanceExperience, paymentType,
+          fixedRate, hourlyRate, weeklyAvailability, openToContractToHire
         } = req.body;
-
-        // Find user and update all profile fields
-        const updatedUser = await userModel.findByIdAndUpdate(
-            req.user.id,
-            { 
-                name, 
-                bio, 
-                profilePicture,
-                education,
-                skills,
-                languageSkills,
-                address,
-                country,
-                phoneNumber,
-                email: email || undefined, // Only update if provided
-                linkedInProfile,
-                socialMediaLink,
-                goals,
-                questions,
-                resume: resumeUrl  // Map to 'resume' field in database
-            },
-            { new: true }
-        );
-
+        
+        // Create update object with all possible fields
+        const updateObject = {};
+        
+        // Add each field to the update object if it exists in the request
+        if (name) updateObject.name = name;
+        if (bio !== undefined) updateObject.bio = bio;
+        if (education) updateObject.education = education;
+        if (skills) updateObject.skills = skills;
+        if (languageSkills) updateObject.languageSkills = languageSkills;
+        if (address !== undefined) updateObject.address = address;
+        if (country !== undefined) updateObject.country = country;
+        if (phoneNumber !== undefined) updateObject.phoneNumber = phoneNumber;
+        if (email) updateObject.email = email;
+        if (linkedInProfile !== undefined) updateObject.linkedInProfile = linkedInProfile;
+        if (socialMediaLink !== undefined) updateObject.socialMediaLink = socialMediaLink;
+        if (goals !== undefined) updateObject.goals = goals;
+        if (questions) updateObject.questions = questions;
+        if (resumeUrl) updateObject.resume = resumeUrl;
+        
+        // Add price preference fields
+        if (freelanceExperience !== undefined) updateObject.freelanceExperience = freelanceExperience;
+        if (paymentType !== undefined) updateObject.paymentType = paymentType;
+        if (fixedRate !== undefined) updateObject.fixedRate = fixedRate;
+        if (hourlyRate !== undefined) updateObject.hourlyRate = hourlyRate;
+        if (weeklyAvailability !== undefined) updateObject.weeklyAvailability = weeklyAvailability;
+        if (openToContractToHire !== undefined) updateObject.openToContractToHire = openToContractToHire;
+        
+        // Update the user with userModel and the correct userId
+        const updatedUser = await userModel.findByIdAndUpdate(userId, updateObject, { new: true });
+        
         if (!updatedUser) {
-            return res.status(404).json({ 
-                success: false, 
-                message: "User not found" 
-            });
+          return res.status(404).json({ success: false, message: "User not found" });
         }
-
-        res.status(200).json({ 
-            success: true, 
-            message: "Profile updated successfully",
-            user: updatedUser 
+        
+        res.status(200).json({
+          success: true,
+          message: "Profile updated successfully",
+          user: updatedUser
         });
-    } catch (error) {
-        console.error("Error updating employee profile:", error);
-        res.status(500).json({ 
-            success: false, 
-            message: "Internal server error" 
-        });
-    }
+      } catch (error) {
+        console.error("Error updating profile:", error);
+        res.status(500).json({ success: false, message: "Server error" });
+      }
 };
 
 export const getAllUsers = async (req, res) => {
