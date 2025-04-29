@@ -23,6 +23,7 @@ import BusinessSolutions from "./BusinessSolutions"; // Import BusinessSolutions
 import ScheduleConsultation from "./contact"; // Import ScheduleConsultation
 import RequestDemo from "./RequestDemo"; // Import RequestDemo component
 import Consultations from "./components/Admin/Consultations"; // Add this import
+import DemoConsultations from "./components/Admin/DemoConsultations"; // Add this import
 import "./App.css"; // Import App.css
 
 const App = () => {
@@ -40,6 +41,7 @@ const App = () => {
                 <Route path="/admin-dashboard/statistics" element={<Statistics />} /> {/* Corrected spelling */}
                 <Route path="/admin-dashboard/job-details" element={<JobDetails />} /> {/* Add this route */}
                 <Route path="/admin-dashboard/consultations" element={<Consultations />} /> {/* Add this route */}
+                <Route path="/admin-dashboard/demo-consultations" element={<DemoConsultations />} /> {/* Add this route */}
                 <Route path="/employee-dashboard" element={<EmployeeDashboard />} />
                 <Route path="/employer-dashboard" element={<EmployerDashboard />} />
                 <Route path="/forgot-password" element={<ForgotPassword />} />

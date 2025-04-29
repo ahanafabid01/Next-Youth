@@ -144,6 +144,55 @@ class DemoController {
       return res.status(500).json({ success: false, message: 'Failed to submit demo request. Please try again.' });
     }
   }
+
+  async getAllDemoRequests(req, res) {
+    try {
+      const demoRequests = await DemoRequest.find().sort({ createdAt: -1 });
+      res.status(200).json(demoRequests);
+    } catch (error) {
+      console.error('Error fetching demo requests:', error);
+      res.status(500).json({ success: false, message: 'Failed to fetch demo requests' });
+    }
+  }
+
+  async updateDemoStatus(req, res) {
+    try {
+      const { id } = req.params;
+      const { status } = req.body;
+      
+      if (!['pending', 'scheduled', 'completed', 'cancelled'].includes(status)) {
+        return res.status(400).json({ 
+          success: false, 
+          message: 'Invalid status value' 
+        });
+      }
+      
+      const updatedDemo = await DemoRequest.findByIdAndUpdate(
+        id,
+        { status },
+        { new: true }
+      );
+      
+      if (!updatedDemo) {
+        return res.status(404).json({ 
+          success: false, 
+          message: 'Demo request not found' 
+        });
+      }
+      
+      res.status(200).json({ 
+        success: true, 
+        message: 'Demo status updated successfully', 
+        demoRequest: updatedDemo 
+      });
+    } catch (error) {
+      console.error('Error updating demo status:', error);
+      res.status(500).json({ 
+        success: false, 
+        message: 'Server error while updating demo status' 
+      });
+    }
+  }
 }
 
 export default new DemoController();
