@@ -526,3 +526,351 @@
   0% { transform: rotate(0deg); }
   100% { transform: rotate(360deg); }
 }
+
+/* Add to your EmployeeProfile.css file */
+.freelance-experience-options {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 15px;
+  margin: 10px 0 25px;
+}
+
+.option-card {
+  flex: 1;
+  min-width: 200px;
+  border: 2px solid #e0e0e0;
+  border-radius: 12px;
+  padding: 0;
+  position: relative;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  overflow: hidden;
+}
+
+.option-card:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 6px 12px rgba(0,0,0,0.1);
+}
+
+.option-card input[type="radio"] {
+  position: absolute;
+  opacity: 0;
+}
+
+.option-card input[type="radio"]:checked + .option-content {
+  border-color: var(--primary-color);
+  background-color: rgba(var(--primary-rgb), 0.05);
+}
+
+.option-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  padding: 20px;
+  border: 2px solid transparent;
+  border-radius: 10px;
+  height: 100%;
+  transition: all 0.3s ease;
+}
+
+.option-icon {
+  font-size: 32px;
+  color: var(--primary-color);
+  margin-bottom: 10px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.option-title {
+  font-weight: 600;
+  font-size: 16px;
+  margin-bottom: 8px;
+  color: var(--text-color);
+}
+
+.option-description {
+  font-size: 14px;
+  color: var(--text-muted);
+}
+
+.dark-mode .option-card {
+  border-color: #444;
+}
+
+.dark-mode .option-card:hover {
+  box-shadow: 0 6px 12px rgba(0,0,0,0.3);
+}
+
+.dark-mode .option-card input[type="radio"]:checked + .option-content {
+  background-color: rgba(var(--primary-rgb), 0.15);
+}
+
+@media (max-width: 768px) {
+  .freelance-experience-options {
+    flex-direction: column;
+  }
+  
+  .option-card {
+    width: 100%;
+  }
+}
+
+/* Add to your EmployeeProfile.css file */
+.pricing-intro {
+  display: flex;
+  align-items: center;
+  margin-bottom: 30px;
+  padding: 15px;
+  background: linear-gradient(to right, rgba(var(--primary-rgb), 0.05), rgba(var(--primary-rgb), 0.02));
+  border-radius: 8px;
+  border-left: 4px solid var(--primary-color);
+}
+
+.pricing-icon {
+  font-size: 40px;
+  color: var(--primary-color);
+  margin-right: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.pricing-description {
+  font-size: 16px;
+  color: var(--text-muted);
+  margin: 0;
+  line-height: 1.5;
+}
+
+.pricing-options {
+  margin-bottom: 30px;
+}
+
+.payment-type-cards {
+  display: flex;
+  gap: 20px;
+  margin-top: 10px;
+}
+
+.payment-type-card {
+  flex: 1;
+  border: 2px solid #e0e0e0;
+  border-radius: 8px;
+  padding: 0;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  overflow: hidden;
+  position: relative;
+}
+
+.payment-type-card:hover {
+  box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+  transform: translateY(-2px);
+}
+
+.payment-type-card.selected {
+  border-color: var(--primary-color);
+  box-shadow: 0 5px 15px rgba(var(--primary-rgb), 0.2);
+}
+
+.payment-type-card input {
+  position: absolute;
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+.payment-card-content {
+  padding: 20px;
+  display: flex;
+  align-items: center;
+}
+
+.payment-card-icon {
+  font-size: 24px;
+  color: var(--primary-color);
+  margin-right: 15px;
+  display: flex;
+  align-items: center;
+}
+
+.payment-card-info h4 {
+  margin: 0 0 5px 0;
+  font-size: 16px;
+  font-weight: 600;
+}
+
+.payment-card-info p {
+  margin: 0;
+  font-size: 14px;
+  color: var(--text-muted);
+}
+
+.rate-setting {
+  background-color: rgba(var(--primary-rgb), 0.03);
+  padding: 20px;
+  border-radius: 8px;
+  margin-bottom: 30px;
+  border: 1px solid rgba(var(--primary-rgb), 0.1);
+}
+
+/* Improved rate input styling */
+.rate-input-container {
+  display: flex;
+  align-items: center;
+  position: relative;
+  width: 100%;
+  max-width: 400px;
+  border: 1px solid var(--profile-input-border);
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.currency-symbol {
+  position: absolute;
+  left: 12px;
+  font-size: 1rem;
+  color: var(--profile-input-text);
+  z-index: 1;
+}
+
+.rate-input {
+  padding-left: 30px !important;
+  width: 100% !important;
+  font-size: 1rem !important;
+  height: 48px !important;
+  border: none !important;
+}
+
+.increment-buttons {
+  position: absolute;
+  right: 0;
+  display: flex;
+  flex-direction: column;
+  border-left: 1px solid var(--profile-input-border);
+  height: 100%;
+}
+
+.increment-button {
+  background: none;
+  border: none;
+  cursor: pointer;
+  height: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  padding: 0;
+}
+
+.increment-button:first-child {
+  border-bottom: 1px solid var(--profile-input-border);
+}
+
+.rate-hint {
+  margin-top: 8px;
+  font-size: 0.85rem;
+  color: var(--text-light);
+}
+
+.availability-label {
+  font-size: 16px;
+  font-weight: 600;
+  margin-bottom: 15px;
+  display: block;
+}
+
+.contract-hire-section {
+  background-color: #f8f9fa;
+  border-radius: 8px;
+  padding: 20px;
+  margin-top: 30px;
+  border: 1px solid #e9ecef;
+}
+
+.contract-hire-header {
+  display: flex;
+  align-items: center;
+  margin-bottom: 10px;
+}
+
+.contract-hire-header label {
+  font-size: 16px;
+  font-weight: 600;
+  margin-right: 8px;
+}
+
+.info-icon {
+  color: var(--text-muted);
+  cursor: help;
+}
+
+.checkbox-option {
+  display: flex;
+  align-items: flex-start;
+  margin-top: 10px;
+  cursor: pointer;
+}
+
+.checkbox-input {
+  margin-top: 3px;
+  margin-right: 12px;
+  width: 18px;
+  height: 18px;
+}
+
+.checkbox-content {
+  flex: 1;
+}
+
+.checkbox-label {
+  font-weight: 500;
+  display: block;
+  margin-bottom: 5px;
+}
+
+@media (max-width: 768px) {
+  .payment-type-cards {
+    flex-direction: column;
+  }
+  
+  .rate-input-container {
+    max-width: 100%;
+  }
+}
+
+.dark-mode .pricing-intro {
+  background: linear-gradient(to right, rgba(var(--primary-rgb), 0.15), rgba(var(--primary-rgb), 0.05));
+}
+
+.dark-mode .payment-type-card {
+  border-color: #444;
+  background-color: #2a2a2a;
+}
+
+.dark-mode .payment-type-card:hover {
+  box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+}
+
+.dark-mode .rate-setting {
+  background-color: rgba(var(--primary-rgb), 0.1);
+  border-color: rgba(var(--primary-rgb), 0.2);
+}
+
+.dark-mode .increment-button {
+  background-color: #333;
+  border-color: #444;
+  color: #ccc;
+}
+
+.dark-mode .increment-button:hover {
+  background-color: #444;
+}
+
+.dark-mode .contract-hire-section {
+  background-color: #222;
+  border-color: #333;
+}

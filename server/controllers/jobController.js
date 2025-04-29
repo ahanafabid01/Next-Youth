@@ -250,3 +250,78 @@ export const removeSavedJob = async (req, res) => {
         return res.status(500).json({ success: false, message: "Internal server error" });
     }
 };
+
+// Update the applyWithDetails function to handle optional fields
+export const applyWithDetails = async (req, res) => {
+    try {
+        const { jobId, bid, receivedAmount, duration, coverLetter } = req.body;
+        const userId = req.user.id;
+        
+        console.log("Received application data:", { 
+            jobId, 
+            bid, 
+            receivedAmount, 
+            duration, 
+            coverLetterProvided: !!coverLetter,
+            filesProvided: req.files && req.files.length > 0
+        });
+        
+        // Check if job exists
+        const job = await jobModel.findById(jobId);
+        if (!job) {
+            return res.status(404).json({ success: false, message: "Job not found" });
+        }
+        
+        // Check if user has already applied
+        const userModel = await import("../models/userModel.js").then(module => module.default);
+        const user = await userModel.findById(userId);
+        
+        if (!user) {
+            return res.status(404).json({ success: false, message: "User not found" });
+        }
+        
+        if (!user.appliedJobs) {
+            user.appliedJobs = [];
+        }
+        
+        if (user.appliedJobs.includes(jobId)) {
+            return res.status(400).json({ success: false, message: "You have already applied to this job" });
+        }
+        
+        // Handle uploaded files (if any)
+        const files = req.files?.map(file => ({
+            filename: file.filename,
+            path: `${req.protocol}://${req.get("host")}/uploads/${file.filename}`,
+        })) || [];
+        
+        // Create application record with optional fields
+        const applicationModel = await import("../models/applicationModel.js").then(module => module.default);
+        
+        const application = await applicationModel.create({
+            job: jobId,
+            applicant: userId,
+            bid: parseFloat(bid),
+            receivedAmount: parseFloat(receivedAmount),
+            duration,
+            coverLetter: coverLetter || "", // Handle empty cover letter
+            attachments: files, // Empty array if no files
+            status: "pending"
+        });
+        
+        // Add job to user's applied jobs
+        user.appliedJobs.push(jobId);
+        await user.save();
+        
+        console.log("Application created successfully:", application._id);
+        
+        return res.status(200).json({ 
+            success: true, 
+            message: "Application submitted successfully", 
+            application 
+        });
+        
+    } catch (error) {
+        console.error("Error applying for job with details:", error);
+        return res.status(500).json({ success: false, message: "Internal server error" });
+    }
+};

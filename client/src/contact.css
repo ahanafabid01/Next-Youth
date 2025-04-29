@@ -1,0 +1,348 @@
+/* === Form Containers and Sections === */
+.sc-form-container {
+  max-width: 900px;
+  margin: 0 auto;
+  padding: 2rem;
+  background-color: var(--bs-light-card);
+  border-radius: var(--bs-border-radius);
+  box-shadow: var(--bs-shadow-light);
+}
+
+.dark-mode .sc-form-container {
+  background-color: var(--bs-dark-card);
+  box-shadow: var(--bs-shadow-dark);
+}
+
+.sc-form {
+  display: grid;
+  grid-template-columns: repeat(1, 1fr);
+  gap: 1.5rem;
+}
+
+.sc-form-section {
+  margin-bottom: 1rem;
+}
+
+.sc-form-section h3 {
+  font-size: 1.4rem;
+  margin-bottom: 1.5rem;
+  color: var(--bs-primary);
+  position: relative;
+  padding-bottom: 0.5rem;
+}
+
+.sc-form-section h3 span {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 60px;
+  height: 3px;
+  background: linear-gradient(90deg, var(--bs-primary), var(--bs-accent));
+  border-radius: 3px;
+}
+
+.sc-form-row {
+  display: grid;
+  grid-template-columns: repeat(1, 1fr);
+  gap: 1.5rem;
+  margin-top: 1.5rem;
+}
+
+.sc-form-row:first-child {
+  margin-top: 0;
+}
+
+/* === Form Controls === */
+.sc-form-group {
+  margin-bottom: 1rem;
+}
+
+.sc-form-group label {
+  display: block;
+  margin-bottom: 0.5rem;
+  font-weight: 500;
+}
+
+.sc-form-group .required {
+  color: var(--bs-secondary);
+}
+
+.sc-form-group input,
+.sc-form-group select,
+.sc-form-group textarea {
+  width: 100%;
+  padding: 0.8rem 1rem;
+  border-radius: 8px;
+  border: 1px solid rgba(0, 0, 0, 0.1);
+  background-color: white;
+  color: var(--bs-dark-text);
+  transition: all 0.3s ease;
+}
+
+.dark-mode .sc-form-group input,
+.dark-mode .sc-form-group select,
+.dark-mode .sc-form-group textarea {
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  background-color: rgba(0, 0, 0, 0.2);
+  color: var(--bs-light-text);
+}
+
+.sc-form-group input:focus,
+.sc-form-group select:focus,
+.sc-form-group textarea:focus {
+  outline: none;
+  border-color: var(--bs-primary);
+  box-shadow: 0 0 0 2px rgba(0, 119, 182, 0.2);
+}
+
+.sc-form-group input.error,
+.sc-form-group select.error,
+.sc-form-group textarea.error {
+  border-color: var(--bs-secondary);
+}
+
+.sc-form-group .error-message {
+  color: var(--bs-secondary);
+  font-size: 0.85rem;
+  margin-top: 0.5rem;
+}
+
+.sc-form-group select {
+  appearance: none;
+  background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="black" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg>');
+  background-repeat: no-repeat;
+  background-position: right 1rem center;
+  background-size: 16px;
+}
+
+.dark-mode .sc-form-group select {
+  background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg>');
+}
+
+.sc-form-group textarea {
+  min-height: 120px;
+  resize: vertical;
+}
+
+/* === Form Footer and Submit Button === */
+.sc-form-footer {
+  text-align: center;
+}
+
+.sc-form-footer .bs-primary-btn {
+  padding: 1rem 2rem;
+  font-size: 1.1rem;
+  cursor: pointer;
+  width: 100%;
+  max-width: 320px;
+  display: inline-flex;
+  justify-content: center;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.sc-form-footer .security-message {
+  font-size: 0.9rem;
+  color: rgba(0, 0, 0, 0.6);
+  margin-top: 1.5rem;
+}
+
+.dark-mode .sc-form-footer .security-message {
+  color: rgba(255, 255, 255, 0.6);
+}
+
+.sc-form-footer .security-message i {
+  margin-right: 0.5rem;
+}
+
+/* === Success Message === */
+.sc-success-message {
+  text-align: center;
+  padding: 3rem 1rem;
+}
+
+.sc-success-icon {
+  font-size: 4rem;
+  color: var(--bs-success);
+  margin-bottom: 1.5rem;
+}
+
+.sc-success-message h3 {
+  font-size: 1.8rem;
+  margin-bottom: 1rem;
+}
+
+.sc-success-message p {
+  font-size: 1.2rem;
+  margin-bottom: 1.5rem;
+}
+
+.sc-success-message p:last-child {
+  font-size: 1rem;
+}
+
+/* === Background Styles === */
+.dark-bg {
+  background: linear-gradient(135deg, #0b090a, #161a1d);
+}
+
+.light-bg {
+  background: linear-gradient(135deg, #0077b6, #00b4d8);
+}
+
+.dark-bg-alt {
+  background: linear-gradient(135deg, #0f172a, #1e293b);
+  padding-top: 4rem;
+}
+
+.light-bg-alt {
+  background: linear-gradient(135deg, #f1f5f9, #e2e8f0);
+  padding-top: 4rem;
+}
+
+.dark-cta-bg {
+  background: linear-gradient(135deg, #1e293b, #0f172a);
+}
+
+.light-cta-bg {
+  background: linear-gradient(135deg, #3a86ff, #4cc9f0);
+}
+
+/* === Toast Notification === */
+.toast-notification {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  background-color: white;
+  color: #334155;
+  padding: 12px 20px;
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  z-index: 1000;
+  transition: all 0.3s ease;
+  transform: translateY(20px);
+  opacity: 0;
+  max-width: 300px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.dark-mode .toast-notification {
+  background-color: #334155;
+  color: white;
+}
+
+.toast-notification.active {
+  transform: translateY(0);
+  opacity: 1;
+}
+
+.toast-notification i {
+  color: var(--bs-primary);
+  font-size: 1.2rem;
+}
+
+/* === Footer Styles === */
+footer {
+  padding: 3rem 2rem;
+  border-top: 1px solid rgba(0, 0, 0, 0.1);
+}
+
+.light-footer {
+  background-color: #f1f5f9;
+  color: #334155;
+}
+
+.dark-footer {
+  background-color: #0f172a;
+  color: #e2e8f0;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.footer-container {
+  max-width: 1200px;
+  margin: 0 auto;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 2rem;
+}
+
+.footer-section h3 {
+  font-size: 1.5rem;
+  margin-bottom: 1.5rem;
+}
+
+.footer-section h4 {
+  font-size: 1.2rem;
+  margin-bottom: 1rem;
+}
+
+.footer-section p {
+  line-height: 1.6;
+  margin-bottom: 1.5rem;
+}
+
+.footer-section ul {
+  list-style: none;
+  padding: 0;
+}
+
+.footer-section li {
+  margin-bottom: 0.5rem;
+}
+
+.footer-section a {
+  color: inherit;
+  text-decoration: none;
+}
+
+.social-links {
+  display: flex;
+  gap: 0.8rem;
+  font-size: 1.2rem;
+}
+
+.footer-bottom {
+  border-top: 1px solid rgba(0, 0, 0, 0.1);
+  margin-top: 2rem;
+  padding-top: 2rem;
+  text-align: center;
+}
+
+.dark-footer .footer-bottom {
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.footer-bottom p {
+  font-size: 0.9rem;
+}
+
+.footer-links {
+  display: flex;
+  justify-content: center;
+  gap: 1.5rem;
+  margin-top: 1rem;
+  font-size: 0.9rem;
+}
+
+/* === Responsive Design === */
+@media (min-width: 768px) {
+  .sc-form-row {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 767px) {
+  .sc-form-container {
+    padding: 1.5rem;
+  }
+  
+  .sc-form-section h3 {
+    font-size: 1.2rem;
+  }
+  
+  .sc-form-footer .bs-primary-btn {
+    max-width: 100%;
+  }
+}

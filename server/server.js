@@ -3,10 +3,17 @@ import cors from 'cors';
 import 'dotenv/config';
 import cookieParser from 'cookie-parser'; // Fixed typo
 import connectDB from './config/mongodb.js';
-import authRouter from './routes/authRoutes.js';
+import authRoutes from './routes/authRoutes.js';
 import jobRoutes from './routes/jobRoutes.js';
+import contactRoutes from './routes/contactRoutes.js'; // Add this line
 import path from "path";
 import bodyParser from "body-parser";
+import { fileURLToPath } from "url";
+import fs from "fs";
+import demoRoutes from './routes/demoRoutes.js'; // Import the demo routes
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 const app = express();
 const PORT = process.env.PORT || 4000;
@@ -32,11 +39,19 @@ app.use(cors({
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 
-app.use("/uploads", express.static(path.join(path.resolve(), "uploads")));
+// Create uploads directory if it doesn't exist
+const uploadDir = path.join(__dirname, 'uploads');
+if (!fs.existsSync(uploadDir)) {
+    fs.mkdirSync(uploadDir, { recursive: true });
+}
+
+app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 
 // API routes
-app.use('/api/auth', authRouter);
+app.use('/api/auth', authRoutes);
 app.use("/api/jobs", jobRoutes); // Multer will handle multipart/form-data for this route
+app.use("/api/contact", contactRoutes); // Add this line
+app.use('/api/contact', demoRoutes); // Add demo routes
 
 // Default route
 app.get('/', (req, res) => {

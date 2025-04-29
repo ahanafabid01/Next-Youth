@@ -12,6 +12,26 @@ const AdminDashboard = () => {
     profileViews: 45673,
     unreadMessages: 93,
   });
+  
+  // Get dark mode setting from localStorage
+  const [darkMode, setDarkMode] = useState(() => {
+    const savedTheme = localStorage.getItem("adminTheme");
+    return savedTheme === "dark";
+  });
+  
+  // Check for dark mode changes
+  useEffect(() => {
+    const handleThemeChange = () => {
+      const savedTheme = localStorage.getItem("adminTheme");
+      setDarkMode(savedTheme === "dark");
+    };
+    
+    // Listen for storage changes in case theme is changed in another component
+    window.addEventListener('storage', handleThemeChange);
+    return () => {
+      window.removeEventListener('storage', handleThemeChange);
+    };
+  }, []);
 
   // Sample data for Vacancy Stats (replace with API calls in a real app)
   const data = [
@@ -28,7 +48,7 @@ const AdminDashboard = () => {
   }, []);
 
   return (
-    <div className="admin-dashboard">
+    <div className={`admin-dashboard ${darkMode ? "admin-dark-mode" : ""}`}>
       {/* Sidebar */}
       <Sidebar />
 

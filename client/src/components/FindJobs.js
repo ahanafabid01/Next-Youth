@@ -25,7 +25,9 @@ const FindJobs = () => {
         skills: [],
         budgetType: '',
         budgetMin: '',
-        budgetMax: ''
+        budgetMax: '',
+        otherSkillsEnabled: false,
+        otherSkills: ''
     });
     const [filteredJobs, setFilteredJobs] = useState([]);
     const [currentJob, setCurrentJob] = useState(null);
@@ -532,21 +534,44 @@ const FindJobs = () => {
         
         // Apply search term filter
         if (searchTerm.trim()) {
-            const term = searchTerm.toLowerCase();
+            const term = searchTerm.toLowerCase().trim();
             filteredJobs = filteredJobs.filter(job => {
-                // Check if any letter in the search term matches the job title
+                // Only check if the job title contains the search term (anywhere in the title)
                 const jobTitle = job.title.toLowerCase();
                 
-                // Match if any letter from the search term is found in the title
-                for (let i = 0; i < term.length; i++) {
-                    if (jobTitle.includes(term[i])) {
-                        return true;
-                    }
+                // Match if the job title contains the search term anywhere
+                return jobTitle.includes(term);
+            });
+        }
+        
+        // Apply skills filter - combining predefined skills and "other" skills
+        if (filters.skills.length > 0 || (filters.otherSkillsEnabled && filters.otherSkills.trim())) {
+            filteredJobs = filteredJobs.filter(job => {
+                // Check predefined skills first
+                if (filters.skills.length > 0 && 
+                    filters.skills.some(skill => job.skills.includes(skill))) {
+                    return true;
                 }
                 
-                // Also check full word matches in description and skills
-                return job.description.toLowerCase().includes(term) || 
-                      job.skills.some(skill => skill.toLowerCase().includes(term));
+                // Then check other skills if enabled
+                if (filters.otherSkillsEnabled && filters.otherSkills.trim()) {
+                    // Split the other skills by commas and trim whitespace
+                    const otherSkillsList = filters.otherSkills
+                        .split(',')
+                        .map(skill => skill.trim().toLowerCase())
+                        .filter(skill => skill.length > 0);
+                    
+                    // Match if any job skill includes any of the other skills (case insensitive)
+                    return job.skills.some(jobSkill => 
+                        otherSkillsList.some(otherSkill => 
+                            jobSkill.toLowerCase().includes(otherSkill)
+                        )
+                    );
+                }
+                
+                // If no skills match or no skills selected, return false
+                return filters.skills.length === 0 && 
+                       (!filters.otherSkillsEnabled || !filters.otherSkills.trim());
             });
         }
         
@@ -678,7 +703,7 @@ const FindJobs = () => {
                         ) : (
                             <button 
                                 className="apply-button" 
-                                onClick={() => applyToJob(currentJob._id)}
+                                onClick={() => navigate(`/jobs/apply/${currentJob._id}`)}
                             >
                                 Apply Now
                             </button>
@@ -1017,7 +1042,7 @@ const FindJobs = () => {
                                                 <div className="filter-section">
                                                     <h4>Skills</h4>
                                                     <div className="skills-filter">
-                                                        {/* A simple implementation - in a real app you'd have a more dynamic skills selector */}
+                                                        {/* Include common skills plus an "Others" option */}
                                                         <div className="skill-options">
                                                             {['JavaScript', 'React', 'Node.js', 'Python', 'Design'].map(skill => (
                                                                 <label key={skill}>
@@ -1041,6 +1066,33 @@ const FindJobs = () => {
                                                                     {skill}
                                                                 </label>
                                                             ))}
+                                                            {/* Add Others option with a text input */}
+                                                            <label className="others-skill-option">
+                                                                <input 
+                                                                    type="checkbox"
+                                                                    checked={filters.otherSkillsEnabled}
+                                                                    onChange={() => {
+                                                                        setFilters({
+                                                                            ...filters, 
+                                                                            otherSkillsEnabled: !filters.otherSkillsEnabled,
+                                                                            otherSkills: filters.otherSkillsEnabled ? "" : filters.otherSkills
+                                                                        });
+                                                                    }}
+                                                                />
+                                                                Others
+                                                            </label>
+                                                            
+                                                            {/* Show text input when "Others" is checked */}
+                                                            {filters.otherSkillsEnabled && (
+                                                                <div className="other-skills-input">
+                                                                    <input
+                                                                        type="text"
+                                                                        placeholder="Enter skills (comma separated)"
+                                                                        value={filters.otherSkills || ""}
+                                                                        onChange={(e) => setFilters({...filters, otherSkills: e.target.value})}
+                                                                    />
+                                                                </div>
+                                                            )}
                                                         </div>
                                                     </div>
                                                 </div>
@@ -1062,7 +1114,9 @@ const FindJobs = () => {
                                                                 skills: [],
                                                                 budgetType: '',
                                                                 budgetMin: '',
-                                                                budgetMax: ''
+                                                                budgetMax: '',
+                                                                otherSkillsEnabled: false,
+                                                                otherSkills: ''
                                                             });
                                                             setShowFiltersDropdown(false);
                                                             performSearch();

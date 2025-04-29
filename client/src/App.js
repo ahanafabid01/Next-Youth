@@ -4,20 +4,26 @@ import Homepage from "./Homepage";
 import Login from "./components/Login";
 import Register from "./components/Register";
 import AdminDashboard from "./components/Admin/AdminDashboard";
-import Dashboard from "./components/Admin/Dashboard";
+
 import Users from "./components/Admin/Users";
-import Messages from "./components/Admin/Messages";
 import Applications from "./components/Admin/Applications";
 import Statistics from "./components/Admin/Statistics";
+import JobDetails from "./components/Admin/JobDetails"; // Add this import
 import EmployeeDashboard from "./components/EmployeeDashboard";
 import EmployerDashboard from "./components/EmployerDashboard";
 import ForgotPassword from "./components/ForgotPassword";
 import Profile from "./components/Profile";
-import EmployeeProfile from "./components/EmployeeProfile";
-import FindJobs from "./components/FindJobs";
-import VerifyAccount from './components/VerifyAccount';
-import MyProfile from './components/MyProfile';
-import JobDetails from "./components/Admin/JobDetails"; // <-- Add this line
+import EmployeeProfile from "./components/EmployeeProfile"; // Updated import
+import FindJobs from "./components/FindJobs"; // Import FindJobs component
+import VerifyAccount from './components/VerifyAccount'; // Add this import
+import MyProfile from './components/MyProfile'; // Import MyProfile
+import Notifications from './components/Notifications'; // Import Notifications
+import JobApplication from "./components/JobApplication"; // Add this import
+import BusinessSolutions from "./BusinessSolutions"; // Import BusinessSolutions
+import ScheduleConsultation from "./contact"; // Import ScheduleConsultation
+import RequestDemo from "./RequestDemo"; // Import RequestDemo component
+import Consultations from "./components/Admin/Consultations"; // Add this import
+import "./App.css"; // Import App.css
 
 const App = () => {
     return (
@@ -27,23 +33,29 @@ const App = () => {
                 <Route path="/login" element={<Login />} />
                 <Route path="/register" element={<Register />} />
                 <Route path="/admin-dashboard" element={<AdminDashboard />} />
-                <Route path="/admin-dashboard/dashboard" element={<Dashboard />} />
+                
                 <Route path="/admin-dashboard/users" element={<Users />} />
-                <Route path="/admin-dashboard/messages" element={<Messages />} />
+            
                 <Route path="/admin-dashboard/applications" element={<Applications />} />
-                <Route path="/admin-dashboard/statistics" element={<Statistics />} />
+                <Route path="/admin-dashboard/statistics" element={<Statistics />} /> {/* Corrected spelling */}
+                <Route path="/admin-dashboard/job-details" element={<JobDetails />} /> {/* Add this route */}
+                <Route path="/admin-dashboard/consultations" element={<Consultations />} /> {/* Add this route */}
                 <Route path="/employee-dashboard" element={<EmployeeDashboard />} />
                 <Route path="/employer-dashboard" element={<EmployerDashboard />} />
                 <Route path="/forgot-password" element={<ForgotPassword />} />
                 <Route path="/profile" element={<Profile />} />
-                <Route path="/employee-profile" element={<EmployeeProfile />} />
-                <Route path="/find-jobs" element={<FindJobs />} />
-                <Route path="/find-jobs/saved" element={<FindJobs />} />
-                <Route path="/find-jobs/proposals" element={<FindJobs />} />
-                <Route path="/find-jobs/details/:jobId" element={<FindJobs />} />
-                <Route path="/verify-account" element={<VerifyAccount />} />
-                <Route path="/my-profile" element={<MyProfile />} />
-                <Route path="/admin-dashboard/job-details" element={<JobDetails />} /> {/* Add this line */}
+                <Route path="/employee-profile" element={<EmployeeProfile />} /> {/* Route for Employee Profile */}
+                <Route path="/find-jobs" element={<FindJobs />} /> {/* Route for FindJobs */}
+                <Route path="/find-jobs/saved" element={<FindJobs />} /> {/* Route for FindJobs saved */}
+                <Route path="/find-jobs/proposals" element={<FindJobs />} /> {/* Route for FindJobs proposals */}
+                <Route path="/find-jobs/details/:jobId" element={<FindJobs />} /> {/* Route for FindJobs details */}
+                <Route path="/verify-account" element={<VerifyAccount />} /> {/* Add this route */}
+                <Route path="/my-profile" element={<MyProfile />} /> {/* Route for MyProfile */}
+                <Route path="/notifications" element={<Notifications />} /> {/* Route for Notifications */}
+                <Route path="/jobs/apply/:jobId" element={<JobApplication />} /> {/* Add this route */}
+                <Route path="/business-solutions" element={<BusinessSolutions />} /> {/* Route for BusinessSolutions */}
+                <Route path="/contact" element={<ScheduleConsultation />} /> {/* Route for ScheduleConsultation */}
+                <Route path="/request-demo" element={<RequestDemo />} /> {/* Route for RequestDemo */}
             </Routes>
         </Router>
     );

@@ -34,6 +34,9 @@ const EmployeeDashboard = () => {
   const [showNotifications, setShowNotifications] = useState(false);
   const notificationsRef = useRef(null);
   const [showMobileNav, setShowMobileNav] = useState(false);
+  const [unreadNotifications, setUnreadNotifications] = useState(() => {
+    return parseInt(localStorage.getItem("unread-notifications") || "2");
+  });
 
   const [user, setUser] = useState({ 
     name: '', 
@@ -338,6 +341,12 @@ const EmployeeDashboard = () => {
     }
   }, [API_BASE_URL, fetchUserJobStats, allAvailableJobs]);
 
+  const handleMarkAllAsRead = useCallback((e) => {
+    e.stopPropagation();
+    setUnreadNotifications(0);
+    localStorage.setItem("unread-notifications", "0");
+  }, []);
+
   useEffect(() => {
     document.addEventListener('click', handleOutsideClick);
     return () => document.removeEventListener('click', handleOutsideClick);
@@ -361,6 +370,10 @@ const EmployeeDashboard = () => {
     }
     localStorage.setItem("dashboard-theme", isDarkMode ? "dark" : "light");
   }, [isDarkMode]);
+
+  useEffect(() => {
+    localStorage.setItem("unread-notifications", unreadNotifications.toString());
+  }, [unreadNotifications]);
 
   const currentYear = new Date().getFullYear();
 
@@ -460,22 +473,44 @@ const EmployeeDashboard = () => {
                 aria-label="Notifications"
               >
                 <FaBell />
-                <span className="notification-badge">2</span>
+                {unreadNotifications > 0 && (
+                  <span className="notification-badge">{unreadNotifications}</span>
+                )}
               </button>
               
               {showNotifications && (
                 <div className="notifications-dropdown">
                   <div className="notification-header">
                     <h3>Notifications</h3>
-                    <button className="mark-all-read">Mark all as read</button>
+                    <button className="mark-all-read" onClick={handleMarkAllAsRead}>Mark all as read</button>
                   </div>
                   <div className="notification-list">
                     <div className="notification-item unread">
                       <div className="notification-icon">
-                        <FaCheckCircle />
+                        {(!user.idVerification || 
+                          !user.idVerification.frontImage || 
+                          !user.idVerification.backImage || 
+                          user.idVerification.status === 'rejected') ? (
+                          <FaRegFileAlt />
+                        ) : user.idVerification.status === 'verified' ? (
+                          <FaCheckCircle />
+                        ) : (
+                          <FaClock />
+                        )}
                       </div>
                       <div className="notification-content">
-                        <p>Your profile has been verified!</p>
+                        <p>
+                          {(!user.idVerification || 
+                            !user.idVerification.frontImage || 
+                            !user.idVerification.backImage || 
+                            user.idVerification.status === 'rejected') ? (
+                            "Please verify your account"
+                          ) : user.idVerification.status === 'verified' ? (
+                            "Your profile has been verified!"
+                          ) : (
+                            "Your verification is pending approval"
+                          )}
+                        </p>
                         <span className="notification-time">2 hours ago</span>
                       </div>
                     </div>

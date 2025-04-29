@@ -70,30 +70,11 @@ authRouter.post("/upload-file", userAuth, upload.single("file"), (req, res) => {
     }
 });
 
-authRouter.put('/update-profile', userAuth, updateUserProfile); // Add this route
-
-authRouter.get('/employee-profile', userAuth, getEmployeeProfile); // Add this route
-
-authRouter.put('/update-employee-profile', userAuth, updateEmployeeProfile); // Add this route
-
-authRouter.get('/admin/users', userAuth, getAllUsers); // Add this route
-
-// Admin verification route
+authRouter.put('/update-profile', userAuth, updateUserProfile);
+authRouter.get('/employee-profile', userAuth, getEmployeeProfile);
+authRouter.put('/update-employee-profile', userAuth, updateEmployeeProfile);
+authRouter.get('/admin/users', userAuth, getAllUsers);
 authRouter.post('/admin/verify-user', userAuth, verifyUserIdentity);
-
-// Add this new route
 authRouter.delete('/delete-user/:id', userAuth, deleteUser);
 
 export default authRouter;
-
-// filepath: /Users/nowrinsanjana/Next-Youth/server/controllers/authController.js
-export const Logout = (req, res) => {
-    console.log("Logout function called!"); // Add this line
-    res.clearCookie("token", {
-        httpOnly: true,
-        secure: process.env.NODE_ENV === "production",
-        sameSite: process.env.NODE_ENV === "production" ? "none" : "strict",
-    });
-    console.log("Token cookie cleared!"); // Add this line
-    return res.status(200).json({ success: true, message: "Logged out successfully" });
-};
