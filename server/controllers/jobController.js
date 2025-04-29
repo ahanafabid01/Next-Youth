@@ -325,3 +325,132 @@ export const applyWithDetails = async (req, res) => {
         return res.status(500).json({ success: false, message: "Internal server error" });
     }
 };
+
+// Add these functions to your existing jobController.js file
+
+export const getApplicationById = async (req, res) => {
+    try {
+        const applicationId = req.params.id;
+        const userId = req.user.id;
+        
+        // Find the application
+        const applicationModel = await import("../models/applicationModel.js").then(module => module.default);
+        const application = await applicationModel.findById(applicationId)
+            .populate('job');
+        
+        if (!application) {
+            return res.status(404).json({ success: false, message: "Application not found" });
+        }
+        
+        // Check if the application belongs to the current user
+        if (application.applicant.toString() !== userId) {
+            return res.status(403).json({ success: false, message: "You don't have permission to view this application" });
+        }
+        
+        return res.status(200).json({ 
+            success: true, 
+            application
+        });
+        
+    } catch (error) {
+        console.error("Error fetching application details:", error);
+        return res.status(500).json({ success: false, message: "Internal server error" });
+    }
+};
+
+export const deleteApplication = async (req, res) => {
+    try {
+        const applicationId = req.params.id;
+        const userId = req.user.id;
+        
+        // Find the application
+        const applicationModel = await import("../models/applicationModel.js").then(module => module.default);
+        const application = await applicationModel.findById(applicationId);
+        
+        if (!application) {
+            return res.status(404).json({ success: false, message: "Application not found" });
+        }
+        
+        // Check if the application belongs to the current user
+        if (application.applicant.toString() !== userId) {
+            return res.status(403).json({ success: false, message: "You don't have permission to delete this application" });
+        }
+        
+        // Only allow deleting if application is still pending
+        if (application.status !== 'pending') {
+            return res.status(400).json({ 
+                success: false, 
+                message: "Only pending applications can be withdrawn" 
+            });
+        }
+        
+        // Remove the application
+        await applicationModel.findByIdAndDelete(applicationId);
+        
+        // Remove the job from user's applied jobs
+        const userModel = await import("../models/userModel.js").then(module => module.default);
+        const user = await userModel.findById(userId);
+        user.appliedJobs = user.appliedJobs.filter(jobId => jobId.toString() !== application.job.toString());
+        await user.save();
+        
+        return res.status(200).json({ success: true, message: "Application withdrawn successfully" });
+        
+    } catch (error) {
+        console.error("Error withdrawing application:", error);
+        return res.status(500).json({ success: false, message: "Internal server error" });
+    }
+};
+
+// Add this function to your controller
+
+export const getUserApplications = async (req, res) => {
+    try {
+        const userId = req.user.id;
+        
+        // Find all applications for this user WITH populated job data
+        const applicationModel = await import("../models/applicationModel.js").then(module => module.default);
+        const applications = await applicationModel.find({ applicant: userId })
+            .populate('job');
+        
+        return res.status(200).json({ 
+            success: true, 
+            applications
+        });
+        
+    } catch (error) {
+        console.error("Error fetching user applications:", error);
+        return res.status(500).json({ success: false, message: "Internal server error" });
+    }
+};
+
+// Add this function to your controller
+
+export const getApplicationByJobId = async (req, res) => {
+    try {
+        const jobId = req.params.jobId;
+        const userId = req.user.id;
+        
+        // Find the application for this job submitted by current user
+        const applicationModel = await import("../models/applicationModel.js").then(module => module.default);
+        const application = await applicationModel.findOne({
+            job: jobId,
+            applicant: userId
+        });
+        
+        if (!application) {
+            return res.status(404).json({ 
+                success: false, 
+                message: "Application not found for this job" 
+            });
+        }
+        
+        return res.status(200).json({ 
+            success: true, 
+            application 
+        });
+        
+    } catch (error) {
+        console.error("Error finding application by job ID:", error);
+        return res.status(500).json({ success: false, message: "Internal server error" });
+    }
+};

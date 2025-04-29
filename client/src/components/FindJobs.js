@@ -337,22 +337,28 @@ const FindJobs = () => {
         }
     };
 
-    // Fetch applied jobs
     const fetchAppliedJobs = async () => {
         setLoading(true);
         try {
-            const response = await axios.get("http://localhost:4000/api/jobs/applied", { 
+            // Get applications instead of just jobs
+            const applicationsResponse = await axios.get("http://localhost:4000/api/jobs/applications", { 
                 withCredentials: true 
             });
             
-            if (response.data.success) {
-                setAppliedJobs(response.data.jobs);
+            if (applicationsResponse.data.success) {
+                // Map applications to jobs with application ID included
+                const jobsWithApplicationIds = applicationsResponse.data.applications.map(app => ({
+                    ...app.job,
+                    applicationId: app._id, // Store the application ID with each job
+                    hasApplied: true
+                }));
+                setAppliedJobs(jobsWithApplicationIds);
             } else {
                 setError("Failed to fetch your job applications.");
             }
         } catch (err) {
             console.error("Error fetching job applications:", err);
-            setError("An error occurred while fetching your job applications.");
+            setError(err.response?.data?.message || "An error occurred while fetching your job applications.");
         } finally {
             setLoading(false);
         }
@@ -622,6 +628,28 @@ const FindJobs = () => {
             setFilteredJobs(getFilteredJobs());
         }
     }, [jobs, savedJobs, appliedJobs, activeTab, searchTerm, filters, viewMode]);
+
+    // Add this function to your FindJobs component
+    const handleViewApplication = async (jobId) => {
+        try {
+            setLoading(true);
+            const response = await axios.get(
+                `http://localhost:4000/api/jobs/job-application/${jobId}`,
+                { withCredentials: true }
+            );
+            
+            if (response.data.success && response.data.application) {
+                navigate(`/view-application/${response.data.application._id}`);
+            } else {
+                setError("No application found for this job");
+            }
+        } catch (err) {
+            console.error("Error finding application:", err);
+            setError(err.response?.data?.message || "Error finding your application");
+        } finally {
+            setLoading(false);
+        }
+    };
 
     // Job detail view rendering
     const renderJobDetail = () => {
@@ -913,51 +941,6 @@ const FindJobs = () => {
                     renderJobDetail()
                 ) : (
                     <>
-                        <div className="header">
-                            <div className="page-title">
-                                <h1>{getPageTitle()}</h1>
-                            </div>
-                            
-                            <div className="job-nav-dropdown" ref={dropdownRef}>
-                                <button 
-                                    className="dropdown-toggle"
-                                    onClick={toggleDropdown}
-                                >
-                                    {getCurrentTabName()}
-                                    <FaChevronDown className={`dropdown-icon ${showDropdown ? 'rotate' : ''}`} />
-                                </button>
-                                {showDropdown && (
-                                    <div className="job-dropdown-menu">
-                                        <button 
-                                            className={activeTab === 'available' ? 'active' : ''}
-                                            onClick={() => navigate('/find-jobs')}
-                                        >
-                                            Find Work
-                                        </button>
-                                        <button 
-                                            className={activeTab === 'saved' ? 'active' : ''}
-                                            onClick={() => navigate('/find-jobs/saved')}
-                                        >
-                                            Saved Jobs
-                                        </button>
-                                        <button 
-                                            className={activeTab === 'proposals' ? 'active' : ''}
-                                            onClick={() => navigate('/find-jobs/proposals')}
-                                        >
-                                            My Proposals
-                                        </button>
-                                    </div>
-                                )}
-                            </div>
-
-                            {/* Back to Dashboard button */}
-                            <button 
-                                className="back-to-dashboard-button"
-                                onClick={() => navigate('/employee-dashboard')}
-                            >
-                                Go Back to Dashboard
-                            </button>
-                        </div>
 
                         {/* Search and filter section - only show on available and saved tabs */}
                         <div className="search-filter-container">
@@ -1227,9 +1210,17 @@ const FindJobs = () => {
                                         <div className="job-actions">
                                             <button 
                                                 className="view-details-button" 
-                                                onClick={() => navigate(`/find-jobs/details/${job._id}`)}
+                                                onClick={() => {
+                                                    if (activeTab === 'proposals') {
+                                                        // For proposals tab, use the stored application ID directly
+                                                        navigate(`/view-application/${job.applicationId}`);
+                                                    } else {
+                                                        // For other tabs, navigate to job details as before
+                                                        navigate(`/find-jobs/details/${job._id}`);
+                                                    }
+                                                }}
                                             >
-                                                View Details
+                                                {activeTab === 'proposals' ? 'View Application' : 'View Details'}
                                             </button>
 
                                             {/* Save button - only for available tab */}

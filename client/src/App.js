@@ -22,6 +22,7 @@ import JobApplication from "./components/JobApplication"; // Add this import
 import BusinessSolutions from "./BusinessSolutions"; // Import BusinessSolutions
 import ScheduleConsultation from "./contact"; // Import ScheduleConsultation
 import RequestDemo from "./RequestDemo"; // Import RequestDemo component
+import ViewApplication from "./components/ViewApplication"; // Import ViewApplication component
 import "./App.css"; // Import App.css
 
 const App = () => {
@@ -53,6 +54,7 @@ const App = () => {
                 <Route path="/business-solutions" element={<BusinessSolutions />} /> {/* Route for BusinessSolutions */}
                 <Route path="/contact" element={<ScheduleConsultation />} /> {/* Route for ScheduleConsultation */}
                 <Route path="/request-demo" element={<RequestDemo />} /> {/* Route for RequestDemo */}
+                <Route path="/view-application/:applicationId" element={<ViewApplication />} /> {/* Add this route */}
             </Routes>
         </Router>
     );

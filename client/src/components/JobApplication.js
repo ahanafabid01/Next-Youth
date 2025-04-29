@@ -4,7 +4,7 @@ import axios from 'axios';
 import { FaArrowLeft, FaPlus, FaMinus, FaFileUpload, FaRegFileAlt, 
          FaSpinner, FaExclamationCircle, FaTimes, FaCheckCircle, 
          FaUserCircle, FaBell, FaSun, FaMoon, FaChevronDown, FaDownload,
-         FaBriefcase, FaFileContract, FaCommentDots, FaDollarSign, FaClock } from 'react-icons/fa';
+         FaBriefcase, FaFileContract, FaCommentDots, FaDollarSign, FaClock, FaStar, FaEdit } from 'react-icons/fa';
 import './JobApplication.css';
 
 const JobApplication = () => {
@@ -45,6 +45,11 @@ const JobApplication = () => {
     });
     const profileDropdownRef = useRef(null);
     const notificationsRef = useRef(null);
+
+    // Add these state variables with your existing useState declarations
+    const [showDeleteModal, setShowDeleteModal] = useState(false);
+    const [applicationData, setApplicationData] = useState(null);
+    const [isEditing, setIsEditing] = useState(false);
 
     // Close dropdowns when clicking outside
     useEffect(() => {
@@ -211,27 +216,54 @@ const JobApplication = () => {
         setFiles(prevFiles => prevFiles.filter((_, i) => i !== index));
     };
 
-    // Add these state variables to track field-specific errors
+    // Add these handler functions to your component
+    const handleEditApplication = () => {
+        setIsEditing(true);
+        navigate(`/edit-application/${jobId}`);
+    };
+
+    const handleDeleteConfirmation = () => {
+        setShowDeleteModal(true);
+    };
+
+    const handleDeleteApplication = async () => {
+        try {
+            setSubmitting(true);
+            const response = await axios.delete(
+                `http://localhost:4000/api/jobs/application/${jobId}`,
+                { withCredentials: true }
+            );
+            
+            if (response.data.success) {
+                alert("Application deleted successfully");
+                navigate('/find-jobs/proposals');
+            } else {
+                setError(response.data.message || "Failed to delete application");
+            }
+        } catch (err) {
+            console.error("Error deleting application:", err);
+            setError(err.response?.data?.message || "An error occurred while deleting your application");
+        } finally {
+            setSubmitting(false);
+            setShowDeleteModal(false);
+        }
+    };
+
     const [bidError, setBidError] = useState('');
     const [durationError, setDurationError] = useState('');
 
-    // Update the handleSubmit function to improve validation and field focus
     const handleSubmit = async (e) => {
         e.preventDefault();
         
-        // Clear any previous errors
         setError('');
         setBidError('');
         setDurationError('');
         
         let hasError = false;
         
-        // Validate required fields with better error handling
         if (!bid || bid <= 0) {
             setBidError("Please enter your bid amount");
-            // Focus on the bid input field
             document.getElementById('bid').focus();
-            // Scroll to the bid section
             document.querySelector('.bid-container').scrollIntoView({ behavior: 'smooth', block: 'center' });
             hasError = true;
         }
@@ -239,16 +271,13 @@ const JobApplication = () => {
         if (!duration) {
             setDurationError("Choose an option");
             if (!hasError) {
-                // Use a more specific and reliable selector
                 const durationSection = document.querySelector('.duration-selection');
                 
                 if (durationSection) {
-                    // Add a console log to debug
                     console.log("Duration section found:", durationSection);
                     
                     durationSection.classList.add('highlight-animation');
                     
-                    // Ensure scrolling works with timeout to let the DOM update
                     setTimeout(() => {
                         durationSection.scrollIntoView({ 
                             behavior: 'smooth', 
@@ -256,12 +285,10 @@ const JobApplication = () => {
                         });
                     }, 100);
                     
-                    // Remove highlight class after animation completes
                     setTimeout(() => {
                         durationSection.classList.remove('highlight-animation');
                     }, 2000);
                 } else {
-                    // Fallback scrolling method if the element isn't found by class
                     console.log("Duration section not found by class, trying alternative selector");
                     const alternativeDurationSection = document.querySelector('div.duration-options').closest('.duration-selection');
                     if (alternativeDurationSection) {
@@ -277,7 +304,6 @@ const JobApplication = () => {
         
         if (hasError) return;
         
-        // Validate optional fields only if they have content
         if (coverLetter && coverLetter.length > 5000) {
             setError("Cover letter exceeds 5000 character limit");
             document.querySelector('.cover-letter-container').scrollIntoView({ behavior: 'smooth', block: 'center' });
@@ -287,15 +313,13 @@ const JobApplication = () => {
         try {
             setSubmitting(true);
             
-            // Prepare form data for file upload
             const formData = new FormData();
             formData.append('jobId', jobId);
             formData.append('bid', bid);
             formData.append('receivedAmount', receivedAmount);
             formData.append('duration', duration);
-            formData.append('coverLetter', coverLetter || ''); // Allow empty cover letter
+            formData.append('coverLetter', coverLetter || '');
             
-            // Add files to form data (if any)
             if (files.length > 0) {
                 files.forEach(file => {
                     formData.append('attachments', file);
@@ -308,7 +332,6 @@ const JobApplication = () => {
                 filesCount: files.length
             });
             
-            // Submit application
             const response = await axios.post(
                 'http://localhost:4000/api/jobs/apply-with-details',
                 formData,
@@ -322,9 +345,8 @@ const JobApplication = () => {
             
             if (response.data.success) {
                 setSuccess(true);
-                // Redirect after success message is shown
                 setTimeout(() => {
-                    navigate('/find-jobs/proposals');
+                    navigate(`/view-application/${response.data.application._id}`);
                 }, 2000);
             } else {
                 setError(response.data.message || "Failed to submit application");
@@ -862,6 +884,66 @@ const JobApplication = () => {
                         </button>
                     </div>
                 </form>
+            </div>
+
+            {/* Sidebar Section */}
+            <div className="application-sidebar">
+                {/* Client Information Section */}
+                <div className="sidebar-section">
+                    <h3 className="sidebar-title">Client Information</h3>
+                    <div className="client-info">
+                        <div className="client-avatar">
+                            {job?.employer?.profilePicture ? (
+                                <img src={job?.employer?.profilePicture} alt="Client" />
+                            ) : (
+                                <div className="avatar-placeholder">
+                                    {job?.employer?.name ? job.employer.name.charAt(0) : "C"}
+                                </div>
+                            )}
+                        </div>
+                        <div className="client-details">
+                            <h4>{job?.employer?.name || "Client Name"}</h4>
+                            <p className="client-location">{job?.employer?.location || "Location"}</p>
+                            <p className="client-rating">
+                                <FaStar className="rating-icon" /> 
+                                {job?.employer?.rating || "4.8"} ({job?.employer?.reviews || "10"} reviews)
+                            </p>
+                        </div>
+                    </div>
+                </div>
+
+                {/* Application Management Section */}
+                <div className="sidebar-section">
+                    <h3 className="sidebar-title">Application Management</h3>
+                    <div className="sidebar-buttons">
+                        <button 
+                            className="sidebar-button edit-button"
+                            onClick={handleEditApplication}
+                        >
+                            <FaEdit /> Edit Application
+                        </button>
+                        <button 
+                            className="sidebar-button delete-button"
+                            onClick={handleDeleteConfirmation}
+                        >
+                            <FaTimes /> Delete Application
+                        </button>
+                    </div>
+                </div>
+                
+                {/* Delete Confirmation Modal */}
+                {showDeleteModal && (
+                    <div className="modal-overlay">
+                        <div className="delete-confirmation-modal">
+                            <h3>Delete Application</h3>
+                            <p>Are you sure you want to delete this application? This action cannot be undone.</p>
+                            <div className="modal-actions">
+                                <button className="cancel-modal-btn" onClick={() => setShowDeleteModal(false)}>Cancel</button>
+                                <button className="delete-modal-btn" onClick={handleDeleteApplication}>Delete</button>
+                            </div>
+                        </div>
+                    </div>
+                )}
             </div>
 
             {/* Footer Section */}
