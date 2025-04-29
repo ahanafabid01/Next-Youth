@@ -37,11 +37,6 @@ const demoRequestSchema = new mongoose.Schema({
     type: String,
     default: 'demo'
   },
-  status: {
-    type: String,
-    enum: ["pending", "confirmed", "completed", "cancelled"],
-    default: "pending"
-  },
   createdAt: {
     type: Date,
     default: Date.now
