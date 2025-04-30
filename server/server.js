@@ -51,7 +51,7 @@ app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 app.use('/api/auth', authRoutes);
 app.use("/api/jobs", jobRoutes); // Multer will handle multipart/form-data for this route
 app.use("/api/contact", contactRoutes); // Add this line
-app.use('/api/contact', demoRoutes); // Add demo routes
+app.use('/api/contact', demoRoutes); // Add demo roues
 
 // Default route
 app.get('/', (req, res) => {
