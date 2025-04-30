@@ -84,10 +84,18 @@ const Sidebar = () => {
           </li>
           <li>
             <Link 
-              to="/admin-dashboard/messages" 
-              className={location.pathname === "/admin-dashboard/messages" ? "active" : ""}
+              to="/admin-dashboard/consultations" 
+              className={location.pathname === "/admin-dashboard/consultations" ? "active" : ""}
             >
-              <FaEnvelope /> Messages
+              <FaEnvelope /> Consultations
+            </Link>
+          </li>
+          <li>
+            <Link 
+              to="/admin-dashboard/demo-consultations" 
+              className={location.pathname === "/admin-dashboard/demo-consultations" ? "active" : ""}
+            >
+              <FaEnvelope /> Demo Consultations
             </Link>
           </li>
           <li>

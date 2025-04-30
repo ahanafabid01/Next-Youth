@@ -543,3 +543,23 @@ export const updateApplicationStatus = async (req, res) => {
         });
     }
 };
+
+// Add admin middleware check
+export const isAdmin = async (req, res, next) => {
+    if (req.user.role === 'admin') {
+        next();
+    } else {
+        return res.status(403).json({ success: false, message: "Access denied: Admin only" });
+    }
+};
+
+// Add this function
+export const getAllJobs = async (req, res) => {
+    try {
+        const jobs = await jobModel.find().populate('employer', 'name email');
+        res.status(200).json({ success: true, jobs });
+    } catch (error) {
+        console.error("Error fetching all jobs:", error);
+        res.status(500).json({ success: false, message: "Internal server error" });
+    }
+};

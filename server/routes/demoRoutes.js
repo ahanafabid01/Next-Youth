@@ -17,4 +17,10 @@ const demoRequestValidation = [
 // POST route for demo requests
 router.post('/demo-request', demoRequestValidation, demoController.requestDemo);
 
+// GET route for all demo requests
+router.get('/requests', demoController.getAllDemoRequests);
+
+// Add this new route for status updates
+router.put('/requests/:id/status', demoController.updateDemoStatus);
+
 export default router;

@@ -9,6 +9,9 @@ import Users from "./components/Admin/Users";
 import Messages from "./components/Admin/Messages";
 import Applications from "./components/Admin/Applications";
 import Statistics from "./components/Admin/Statistics";
+import JobDetails from "./components/Admin/JobDetails"; // Add this import
+import Consultations from "./components/Admin/Consultations"; // Add this import
+import DemoConsultations from "./components/Admin/DemoConsultations"; // Add this import
 import EmployeeDashboard from "./components/EmployeeDashboard";
 import EmployerDashboard from "./components/EmployerDashboard";
 import ForgotPassword from "./components/ForgotPassword";
@@ -39,6 +42,9 @@ const App = () => {
                 <Route path="/admin-dashboard/messages" element={<Messages />} />
                 <Route path="/admin-dashboard/applications" element={<Applications />} />
                 <Route path="/admin-dashboard/statistics" element={<Statistics />} />
+                <Route path="/admin-dashboard/job-details" element={<JobDetails />} /> {/* Add this route */}
+                <Route path="/admin-dashboard/consultations" element={<Consultations />} /> {/* Add this route */}
+                <Route path="/admin-dashboard/demo-consultations" element={<DemoConsultations />} /> {/* Add this route */}
                 <Route path="/employee-dashboard" element={<EmployeeDashboard />} />
                 <Route path="/employer-dashboard" element={<EmployerDashboard />} />
                 <Route path="/forgot-password" element={<ForgotPassword />} />

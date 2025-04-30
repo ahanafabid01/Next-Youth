@@ -16,7 +16,8 @@ const JobDetails = () => {
 
     const fetchJobs = async () => {
         try {
-            const response = await axios.get("http://localhost:4000/api/jobs/admin/all", {
+            // Use the regular jobs endpoint instead of admin-only endpoint
+            const response = await axios.get("http://localhost:4000/api/jobs/available", {
                 withCredentials: true
             });
 
@@ -64,6 +65,7 @@ const JobDetails = () => {
         if (!window.confirm("Are you sure you want to delete this job?")) return;
         
         try {
+            setLoading(true); // Show loading indicator
             const response = await axios.delete(`http://localhost:4000/api/jobs/${jobId}`, { 
                 withCredentials: true 
             });
@@ -76,7 +78,17 @@ const JobDetails = () => {
             }
         } catch (err) {
             console.error("Error deleting job:", err);
-            alert(`Error: ${err.response?.data?.message || err.message}`);
+            
+            // More specific error message based on status code
+            if (err.response?.status === 403) {
+                alert("You don't have permission to delete this job. Admin access required.");
+            } else if (err.response?.status === 404) {
+                alert("Job not found. It may have been already deleted.");
+            } else {
+                alert(`Error: ${err.response?.data?.message || err.message}`);
+            }
+        } finally {
+            setLoading(false); // Hide loading indicator
         }
     };
 

@@ -97,15 +97,17 @@ const Applications = () => {
             
             <div className="detail-section">
               <h4>Applicant Information</h4>
-              <p><strong>Name:</strong> {selectedApplication.applicant.name}</p>
-              <p><strong>Email:</strong> {selectedApplication.applicant.email}</p>
+              <p><strong>Name:</strong> {selectedApplication.applicant ? selectedApplication.applicant.name : "Unknown User"}</p>
+              <p><strong>Email:</strong> {selectedApplication.applicant ? selectedApplication.applicant.email : "N/A"}</p>
               <p><strong>Applied On:</strong> {new Date(selectedApplication.createdAt).toLocaleDateString()}</p>
-              <button 
-                className="view-profile-button"
-                onClick={() => handleViewProfile(selectedApplication.applicant._id)}
-              >
-                View Applicant Profile
-              </button>
+              {selectedApplication.applicant && (
+                <button 
+                  className="view-profile-button"
+                  onClick={() => handleViewProfile(selectedApplication.applicant._id)}
+                >
+                  View Applicant Profile
+                </button>
+              )}
             </div>
             
             <div className="detail-section">
@@ -224,8 +226,8 @@ const Applications = () => {
             <tbody>
               {applications.map((application) => (
                 <tr key={application._id} className={`application-row ${application.status}`}>
-                  <td>{application.applicant.name}</td>
-                  <td>{application.job.title}</td>
+                  <td>{application.applicant ? application.applicant.name : "Unknown User"}</td>
+                  <td>{application.job ? application.job.title : "Unknown Job"}</td>
                   <td>${application.bid}</td>
                   <td>{application.duration}</td>
                   <td>{new Date(application.createdAt).toLocaleDateString()}</td>
