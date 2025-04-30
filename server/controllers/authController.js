@@ -742,3 +742,42 @@ export const deleteUser = async (req, res) => {
         return res.status(500).json({ success: false, message: "Internal server error during user deletion." });
     }
 };
+
+export const getUserProfileById = async (req, res) => {
+    try {
+        const { userId } = req.params;
+        
+        if (!userId) {
+            return res.status(400).json({ 
+                success: false, 
+                message: "User ID is required" 
+            });
+        }
+        
+        // Find user with public profile information
+        // Exclude sensitive info like password, verification data, etc.
+        const user = await userModel.findById(userId).select(
+            "name bio profilePicture education skills languageSkills country " +
+            "linkedInProfile socialMediaLink goals questions resume " +
+            "freelanceExperience paymentType hourlyRate weeklyAvailability idVerification"
+        );
+
+        if (!user) {
+            return res.status(404).json({ 
+                success: false, 
+                message: "User not found" 
+            });
+        }
+
+        return res.status(200).json({ 
+            success: true, 
+            profile: user 
+        });
+    } catch (error) {
+        console.error("Error fetching user profile by ID:", error);
+        return res.status(500).json({ 
+            success: false, 
+            message: "Internal server error" 
+        });
+    }
+};

@@ -4,7 +4,7 @@ import axios from 'axios';
 import { FaRegFileAlt, FaSpinner, FaExclamationCircle, FaClock, FaCheckCircle, FaRegBookmark,
          FaBookmark, FaSearch, FaChevronDown, FaArrowLeft, FaSun, FaMoon, FaUserCircle, 
          FaBell, FaHome, FaQuestionCircle, FaBriefcase, FaLinkedinIn, FaGlobe, 
-         FaFacebook, FaTwitter, FaInstagram } from 'react-icons/fa';
+         FaFacebook, FaTwitter, FaInstagram, FaTrash } from 'react-icons/fa';
 import './FindJobs.css';
 import './EmployeeDashboard.css'; // Import the EmployeeDashboard styles
 
@@ -42,13 +42,18 @@ const FindJobs = () => {
     const [isDarkMode, setIsDarkMode] = useState(() => {
         return localStorage.getItem("dashboard-theme") === "dark";
     });
-    const [userData, setUserData] = useState({
-        name: '',
+    const [user, setUser] = useState({ 
+        name: '', 
         profilePicture: '',
-        idVerification: null
+        isVerified: false 
+    });
+    const [unreadNotifications, setUnreadNotifications] = useState(() => {
+        return parseInt(localStorage.getItem("unread-notifications") || "2");
     });
     const profileDropdownRef = useRef(null);
     const notificationsRef = useRef(null);
+
+    const API_BASE_URL = 'http://localhost:4000/api';
 
     // Close dropdown when clicking outside
     useEffect(() => {
@@ -80,63 +85,87 @@ const FindJobs = () => {
     }, [isDarkMode]);
 
     // Fetch user data for header
-    useEffect(() => {
-        const fetchUserData = async () => {
-            try {
-                const employeeResponse = await axios.get("http://localhost:4000/api/auth/employee-profile", { 
-                    withCredentials: true 
-                });
+    const fetchUserData = useCallback(async () => {
+        try {
+            const [userResponse, verificationResponse] = await Promise.all([
+                axios.get(`${API_BASE_URL}/auth/me`, { withCredentials: true }),
+                axios.get(`${API_BASE_URL}/auth/verification-status`, { withCredentials: true })
+            ]);
+            
+            if (userResponse.data.success) {
+                const userData = userResponse.data.user;
                 
-                if (employeeResponse.data.success) {
-                    const userData = employeeResponse.data.profile;
-                    setUserData({
-                        name: userData.name || '',
-                        profilePicture: userData.profilePicture || '',
-                        idVerification: userData.idVerification || null
-                    });
+                let verificationData = null;
+                let verificationStatus = null;
+                
+                if (verificationResponse.data.success) {
+                    if (verificationResponse.data.verification) {
+                        verificationData = verificationResponse.data.verification;
+                        verificationStatus = verificationData.status;
+                    }
                 }
-            } catch (error) {
-                console.error('Error fetching user data:', error);
+                
+                setUser({
+                    ...userData,
+                    idVerification: verificationData,
+                    isVerified: verificationStatus === 'verified'
+                });
             }
-        };
+        } catch (error) {
+            console.error('Error fetching user data:', error);
+            if (error.response?.status === 401) {
+                navigate('/login');
+            }
+        }
+    }, [API_BASE_URL, navigate]);
 
+    useEffect(() => {
         fetchUserData();
-    }, []);
+    }, [fetchUserData]);
+
+    useEffect(() => {
+        localStorage.setItem("unread-notifications", unreadNotifications.toString());
+    }, [unreadNotifications]);
 
     // Header functions
-    const toggleMobileNav = (e) => {
+    const toggleMobileNav = useCallback((e) => {
         e.stopPropagation();
         setShowMobileNav(prev => !prev);
-    };
+    }, []);
 
-    const toggleProfileDropdown = (e) => {
+    const toggleProfileDropdown = useCallback((e) => {
         e.stopPropagation();
         setShowProfileDropdown(prev => !prev);
-    };
+    }, []);
 
-    const toggleNotifications = (e) => {
+    const toggleNotifications = useCallback((e) => {
         e.stopPropagation();
         setShowNotifications(prev => !prev);
-    };
+    }, []);
 
-    const toggleDarkMode = () => {
+    const toggleDarkMode = useCallback(() => {
         setIsDarkMode(prev => !prev);
-    };
+    }, []);
 
-    const handleLogout = async () => {
+    const handleMarkAllAsRead = useCallback((e) => {
+        e.stopPropagation();
+        setUnreadNotifications(0);
+        localStorage.setItem("unread-notifications", "0");
+    }, []);
+
+    const handleLogout = useCallback(async () => {
         try {
-            const response = await axios.post("http://localhost:4000/api/auth/logout", {}, { 
+            const response = await axios.post(`${API_BASE_URL}/auth/logout`, {}, { 
                 withCredentials: true 
             });
             if (response.data.success) navigate('/login');
         } catch (error) {
             console.error('Error logging out:', error);
         }
-    };
+    }, [navigate, API_BASE_URL]);
 
     // Handle URL params and navigation
     useEffect(() => {
-        // Reset loading state with each URL change
         setLoading(true);
         
         if (jobId) {
@@ -145,7 +174,6 @@ const FindJobs = () => {
         } else {
             setViewMode('list');
             
-            // Set the active tab based on the URL view parameter
             if (location.pathname.includes('/find-jobs/saved')) {
                 setActiveTab('saved');
             } else if (location.pathname.includes('/find-jobs/proposals')) {
@@ -160,16 +188,14 @@ const FindJobs = () => {
     const fetchJobDetails = async (id) => {
         setLoading(true);
         try {
-            // First try to find it in the available jobs
-            const availableResponse = await axios.get("http://localhost:4000/api/jobs/available", { 
+            const availableResponse = await axios.get(`${API_BASE_URL}/jobs/available`, { 
                 withCredentials: true 
             });
             
             if (availableResponse.data.success) {
                 const job = availableResponse.data.jobs.find(j => j._id === id);
                 if (job) {
-                    // Check if job is saved
-                    const savedResponse = await axios.get("http://localhost:4000/api/jobs/saved", { 
+                    const savedResponse = await axios.get(`${API_BASE_URL}/jobs/saved`, { 
                         withCredentials: true 
                     });
                     
@@ -178,8 +204,7 @@ const FindJobs = () => {
                         job.isSaved = savedJobIds.includes(id);
                     }
                     
-                    // Check if job is applied
-                    const appliedResponse = await axios.get("http://localhost:4000/api/jobs/applied", { 
+                    const appliedResponse = await axios.get(`${API_BASE_URL}/jobs/applied`, { 
                         withCredentials: true 
                     });
                     
@@ -194,8 +219,7 @@ const FindJobs = () => {
                 }
             }
             
-            // If not found, try saved jobs
-            const savedResponse = await axios.get("http://localhost:4000/api/jobs/saved", { 
+            const savedResponse = await axios.get(`${API_BASE_URL}/jobs/saved`, { 
                 withCredentials: true 
             });
             
@@ -204,8 +228,7 @@ const FindJobs = () => {
                 if (job) {
                     job.isSaved = true;
                     
-                    // Check if job is applied
-                    const appliedResponse = await axios.get("http://localhost:4000/api/jobs/applied", { 
+                    const appliedResponse = await axios.get(`${API_BASE_URL}/jobs/applied`, { 
                         withCredentials: true 
                     });
                     
@@ -220,8 +243,7 @@ const FindJobs = () => {
                 }
             }
             
-            // Finally try applied jobs
-            const appliedResponse = await axios.get("http://localhost:4000/api/jobs/applied", { 
+            const appliedResponse = await axios.get(`${API_BASE_URL}/jobs/applied`, { 
                 withCredentials: true 
             });
             
@@ -230,7 +252,6 @@ const FindJobs = () => {
                 if (job) {
                     job.hasApplied = true;
                     
-                    // Check if job is saved
                     const savedJobIds = savedResponse.data.success 
                         ? savedResponse.data.jobs.map(j => j._id)
                         : [];
@@ -242,7 +263,6 @@ const FindJobs = () => {
                 }
             }
             
-            // If we get here, job wasn't found
             setError("Job not found");
             setLoading(false);
         } catch (err) {
@@ -256,35 +276,30 @@ const FindJobs = () => {
     const fetchAvailableJobs = async () => {
         setLoading(true);
         try {
-            const response = await axios.get("http://localhost:4000/api/jobs/available", { 
+            const response = await axios.get(`${API_BASE_URL}/jobs/available`, { 
                 withCredentials: true 
             });
             
-            // Fetch applied jobs list first to check if any jobs have been applied
-            const appliedResponse = await axios.get("http://localhost:4000/api/jobs/applied", {
+            const appliedResponse = await axios.get(`${API_BASE_URL}/jobs/applied`, {
                 withCredentials: true
             });
             
-            // Get the IDs of all applied jobs
             const appliedJobIds = appliedResponse.data.success 
                 ? appliedResponse.data.jobs.map(job => job._id) 
                 : [];
             
-            // Also get saved jobs to mark them properly
-            const savedResponse = await axios.get("http://localhost:4000/api/jobs/saved", {
+            const savedResponse = await axios.get(`${API_BASE_URL}/jobs/saved`, {
                 withCredentials: true
             });
             
-            // Get the IDs of all saved jobs
             const savedJobIds = savedResponse.data.success 
                 ? savedResponse.data.jobs.map(job => job._id) 
                 : [];
                 
-            // Mark jobs as applied and saved if they're in the respective lists
             const updatedJobs = response.data.jobs.map(job => ({
                 ...job,
                 hasApplied: appliedJobIds.includes(job._id),
-                isSaved: savedJobIds.includes(job._id) // Add this to track saved status
+                isSaved: savedJobIds.includes(job._id)
             }));
             
             setJobs(updatedJobs);
@@ -303,22 +318,19 @@ const FindJobs = () => {
     const fetchSavedJobs = async () => {
         setLoading(true);
         try {
-            const response = await axios.get("http://localhost:4000/api/jobs/saved", { 
+            const response = await axios.get(`${API_BASE_URL}/jobs/saved`, { 
                 withCredentials: true 
             });
             
             if (response.data.success) {
-                // Fetch applied jobs list first to check if any jobs have been applied
-                const appliedResponse = await axios.get("http://localhost:4000/api/jobs/applied", {
+                const appliedResponse = await axios.get(`${API_BASE_URL}/jobs/applied`, {
                     withCredentials: true
                 });
                 
-                // Get the IDs of all applied jobs
                 const appliedJobIds = appliedResponse.data.success 
                     ? appliedResponse.data.jobs.map(job => job._id) 
                     : [];
                     
-                // Mark jobs as applied if they're in the applied list
                 const updatedJobs = response.data.jobs.map(job => ({
                     ...job,
                     hasApplied: appliedJobIds.includes(job._id),
@@ -340,16 +352,15 @@ const FindJobs = () => {
     const fetchAppliedJobs = async () => {
         setLoading(true);
         try {
-            // Get applications instead of just jobs
-            const applicationsResponse = await axios.get("http://localhost:4000/api/jobs/applications", { 
+            const applicationsResponse = await axios.get(`${API_BASE_URL}/jobs/applications`, { 
                 withCredentials: true 
             });
             
             if (applicationsResponse.data.success) {
-                // Map applications to jobs with application ID included
                 const jobsWithApplicationIds = applicationsResponse.data.applications.map(app => ({
                     ...app.job,
-                    applicationId: app._id, // Store the application ID with each job
+                    applicationId: app._id,
+                    applicationStatus: app.status,
                     hasApplied: true
                 }));
                 setAppliedJobs(jobsWithApplicationIds);
@@ -368,43 +379,36 @@ const FindJobs = () => {
     const toggleSaveJob = async (jobId, isSaved) => {
         try {
             if (isSaved) {
-                // Unsave job - Fix: The endpoint should match the route defined in jobRoutes.js
-                await axios.post(`http://localhost:4000/api/jobs/${jobId}/save/remove`, {}, { 
+                await axios.post(`${API_BASE_URL}/jobs/${jobId}/save/remove`, {}, { 
                     withCredentials: true 
                 });
                 
                 setSavedJobs(savedJobs.filter(job => job._id !== jobId));
                 
-                // Update the jobs list if we're on the available tab
                 if (activeTab === 'available') {
                     setJobs(jobs.map(job => 
                         job._id === jobId ? { ...job, isSaved: false } : job
                     ));
                 }
                 
-                // Update current job if we're in detail view
                 if (viewMode === 'detail' && currentJob && currentJob._id === jobId) {
                     setCurrentJob({...currentJob, isSaved: false});
                 }
             } else {
-                // Save job - Fix: The endpoint should match the route defined in jobRoutes.js
-                await axios.post(`http://localhost:4000/api/jobs/${jobId}/save`, {}, { 
+                await axios.post(`${API_BASE_URL}/jobs/${jobId}/save`, {}, { 
                     withCredentials: true 
                 });
                 
-                // If viewing available jobs, mark this job as saved
                 if (activeTab === 'available') {
                     setJobs(jobs.map(job => 
                         job._id === jobId ? { ...job, isSaved: true } : job
                     ));
                 }
                 
-                // If on saved tab, might want to refresh the saved jobs list
                 if (activeTab === 'saved') {
                     fetchSavedJobs();
                 }
                 
-                // Update current job if we're in detail view
                 if (viewMode === 'detail' && currentJob && currentJob._id === jobId) {
                     setCurrentJob({...currentJob, isSaved: true});
                 }
@@ -418,23 +422,19 @@ const FindJobs = () => {
     // Apply for a job
     const applyToJob = async (jobId) => {
         try {
-            // Fix: The endpoint should match the route defined in jobRoutes.js
-            await axios.post(`http://localhost:4000/api/jobs/${jobId}/apply`, {}, { 
+            await axios.post(`${API_BASE_URL}/jobs/${jobId}/apply`, {}, { 
                 withCredentials: true 
             });
             alert("Your application has been submitted successfully!");
             
-            // Refresh the current tab and proposals tab
             if (activeTab === 'available') {
-                await fetchAvailableJobs(); // Refresh available jobs
+                await fetchAvailableJobs();
             } else if (activeTab === 'saved') {
-                await fetchSavedJobs(); // Refresh saved jobs
+                await fetchSavedJobs();
             }
             
-            // Also refresh applied jobs for the proposals tab
             await fetchAppliedJobs();
             
-            // Update current job if we're in detail view
             if (viewMode === 'detail' && currentJob && currentJob._id === jobId) {
                 setCurrentJob({...currentJob, hasApplied: true});
             }
@@ -450,13 +450,11 @@ const FindJobs = () => {
         setShowDropdown(!showDropdown);
     };
 
-    // Add a toggle function for the filters dropdown
     const toggleFiltersDropdown = (e) => {
         e.stopPropagation();
         setShowFiltersDropdown(!showFiltersDropdown);
     };
 
-    // Update handleTabSelection function to properly navigate
     const handleTabSelection = (tab) => {
         if (tab === 'available') {
             navigate('/find-jobs');
@@ -468,42 +466,34 @@ const FindJobs = () => {
         setShowDropdown(false);
     };
 
-    // Update search handler
     const handleSearch = (e) => {
         setSearchTerm(e.target.value);
     };
 
-    // Add function to handle search button click
     const performSearch = () => {
-        // Force update of filtered jobs
         setFilteredJobs(getFilteredJobs());
     };
 
-    // Load jobs based on active tab
     useEffect(() => {
-        if (viewMode === 'detail') return; // Don't load tab data in detail view
+        if (viewMode === 'detail') return;
         
         setSearchTerm('');
         
         if (activeTab === 'available') {
             fetchAvailableJobs().then(() => {
-                // Update filtered jobs after fetching
                 setFilteredJobs(getFilteredJobs());
             });
         } else if (activeTab === 'saved') {
             fetchSavedJobs().then(() => {
-                // Update filtered jobs after fetching
                 setFilteredJobs(getFilteredJobs());
             });
         } else if (activeTab === 'proposals') {
             fetchAppliedJobs().then(() => {
-                // Update filtered jobs after fetching
                 setFilteredJobs(getFilteredJobs());
             });
         }
     }, [activeTab, viewMode]);
 
-    // Get page title based on active tab
     const getPageTitle = () => {
         switch(activeTab) {
             case 'available': return 'Find Work';
@@ -513,7 +503,6 @@ const FindJobs = () => {
         }
     };
     
-    // Get the current tab name for dropdown display
     const getCurrentTabName = () => {
         switch(activeTab) {
             case 'available': return 'Find Work';
@@ -523,51 +512,38 @@ const FindJobs = () => {
         }
     };
 
-    // Filter jobs based on search and filters
     const getFilteredJobs = () => {
         let filteredJobs = [];
         
-        // Determine which job list to use based on active tab
         if (activeTab === 'available') {
-            // Filter out jobs that have already been applied to
             filteredJobs = jobs.filter(job => !job.hasApplied);
         } else if (activeTab === 'saved') {
-            // Filter out jobs that have already been applied to
             filteredJobs = savedJobs.filter(job => !job.hasApplied);
         } else if (activeTab === 'proposals') {
             filteredJobs = [...appliedJobs];
         }
         
-        // Apply search term filter
         if (searchTerm.trim()) {
             const term = searchTerm.toLowerCase().trim();
             filteredJobs = filteredJobs.filter(job => {
-                // Only check if the job title contains the search term (anywhere in the title)
                 const jobTitle = job.title.toLowerCase();
-                
-                // Match if the job title contains the search term anywhere
                 return jobTitle.includes(term);
             });
         }
         
-        // Apply skills filter - combining predefined skills and "other" skills
         if (filters.skills.length > 0 || (filters.otherSkillsEnabled && filters.otherSkills.trim())) {
             filteredJobs = filteredJobs.filter(job => {
-                // Check predefined skills first
                 if (filters.skills.length > 0 && 
                     filters.skills.some(skill => job.skills.includes(skill))) {
                     return true;
                 }
                 
-                // Then check other skills if enabled
                 if (filters.otherSkillsEnabled && filters.otherSkills.trim()) {
-                    // Split the other skills by commas and trim whitespace
                     const otherSkillsList = filters.otherSkills
                         .split(',')
                         .map(skill => skill.trim().toLowerCase())
                         .filter(skill => skill.length > 0);
                     
-                    // Match if any job skill includes any of the other skills (case insensitive)
                     return job.skills.some(jobSkill => 
                         otherSkillsList.some(otherSkill => 
                             jobSkill.toLowerCase().includes(otherSkill)
@@ -575,13 +551,11 @@ const FindJobs = () => {
                     );
                 }
                 
-                // If no skills match or no skills selected, return false
                 return filters.skills.length === 0 && 
                        (!filters.otherSkillsEnabled || !filters.otherSkills.trim());
             });
         }
         
-        // Apply additional filters (skills, scope, budget, etc.)
         if (filters.skills.length > 0) {
             filteredJobs = filteredJobs.filter(job => 
                 filters.skills.some(skill => job.skills.includes(skill))
@@ -595,7 +569,6 @@ const FindJobs = () => {
         if (filters.budgetType) {
             filteredJobs = filteredJobs.filter(job => job.budgetType === filters.budgetType);
             
-            // Additional budget range filtering
             if (filters.budgetType === 'hourly' && (filters.budgetMin || filters.budgetMax)) {
                 filteredJobs = filteredJobs.filter(job => {
                     if (filters.budgetMin && parseInt(job.hourlyFrom) < parseInt(filters.budgetMin)) {
@@ -623,18 +596,16 @@ const FindJobs = () => {
     };
 
     useEffect(() => {
-        // Update the filteredJobs state whenever searchTerm or filters change
         if (viewMode === 'list') {
             setFilteredJobs(getFilteredJobs());
         }
     }, [jobs, savedJobs, appliedJobs, activeTab, searchTerm, filters, viewMode]);
 
-    // Add this function to your FindJobs component
     const handleViewApplication = async (jobId) => {
         try {
             setLoading(true);
             const response = await axios.get(
-                `http://localhost:4000/api/jobs/job-application/${jobId}`,
+                `${API_BASE_URL}/jobs/job-application/${jobId}`,
                 { withCredentials: true }
             );
             
@@ -651,7 +622,6 @@ const FindJobs = () => {
         }
     };
 
-    // Job detail view rendering
     const renderJobDetail = () => {
         if (!currentJob) return null;
         
@@ -758,7 +728,6 @@ const FindJobs = () => {
         );
     };
 
-    // Loading and error handling
     if (loading) {
         return (
             <div className="loading">
@@ -776,10 +745,8 @@ const FindJobs = () => {
         );
     }
 
-    // Render either job list or job detail based on viewMode
     return (
         <div className={`employee-dashboard ${isDarkMode ? 'dark-mode' : ''}`}>
-            {/* Header with Navigation */}
             <header className="dashboard-header">
                 <div className="dashboard-header-container">
                     <div className="dashboard-header-left">
@@ -808,22 +775,44 @@ const FindJobs = () => {
                                 aria-label="Notifications"
                             >
                                 <FaBell />
-                                <span className="notification-badge">2</span>
+                                {unreadNotifications > 0 && (
+                                    <span className="notification-badge">{unreadNotifications}</span>
+                                )}
                             </button>
                             
                             {showNotifications && (
                                 <div className="notifications-dropdown">
                                     <div className="notification-header">
                                         <h3>Notifications</h3>
-                                        <button className="mark-all-read">Mark all as read</button>
+                                        <button className="mark-all-read" onClick={handleMarkAllAsRead}>Mark all as read</button>
                                     </div>
                                     <div className="notification-list">
                                         <div className="notification-item unread">
                                             <div className="notification-icon">
-                                                <FaCheckCircle />
+                                                {(!user.idVerification || 
+                                                  !user.idVerification.frontImage || 
+                                                  !user.idVerification.backImage || 
+                                                  user.idVerification.status === 'rejected') ? (
+                                                    <FaRegFileAlt />
+                                                ) : user.idVerification.status === 'verified' ? (
+                                                    <FaCheckCircle />
+                                                ) : (
+                                                    <FaClock />
+                                                )}
                                             </div>
                                             <div className="notification-content">
-                                                <p>Your profile has been verified!</p>
+                                                <p>
+                                                    {(!user.idVerification || 
+                                                      !user.idVerification.frontImage || 
+                                                      !user.idVerification.backImage || 
+                                                      user.idVerification.status === 'rejected') ? (
+                                                        "Please verify your account"
+                                                    ) : user.idVerification.status === 'verified' ? (
+                                                        "Your profile has been verified!"
+                                                    ) : (
+                                                        "Your verification is pending approval"
+                                                    )}
+                                                </p>
                                                 <span className="notification-time">2 hours ago</span>
                                             </div>
                                         </div>
@@ -858,9 +847,9 @@ const FindJobs = () => {
                                 onClick={toggleProfileDropdown}
                                 aria-label="User profile"
                             >
-                                {userData.profilePicture ? (
+                                {user.profilePicture ? (
                                     <img 
-                                        src={userData.profilePicture}
+                                        src={user.profilePicture}
                                         alt="Profile"
                                         className="profile-avatar"
                                     />
@@ -874,25 +863,25 @@ const FindJobs = () => {
                                 <div className="profile-dropdown">
                                     <div className="profile-dropdown-header">
                                         <div className="profile-dropdown-avatar">
-                                            {userData.profilePicture ? (
+                                            {user.profilePicture ? (
                                                 <img 
-                                                    src={userData.profilePicture}
-                                                    alt={`${userData.name}'s profile`}
+                                                    src={user.profilePicture}
+                                                    alt={`${user.name}'s profile`}
                                                 />
                                             ) : (
                                                 <FaUserCircle />
                                             )}
                                         </div>
                                         <div className="profile-dropdown-info">
-                                            <h4>{userData.name || 'User'}</h4>
+                                            <h4>{user.name || 'User'}</h4>
                                             <span className="profile-status">
-                                                {!userData.idVerification ? (
+                                                {!user.idVerification ? (
                                                     'Not Verified'
-                                                ) : userData.idVerification.status === 'verified' ? (
+                                                ) : user.idVerification.status === 'verified' ? (
                                                     <><FaCheckCircle className="verified-icon" /> Verified</>
-                                                ) : userData.idVerification.status === 'pending' ? (
+                                                ) : user.idVerification.status === 'pending' && user.idVerification.frontImage && user.idVerification.backImage ? (
                                                     <><FaClock className="pending-icon" /> Verification Pending</>
-                                                ) : userData.idVerification.status === 'rejected' ? (
+                                                ) : user.idVerification.status === 'rejected' ? (
                                                     <>Verification Rejected</>
                                                 ) : (
                                                     'Not Verified'
@@ -908,12 +897,17 @@ const FindJobs = () => {
                                             <FaUserCircle /> View Profile
                                         </button>
                                         
-                                        <button 
-                                            className="profile-dropdown-link"
-                                            onClick={() => navigate('/verify-account')}
-                                        >
-                                            Verify Account
-                                        </button>
+                                        {(!user.idVerification || 
+                                          !user.idVerification.frontImage || 
+                                          !user.idVerification.backImage || 
+                                          user.idVerification.status === 'rejected') && (
+                                            <button 
+                                                className="profile-dropdown-link"
+                                                onClick={() => navigate('/verify-account')}
+                                            >
+                                                Verify Account
+                                            </button>
+                                        )}
                                         
                                         <button 
                                             className="profile-dropdown-link"
@@ -935,14 +929,11 @@ const FindJobs = () => {
                 </div>
             </header>
 
-            {/* Main Content - Find Jobs Container */}
             <div className="find-jobs-container">
                 {viewMode === 'detail' ? (
                     renderJobDetail()
                 ) : (
                     <>
-
-                        {/* Search and filter section - only show on available and saved tabs */}
                         <div className="search-filter-container">
                             <div className="search-bar">
                                 <FaSearch className="search-icon" />
@@ -961,7 +952,6 @@ const FindJobs = () => {
                                 </button>
                             </div>
 
-                            {/* Additional filters - only show for available and saved tabs */}
                             {(activeTab === 'available' || activeTab === 'saved') && (
                                 <div className="additional-filters">
                                     <div className="filters-dropdown" ref={filtersDropdownRef}>
@@ -974,7 +964,6 @@ const FindJobs = () => {
                                         </button>
                                         {showFiltersDropdown && (
                                             <div className="filters-dropdown-menu">
-                                                {/* Your filter options here */}
                                                 <div className="filter-section">
                                                     <h4>Budget Type</h4>
                                                     <div className="filter-options">
@@ -1001,7 +990,6 @@ const FindJobs = () => {
                                                     </div>
                                                 </div>
 
-                                                {/* Add budget range inputs */}
                                                 <div className="filter-section">
                                                     <h4>Budget Range</h4>
                                                     <div className="budget-inputs">
@@ -1021,11 +1009,9 @@ const FindJobs = () => {
                                                     </div>
                                                 </div>
 
-                                                {/* Add skills filter */}
                                                 <div className="filter-section">
                                                     <h4>Skills</h4>
                                                     <div className="skills-filter">
-                                                        {/* Include common skills plus an "Others" option */}
                                                         <div className="skill-options">
                                                             {['JavaScript', 'React', 'Node.js', 'Python', 'Design'].map(skill => (
                                                                 <label key={skill}>
@@ -1049,7 +1035,6 @@ const FindJobs = () => {
                                                                     {skill}
                                                                 </label>
                                                             ))}
-                                                            {/* Add Others option with a text input */}
                                                             <label className="others-skill-option">
                                                                 <input 
                                                                     type="checkbox"
@@ -1065,7 +1050,6 @@ const FindJobs = () => {
                                                                 Others
                                                             </label>
                                                             
-                                                            {/* Show text input when "Others" is checked */}
                                                             {filters.otherSkillsEnabled && (
                                                                 <div className="other-skills-input">
                                                                     <input
@@ -1115,7 +1099,6 @@ const FindJobs = () => {
                             )}
                         </div>
 
-                        {/* Job listings */}
                         {filteredJobs.length === 0 ? (
                             <div className="empty-state">
                                 {activeTab === 'available' && (
@@ -1144,11 +1127,22 @@ const FindJobs = () => {
                                         <div className="card-header">
                                             <h3>{job.title}</h3>
                                             
-                                            {/* Show application status for proposals tab */}
                                             {activeTab === 'proposals' && (
                                                 <div className="application-status">
-                                                    <FaClock />
-                                                    <span>Pending Review</span>
+                                                    {job.applicationStatus === 'accepted' ? (
+                                                        <FaCheckCircle />
+                                                    ) : job.applicationStatus === 'rejected' ? (
+                                                        <FaExclamationCircle />
+                                                    ) : job.applicationStatus === 'withdrawn' ? (
+                                                        <FaTrash />
+                                                    ) : (
+                                                        <FaClock />
+                                                    )}
+                                                    <span>
+                                                        {job.applicationStatus ? 
+                                                            job.applicationStatus.charAt(0).toUpperCase() + job.applicationStatus.slice(1) : 
+                                                            'Pending Review'}
+                                                    </span>
                                                 </div>
                                             )}
                                         </div>
@@ -1200,7 +1194,6 @@ const FindJobs = () => {
                                             )}
                                         </div>
 
-                                        {/* Application info for proposals tab */}
                                         {activeTab === 'proposals' && (
                                             <div className="application-info">
                                                 <p>Applied on: {new Date(job.createdAt).toLocaleDateString()}</p>
@@ -1212,10 +1205,8 @@ const FindJobs = () => {
                                                 className="view-details-button" 
                                                 onClick={() => {
                                                     if (activeTab === 'proposals') {
-                                                        // For proposals tab, use the stored application ID directly
                                                         navigate(`/view-application/${job.applicationId}`);
                                                     } else {
-                                                        // For other tabs, navigate to job details as before
                                                         navigate(`/find-jobs/details/${job._id}`);
                                                     }
                                                 }}
@@ -1223,7 +1214,6 @@ const FindJobs = () => {
                                                 {activeTab === 'proposals' ? 'View Application' : 'View Details'}
                                             </button>
 
-                                            {/* Save button - only for available tab */}
                                             {activeTab === 'available' && (
                                                 job.isSaved ? (
                                                     <button 
@@ -1252,7 +1242,6 @@ const FindJobs = () => {
                 )}
             </div>
 
-            {/* Footer Section */}
             <footer className="dashboard-footer">
                 <div className="footer-grid">
                     <div className="footer-column">

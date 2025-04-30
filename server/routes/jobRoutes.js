@@ -1,5 +1,5 @@
 import express from "express";
-import { addJob, getJobs, deleteJob, updateJobStatus, getAvailableJobs, saveJob, applyForJob, getSavedJobs, getAppliedJobs, removeSavedJob, applyWithDetails, getApplicationById, deleteApplication, getUserApplications, getApplicationByJobId } from "../controllers/jobController.js";
+import { addJob, getJobs, deleteJob, updateJobStatus, getAvailableJobs, saveJob, applyForJob, getSavedJobs, getAppliedJobs, removeSavedJob, applyWithDetails, getApplicationById, deleteApplication, getUserApplications, getApplicationByJobId, getEmployerApplications, updateApplicationStatus } from "../controllers/jobController.js";
 import userAuth from "../middleware/userAuth.js";
 import upload from "../middleware/uploadMiddleware.js";
 
@@ -20,5 +20,7 @@ router.get("/application/:id", userAuth, getApplicationById); // Get application
 router.delete("/application/:id", userAuth, deleteApplication); // Delete application by ID
 router.get("/applications", userAuth, getUserApplications);
 router.get("/job-application/:jobId", userAuth, getApplicationByJobId); // Get application by Job ID
+router.get("/employer-applications", userAuth, getEmployerApplications);
+router.put("/application/:id/status", userAuth, updateApplicationStatus);
 
 export default router;

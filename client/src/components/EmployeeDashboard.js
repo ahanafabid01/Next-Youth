@@ -455,7 +455,7 @@ const EmployeeDashboard = () => {
             >
               ☰
             </button>
-            <Link to="/" className="dashboard-logo">Next Youth</Link>
+            <Link to="/employee-dashboard" className="dashboard-logo">Next Youth</Link>
             
             <nav className={`dashboard-nav ${showMobileNav ? 'active' : ''}`}>
               <Link to="/find-jobs" className="nav-link">Find Work</Link>
