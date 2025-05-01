@@ -4,11 +4,14 @@ import Homepage from "./Homepage";
 import Login from "./components/Login";
 import Register from "./components/Register";
 import AdminDashboard from "./components/Admin/AdminDashboard";
-
+import Dashboard from "./components/Admin/Dashboard";
 import Users from "./components/Admin/Users";
+import Messages from "./components/Admin/Messages";
 import Applications from "./components/Admin/Applications";
 import Statistics from "./components/Admin/Statistics";
 import JobDetails from "./components/Admin/JobDetails"; // Add this import
+import Consultations from "./components/Admin/Consultations"; // Add this import
+import DemoConsultations from "./components/Admin/DemoConsultations"; // Add this import
 import EmployeeDashboard from "./components/EmployeeDashboard";
 import EmployerDashboard from "./components/EmployerDashboard";
 import ForgotPassword from "./components/ForgotPassword";
@@ -22,8 +25,8 @@ import JobApplication from "./components/JobApplication"; // Add this import
 import BusinessSolutions from "./BusinessSolutions"; // Import BusinessSolutions
 import ScheduleConsultation from "./contact"; // Import ScheduleConsultation
 import RequestDemo from "./RequestDemo"; // Import RequestDemo component
-import Consultations from "./components/Admin/Consultations"; // Add this import
-import DemoConsultations from "./components/Admin/DemoConsultations"; // Add this import
+import ViewApplication from "./components/ViewApplication"; // Import ViewApplication component
+import ViewProfile from './components/ViewProfile'; // Import ViewProfile component
 import "./App.css"; // Import App.css
 
 const App = () => {
@@ -34,11 +37,11 @@ const App = () => {
                 <Route path="/login" element={<Login />} />
                 <Route path="/register" element={<Register />} />
                 <Route path="/admin-dashboard" element={<AdminDashboard />} />
-                
+                <Route path="/admin-dashboard/dashboard" element={<Dashboard />} />
                 <Route path="/admin-dashboard/users" element={<Users />} />
-            
+                <Route path="/admin-dashboard/messages" element={<Messages />} />
                 <Route path="/admin-dashboard/applications" element={<Applications />} />
-                <Route path="/admin-dashboard/statistics" element={<Statistics />} /> {/* Corrected spelling */}
+                <Route path="/admin-dashboard/statistics" element={<Statistics />} />
                 <Route path="/admin-dashboard/job-details" element={<JobDetails />} /> {/* Add this route */}
                 <Route path="/admin-dashboard/consultations" element={<Consultations />} /> {/* Add this route */}
                 <Route path="/admin-dashboard/demo-consultations" element={<DemoConsultations />} /> {/* Add this route */}
@@ -58,6 +61,8 @@ const App = () => {
                 <Route path="/business-solutions" element={<BusinessSolutions />} /> {/* Route for BusinessSolutions */}
                 <Route path="/contact" element={<ScheduleConsultation />} /> {/* Route for ScheduleConsultation */}
                 <Route path="/request-demo" element={<RequestDemo />} /> {/* Route for RequestDemo */}
+                <Route path="/view-application/:applicationId" element={<ViewApplication />} /> {/* Add this route */}
+                <Route path="/view-profile/:userId" element={<ViewProfile />} /> {/* Add this route */}
             </Routes>
         </Router>
     );

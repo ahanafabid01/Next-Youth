@@ -461,6 +461,7 @@ const RequestDemo = () => {
                 <button 
                   className="demo-secondary-btn"
                   onClick={() => setFormSuccess(false)}
+                  style={{ color: isDarkMode ? "#ffffff" : "#333333" }}
                 >
                   <i className="fas fa-plus-circle"></i> Request Another Demo
                 </button>

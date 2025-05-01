@@ -1,6 +1,6 @@
 import express from "express";
 import { register, Login, Logout, verifyEmail, resendOtp, resetPassword, getUserProfile, updateUserProfile, verifyIdentity,
-    getVerificationStatus, updateEmployeeProfile, getEmployeeProfile, getAllUsers, verifyUserIdentity, deleteUser } from "../controllers/authController.js";
+    getVerificationStatus, updateEmployeeProfile, getEmployeeProfile, getAllUsers, verifyUserIdentity, deleteUser, getUserProfileById } from "../controllers/authController.js";
 import userAuth from "../middleware/userAuth.js"; // Import userAuth middleware
 import upload from "../middleware/uploadMiddleware.js"; // Import upload middleware
 import userModel from "../models/userModel.js"; // Add this import
@@ -27,6 +27,8 @@ authRouter.get("/profile", userAuth, async (req, res) => {
     res.status(500).json({ success: false, message: "Internal server error" });
   }
 });
+
+authRouter.get('/profile/:userId', getUserProfileById);
 
 authRouter.put("/profile", userAuth, updateUserProfile); // Add this route
 

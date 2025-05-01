@@ -23,6 +23,7 @@ import Profile from "./Profile";
 import PostJob from "./PostJob";
 import MyJobs from "./MyJobs";
 import ClientDashboard from "./ClientDashboard";
+import Applications from "./Applications";
 
 ChartJS.register(ArcElement, Tooltip, Legend, CategoryScale, LinearScale, BarElement);
 
@@ -158,6 +159,10 @@ const EmployerDashboard = () => {
                 return <PostJob />;
             case "jobs":
                 return <MyJobs />;
+            case "applications":
+                return <Applications />;
+            case "messages":
+            case "settings":
             default:
                 return <div className="dashboard-main">Default Content</div>;
         }

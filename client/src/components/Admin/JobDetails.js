@@ -16,31 +16,16 @@ const JobDetails = () => {
 
     const fetchJobs = async () => {
         try {
-            // Get all available jobs first - this is accessible by all authenticated users
-            const availableResponse = await axios.get("http://localhost:4000/api/jobs/available", {
+            // Use the regular jobs endpoint instead of admin-only endpoint
+            const response = await axios.get("http://localhost:4000/api/jobs/available", {
                 withCredentials: true
             });
 
-            // Get employer's own jobs to include all job statuses
-            const employerResponse = await axios.get("http://localhost:4000/api/jobs", {
-                withCredentials: true
-            });
-
-            if (availableResponse.data.success && employerResponse.data.success) {
-                // Combine results, removing duplicates by ID
-                const allJobs = [...availableResponse.data.jobs];
-                
-                // Add employer's jobs that aren't already in the list
-                employerResponse.data.jobs.forEach(job => {
-                    if (!allJobs.some(j => j._id === job._id)) {
-                        allJobs.push(job);
-                    }
-                });
-                
-                setJobs(allJobs);
-                console.log("Combined jobs data:", allJobs);
+            if (response.data && response.data.success) {
+                console.log("Jobs data received:", response.data.jobs);
+                setJobs(response.data.jobs);
             } else {
-                throw new Error("Failed to fetch complete job data");
+                throw new Error(response.data?.message || "Failed to fetch jobs");
             }
             setLoading(false);
         } catch (err) {
@@ -80,6 +65,7 @@ const JobDetails = () => {
         if (!window.confirm("Are you sure you want to delete this job?")) return;
         
         try {
+            setLoading(true); // Show loading indicator
             const response = await axios.delete(`http://localhost:4000/api/jobs/${jobId}`, { 
                 withCredentials: true 
             });
@@ -92,28 +78,17 @@ const JobDetails = () => {
             }
         } catch (err) {
             console.error("Error deleting job:", err);
-            alert(`Error: ${err.response?.data?.message || err.message}`);
-        }
-    };
-
-    // Handle job status update
-    const handleStatusChange = async (jobId, newStatus) => {
-        try {
-            const response = await axios.put(`http://localhost:4000/api/jobs/${jobId}/status`, 
-                { status: newStatus },
-                { withCredentials: true }
-            );
             
-            if (response.data.success) {
-                setJobs(jobs.map(job => 
-                    job._id === jobId ? { ...job, status: newStatus } : job
-                ));
+            // More specific error message based on status code
+            if (err.response?.status === 403) {
+                alert("You don't have permission to delete this job. Admin access required.");
+            } else if (err.response?.status === 404) {
+                alert("Job not found. It may have been already deleted.");
             } else {
-                alert(response.data.message || "Failed to update status");
+                alert(`Error: ${err.response?.data?.message || err.message}`);
             }
-        } catch (err) {
-            console.error("Error updating job status:", err);
-            alert(`Error: ${err.response?.data?.message || err.message}`);
+        } finally {
+            setLoading(false); // Hide loading indicator
         }
     };
 
@@ -132,6 +107,8 @@ const JobDetails = () => {
                             <thead>
                                 <tr>
                                     <th>Title</th>
+                                    {/* Description column removed */}
+                                    {/* Skills column removed */}
                                     <th>Scope</th>
                                     <th>Budget</th>
                                     <th>Status</th>
@@ -145,19 +122,14 @@ const JobDetails = () => {
                                     jobs.map(job => (
                                         <tr key={job._id}>
                                             <td className="job-title">{job.title}</td>
+                                            {/* Description cell removed */}
+                                            {/* Skills cell removed */}
                                             <td>{job.scope}</td>
                                             <td>{formatBudget(job)}</td>
                                             <td>
-                                                <select
-                                                    value={job.status || "Available"}
-                                                    onChange={(e) => handleStatusChange(job._id, e.target.value)}
-                                                    className="status-select"
-                                                >
-                                                    <option value="Available">Available</option>
-                                                    <option value="In Progress">In Progress</option>
-                                                    <option value="On Hold">On Hold</option>
-                                                    <option value="Completed">Completed</option>
-                                                </select>
+                                                <span className={`status-badge ${job.status.toLowerCase()}`}>
+                                                    {job.status}
+                                                </span>
                                             </td>
                                             <td>{formatDate(job.createdAt)}</td>
                                             <td>

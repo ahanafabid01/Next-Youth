@@ -55,6 +55,34 @@ const DemoConsultations = () => {
     }
   };
 
+  // Function to send status update email notification
+  const sendStatusUpdateEmail = async (demo, newStatus) => {
+    try {
+      const response = await axios.post(
+        "http://localhost:4000/api/contact/notify",
+        {
+          recipientEmail: demo.email,
+          recipientName: demo.fullName,
+          status: "confirmed", // Use "confirmed" instead of "scheduled" to match what the server expects
+          preferredDate: demo.preferredDate,
+          preferredTime: demo.preferredTime,
+          serviceType: "demo", // Identify this as a demo request
+          consultationNotes: demo.message || ""
+        },
+        { withCredentials: true }
+      );
+
+      if (response.data.success) {
+        console.log("Demo status notification email sent successfully");
+      } else {
+        throw new Error(response.data.message || "Failed to send notification email");
+      }
+    } catch (err) {
+      console.error("Error sending demo status notification email:", err);
+      // Don't alert here as it's a secondary action
+    }
+  };
+
   // Handle sorting
   const handleSort = (key) => {
     let direction = "asc";
@@ -91,11 +119,14 @@ const DemoConsultations = () => {
   // Handle demo status change - update to match backend API
   const handleStatusChange = async (id, newStatus) => {
     try {
-      await axios.put(
+      const response = await axios.put(
         `http://localhost:4000/api/contact/requests/${id}/status`,
         { status: newStatus },
         { withCredentials: true }
       );
+      
+      // Find the demo object that was updated
+      const updatedDemo = demoRequests.find(demo => demo._id === id);
       
       // Update local state
       setDemoRequests(
@@ -103,6 +134,11 @@ const DemoConsultations = () => {
           demo._id === id ? { ...demo, status: newStatus } : demo
         )
       );
+      
+      // Send email notification when status is changed to scheduled (confirmed)
+      if (updatedDemo && newStatus === "scheduled") {
+        await sendStatusUpdateEmail(updatedDemo, newStatus);
+      }
       
       // Close modal if open
       if (showModal) {
