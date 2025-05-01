@@ -211,6 +211,37 @@
   color: #b91c1c;
 }
 
+/* Add after the existing .status-badge styles */
+.status-cell {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.status-select {
+  padding: 5px;
+  border-radius: 4px;
+  border: 1px solid #e2e8f0;
+  background-color: white;
+  font-size: 0.85rem;
+  cursor: pointer;
+  margin-bottom: 4px;
+  width: 100%;
+}
+
+.status-select:focus {
+  outline: none;
+  border-color: #4a6cf7;
+  box-shadow: 0 0 0 2px rgba(74, 108, 247, 0.15);
+}
+
+/* Dark mode styles */
+.admin-dark-mode .status-select {
+  background-color: #2d3748;
+  color: #e2e8f0;
+  border-color: #4a5568;
+}
+
 .action-buttons {
   display: flex;
   gap: 0.5rem;

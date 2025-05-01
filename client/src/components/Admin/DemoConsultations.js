@@ -255,9 +255,21 @@ const DemoConsultations = () => {
                         <td>{formatTimePreference(demo.preferredTime)}</td>
                         <td>{demo.businessSize}</td>
                         <td>
-                          <span className={`status-badge ${demo.status || 'pending'}`}>
-                            {demo.status ? demo.status.charAt(0).toUpperCase() + demo.status.slice(1) : 'Pending'}
-                          </span>
+                          <div className="status-cell">
+                            <select 
+                              value={demo.status || 'pending'}
+                              onChange={(e) => handleStatusChange(demo._id, e.target.value)}
+                              className="status-select"
+                            >
+                              <option value="pending">Pending</option>
+                              <option value="scheduled">Scheduled</option>
+                              <option value="completed">Completed</option>
+                              <option value="cancelled">Cancelled</option>
+                            </select>
+                            <span className={`status-badge ${demo.status || 'pending'}`}>
+                              {demo.status ? demo.status.charAt(0).toUpperCase() + demo.status.slice(1) : 'Pending'}
+                            </span>
+                          </div>
                         </td>
                         <td className="action-buttons">
                           <button
@@ -342,35 +354,6 @@ const DemoConsultations = () => {
                   </div>
                 )}
                 
-                <div className="detail-group">
-                  <h3>Status Management</h3>
-                  <div className="status-buttons">
-                    <button 
-                      className="status-btn pending"
-                      onClick={() => handleStatusChange(selectedDemo._id, "pending")}
-                    >
-                      Mark as Pending
-                    </button>
-                    <button 
-                      className="status-btn scheduled"
-                      onClick={() => handleStatusChange(selectedDemo._id, "scheduled")}
-                    >
-                      Mark as Scheduled
-                    </button>
-                    <button 
-                      className="status-btn completed"
-                      onClick={() => handleStatusChange(selectedDemo._id, "completed")}
-                    >
-                      Mark as Completed
-                    </button>
-                    <button 
-                      className="status-btn cancelled"
-                      onClick={() => handleStatusChange(selectedDemo._id, "cancelled")}
-                    >
-                      Cancel Demo
-                    </button>
-                  </div>
-                </div>
               </div>
               <div className="modal-footer">
                 <button className="close-btn" onClick={() => setShowModal(false)}>Close</button>
