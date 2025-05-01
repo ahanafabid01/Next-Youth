@@ -42,9 +42,66 @@ const JobCard = memo(({
       <div className="job-card-header">
         <div className="job-title-section">
           <h3 className="job-title">{job.title}</h3>
-          <span className={`job-status-badge ${getStatusClass(job.status)}`}>
-            {job.status || "Available"}
-          </span>
+          <div className="status-dropdown">
+            <button
+              className={`status-button status-${job.status?.toLowerCase().replace(/\s+/g, "-") || "available"}`}
+              onClick={(e) => {
+                e.stopPropagation();
+                e.currentTarget.nextElementSibling.classList.toggle("show");
+              }}
+              disabled={updatingJobIds.includes(job._id)}
+              aria-label="Open status dropdown"
+              type="button"
+            >
+              <span>{job.status || "Available"}</span>
+              <span className="dropdown-arrow">▼</span>
+              {updatingJobIds.includes(job._id) && (
+                <FaSpinner className="status-spinner spin" aria-hidden="true" />
+              )}
+            </button>
+            <div className="status-dropdown-menu">
+              <div
+                className="status-option status-available"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleUpdateJobStatus(job._id, "Available", e);
+                  e.currentTarget.parentElement.classList.remove("show");
+                }}
+              >
+                Available
+              </div>
+              <div
+                className="status-option status-in-progress"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleUpdateJobStatus(job._id, "In Progress", e);
+                  e.currentTarget.parentElement.classList.remove("show");
+                }}
+              >
+                In Progress
+              </div>
+              <div
+                className="status-option status-on-hold"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleUpdateJobStatus(job._id, "On Hold", e);
+                  e.currentTarget.parentElement.classList.remove("show");
+                }}
+              >
+                On Hold
+              </div>
+              <div
+                className="status-option status-completed"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleUpdateJobStatus(job._id, "Completed", e);
+                  e.currentTarget.parentElement.classList.remove("show");
+                }}
+              >
+                Completed
+              </div>
+            </div>
+          </div>
         </div>
         <button 
           className="job-card-toggle-btn" 
@@ -131,68 +188,7 @@ const JobCard = memo(({
 
       <div className="job-card-footer">
         <div className="status-control-wrapper">
-          <div className={`status-select-container ${updatingJobIds.includes(job._id) ? 'updating' : ''}`}>
-            <div className="status-dropdown">
-              <button
-                className={`status-button status-${job.status?.toLowerCase().replace(/\s+/g, "-") || "available"}`}
-                onClick={(e) => {
-                  e.stopPropagation();
-                  e.currentTarget.nextElementSibling.classList.toggle("show");
-                }}
-                disabled={updatingJobIds.includes(job._id)}
-                aria-label="Open status dropdown"
-                type="button"
-              >
-                <span>{job.status || "Available"}</span>
-                <span className="dropdown-arrow">▼</span>
-                {updatingJobIds.includes(job._id) && (
-                  <FaSpinner className="status-spinner spin" aria-hidden="true" />
-                )}
-              </button>
-              <div className="status-dropdown-menu">
-                <div
-                  className="status-option status-available"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    handleUpdateJobStatus(job._id, "Available", e);
-                    e.currentTarget.parentElement.classList.remove("show");
-                  }}
-                >
-                  Available
-                </div>
-                <div
-                  className="status-option status-in-progress"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    handleUpdateJobStatus(job._id, "In Progress", e);
-                    e.currentTarget.parentElement.classList.remove("show");
-                  }}
-                >
-                  In Progress
-                </div>
-                <div
-                  className="status-option status-on-hold"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    handleUpdateJobStatus(job._id, "On Hold", e);
-                    e.currentTarget.parentElement.classList.remove("show");
-                  }}
-                >
-                  On Hold
-                </div>
-                <div
-                  className="status-option status-completed"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    handleUpdateJobStatus(job._id, "Completed", e);
-                    e.currentTarget.parentElement.classList.remove("show");
-                  }}
-                >
-                  Completed
-                </div>
-              </div>
-            </div>
-          </div>
+          {/* Status controls are moved above to header section */}
         </div>
         
         <button 
@@ -208,31 +204,12 @@ const JobCard = memo(({
   );
 });
 
-// Toast notification component
-const Toast = ({ message, type, onClose }) => {
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      onClose();
-    }, 3000);
-    
-    return () => clearTimeout(timer);
-  }, [onClose]);
-  
-  return (
-    <div className={`toast-notification toast-${type}`}>
-      <span>{message}</span>
-      <button className="toast-close" onClick={onClose}>×</button>
-    </div>
-  );
-};
-
 const MyJobs = () => {
     const [jobs, setJobs] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState("");
     const [updatingJobIds, setUpdatingJobIds] = useState([]);
     const [expandedJobId, setExpandedJobId] = useState(null);
-    const [notification, setNotification] = useState({ show: false, message: "", type: "" });
 
     useEffect(() => {
         const fetchJobs = async () => {
@@ -257,14 +234,6 @@ const MyJobs = () => {
         fetchJobs();
     }, []);
 
-    const showNotification = useCallback((message, type) => {
-        setNotification({ show: true, message, type });
-    }, []);
-
-    const hideNotification = useCallback(() => {
-        setNotification({ show: false, message: "", type: "" });
-    }, []);
-
     const handleDeleteJob = useCallback(async (jobId, event) => {
         // Prevent event bubbling to parent elements
         event.stopPropagation();
@@ -278,15 +247,14 @@ const MyJobs = () => {
             );
             if (response.data.success) {
                 setJobs(prev => prev.filter((job) => job._id !== jobId));
-                showNotification("Job deleted successfully!", "success");
+                console.log("Job deleted successfully!");
             } else {
-                showNotification(response.data.message || "Failed to delete the job.", "error");
+                console.error("Failed to delete job:", response.data.message);
             }
         } catch (error) {
             console.error("Error deleting job:", error.response?.data || error.message);
-            showNotification(error.response?.data?.message || "An error occurred while deleting the job.", "error");
         }
-    }, [showNotification]);
+    }, []);
 
     const handleUpdateJobStatus = useCallback(async (jobId, newStatus, event) => {
         // Prevent event bubbling
@@ -319,28 +287,23 @@ const MyJobs = () => {
                         job._id === jobId ? { ...job, status: newStatus } : job
                     )
                 );
-                
-                // Success notification
-                showNotification("Job status updated successfully!", "success");
+                console.log("Job status updated successfully!");
             } else {
                 console.error("Failed to update status:", response.data.message);
-                showNotification(response.data.message || "Failed to update job status.", "error");
             }
         } catch (error) {
             console.error("Error updating job status:", error);
             
             if (error.response?.status === 401) {
-                showNotification("Your session has expired. Please login again.", "error");
+                console.error("Your session has expired. Please login again.");
                 // Optionally redirect to login page
                 // navigate('/login');
-            } else {
-                showNotification(error.response?.data?.message || "An error occurred while updating the job status.", "error");
             }
         } finally {
             // Remove this job from updating list
             setUpdatingJobIds(prev => prev.filter(id => id !== jobId));
         }
-    }, [jobs, updatingJobIds, showNotification]);
+    }, [jobs, updatingJobIds]);
 
     const toggleJobExpansion = useCallback((jobId) => {
         setExpandedJobId(prev => prev === jobId ? null : jobId);
@@ -393,14 +356,6 @@ const MyJobs = () => {
 
     return (
         <div className="myjobs-container">
-            {notification.show && (
-                <Toast 
-                    message={notification.message}
-                    type={notification.type}
-                    onClose={hideNotification}
-                />
-            )}
-            
             <div className="myjobs-header">
                 <div className="myjobs-title-wrapper">
                     <h1 className="myjobs-title">My Posted Jobs</h1>
