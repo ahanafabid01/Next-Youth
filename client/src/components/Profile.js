@@ -158,260 +158,267 @@ const Profile = () => {
     }
 
     return (
-
-        
-        <div className="profile-container">
-            {error && (
-                <div className="error-banner">
-                    <FaExclamationCircle /> {error}
-                    <button onClick={() => setError(null)} className="close-error">×</button>
-                </div>
-            )}
-
-            <div className="profile-header">
-                <h1><FaUser className="header-icon" /> My Profile</h1>
-                <div className="progress-container">
-                    <div className="progress-bar">
-                        <div 
-                            className="progress-fill" 
-                            style={{ 
-                                width: `${progress}%`,
-                                backgroundColor: getProgressColor()
-                            }}
-                        ></div>
+        <div className="profile-component-root">
+            <div className="profile-container">
+                {error && (
+                    <div className="error-banner">
+                        <FaExclamationCircle /> {error}
+                        <button onClick={() => setError(null)} className="close-error">×</button>
                     </div>
-                    <span className="progress-text">{Math.round(progress)}% Profile Complete</span>
-                </div>
-            </div>
+                )}
 
-            {!isEditing ? (
-                <div className="profile-view">
-                    <div className="profile-card">
-                    {/* In the profile-card-header div */}
-                        <div className="profile-card-header">
-                            <h2>Personal Information</h2>
-                            <button 
-                                className="edit-btn" 
-                                onClick={() => setIsEditing(true)}
-                                aria-label="Edit profile"
-                            >
-                                <FaEdit /> <span className="btn-text">Edit Profile</span>
-                            </button>
-
+                <div className="profile-header">
+                    <h1><FaUser className="header-icon" /> My Profile</h1>
+                    <div className="progress-container">
+                        <div className="progress-bar">
+                            <div 
+                                className="progress-fill" 
+                                style={{ 
+                                    width: `${progress}%`,
+                                    backgroundColor: getProgressColor()
+                                }}
+                            ></div>
                         </div>
+                        <span className="progress-text">{Math.round(progress)}% Profile Complete</span>
+                    </div>
+                </div>
 
-                        <div className="profile-content">
-                            <div className="avatar-section">
-                                <div className="avatar-container">
-                                    <img 
-                                        src={profile.profilePicture || "/default-avatar.png"} 
-                                        alt="Profile" 
-                                        className="profile-avatar"
-                                        onError={(e) => {
-                                            e.target.src = "/default-avatar.png";
-                                        }}
-                                    />
-                                </div>
-                                <h3 className="profile-name">{profile.name}</h3>
+                {!isEditing ? (
+                    <div className="profile-view">
+                        <div className="profile-card">
+                        {/* In the profile-card-header div */}
+                            <div className="profile-card-header">
+                                <h2>Personal Information</h2>
                                 <button 
-                                    className="edit-profile-btn" 
+                                    className="edit-btn" 
                                     onClick={() => setIsEditing(true)}
                                     aria-label="Edit profile"
-        >
+                                >
                                     <FaEdit /> <span className="btn-text">Edit Profile</span>
                                 </button>
+
                             </div>
-                        
-                            <div className="profile-info">
-                                <div className="info-item">
-                                    <FaEnvelope className="info-icon" />
-                                    <div className="info-content">
-                                        <span className="info-label">Email</span>
-                                        <span className="info-value">{profile.email}</span>
+
+                            <div className="profile-content">
+                                <div className="avatar-section">
+                                    <div className="avatar-container">
+                                        <img 
+                                            src={profile.profilePicture || "https://via.placeholder.com/160x160?text=User"} 
+                                            alt={profile.name || "Profile"} 
+                                            className="profile-avatar"
+                                            onError={(e) => {
+                                                console.log("Image failed to load:", e.target.src);
+                                                e.target.src = "https://via.placeholder.com/160x160?text=User";
+                                                e.target.onerror = null; // Prevent infinite loop if placeholder fails
+                                            }}
+                                        />
                                     </div>
+                                    <h3 className="profile-name">{profile.name}</h3>
+                                    <button 
+                                        className="edit-profile-btn" 
+                                        onClick={() => setIsEditing(true)}
+                                        aria-label="Edit profile"
+            >
+                                        <FaEdit /> <span className="btn-text">Edit Profile</span>
+                                    </button>
                                 </div>
-                                
-                                <div className="info-item">
-                                    <FaCalendar className="info-icon" />
-                                    <div className="info-content">
-                                        <span className="info-label">Date of Birth</span>
-                                        <span className="info-value">
-                                            {profile.dateOfBirth || "Not specified"}
-                                        </span>
+                            
+                                <div className="profile-info">
+                                    <div className="info-item">
+                                        <FaEnvelope className="info-icon" />
+                                        <div className="info-content">
+                                            <span className="info-label">Email</span>
+                                            <span className="info-value">{profile.email}</span>
+                                        </div>
                                     </div>
-                                </div>
-                                
-                                <div className="info-item">
-                                    <FaLinkedin className="info-icon" />
-                                    <div className="info-content">
-                                        <span className="info-label">LinkedIn</span>
-                                        <span className="info-value">
-                                            {profile.linkedInId ? (
-                                                <a href={profile.linkedInId.startsWith('http') ? profile.linkedInId : `https://${profile.linkedInId}`} 
-                                                   target="_blank" 
-                                                   rel="noopener noreferrer"
-                                                   className="linkedin-link">
-                                                    View Profile
-                                                </a>
-                                            ) : (
-                                                "Not linked"
-                                            )}
-                                        </span>
+                                    
+                                    <div className="info-item">
+                                        <FaCalendar className="info-icon" />
+                                        <div className="info-content">
+                                            <span className="info-label">Date of Birth</span>
+                                            <span className="info-value">
+                                                {profile.dateOfBirth || "Not specified"}
+                                            </span>
+                                        </div>
                                     </div>
-                                </div>
-                                
-                                <div className="info-item bio-item">
-                                    <FaInfoCircle className="info-icon" />
-                                    <div className="info-content">
-                                        <span className="info-label">About Me</span>
-                                        <p className="info-bio">
-                                            {profile.otherInfo || "No bio added yet. Tell us about yourself!"}
-                                        </p>
+                                    
+                                    <div className="info-item">
+                                        <FaLinkedin className="info-icon" />
+                                        <div className="info-content">
+                                            <span className="info-label">LinkedIn</span>
+                                            <span className="info-value">
+                                                {profile.linkedInId ? (
+                                                    <a href={profile.linkedInId.startsWith('http') ? profile.linkedInId : `https://${profile.linkedInId}`} 
+                                                       target="_blank" 
+                                                       rel="noopener noreferrer"
+                                                       className="linkedin-link">
+                                                        View Profile
+                                                    </a>
+                                                ) : (
+                                                    "Not linked"
+                                                )}
+                                            </span>
+                                        </div>
+                                    </div>
+                                    
+                                    <div className="info-item bio-item">
+                                        <FaInfoCircle className="info-icon" />
+                                        <div className="info-content">
+                                            <span className="info-label">About Me</span>
+                                            <p className="info-bio">
+                                                {profile.otherInfo || "No bio added yet. Tell us about yourself!"}
+                                            </p>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
                         </div>
                     </div>
-                </div>
-            ) : (
-                <div className="profile-edit">
-                    <form className="edit-form" onSubmit={(e) => e.preventDefault()}>
-                        <div className="form-header">
-                            <button 
-                                type="button" 
-                                className="back-btn" 
-                                onClick={() => setIsEditing(false)}
-                                aria-label="Cancel editing"
-                            >
-                                <FaChevronLeft /> <span>Back</span>
-                            </button>
-                            <h2>Edit Profile</h2>
-                        </div>
-
-                        <div className="avatar-edit-section">
-                            <div className="avatar-upload">
-                                <img 
-                                    src={previewImage || profile.profilePicture || "/default-avatar.png"} 
-                                    alt="Profile Preview" 
-                                    className="avatar-preview"
-                                />
-                                <label htmlFor="profile-pic" className="avatar-edit-btn">
-                                    <FaCamera /> <span className="sr-only">Change Photo</span>
-                                </label>
-                                <input 
-                                    type="file" 
-                                    id="profile-pic" 
-                                    accept="image/*"
-                                    onChange={handleProfilePictureChange}
-                                    className="avatar-input"
-                                />
+                ) : (
+                    <div className="profile-edit">
+                        <form className="edit-form" onSubmit={(e) => e.preventDefault()}>
+                            <div className="form-header">
+                                <button 
+                                    type="button" 
+                                    className="back-btn" 
+                                    onClick={() => setIsEditing(false)}
+                                    aria-label="Cancel editing"
+                                >
+                                    <FaChevronLeft /> <span>Back</span>
+                                </button>
+                                <h2>Edit Profile</h2>
                             </div>
-                            <p className="avatar-hint">Click on the camera icon to change your profile picture</p>
-                        </div>
 
-                        <div className="form-section">
-                            <h3><FaUser className="section-icon" /> Basic Information</h3>
-                            <div className="form-grid">
+                            <div className="avatar-edit-section">
+                                <div className="avatar-upload">
+                                    <img 
+                                        src={previewImage || profile.profilePicture || "https://via.placeholder.com/140x140?text=User"} 
+                                        alt="Profile Preview" 
+                                        className="avatar-preview"
+                                        onError={(e) => {
+                                            console.log("Preview image failed to load:", e.target.src);
+                                            e.target.src = "https://via.placeholder.com/140x140?text=User";
+                                            e.target.onerror = null;
+                                        }}
+                                    />
+                                    <label htmlFor="profile-pic" className="avatar-edit-btn">
+                                        <FaCamera /> <span className="sr-only">Change Photo</span>
+                                    </label>
+                                    <input 
+                                        type="file" 
+                                        id="profile-pic" 
+                                        accept="image/*"
+                                        onChange={handleProfilePictureChange}
+                                        className="avatar-input"
+                                    />
+                                </div>
+                                <p className="avatar-hint">Click on the camera icon to change your profile picture</p>
+                            </div>
+
+                            <div className="form-section">
+                                <h3><FaUser className="section-icon" /> Basic Information</h3>
+                                <div className="form-grid">
+                                    <div className="form-group">
+                                        <label htmlFor="name"><FaUser /> Full Name</label>
+                                        <input
+                                            type="text"
+                                            id="name"
+                                            name="name"
+                                            value={profile.name}
+                                            onChange={handleInputChange}
+                                            placeholder="Enter your full name"
+                                            required
+                                        />
+                                    </div>
+                                    <div className="form-group">
+                                        <label htmlFor="email"><FaEnvelope /> Email</label>
+                                        <input
+                                            type="email"
+                                            id="email"
+                                            name="email"
+                                            value={profile.email}
+                                            onChange={handleInputChange}
+                                            placeholder="Enter your email address"
+                                            required
+                                        />
+                                    </div>
+                                    <div className="form-group">
+                                        <label htmlFor="dateOfBirth"><FaCalendar /> Date of Birth</label>
+                                        <input
+                                            type="date"
+                                            id="dateOfBirth"
+                                            name="dateOfBirth"
+                                            value={profile.dateOfBirth}
+                                            onChange={handleInputChange}
+                                        />
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div className="form-section">
+                                <h3><FaLinkedin className="section-icon" /> Social Links</h3>
                                 <div className="form-group">
-                                    <label htmlFor="name"><FaUser /> Full Name</label>
+                                    <label htmlFor="linkedInId"><FaLinkedin /> LinkedIn Profile</label>
                                     <input
                                         type="text"
-                                        id="name"
-                                        name="name"
-                                        value={profile.name}
+                                        id="linkedInId"
+                                        name="linkedInId"
+                                        value={profile.linkedInId}
                                         onChange={handleInputChange}
-                                        placeholder="Enter your full name"
-                                        required
+                                        placeholder="https://linkedin.com/in/username"
                                     />
                                 </div>
+                            </div>
+
+                            <div className="form-section">
+                                <h3><FaInfoCircle className="section-icon" /> About You</h3>
                                 <div className="form-group">
-                                    <label htmlFor="email"><FaEnvelope /> Email</label>
-                                    <input
-                                        type="email"
-                                        id="email"
-                                        name="email"
-                                        value={profile.email}
+                                    <label htmlFor="otherInfo"><FaInfoCircle /> Bio</label>
+                                    <textarea
+                                        id="otherInfo"
+                                        name="otherInfo"
+                                        value={profile.otherInfo}
                                         onChange={handleInputChange}
-                                        placeholder="Enter your email address"
-                                        required
-                                    />
-                                </div>
-                                <div className="form-group">
-                                    <label htmlFor="dateOfBirth"><FaCalendar /> Date of Birth</label>
-                                    <input
-                                        type="date"
-                                        id="dateOfBirth"
-                                        name="dateOfBirth"
-                                        value={profile.dateOfBirth}
-                                        onChange={handleInputChange}
-                                    />
+                                        placeholder="Tell us about yourself..."
+                                        rows="4"
+                                    ></textarea>
+                                    <small className="text-helper">Share your skills, experience, or interests. This helps others get to know you better.</small>
                                 </div>
                             </div>
-                        </div>
 
-                        <div className="form-section">
-                            <h3><FaLinkedin className="section-icon" /> Social Links</h3>
-                            <div className="form-group">
-                                <label htmlFor="linkedInId"><FaLinkedin /> LinkedIn Profile</label>
-                                <input
-                                    type="text"
-                                    id="linkedInId"
-                                    name="linkedInId"
-                                    value={profile.linkedInId}
-                                    onChange={handleInputChange}
-                                    placeholder="https://linkedin.com/in/username"
-                                />
+                            <div className="form-actions">
+                                <button 
+                                    type="button" 
+                                    className="save-btn" 
+                                    onClick={handleSaveProfile}
+                                    disabled={loading}
+                                >
+                                    {loading ? (
+                                        <>
+                                            <div className="button-spinner"></div>
+                                            <span>Saving...</span>
+                                        </>
+                                    ) : (
+                                        <>
+                                            <FaSave /> <span>Save Changes</span>
+                                        </>
+                                    )}
+                                </button>
+                                <button 
+                                    type="button" 
+                                    className="cancel-btn" 
+                                    onClick={() => {
+                                        setIsEditing(false);
+                                        setPreviewImage(null);
+                                    }}
+                                >
+                                    Cancel
+                                </button>
                             </div>
-                        </div>
-
-                        <div className="form-section">
-                            <h3><FaInfoCircle className="section-icon" /> About You</h3>
-                            <div className="form-group">
-                                <label htmlFor="otherInfo"><FaInfoCircle /> Bio</label>
-                                <textarea
-                                    id="otherInfo"
-                                    name="otherInfo"
-                                    value={profile.otherInfo}
-                                    onChange={handleInputChange}
-                                    placeholder="Tell us about yourself..."
-                                    rows="4"
-                                ></textarea>
-                                <small className="text-helper">Share your skills, experience, or interests. This helps others get to know you better.</small>
-                            </div>
-                        </div>
-
-                        <div className="form-actions">
-                            <button 
-                                type="button" 
-                                className="save-btn" 
-                                onClick={handleSaveProfile}
-                                disabled={loading}
-                            >
-                                {loading ? (
-                                    <>
-                                        <div className="button-spinner"></div>
-                                        <span>Saving...</span>
-                                    </>
-                                ) : (
-                                    <>
-                                        <FaSave /> <span>Save Changes</span>
-                                    </>
-                                )}
-                            </button>
-                            <button 
-                                type="button" 
-                                className="cancel-btn" 
-                                onClick={() => {
-                                    setIsEditing(false);
-                                    setPreviewImage(null);
-                                }}
-                            >
-                                Cancel
-                            </button>
-                        </div>
-                    </form>
-                </div>
-            )}
+                        </form>
+                    </div>
+                )}
+            </div>
         </div>
     );
 };

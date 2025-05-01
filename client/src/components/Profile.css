@@ -1,4 +1,37 @@
 /* Profile Page Styles */
+.profile-component-root {
+  /* Isolate this component */
+  isolation: isolate;
+  --profile-primary-color: inherit;
+  --profile-background-color: #fff;
+  --profile-border-color: #e0e0e0;
+}
+
+.profile-component-root .profile-container {
+  /* Existing styles */
+}
+
+.profile-component-root .avatar-container {
+  width: 160px;
+  height: 160px;
+  border-radius: 50%;
+  overflow: hidden;
+  margin: 0 auto 15px auto;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+  border: 3px solid var(--profile-border-color);
+  background-color: #f5f5f5;
+  position: relative;
+  z-index: 1; /* Ensure proper stacking */
+}
+
+.profile-component-root .profile-avatar {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+/* Profile Page Styles */
 .profile-container {
   width: 100%;
   max-width: 1200px;
@@ -137,6 +170,7 @@
   display: flex;
   flex-direction: column;
   align-items: center;
+  position: relative; /* Add position relative to contain the button */
 }
 
 .avatar-container {
@@ -160,11 +194,40 @@
   object-fit: cover;
 }
 
+.profile-name-section {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin-top: 10px;
+  width: 100%;
+}
+
 .profile-name {
   font-size: 1.5rem;
   font-weight: 600;
   margin: 10px 0;
   text-align: center;
+}
+
+.edit-profile-btn {
+  margin-top: 15px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 16px;
+  background-color: var(--primary-color);
+  color: white;
+  border-radius: 6px;
+  font-weight: 500;
+  font-size: 0.875rem;
+  transition: all 0.2s ease;
+  border: none;
+  cursor: pointer;
+}
+
+.edit-profile-btn:hover {
+  background-color: var(--primary-dark);
+  transform: translateY(-2px);
 }
 
 .profile-info {
@@ -845,46 +908,6 @@ textarea:focus {
     forced-color-adjust: none;
     color: Highlight;
   }
-}
-
-
-/* Update the avatar section styles to include the edit button */
-.avatar-section {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  position: relative; /* Add position relative to contain the button */
-}
-
-/* Style for the edit profile button under the user name */
-.profile-name-section {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  margin-top: 10px;
-  width: 100%;
-}
-
-/* Adjust the edit button to appear under the username */
-.edit-profile-btn {
-  margin-top: 15px;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 8px 16px;
-  background-color: var(--primary-color);
-  color: white;
-  border-radius: 6px;
-  font-weight: 500;
-  font-size: 0.875rem;
-  transition: all 0.2s ease;
-  border: none;
-  cursor: pointer;
-}
-
-.edit-profile-btn:hover {
-  background-color: var(--primary-dark);
-  transform: translateY(-2px);
 }
 
 /* Hide the edit button in the header */
