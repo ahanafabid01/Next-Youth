@@ -1,482 +1,527 @@
-/* MyJobs.css */
-.my-jobs-container {
-  padding: 24px;
-  max-width: 1200px;
-  margin: 0 auto;
+/* MyJobs.css - Professional styling for job management */
+
+/* Base Styles with CSS Variables for Theme Support */
+:root {
+  /* Common colors */
+  --primary-color: #3498db;
+  --primary-hover: #2980b9;
+  --success-color: #27ae60;
+  --warning-color: #f39c12;
+  --danger-color: #e74c3c;
+  --danger-hover: #c0392b;
+  
+  /* Animation speeds */
+  --animation-speed: 0.3s;
+  
+  /* Border radius */
+  --border-radius-sm: 4px;
+  --border-radius-md: 8px;
+  --border-radius-lg: 12px;
+  
+  /* Shadows */
+  --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.12), 0 1px 2px rgba(0, 0, 0, 0.24);
+  --shadow-md: 0 4px 6px rgba(0, 0, 0, 0.1);
+  --shadow-lg: 0 10px 20px rgba(0, 0, 0, 0.1);
+  
+  /* Spacing */
+  --spacing-xs: 4px;
+  --spacing-sm: 8px;
+  --spacing-md: 16px;
+  --spacing-lg: 24px;
+  --spacing-xl: 32px;
 }
 
-/* Ensure text is properly displayed within the container */
-.post-job-container {
-  padding: 20px; /* Add padding to prevent text from touching edges */
-  max-width: 1200px; /* Set a maximum width for better readability */
-  margin: 0 auto; /* Center the container */
-  overflow: hidden; /* Prevent content overflow */
-  box-sizing: border-box; /* Include padding and border in the element's total width/height */
+/* Light theme variables (inherited from parent theme) */
+.light-theme {
+  --myjobs-bg: #f8f9fa;
+  --myjobs-card-bg: #ffffff;
+  --myjobs-text: #333333;
+  --myjobs-text-secondary: #6c757d;
+  --myjobs-border: #e1e4e8;
+  --myjobs-hover-bg: #f0f2f5;
+  --badge-bg: #e9ecef;
+  --badge-text: #495057;
+  --input-bg: #ffffff;
+  --button-secondary-bg: #e9ecef;
+  --button-secondary-text: #495057;
+  --status-select-bg: #f8f9fa;
+  --card-shadow: 0 2px 20px rgba(0, 0, 0, 0.06);
+  --card-shadow-hover: 0 4px 28px rgba(0, 0, 0, 0.12);
+  --empty-state-bg: rgba(52, 152, 219, 0.05);
+  --skill-tag-bg: #e9f2fb;
+  --skill-tag-text: #2980b9;
+  --attachment-bg: #f5f7fa;
+  --attachment-hover: #ebeef2;
+  --pill-bg: rgba(52, 152, 219, 0.1);
+  --pill-text: #2980b9;
+  --toggle-btn-bg: #e9ecef;
+  --toggle-btn-color: #6c757d;
+  --toggle-btn-hover-bg: #e3e6e9;
+  --toggle-btn-hover-color: #3498db;
 }
 
-.post-job-container h1,
-.post-job-container p {
-  margin: 0 0 16px; /* Add spacing between text elements */
-  line-height: 1.5; /* Improve readability */
-  word-wrap: break-word; /* Prevent long words from breaking the layout */
+/* Enhanced Dark Theme for Better Readability */
+.dark-theme {
+  --myjobs-bg: #121212;
+  --myjobs-card-bg: #1e1e1e;
+  --myjobs-text: #ffffff; /* Increased contrast from f0f0f0 to white */
+  --myjobs-text-secondary: #cccccc; /* Lighter secondary text for better contrast */
+  --myjobs-border: #383838; /* Slightly more visible border */
+  --myjobs-hover-bg: #2c2c2c;
+  --badge-bg: #333333; /* Darker badge background for better contrast */
+  --badge-text: #ffffff; /* Brighter badge text */
+  --input-bg: #2d2d2d;
+  --button-secondary-bg: #2d2d2d;
+  --button-secondary-text: #ffffff; /* Brighter text for better contrast */
+  --status-select-bg: #2d2d2d;
+  --card-shadow: 0 2px 20px rgba(0, 0, 0, 0.2);
+  --card-shadow-hover: 0 4px 28px rgba(0, 0, 0, 0.4);
+  --empty-state-bg: rgba(52, 152, 219, 0.15); /* Slightly more visible */
+  --skill-tag-bg: rgba(52, 152, 219, 0.3); /* More visible background */
+  --skill-tag-text: #64b5f6; /* Brighter blue for better contrast */
+  --attachment-bg: #2a2a2a;
+  --attachment-hover: #333333;
+  --pill-bg: rgba(52, 152, 219, 0.3);
+  --pill-text: #64b5f6; /* Brighter blue */
+  --toggle-btn-bg: #333333;
+  --toggle-btn-color: #cccccc; /* Lighter color */
+  --toggle-btn-hover-bg: #444444;
+  --toggle-btn-hover-color: #64b5f6;
 }
 
-/* Header styling */
-.header {
+/* Status colors with improved contrast for dark theme */
+.dark-theme .status-available {
+  background-color: rgba(39, 174, 96, 0.3); /* More visible background */
+  color: #7defa9; /* Brighter green */
+}
+
+.dark-theme .status-in-progress {
+  background-color: rgba(52, 152, 219, 0.3);
+  color: #64b5f6; /* Brighter blue */
+}
+
+.dark-theme .status-on-hold {
+  background-color: rgba(243, 156, 18, 0.3);
+  color: #ffcc80; /* Brighter orange */
+}
+
+.dark-theme .status-completed {
+  background-color: rgba(156, 156, 156, 0.3);
+  color: #cccccc; /* Brighter gray */
+}
+
+/* Main container for MyJobs component */
+.myjobs-container {
+  padding: var(--spacing-lg) var(--spacing-md);
+  background-color: var(--myjobs-bg);
+  min-height: calc(100vh - 80px); /* Account for potential header */
+  font-family: 'Inter', 'Roboto', -apple-system, BlinkMacSystemFont, sans-serif;
+  color: var(--myjobs-text);
+  transition: background-color var(--animation-speed) ease;
+  box-sizing: border-box; /* Ensure padding is included in width */
+}
+
+/* Header section styling */
+.myjobs-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 32px;
-  position: relative;
+  margin-bottom: var(--spacing-xl);
+  flex-wrap: wrap;
+  gap: var(--spacing-md);
 }
 
-.header h1 {
+.myjobs-title-wrapper {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-md);
+}
+
+.myjobs-title {
   font-size: 2rem;
   font-weight: 700;
-  position: relative;
   margin: 0;
+  letter-spacing: -0.02em;
+  color: var(--myjobs-text);
+  transition: color var(--animation-speed) ease;
 }
 
-.header h1::after {
-  content: '';
-  position: absolute;
-  left: 0;
-  bottom: -8px;
-  width: 60px;
-  height: 4px;
-  background: var(--primary-color);
-  border-radius: 2px;
-  transition: width 0.3s ease;
+.job-count-pill {
+  background-color: var(--pill-bg);
+  color: var(--pill-text);
+  font-size: 0.875rem;
+  font-weight: 600;
+  padding: 6px 12px;
+  border-radius: 50px;
+  transition: all var(--animation-speed) ease;
 }
 
-.header:hover h1::after {
-  width: 100px;
+.myjobs-actions {
+  display: flex;
+  gap: var(--spacing-md);
 }
 
-.job-count {
+.post-job-button {
   background-color: var(--primary-color);
   color: white;
-  padding: 6px 12px;
-  border-radius: 20px;
-  font-size: 0.9rem;
-  font-weight: 500;
-  box-shadow: 0 3px 8px rgba(52, 152, 219, 0.3);
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
-}
-
-.job-count:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 5px 15px rgba(52, 152, 219, 0.4);
-}
-
-/* Empty state styling */
-.empty-state {
+  font-size: 0.95rem;
+  font-weight: 600;
+  padding: 10px 18px;
+  border: none;
+  border-radius: var(--border-radius-md);
   display: flex;
-  flex-direction: column;
   align-items: center;
-  justify-content: center;
-  padding: 60px 20px;
-  text-align: center;
-  border-radius: 10px;
-  transition: transform 0.3s ease, box-shadow 0.3s ease;
+  gap: 8px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-shadow: 0 2px 5px rgba(52, 152, 219, 0.2);
 }
 
-.light-theme .empty-state {
-  background-color: white;
-  box-shadow: var(--light-shadow);
+.post-job-button:hover {
+  background-color: var(--primary-hover);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(52, 152, 219, 0.3);
 }
 
-.dark-theme .empty-state {
-  background-color: var(--dark-card-bg);
-  box-shadow: var(--dark-shadow);
+.post-job-button:active {
+  transform: translateY(0);
 }
 
-.empty-state img {
-  width: 180px;
-  margin-bottom: 24px;
-  opacity: 0.8;
-}
-
-.empty-state p {
-  font-size: 1.2rem;
-  margin: 0;
-  opacity: 0.8;
-}
-
-/* Job grid layout */
-.job-grid {
+/* Job Grid Layout */
+.myjobs-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-  gap: 24px;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: var(--spacing-lg);
+  width: 100%;
 }
 
-/* Job card styling */
+/* Job Card Styling */
 .job-card {
-  border-radius: 12px;
-  overflow: hidden;
-  transition: transform 0.3s ease, box-shadow 0.3s ease;
+  background-color: var(--myjobs-card-bg);
+  border-radius: var(--border-radius-lg);
+  overflow: visible !important; /* Ensure dropdowns remain visible */
+  box-shadow: var(--card-shadow);
+  transition: all 0.25s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+  will-change: transform, box-shadow;
+  cursor: pointer;
+  position: relative;
   display: flex;
   flex-direction: column;
-}
-
-.light-theme .job-card {
-  background-color: white;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
-}
-
-.dark-theme .job-card {
-  background-color: var(--dark-card-bg);
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+  border: 1px solid var(--myjobs-border);
 }
 
 .job-card:hover {
-  transform: translateY(-5px);
+  box-shadow: var(--card-shadow-hover);
+  transform: translateY(-4px);
 }
 
-.light-theme .job-card:hover {
-  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.12);
+.job-card.expanded {
+  transform: translateY(-4px);
+  box-shadow: var(--card-shadow-hover);
 }
 
-.dark-theme .job-card:hover {
-  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.4);
-}
-
-/* Card header */
-.card-header {
-  padding: 20px;
+.job-card-header {
   display: flex;
   justify-content: space-between;
   align-items: flex-start;
-  border-bottom: 1px solid transparent;
+  padding: var(--spacing-lg) var(--spacing-lg) var(--spacing-md);
+  border-bottom: 1px solid var(--myjobs-border);
   position: relative;
 }
 
-.light-theme .card-header {
-  border-bottom-color: var(--light-border-color);
+.job-title-section {
+  flex: 1;
 }
 
-.dark-theme .card-header {
-  border-bottom-color: var(--dark-border-color);
-}
-
-.card-header h3 {
-  margin: 0;
+.job-title {
   font-size: 1.25rem;
   font-weight: 600;
+  margin: 0 0 var(--spacing-sm);
   line-height: 1.4;
-  max-width: 70%;
+  color: var(--myjobs-text);
+  transition: color var(--animation-speed) ease;
+  word-wrap: break-word;
+  overflow-wrap: break-word;
+  hyphens: auto;
+  max-width: calc(100% - 40px); /* Prevent overlap with toggle button */
 }
 
-/* Status badges */
-.status {
-  padding: 5px 10px;
-  border-radius: 4px;
-  font-size: 0.8rem;
-  font-weight: 500;
+.dark-theme .job-title {
+  color: #ffffff; /* Bright white for maximum contrast */
+  text-shadow: 0 1px 1px rgba(0, 0, 0, 0.2); /* Subtle text shadow for better legibility */
+}
+
+.job-status-badge {
+  display: inline-block;
+  padding: 4px 10px;
+  border-radius: 50px;
+  font-size: 0.75rem;
+  font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.5px;
+  transition: all var(--animation-speed) ease;
 }
 
-.light-theme .status.available {
-  background-color: rgba(39, 174, 96, 0.1);
-  color: var(--success-color);
+.status-available {
+  background-color: rgba(39, 174, 96, 0.15);
+  color: #27ae60;
 }
 
-.dark-theme .status.available {
-  background-color: rgba(39, 174, 96, 0.2);
-  color: #2ecc71;
+.dark-theme .status-available {
+  background-color: rgba(39, 174, 96, 0.3); /* More visible background */
+  color: #7defa9; /* Brighter green */
 }
 
-.light-theme .status.in.progress {
-  background-color: rgba(52, 152, 219, 0.1);
-  color: var(--primary-color);
-}
-
-.dark-theme .status.in.progress {
-  background-color: rgba(52, 152, 219, 0.2);
+.status-in-progress {
+  background-color: rgba(52, 152, 219, 0.15);
   color: #3498db;
 }
 
-.light-theme .status.on.hold {
-  background-color: rgba(243, 156, 18, 0.1);
-  color: var(--warning-color);
+.dark-theme .status-in-progress {
+  background-color: rgba(52, 152, 219, 0.3);
+  color: #64b5f6; /* Brighter blue */
 }
 
-.dark-theme .status.on.hold {
-  background-color: rgba(243, 156, 18, 0.2);
+.status-on-hold {
+  background-color: rgba(243, 156, 18, 0.15);
   color: #f39c12;
 }
 
-.light-theme .status.completed {
-  background-color: rgba(142, 68, 173, 0.1);
-  color: #8e44ad;
+.dark-theme .status-on-hold {
+  background-color: rgba(243, 156, 18, 0.3);
+  color: #ffcc80; /* Brighter orange */
 }
 
-.dark-theme .status.completed {
-  background-color: rgba(142, 68, 173, 0.2);
-  color: #9b59b6;
+.status-completed {
+  background-color: rgba(156, 156, 156, 0.15);
+  color: #7f8c8d;
 }
 
-/* Job description */
-.description {
-  padding: 15px 20px;
-  margin: 0;
-  font-size: 0.95rem;
-  line-height: 1.6;
-  flex-grow: 1;
+.dark-theme .status-completed {
+  background-color: rgba(156, 156, 156, 0.3);
+  color: #cccccc; /* Brighter gray */
 }
 
-.light-theme .description {
-  color: #555;
-}
-
-.dark-theme .description {
-  color: #bbb;
-}
-
-/* Job details section */
-.job-details {
-  padding: 0 20px 15px;
-  display: flex;
-  flex-direction: column;
-  gap: 15px;
-}
-
-.detail-item {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-}
-
-.detail-item > span:first-child {
-  font-size: 0.85rem;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-  font-weight: 600;
-}
-
-.light-theme .detail-item > span:first-child {
-  color: #777;
-}
-
-.dark-theme .detail-item > span:first-child {
-  color: #aaa;
-}
-
-.highlight {
-  font-weight: 600;
-}
-
-.light-theme .highlight {
-  color: var(--secondary-color);
-}
-
-.dark-theme .highlight {
-  color: #4dabf7;
-}
-
-/* Skills tags */
-.skills {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-}
-
-.skill-tag {
-  padding: 4px 10px;
-  border-radius: 20px;
-  font-size: 0.8rem;
-  transition: transform 0.2s ease;
-}
-
-.light-theme .skill-tag {
-  background-color: rgba(52, 73, 94, 0.1);
-  color: var(--secondary-color);
-}
-
-.dark-theme .skill-tag {
-  background-color: rgba(84, 160, 255, 0.15);
-  color: #4dabf7;
-}
-
-.skill-tag:hover {
-  transform: translateY(-2px);
-}
-
-/* Details layout */
-.detail-grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 15px;
-}
-
-/* File attachments */
-.attachments {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-
-.file-link {
+/* Improved toggle button styling */
+.job-card-toggle-btn {
   display: flex;
   align-items: center;
-  gap: 8px;
-  padding: 6px 10px;
-  border-radius: 4px;
-  text-decoration: none;
-  transition: background-color 0.2s ease;
-  font-size: 0.9rem;
-}
-
-.light-theme .file-link {
-  background-color: rgba(52, 152, 219, 0.05);
-  color: var(--primary-color);
-}
-
-.dark-theme .file-link {
-  background-color: rgba(52, 152, 219, 0.1);
-  color: #4dabf7;
-}
-
-.light-theme .file-link:hover {
-  background-color: rgba(52, 152, 219, 0.1);
-}
-
-.dark-theme .file-link:hover {
-  background-color: rgba(52, 152, 219, 0.2);
-}
-
-/* Card footer */
-.card-footer {
-  padding: 15px 20px;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  border-top: 1px solid transparent;
-}
-
-.light-theme .card-footer {
-  border-top-color: var(--light-border-color);
-}
-
-.dark-theme .card-footer {
-  border-top-color: var(--dark-border-color);
-}
-
-/* Status select dropdown */
-.status-select {
-  padding: 8px 12px;
-  border-radius: 6px;
-  border: 1px solid transparent;
-  font-size: 0.9rem;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background-color: var(--toggle-btn-bg);
+  border: 1px solid var(--myjobs-border);
   cursor: pointer;
-  transition: border-color 0.2s ease, box-shadow 0.2s ease;
-  width: auto;
+  transition: all 0.3s ease;
+  margin-left: var(--spacing-md);
+  color: var(--toggle-btn-color);
+  flex-shrink: 0;
+  position: relative;
+  z-index: 2;
 }
 
-.light-theme .status-select {
-  background-color: #f8f9fa;
-  border-color: var(--light-border-color);
-  color: var(--secondary-color);
+.job-card-toggle-btn:hover {
+  background-color: var(--toggle-btn-hover-bg);
+  color: var(--toggle-btn-hover-color);
+  transform: scale(1.1);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
 }
 
-.dark-theme .status-select {
-  background-color: #2d2d2d;
-  border-color: var(--dark-border-color);
-  color: var(--dark-text-color);
-}
-
-.light-theme .status-select:focus {
-  border-color: var(--primary-color);
-  box-shadow: 0 0 0 2px rgba(52, 152, 219, 0.2);
-  outline: none;
-}
-
-.dark-theme .status-select:focus {
-  border-color: #4dabf7;
-  box-shadow: 0 0 0 2px rgba(52, 152, 219, 0.3);
-  outline: none;
-}
-
-/* Delete button */
-.delete-btn {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 8px 12px;
-  border-radius: 6px;
-  font-size: 0.9rem;
-  transition: background-color 0.2s ease, transform 0.1s ease;
-}
-
-.light-theme .delete-btn {
-  background-color: rgba(231, 76, 60, 0.1);
-  color: var(--danger-color);
-}
-
-.dark-theme .delete-btn {
-  background-color: rgba(231, 76, 60, 0.2);
-  color: #ff6b6b;
-}
-
-.light-theme .delete-btn:hover {
-  background-color: rgba(231, 76, 60, 0.2);
-}
-
-.dark-theme .delete-btn:hover {
-  background-color: rgba(231, 76, 60, 0.3);
-}
-
-.delete-btn:active {
+.job-card-toggle-btn:active {
   transform: scale(0.95);
 }
 
-/* Loading and error states */
-.loading, .error {
+.toggle-icon {
+  font-size: 14px;
+  transition: transform 0.3s ease, color 0.3s ease;
+  color: inherit;
+}
+
+.job-card.expanded .toggle-icon {
+  transform: rotate(90deg);
+}
+
+/* Job Meta Information */
+.job-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--spacing-md);
+  padding: 0 var(--spacing-lg) var(--spacing-md);
+  font-size: 0.875rem;
+}
+
+.job-meta-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--myjobs-text-secondary);
+}
+
+.job-meta-item svg {
+  flex-shrink: 0;
+  opacity: 0.8;
+}
+
+/* Job Content Section */
+.job-content {
+  padding: var(--spacing-md) var(--spacing-lg);
+  flex: 1;
+  transition: all 0.3s ease;
+}
+
+.job-description {
+  color: var(--myjobs-text-secondary);
+  line-height: 1.6;
+  margin: 0;
+  transition: color var(--animation-speed) ease;
+}
+
+.job-details-expanded {
+  margin-top: var(--spacing-lg);
+  animation: fadeIn 0.3s ease;
+  transition: max-height 0.3s ease, opacity 0.3s ease;
+  overflow: hidden;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(-8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.job-skills-section h4,
+.job-attachments-section h4 {
+  font-size: 0.95rem;
+  font-weight: 600;
+  margin: var(--spacing-md) 0 var(--spacing-xs);
+  color: var(--myjobs-text);
+}
+
+.job-skills {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: var(--spacing-md);
+}
+
+.skill-tag {
+  background-color: var(--skill-tag-bg);
+  color: var(--skill-tag-text);
+  padding: 4px 10px;
+  border-radius: var(--border-radius-sm);
+  font-size: 0.8125rem;
+  font-weight: 500;
+  transition: all 0.2s ease;
+}
+
+.no-skills {
+  color: var(--myjobs-text-secondary);
+  font-style: italic;
+  font-size: 0.875rem;
+}
+
+.job-attachments {
   display: flex;
   flex-direction: column;
+  gap: var(--spacing-sm);
+}
+
+.attachment-link {
+  display: flex;
   align-items: center;
-  justify-content: center;
-  padding: 40px;
-  text-align: center;
-  border-radius: 10px;
-  margin: 20px auto;
-  max-width: 500px;
-  gap: 15px;
+  gap: 8px;
+  padding: 8px 12px;
+  border-radius: var(--border-radius-sm);
+  text-decoration: none;
+  color: var(--myjobs-text);
+  background-color: var(--attachment-bg);
+  transition: all 0.2s ease;
+  font-size: 0.875rem;
 }
 
-.light-theme .loading, .light-theme .error {
-  background-color: white;
-  box-shadow: var(--light-shadow);
+.attachment-link:hover {
+  background-color: var(--attachment-hover);
+  transform: translateX(3px);
 }
 
-.dark-theme .loading, .dark-theme .error {
-  background-color: var(--dark-card-bg);
-  box-shadow: var(--dark-shadow);
-}
-
-.loading svg, .error svg {
-  font-size: 2rem;
-}
-
-.light-theme .loading svg {
+.attachment-link svg {
   color: var(--primary-color);
 }
 
-.dark-theme .loading svg {
-  color: #4dabf7;
+.filename {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 200px;
 }
 
-.light-theme .error svg {
-  color: var(--danger-color);
+/* Job Card Footer */
+.job-card-footer {
+  padding: var(--spacing-md) var(--spacing-lg);
+  border-top: 1px solid var(--myjobs-border);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: var(--spacing-md);
+  transition: border-color var(--animation-speed) ease;
+  position: relative; /* Ensure proper positioning context */
+  overflow: visible;
 }
 
-.dark-theme .error svg {
-  color: #ff6b6b;
+.status-control-wrapper {
+  flex: 1;
+  position: relative;
+  overflow: visible;
 }
 
+.status-select-container {
+  position: relative;
+  max-width: 180px;
+}
+
+.status-select {
+  width: 100%;
+  padding: 8px 12px;
+  appearance: none;
+  background-color: var(--status-select-bg);
+  color: var(--myjobs-text);
+  border: 1px solid var(--myjobs-border);
+  border-radius: var(--border-radius-sm);
+  font-size: 0.875rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%236c757d' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 12px center;
+  padding-right: 32px;
+}
+
+.dark-theme .status-select {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%23aaaaaa' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+}
+
+.status-select:focus {
+  outline: none;
+  border-color: var(--primary-color);
+  box-shadow: 0 0 0 2px rgba(52, 152, 219, 0.2);
+}
+
+.status-select-container.updating .status-select {
+  opacity: 0.7;
+  pointer-events: none;
+}
+
+.status-spinner {
+  position: absolute;
+  right: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--primary-color);
+}
+
+/* Spinner animation */
 .spin {
-  animation: spin 1.2s linear infinite;
+  animation: spin 1s linear infinite;
 }
 
 @keyframes spin {
@@ -484,109 +529,705 @@
   100% { transform: rotate(360deg); }
 }
 
-/* Animations */
-@keyframes fadeIn {
-  from { opacity: 0; transform: translateY(20px); }
+/* Delete button styling */
+.delete-button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 8px 12px;
+  background-color: transparent;
+  color: var(--danger-color);
+  border: 1px solid var(--myjobs-border);
+  border-radius: var(--border-radius-sm);
+  font-size: 0.875rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.delete-button:hover {
+  background-color: rgba(231, 76, 60, 0.1);
+  border-color: var(--danger-color);
+}
+
+.delete-button:active {
+  transform: translateY(1px);
+}
+
+.delete-button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Empty state styling */
+.myjobs-empty-state {
+  text-align: center;
+  background-color: var(--empty-state-bg);
+  border-radius: var(--border-radius-lg);
+  padding: var(--spacing-xl);
+  margin-top: var(--spacing-lg);
+  border: 1px dashed var(--myjobs-border);
+}
+
+.empty-icon {
+  font-size: 3rem;
+  color: var(--primary-color);
+  margin-bottom: var(--spacing-md);
+  opacity: 0.8;
+}
+
+.myjobs-empty-state h2 {
+  margin-top: 0;
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: var(--myjobs-text);
+}
+
+.myjobs-empty-state p {
+  color: var(--myjobs-text-secondary);
+  max-width: 500px;
+  margin: 0 auto var(--spacing-lg);
+}
+
+.create-job-button {
+  background-color: var(--primary-color);
+  color: white;
+  font-size: 0.95rem;
+  font-weight: 600;
+  padding: 10px 24px;
+  border: none;
+  border-radius: var(--border-radius-md);
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-shadow: 0 2px 5px rgba(52, 152, 219, 0.2);
+}
+
+.create-job-button:hover {
+  background-color: var(--primary-hover);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(52, 152, 219, 0.3);
+}
+
+.create-job-button:active {
+  transform: translateY(0);
+}
+
+/* Loading and error states */
+.myjobs-loading,
+.myjobs-error {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 400px;
+  text-align: center;
+}
+
+.loading-spinner {
+  font-size: 2rem;
+  color: var(--primary-color);
+  margin-bottom: var(--spacing-md);
+}
+
+.myjobs-error {
+  color: var(--danger-color);
+}
+
+.myjobs-error svg {
+  font-size: 3rem;
+  margin-bottom: var(--spacing-md);
+}
+
+.retry-button {
+  margin-top: var(--spacing-lg);
+  padding: 8px 16px;
+  background-color: var(--button-secondary-bg);
+  color: var(--button-secondary-text);
+  border: 1px solid var(--myjobs-border);
+  border-radius: var(--border-radius-sm);
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.retry-button:hover {
+  background-color: var(--myjobs-hover-bg);
+}
+
+/* Responsive adjustments */
+@media (max-width: 1200px) {
+  .myjobs-grid {
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: var(--spacing-md);
+  }
+}
+
+@media (max-width: 992px) {
+  .myjobs-grid {
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  }
+  
+  .myjobs-title {
+    font-size: 1.8rem;
+  }
+}
+
+@media (max-width: 768px) {
+  .myjobs-container {
+    padding: var(--spacing-md) var(--spacing-sm);
+  }
+  
+  .myjobs-grid {
+    grid-template-columns: 1fr;
+    gap: var(--spacing-md);
+  }
+  
+  .myjobs-header {
+    flex-direction: column;
+    align-items: flex-start;
+    margin-bottom: var(--spacing-lg);
+    gap: var(--spacing-sm);
+  }
+  
+  .job-card-footer {
+    flex-direction: column;
+    align-items: stretch;
+    gap: var(--spacing-sm);
+  }
+  
+  .status-control-wrapper,
+  .status-select-container {
+    width: 100%;
+    max-width: none;
+  }
+  
+  .delete-button {
+    margin-top: var(--spacing-sm);
+    justify-content: center;
+    padding: 10px;
+  }
+}
+
+@media (max-width: 576px) {
+  .myjobs-container {
+    padding: var(--spacing-sm) var(--spacing-sm);
+  }
+  
+  .myjobs-title {
+    font-size: 1.5rem;
+  }
+  
+  .myjobs-subtitle {
+    font-size: 0.9rem;
+  }
+  
+  .job-count-pill {
+    font-size: 0.8rem;
+    padding: 4px 10px;
+  }
+  
+  .post-job-button {
+    padding: 8px 14px;
+    font-size: 0.9rem;
+  }
+  
+  .job-card {
+    border-radius: var(--border-radius-md); /* Smaller radius on mobile */
+  }
+
+  .job-card-header {
+    padding: var(--spacing-sm) var(--spacing-sm);
+    align-items: flex-start;
+  }
+
+  .job-content {
+    padding: var(--spacing-xs) var(--spacing-sm);
+  }
+  
+  .job-card-footer {
+    padding: var(--spacing-xs) var(--spacing-sm);
+    flex-direction: column;
+  }
+  
+  .job-title {
+    font-size: 1.1rem;
+    margin-bottom: var(--spacing-xs);
+    margin-right: 30px; /* Make room for toggle button */
+  }
+  
+  .job-meta {
+    padding: 0 var(--spacing-sm) var(--spacing-xs);
+    gap: 4px;
+    flex-direction: column;
+    align-items: flex-start;
+  }
+  
+  .job-meta-item {
+    font-size: 0.8rem;
+  }
+  
+  .status-button, 
+  .delete-button {
+    padding: 8px 12px;
+    font-size: 0.85rem;
+    width: 100%;
+    justify-content: center;
+    margin-top: var(--spacing-xs);
+    min-height: 44px;
+  }
+  
+  .skill-tag {
+    font-size: 0.75rem;
+    padding: 4px 8px;
+    margin-bottom: 2px;
+  }
+  
+  .job-card-toggle-btn {
+    width: 36px;
+    height: 36px;
+  }
+  
+  .job-details-expanded {
+    margin-top: var(--spacing-sm);
+    padding-top: var(--spacing-xs);
+  }
+}
+
+@media (max-width: 400px) {
+  .myjobs-title {
+    font-size: 1.2rem;
+  }
+  
+  .job-count-pill {
+    font-size: 0.7rem;
+    padding: 3px 8px;
+  }
+  
+  .post-job-button {
+    padding: 6px 12px;
+    font-size: 0.8rem;
+  }
+  
+  .job-title {
+    font-size: 1rem;
+    line-height: 1.3;
+  }
+  
+  .job-description {
+    font-size: 0.85rem;
+    line-height: 1.4;
+  }
+  
+  .job-card-toggle-btn {
+    position: absolute;
+    right: var(--spacing-sm);
+    top: var(--spacing-sm);
+  }
+  
+  .job-meta-item {
+    font-size: 0.8rem;
+  }
+  
+  .status-dropdown-menu {
+    left: 0;
+    right: 0;
+    width: 100%;
+  }
+}
+
+/* Status-specific colors for In Progress status properly formatted */
+.status-in-progress {
+  background-color: rgba(52, 152, 219, 0.15);
+  color: #3498db;
+}
+
+.dark-theme .status-in-progress {
+  background-color: rgba(52, 152, 219, 0.3);
+  color: #64b5f6; /* Brighter blue */
+}
+
+/* Status-specific colors for On Hold status properly formatted */
+.status-on-hold {
+  background-color: rgba(243, 156, 18, 0.15);
+  color: #f39c12;
+}
+
+.dark-theme .status-on-hold {
+  background-color: rgba(243, 156, 18, 0.3);
+  color: #ffcc80; /* Brighter orange */
+}
+
+/* Toast notification styling for MyJobs component
+   Add this to your MyJobs.css file */
+
+/* Toast container */
+.toast-notification {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  padding: 12px 20px;
+  border-radius: var(--border-radius-md);
+  box-shadow: var(--shadow-md);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  min-width: 300px;
+  max-width: 450px;
+  z-index: 1000;
+  animation: slideInRight 0.3s ease-out forwards;
+  font-weight: 500;
+}
+
+@keyframes slideInRight {
+  from {
+    transform: translateX(110%);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+.toast-success {
+  background-color: rgba(39, 174, 96, 0.9);
+  color: white;
+  border-left: 5px solid #27ae60;
+}
+
+.dark-theme .toast-success {
+  background-color: rgba(39, 174, 96, 0.8);
+  border-left: 5px solid #2ecc71;
+}
+
+.toast-error {
+  background-color: rgba(231, 76, 60, 0.9);
+  color: white;
+  border-left: 5px solid #c0392b;
+}
+
+.dark-theme .toast-error {
+  background-color: rgba(231, 76, 60, 0.8);
+  border-left: 5px solid #e74c3c;
+}
+
+.toast-warning {
+  background-color: rgba(243, 156, 18, 0.9);
+  color: white;
+  border-left: 5px solid #d35400;
+}
+
+.dark-theme .toast-warning {
+  background-color: rgba(243, 156, 18, 0.8);
+  border-left: 5px solid #f39c12;
+}
+
+.toast-close {
+  background: none;
+  border: none;
+  color: white;
+  font-size: 1.25rem;
+  cursor: pointer;
+  margin-left: 12px;
+  opacity: 0.8;
+  transition: opacity 0.2s ease;
+}
+
+.toast-close:hover {
+  opacity: 1;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .toast-notification {
+    width: calc(100% - 40px);
+    min-width: unset;
+    left: 50%;
+    transform: translateX(-50%);
+    top: 10px;
+    right: auto;
+  }
+  
+  @keyframes slideInRight {
+    from {
+      transform: translateX(-50%) translateY(-100%);
+      opacity: 0;
+    }
+    to {
+      transform: translateX(-50%) translateY(0);
+      opacity: 1;
+    }
+  }
+}
+
+/* Status button styling */
+.status-button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 6px 12px;
+  border-radius: 4px;
+  font-weight: 500;
+  border: none;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  min-width: 120px;
+}
+
+.status-button.status-available {
+  background-color: #e3f2fd;
+  color: #1976d2;
+}
+
+.status-button.status-in-progress {
+  background-color: #e8f5e9;
+  color: #2e7d32;
+}
+
+.status-button.status-on-hold {
+  background-color: #fff8e1;
+  color: #f57c00;
+}
+
+.status-button.status-completed {
+  background-color: #e8eaf6;
+  color: #3f51b5;
+}
+
+.status-button:hover {
+  filter: brightness(95%);
+}
+
+.status-button:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+
+.status-button .status-spinner {
+  margin-left: 8px;
+}
+
+/* Status dropdown styling */
+.status-dropdown {
+  position: relative;
+  width: 100%;
+}
+
+.status-button {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  padding: 8px 12px;
+  border-radius: var(--border-radius-sm);
+  font-weight: 500;
+  border: 1px solid var(--myjobs-border);
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.dropdown-arrow {
+  font-size: 10px;
+  margin-left: 8px;
+  opacity: 0.7;
+}
+
+.status-dropdown-menu {
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 0;
+  width: 100%;
+  background-color: var(--myjobs-card-bg);
+  border: 1px solid var(--myjobs-border);
+  border-radius: var(--border-radius-sm);
+  box-shadow: var(--shadow-md);
+  z-index: 1000; /* Increased z-index */
+  display: none;
+  overflow: hidden;
+}
+
+.dark-theme .status-dropdown-menu {
+  background-color: #2a2a2a;
+  border-color: #444444;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.5);
+}
+
+.status-dropdown-menu.show {
+  display: block;
+  animation: fadeInDropdown 0.2s ease;
+  z-index: 1000;
+  box-shadow: var(--shadow-lg);
+}
+
+@keyframes fadeInDropdown {
+  from { opacity: 0; transform: translateY(-10px); }
   to { opacity: 1; transform: translateY(0); }
 }
 
-.job-card {
-  animation: fadeIn 0.3s ease-out forwards;
+.status-option {
+  padding: 8px 12px;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
 }
 
-.job-card:nth-child(2) { animation-delay: 0.05s; }
-.job-card:nth-child(3) { animation-delay: 0.1s; }
-.job-card:nth-child(4) { animation-delay: 0.15s; }
-.job-card:nth-child(5) { animation-delay: 0.2s; }
-.job-card:nth-child(6) { animation-delay: 0.25s; }
-
-/* Responsive styles */
-@media (max-width: 768px) {
-  .header {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 10px;
-  }
-  
-  .job-count {
-    align-self: flex-start;
-  }
-  
-  .detail-grid {
-    grid-template-columns: 1fr;
-    gap: 10px;
-  }
+.dark-theme .status-option:hover {
+  background-color: #3a3a3a;
 }
 
-@media (max-width: 480px) {
-  .my-jobs-container {
-    padding: 16px;
-  }
-  
-  .job-grid {
-    grid-template-columns: 1fr;
-  }
-  
-  .card-header {
-    flex-direction: column;
-    gap: 10px;
-  }
-  
-  .card-header h3 {
-    max-width: 100%;
-  }
-  
-  .status {
-    align-self: flex-start;
-  }
-  
-  .card-footer {
-    flex-direction: column;
-    gap: 12px;
-    align-items: stretch;
-  }
-  
-  .status-select, .delete-btn {
-    width: 100%;
-  }
-  
-  .delete-btn {
-    justify-content: center;
-  }
+.status-option:hover {
+  background-color: var(--myjobs-hover-bg);
 }
 
-/* Hover effects and transitions for cards */
-.job-card {
-  position: relative;
-  overflow: hidden;
-}
-
-.job-card::before {
+/* Add these to hide dropdown when clicking elsewhere */
+body.has-dropdown-open::after {
   content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
+  position: fixed;
+  inset: 0;
+  z-index: 5;
+}
+
+/* Enhanced responsiveness for smaller screens */
+@media (max-width: 480px) {
+  .myjobs-container {
+    padding: var(--spacing-md) var(--spacing-sm);
+  }
+
+  .myjobs-title {
+    font-size: 1.5rem;
+  }
+
+  .job-count-pill {
+    font-size: 0.75rem;
+    padding: 4px 10px;
+  }
+
+  .post-job-button {
+    padding: 8px 14px;
+    font-size: 0.875rem;
+  }
+
+  .job-card {
+    min-height: auto;
+  }
+
+  .job-title {
+    font-size: 1.1rem;
+  }
+
+  .job-meta {
+    font-size: 0.75rem;
+    gap: var(--spacing-sm);
+  }
+
+  .status-button, .delete-button {
+    padding: 6px 8px;
+    font-size: 0.75rem;
+  }
+
+  .delete-button .btn-text {
+    display: none;
+  }
+
+  .delete-button {
+    padding: 8px;
+  }
+
+  /* Status options improvement for touch devices */
+  .status-option {
+    padding: 10px 12px;
+  }
+}
+
+/* Additional improvements for job card UI in dark mode */
+.dark-theme .job-card {
+  box-shadow: 0 3px 10px rgba(0, 0, 0, 0.5);
+}
+
+.dark-theme .job-card:hover,
+.dark-theme .job-card.expanded {
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.7);
+}
+
+.dark-theme .job-card-footer {
+  border-top: 1px solid #383838; /* More visible separator */
+}
+
+.dark-theme .job-card-header {
+  border-bottom: 1px solid #383838; /* More visible separator */
+}
+
+/* Better visibility for dropdown in dark mode */
+.dark-theme .status-dropdown-menu {
+  background-color: #2a2a2a;
+  border-color: #444444;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.5);
+}
+
+.dark-theme .status-option:hover {
+  background-color: #3a3a3a;
+}
+
+/* Fix for status button and dropdown menu */
+.status-button {
   width: 100%;
-  height: 4px;
-  background: linear-gradient(to right, var(--primary-color), var(--info-color));
-  transform: scaleX(0);
-  transform-origin: left;
-  transition: transform 0.3s ease;
+  box-sizing: border-box;
 }
 
-.job-card:hover::before {
-  transform: scaleX(1);
+.status-dropdown {
+  position: relative;
+  width: 100%;
+  z-index: 5;
 }
 
-/* Screen reader only class for accessibility */
-.sr-only {
-  position: absolute;
-  width: 1px;
-  height: 1px;
-  padding: 0;
-  margin: -1px;
+.status-dropdown-menu {
+  max-height: 200px;
+  overflow-y: auto;
+}
+
+/* Improved touch targets for mobile */
+@media (max-width: 576px) {
+  .job-card-toggle-btn,
+  .status-option,
+  .delete-button {
+    min-height: 40px; /* Larger touch targets */
+  }
+  
+  .upload-card,
+  .attachment-link {
+    padding: 12px; /* Larger touch targets */
+  }
+  
+  .status-dropdown-menu.show {
+    z-index: 10; /* Ensure menu shows above other elements */
+  }
+}
+
+/* Fix for file names and skill tags overflow */
+.filename,
+.skill-tag {
+  max-width: 100%;
   overflow: hidden;
-  clip: rect(0, 0, 0, 0);
+  text-overflow: ellipsis;
   white-space: nowrap;
-  border-width: 0;
+}
+
+/* Handle better spacing for empty state on small screens */
+@media (max-width: 576px) {
+  .myjobs-empty-state {
+    padding: var(--spacing-md);
+  }
+  
+  .myjobs-empty-state h2 {
+    font-size: 1.3rem;
+  }
+  
+  .myjobs-empty-state p {
+    font-size: 0.9rem;
+    margin-bottom: var(--spacing-md);
+  }
+  
+  .create-job-button {
+    width: 100%;
+    padding: 12px;
+  }
 }
