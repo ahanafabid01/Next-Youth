@@ -158,7 +158,7 @@ const EmployerDashboard = () => {
             case "post-job":
                 return <PostJob />;
             case "jobs":
-                return <MyJobs />;
+                return <MyJobs onPostJobClick={() => handleTabChange("post-job")} />;
             case "applications":
                 return <Applications />;
             case "messages":

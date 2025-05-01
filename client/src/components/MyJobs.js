@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback, memo } from "react";
+import { useNavigate } from "react-router-dom"; // Add this import
 import axios from "axios";
 import { 
   FaTrash, 
@@ -204,12 +205,13 @@ const JobCard = memo(({
   );
 });
 
-const MyJobs = () => {
+const MyJobs = ({ onPostJobClick }) => {
     const [jobs, setJobs] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState("");
     const [updatingJobIds, setUpdatingJobIds] = useState([]);
     const [expandedJobId, setExpandedJobId] = useState(null);
+    const navigate = useNavigate();
 
     useEffect(() => {
         const fetchJobs = async () => {
@@ -320,8 +322,13 @@ const MyJobs = () => {
     }, []);
 
     const navigateToPostJob = useCallback(() => {
-        window.location.href = "/post-job";
-    }, []);
+        if (onPostJobClick) {
+            onPostJobClick();
+        } else {
+            // Fallback to direct navigation if not in dashboard context
+            navigate('/post-job');
+        }
+    }, [onPostJobClick, navigate]);
 
     if (loading) {
         return (
