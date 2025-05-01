@@ -411,4 +411,91 @@ input, select, textarea {
   outline: none;
 }
 
+/* Verification Banner Styles */
+.verification-banner {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background-color: #f8f9fa;
+  border-left: 4px solid #007bff;
+  padding: 12px 20px;
+  margin-bottom: 20px;
+  border-radius: 4px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+}
+
+.dark-mode .verification-banner {
+  background-color: #2d3748;
+  border-left-color: #3b82f6;
+}
+
+.verification-banner-content {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+}
+
+.verification-banner-icon {
+  font-size: 24px;
+  color: #007bff;
+}
+
+.dark-mode .verification-banner-icon {
+  color: #3b82f6;
+}
+
+.verification-banner-text h3 {
+  margin: 0 0 5px 0;
+  font-size: 16px;
+}
+
+.verification-banner-text p {
+  margin: 0;
+  font-size: 14px;
+  color: #6c757d;
+}
+
+.dark-mode .verification-banner-text p {
+  color: #a0aec0;
+}
+
+.verification-banner-btn {
+  background-color: #007bff;
+  color: white;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 4px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.verification-banner-btn:hover {
+  background-color: #0069d9;
+}
+
+.dark-mode .verification-banner-btn {
+  background-color: #3b82f6;
+}
+
+.dark-mode .verification-banner-btn:hover {
+  background-color: #2563eb;
+}
+
+@media (max-width: 768px) {
+  .verification-banner {
+    flex-direction: column;
+    gap: 15px;
+    text-align: center;
+  }
+
+  .verification-banner-content {
+    flex-direction: column;
+  }
+
+  .verification-banner-btn {
+    width: 100%;
+  }
+}
+
 

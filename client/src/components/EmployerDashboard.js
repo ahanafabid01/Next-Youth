@@ -13,7 +13,8 @@ import {
   FaPlus,
   FaTimes,
   FaMoon,
-  FaSun
+  FaSun,
+  FaIdCard
 } from "react-icons/fa";
 import { Bar, Pie } from "react-chartjs-2";
 import { Chart as ChartJS, ArcElement, Tooltip, Legend, CategoryScale, LinearScale, BarElement } from "chart.js";
@@ -24,6 +25,7 @@ import PostJob from "./PostJob";
 import MyJobs from "./MyJobs";
 import ClientDashboard from "./ClientDashboard";
 import Applications from "./Applications";
+import EmployerVerification from './EmployerVerification';
 
 ChartJS.register(ArcElement, Tooltip, Legend, CategoryScale, LinearScale, BarElement);
 
@@ -38,6 +40,7 @@ const EmployerDashboard = () => {
     const [jobStats, setJobStats] = useState(null);
     const [monthlyTrends, setMonthlyTrends] = useState(null);
     const [darkMode, setDarkMode] = useState(false);
+    const [verificationStatus, setVerificationStatus] = useState(null);
 
     // Check for saved theme preference when component mounts
     useEffect(() => {
@@ -79,9 +82,18 @@ const EmployerDashboard = () => {
     useEffect(() => {
         const fetchUserProfile = async () => {
             try {
-                const response = await axios.get("http://localhost:4000/api/auth/me", { withCredentials: true });
-                if (response.data.success) {
-                    setUserName(response.data.user.name);
+                const [profileResponse, verificationResponse] = await Promise.all([
+                    axios.get("http://localhost:4000/api/auth/me", { withCredentials: true }),
+                    axios.get("http://localhost:4000/api/auth/verification-status", { withCredentials: true })
+                ]);
+                
+                if (profileResponse.data.success) {
+                    setUserName(profileResponse.data.user.name);
+                }
+                
+                // Set verification status
+                if (verificationResponse.data.success) {
+                    setVerificationStatus(verificationResponse.data.verification?.status || null);
                 }
             } catch (error) {
                 console.error("Error fetching user profile:", error);
@@ -161,6 +173,8 @@ const EmployerDashboard = () => {
                 return <MyJobs onPostJobClick={() => handleTabChange("post-job")} />;
             case "applications":
                 return <Applications />;
+            case "verification":
+                return <EmployerVerification onComplete={() => handleTabChange("dashboard")} />;
             case "messages":
             case "settings":
             default:
@@ -265,6 +279,23 @@ const EmployerDashboard = () => {
             {/* Main Content */}
             <div className="dashboard-content">
                 {menuOpen && <div className="sidebar-overlay" onClick={() => setMenuOpen(false)}></div>}
+                {(!verificationStatus || verificationStatus === 'rejected') && (
+                    <div className="verification-banner">
+                        <div className="verification-banner-content">
+                            <FaIdCard className="verification-banner-icon" />
+                            <div className="verification-banner-text">
+                                <h3>Verify Your Account</h3>
+                                <p>Complete ID verification to unlock full platform features</p>
+                            </div>
+                        </div>
+                        <button 
+                            className="verification-banner-btn"
+                            onClick={() => setActiveTab('verification')}
+                        >
+                            Verify Now
+                        </button>
+                    </div>
+                )}
                 {renderContent()}
             </div>
         </div>

@@ -10,7 +10,8 @@ import {
   FaSave,
   FaCamera,
   FaChevronLeft,
-  FaExclamationCircle
+  FaExclamationCircle,
+  FaIdCard // Add this import for the verification icon
 } from "react-icons/fa";
 import { useNavigate } from "react-router-dom";
 import "./Profile.css";
@@ -31,24 +32,32 @@ const Profile = () => {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
     const [previewImage, setPreviewImage] = useState(null);
+    const [verificationStatus, setVerificationStatus] = useState(null); // Add state for verification status
 
     useEffect(() => {
         const fetchUserProfile = async () => {
             try {
                 setLoading(true);
-                const response = await axios.get("http://localhost:4000/api/auth/me", { 
-                    withCredentials: true 
-                });
-                if (response.data.success) {
+                const [profileResponse, verificationResponse] = await Promise.all([
+                    axios.get("http://localhost:4000/api/auth/me", { withCredentials: true }),
+                    axios.get("http://localhost:4000/api/auth/verification-status", { withCredentials: true })
+                ]);
+                
+                if (profileResponse.data.success) {
                     setProfile({
-                        name: response.data.user.name || "",
-                        email: response.data.user.email || "",
-                        profilePicture: response.data.user.profilePicture || "",
-                        dateOfBirth: response.data.user.dateOfBirth || "",
-                        linkedInId: response.data.user.linkedInId || "",
-                        otherInfo: response.data.user.otherInfo || "",
+                        name: profileResponse.data.user.name || "",
+                        email: profileResponse.data.user.email || "",
+                        profilePicture: profileResponse.data.user.profilePicture || "",
+                        dateOfBirth: profileResponse.data.user.dateOfBirth || "",
+                        linkedInId: profileResponse.data.user.linkedInId || "",
+                        otherInfo: profileResponse.data.user.otherInfo || "",
                     });
                 }
+                
+                if (verificationResponse.data.success) {
+                    setVerificationStatus(verificationResponse.data.verification?.status || null);
+                }
+                
                 setError(null);
             } catch (error) {
                 console.error("Error fetching user profile:", error);
@@ -62,7 +71,6 @@ const Profile = () => {
     }, []);
 
     useEffect(() => {
-        // Calculate profile completeness
         const requiredFields = ['name', 'email', 'profilePicture', 'dateOfBirth', 'linkedInId', 'otherInfo'];
         const filledFields = requiredFields.filter(field => profile[field] && profile[field].trim() !== '').length;
         setProgress((filledFields / requiredFields.length) * 100);
@@ -78,7 +86,6 @@ const Profile = () => {
         if (file) {
             setProfilePictureFile(file);
             
-            // Create a preview of the selected image
             const reader = new FileReader();
             reader.onloadend = () => {
                 setPreviewImage(reader.result);
@@ -124,7 +131,6 @@ const Profile = () => {
                 setPreviewImage(null);
                 setError(null);
                 
-                // Show success message
                 const successMessage = document.createElement('div');
                 successMessage.className = 'success-toast';
                 successMessage.textContent = 'Profile updated successfully!';
@@ -146,6 +152,10 @@ const Profile = () => {
         if (progress < 30) return '#e74c3c';
         if (progress < 70) return '#f39c12';
         return '#27ae60';
+    };
+
+    const handleNavigateToVerification = () => {
+        navigate('/employer-verification');
     };
 
     if (loading && !profile.name) {
@@ -186,7 +196,6 @@ const Profile = () => {
                 {!isEditing ? (
                     <div className="profile-view">
                         <div className="profile-card">
-                        {/* In the profile-card-header div */}
                             <div className="profile-card-header">
                                 <h2>Personal Information</h2>
                                 <button 
@@ -196,7 +205,6 @@ const Profile = () => {
                                 >
                                     <FaEdit /> <span className="btn-text">Edit Profile</span>
                                 </button>
-
                             </div>
 
                             <div className="profile-content">
@@ -209,16 +217,34 @@ const Profile = () => {
                                             onError={(e) => {
                                                 console.log("Image failed to load:", e.target.src);
                                                 e.target.src = "https://via.placeholder.com/160x160?text=User";
-                                                e.target.onerror = null; // Prevent infinite loop if placeholder fails
+                                                e.target.onerror = null;
                                             }}
                                         />
                                     </div>
                                     <h3 className="profile-name">{profile.name}</h3>
+                                    
+                                    {verificationStatus === 'verified' ? (
+                                        <div className="verification-badge verified">
+                                            <FaIdCard /> Verified Account
+                                        </div>
+                                    ) : verificationStatus === 'pending' ? (
+                                        <div className="verification-badge pending">
+                                            <FaIdCard /> Verification Pending
+                                        </div>
+                                    ) : (
+                                        <button 
+                                            className="verify-account-btn" 
+                                            onClick={handleNavigateToVerification}
+                                        >
+                                            <FaIdCard /> Verify Your Account
+                                        </button>
+                                    )}
+                                    
                                     <button 
                                         className="edit-profile-btn" 
                                         onClick={() => setIsEditing(true)}
                                         aria-label="Edit profile"
-            >
+                                    >
                                         <FaEdit /> <span className="btn-text">Edit Profile</span>
                                     </button>
                                 </div>

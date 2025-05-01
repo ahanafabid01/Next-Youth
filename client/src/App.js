@@ -27,6 +27,7 @@ import ScheduleConsultation from "./contact"; // Import ScheduleConsultation
 import RequestDemo from "./RequestDemo"; // Import RequestDemo component
 import ViewApplication from "./components/ViewApplication"; // Import ViewApplication component
 import ViewProfile from './components/ViewProfile'; // Import ViewProfile component
+import EmployerVerification from './components/EmployerVerification'; // Add this import
 import "./App.css"; // Import App.css
 
 const App = () => {
@@ -55,6 +56,7 @@ const App = () => {
                 <Route path="/find-jobs/proposals" element={<FindJobs />} /> {/* Route for FindJobs proposals */}
                 <Route path="/find-jobs/details/:jobId" element={<FindJobs />} /> {/* Route for FindJobs details */}
                 <Route path="/verify-account" element={<VerifyAccount />} /> {/* Add this route */}
+                <Route path="/employer-verification" element={<EmployerVerification />} /> {/* Add this route */}
                 <Route path="/my-profile" element={<MyProfile />} /> {/* Route for MyProfile */}
                 <Route path="/notifications" element={<Notifications />} /> {/* Route for Notifications */}
                 <Route path="/jobs/apply/:jobId" element={<JobApplication />} /> {/* Add this route */}
