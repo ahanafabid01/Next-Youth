@@ -3,8 +3,7 @@ import { FaCalendarAlt, FaBuilding, FaSearch, FaSortAmountDown, FaSortAmountUp }
 import axios from "axios";
 import Sidebar from "./Sidebar";
 import "./DemoConsultations.css";
-
-const API_BASE_URL = "http://localhost:4000/api";
+import API_BASE_URL from '../../config';  // Add this import
 
 const DemoConsultations = () => {
   const [demoRequests, setDemoRequests] = useState([]);

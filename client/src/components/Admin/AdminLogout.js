@@ -3,13 +3,15 @@ import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { FaSignOutAlt } from 'react-icons/fa';
 import './logout.css';
+import API_BASE_URL from '../../config';  // Add this import
 
 const AdminLogout = () => {
   const navigate = useNavigate();
 
   const handleLogout = async () => {
     try {
-      await axios.post("http://localhost:4000/api/auth/logout", {}, { withCredentials: true });
+      // Replace hardcoded URL with API_BASE_URL
+      await axios.post(`${API_BASE_URL}/auth/logout`, {}, { withCredentials: true });
       navigate("/login");
     } catch (error) {
       console.error("Logout failed:", error);
