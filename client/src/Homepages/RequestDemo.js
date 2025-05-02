@@ -3,10 +3,7 @@ import { Link, useNavigate } from "react-router-dom"; // Add useNavigate
 import "./RequestDemo.css";
 import "./Homepage.css"; // Import Homepage CSS for header and footer styles
 import axios from "axios"; // Add axios import
-
-// Add this near the top where other imports are
-// Make sure the API_BASE_URL is properly set
-const API_BASE_URL = process.env.REACT_APP_API_URL || "http://localhost:4000/api";
+import API_BASE_URL from '../config';  // Note the different path
 
 const RequestDemo = () => {
   // State for animations and visibility
@@ -113,8 +110,7 @@ const RequestDemo = () => {
     try {
       console.log("Submitting form data:", formData);
       
-      const response = await axios.post(
-        `${API_BASE_URL}/contact/demo-request`, 
+      const response = await axios.post(`${API_BASE_URL}/contact/request-demo`, 
         formData
       );
       

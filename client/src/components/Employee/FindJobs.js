@@ -54,6 +54,23 @@ const FindJobs = () => {
     const profileDropdownRef = useRef(null);
     const notificationsRef = useRef(null);
 
+    const [hasError, setHasError] = useState(false);
+
+    // Add this function near the beginning of your component:
+    const retryApiCall = async (apiCall, maxRetries = 3) => {
+        let retries = 0;
+        while (retries < maxRetries) {
+            try {
+                return await apiCall();
+            } catch (error) {
+                retries++;
+                if (retries === maxRetries) throw error;
+                // Exponential backoff
+                await new Promise(r => setTimeout(r, 1000 * Math.pow(2, retries)));
+            }
+        }
+    };
+
     // Close dropdown when clicking outside
     useEffect(() => {
         const handleOutsideClick = (event) => {
@@ -82,6 +99,35 @@ const FindJobs = () => {
         document.body.classList.toggle('dark-mode', isDarkMode);
         localStorage.setItem("dashboard-theme", isDarkMode ? "dark" : "light");
     }, [isDarkMode]);
+
+    useEffect(() => {
+        const handleError = (error) => {
+            console.error("Caught runtime error:", error);
+            setHasError(true);
+        };
+        
+        window.addEventListener('error', handleError);
+        return () => window.removeEventListener('error', handleError);
+    }, []);
+
+    // Add this to your component:
+    useEffect(() => {
+        const handleOnline = () => {
+            if (error && error.includes("network")) {
+                setError(null);
+                // Re-fetch data
+                fetchAvailableJobs();
+            }
+        };
+        
+        window.addEventListener('online', handleOnline);
+        window.addEventListener('offline', () => setError("You appear to be offline. Please check your connection."));
+        
+        return () => {
+            window.removeEventListener('online', handleOnline);
+            window.removeEventListener('offline', () => {});
+        };
+    }, [error]);
 
     // Fetch user data for header
     const fetchUserData = useCallback(async () => {
@@ -187,25 +233,25 @@ const FindJobs = () => {
     const fetchJobDetails = async (id) => {
         setLoading(true);
         try {
-            const availableResponse = await axios.get(`${API_BASE_URL}/jobs/available`, { 
-                withCredentials: true 
-            });
+            const availableResponse = await retryApiCall(() => 
+                axios.get(`${API_BASE_URL}/jobs/available`, { withCredentials: true })
+            );
             
             if (availableResponse.data.success) {
                 const job = availableResponse.data.jobs.find(j => j._id === id);
                 if (job) {
-                    const savedResponse = await axios.get(`${API_BASE_URL}/jobs/saved`, { 
-                        withCredentials: true 
-                    });
+                    const savedResponse = await retryApiCall(() => 
+                        axios.get(`${API_BASE_URL}/jobs/saved`, { withCredentials: true })
+                    );
                     
                     if (savedResponse.data.success) {
                         const savedJobIds = savedResponse.data.jobs.map(j => j._id);
                         job.isSaved = savedJobIds.includes(id);
                     }
                     
-                    const appliedResponse = await axios.get(`${API_BASE_URL}/jobs/applied`, { 
-                        withCredentials: true 
-                    });
+                    const appliedResponse = await retryApiCall(() => 
+                        axios.get(`${API_BASE_URL}/jobs/applied`, { withCredentials: true })
+                    );
                     
                     if (appliedResponse.data.success) {
                         const appliedJobIds = appliedResponse.data.jobs.map(j => j._id);
@@ -218,18 +264,18 @@ const FindJobs = () => {
                 }
             }
             
-            const savedResponse = await axios.get(`${API_BASE_URL}/jobs/saved`, { 
-                withCredentials: true 
-            });
+            const savedResponse = await retryApiCall(() => 
+                axios.get(`${API_BASE_URL}/jobs/saved`, { withCredentials: true })
+            );
             
             if (savedResponse.data.success) {
                 const job = savedResponse.data.jobs.find(j => j._id === id);
                 if (job) {
                     job.isSaved = true;
                     
-                    const appliedResponse = await axios.get(`${API_BASE_URL}/jobs/applied`, { 
-                        withCredentials: true 
-                    });
+                    const appliedResponse = await retryApiCall(() => 
+                        axios.get(`${API_BASE_URL}/jobs/applied`, { withCredentials: true })
+                    );
                     
                     if (appliedResponse.data.success) {
                         const appliedJobIds = appliedResponse.data.jobs.map(j => j._id);
@@ -242,9 +288,9 @@ const FindJobs = () => {
                 }
             }
             
-            const appliedResponse = await axios.get(`${API_BASE_URL}/jobs/applied`, { 
-                withCredentials: true 
-            });
+            const appliedResponse = await retryApiCall(() => 
+                axios.get(`${API_BASE_URL}/jobs/applied`, { withCredentials: true })
+            );
             
             if (appliedResponse.data.success) {
                 const job = appliedResponse.data.jobs.find(j => j._id === id);
@@ -275,36 +321,27 @@ const FindJobs = () => {
     const fetchAvailableJobs = async () => {
         setLoading(true);
         try {
-            const response = await axios.get(`${API_BASE_URL}/jobs/available`, { 
-                withCredentials: true 
-            });
-            
-            const appliedResponse = await axios.get(`${API_BASE_URL}/jobs/applied`, {
-                withCredentials: true
-            });
+            const [availableResponse, appliedResponse, savedResponse] = await Promise.all([
+                retryApiCall(() => axios.get(`${API_BASE_URL}/jobs/available`, { withCredentials: true })),
+                retryApiCall(() => axios.get(`${API_BASE_URL}/jobs/applied`, { withCredentials: true })),
+                retryApiCall(() => axios.get(`${API_BASE_URL}/jobs/saved`, { withCredentials: true }))
+            ]);
             
             const appliedJobIds = appliedResponse.data.success 
                 ? appliedResponse.data.jobs.map(job => job._id) 
                 : [];
             
-            const savedResponse = await axios.get(`${API_BASE_URL}/jobs/saved`, {
-                withCredentials: true
-            });
-            
             const savedJobIds = savedResponse.data.success 
                 ? savedResponse.data.jobs.map(job => job._id) 
                 : [];
                 
-            const updatedJobs = response.data.jobs.map(job => ({
+            const updatedJobs = availableResponse.data.jobs.map(job => ({
                 ...job,
                 hasApplied: appliedJobIds.includes(job._id),
                 isSaved: savedJobIds.includes(job._id)
             }));
             
             setJobs(updatedJobs);
-            if (!response.data.success) {
-                setError("Failed to fetch available jobs.");
-            }
         } catch (err) {
             console.error("Error fetching jobs:", err);
             setError("An error occurred while fetching available jobs.");
@@ -317,14 +354,14 @@ const FindJobs = () => {
     const fetchSavedJobs = async () => {
         setLoading(true);
         try {
-            const response = await axios.get(`${API_BASE_URL}/jobs/saved`, { 
-                withCredentials: true 
-            });
+            const response = await retryApiCall(() => 
+                axios.get(`${API_BASE_URL}/jobs/saved`, { withCredentials: true })
+            );
             
             if (response.data.success) {
-                const appliedResponse = await axios.get(`${API_BASE_URL}/jobs/applied`, {
-                    withCredentials: true
-                });
+                const appliedResponse = await retryApiCall(() => 
+                    axios.get(`${API_BASE_URL}/jobs/applied`, { withCredentials: true })
+                );
                 
                 const appliedJobIds = appliedResponse.data.success 
                     ? appliedResponse.data.jobs.map(job => job._id) 
@@ -351,9 +388,9 @@ const FindJobs = () => {
     const fetchAppliedJobs = async () => {
         setLoading(true);
         try {
-            const applicationsResponse = await axios.get(`${API_BASE_URL}/jobs/applications`, { 
-                withCredentials: true 
-            });
+            const applicationsResponse = await retryApiCall(() => 
+                axios.get(`${API_BASE_URL}/jobs/applications`, { withCredentials: true })
+            );
             
             if (applicationsResponse.data.success) {
                 const jobsWithApplicationIds = applicationsResponse.data.applications.map(app => ({
@@ -378,9 +415,9 @@ const FindJobs = () => {
     const toggleSaveJob = async (jobId, isSaved) => {
         try {
             if (isSaved) {
-                await axios.post(`${API_BASE_URL}/jobs/${jobId}/save/remove`, {}, { 
-                    withCredentials: true 
-                });
+                await retryApiCall(() => 
+                    axios.post(`${API_BASE_URL}/jobs/${jobId}/save/remove`, {}, { withCredentials: true })
+                );
                 
                 setSavedJobs(savedJobs.filter(job => job._id !== jobId));
                 
@@ -394,9 +431,9 @@ const FindJobs = () => {
                     setCurrentJob({...currentJob, isSaved: false});
                 }
             } else {
-                await axios.post(`${API_BASE_URL}/jobs/${jobId}/save`, {}, { 
-                    withCredentials: true 
-                });
+                await retryApiCall(() => 
+                    axios.post(`${API_BASE_URL}/jobs/${jobId}/save`, {}, { withCredentials: true })
+                );
                 
                 if (activeTab === 'available') {
                     setJobs(jobs.map(job => 
@@ -421,9 +458,9 @@ const FindJobs = () => {
     // Apply for a job
     const applyToJob = async (jobId) => {
         try {
-            await axios.post(`${API_BASE_URL}/jobs/${jobId}/apply`, {}, { 
-                withCredentials: true 
-            });
+            await retryApiCall(() => 
+                axios.post(`${API_BASE_URL}/jobs/${jobId}/apply`, {}, { withCredentials: true })
+            );
             alert("Your application has been submitted successfully!");
             
             if (activeTab === 'available') {
@@ -603,9 +640,8 @@ const FindJobs = () => {
     const handleViewApplication = async (jobId) => {
         try {
             setLoading(true);
-            const response = await axios.get(
-                `${API_BASE_URL}/jobs/job-application/${jobId}`,
-                { withCredentials: true }
+            const response = await retryApiCall(() => 
+                axios.get(`${API_BASE_URL}/jobs/application/${jobId}`, { withCredentials: true })
             );
             
             if (response.data.success && response.data.application) {
@@ -726,6 +762,16 @@ const FindJobs = () => {
             </div>
         );
     };
+
+    if (hasError) {
+        return (
+            <div className="error-boundary">
+                <h2>Something went wrong</h2>
+                <p>We're sorry, but there was an error loading this page.</p>
+                <button onClick={() => window.location.reload()}>Refresh Page</button>
+            </div>
+        );
+    }
 
     if (loading) {
         return (
