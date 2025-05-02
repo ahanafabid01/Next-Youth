@@ -51,9 +51,6 @@
       "last 1 safari version"
     ]
   },
-  "devDependencies": {
-    "typescript": "^5.3.3"
-  },
   "overrides": {
     "typescript": "4.9.5"
   }
