@@ -1,6 +1,7 @@
 import React, { useEffect, useState, useRef, useCallback } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import axios from 'axios';
+import API_BASE_URL from '../../config';  // Add this import
 import { 
   FaRegFileAlt, 
   FaChevronDown, 
@@ -39,9 +40,6 @@ const Notifications = () => {
     return localStorage.getItem("dashboard-theme") === "dark";
   });
 
-  const API_BASE_URL = 'http://localhost:4000/api';
-
-  // Update the fetchUserData function to check localStorage for read status
   const fetchUserData = useCallback(async () => {
     try {
       const [userResponse, verificationResponse] = await Promise.all([
@@ -134,7 +132,22 @@ const Notifications = () => {
     } finally {
       setLoading(false);
     }
-  }, [API_BASE_URL, navigate]);
+  }, [navigate]);
+
+  const fetchNotifications = useCallback(async () => {
+    try {
+      setLoading(true);
+      const response = await axios.get(`${API_BASE_URL}/notifications`, { 
+        withCredentials: true 
+      });
+      
+      // ...rest of the function remains the same
+    } catch (error) {
+      console.error('Error fetching notifications:', error);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
 
   const handleOutsideClick = useCallback((event) => {
     if (profileDropdownRef.current && !profileDropdownRef.current.contains(event.target)) {
@@ -159,7 +172,6 @@ const Notifications = () => {
     setIsDarkMode(prev => !prev);
   }, []);
 
-  // Update the handleMarkAllAsRead function
   const handleMarkAllAsRead = useCallback(() => {
     setNotifications(prevNotifications => 
       prevNotifications.map(notification => ({ ...notification, isRead: true }))
@@ -176,7 +188,6 @@ const Notifications = () => {
     localStorage.setItem("read-notifications-status", JSON.stringify(readStatus));
   }, [notifications]);
 
-  // Update the handleMarkAsRead function
   const handleMarkAsRead = useCallback((id) => {
     setNotifications(prevNotifications => 
       prevNotifications.map(notification => 
@@ -230,7 +241,7 @@ const Notifications = () => {
       console.error('Error logging out:', error);
       setError("Logout failed. Please try again.");
     }
-  }, [navigate, API_BASE_URL]);
+  }, [navigate]);
 
   const handleVerifyAccount = useCallback(() => {
     navigate('/verify-account');

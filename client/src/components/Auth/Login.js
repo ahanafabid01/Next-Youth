@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import axios from "axios";
 import { useNavigate, Link } from "react-router-dom";
 import "./Auth.css";
+import API_BASE_URL from '../../config';  // Add this import
 
 const Login = () => {
     const [email, setEmail] = useState("");
@@ -249,13 +250,11 @@ const Login = () => {
     const handleSubmit = async (e) => {
         e.preventDefault();
         setError("");
-
         try {
-            const response = await axios.post(
-                "http://localhost:4000/api/auth/login",
-                { email, password },
-                { withCredentials: true }
-            );
+            const response = await axios.post(`${API_BASE_URL}/auth/login`, {
+                email,
+                password,
+            }, { withCredentials: true });
 
             if (response.data.success) {
                 alert("Login successful!");

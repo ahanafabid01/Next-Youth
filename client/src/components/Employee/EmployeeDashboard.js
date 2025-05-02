@@ -1,6 +1,7 @@
 import React, { useEffect, useState, useRef, useCallback } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import axios from 'axios';
+import API_BASE_URL from '../../config';  // Add this import
 import { 
   FaRegFileAlt, 
   FaChevronDown, 
@@ -47,8 +48,6 @@ const EmployeeDashboard = () => {
   const [isDarkMode, setIsDarkMode] = useState(() => {
     return localStorage.getItem("dashboard-theme") === "dark";
   });
-
-  const API_BASE_URL = 'http://localhost:4000/api';
 
   const [allAvailableJobs, setAllAvailableJobs] = useState([]);
   const [currentPage, setCurrentPage] = useState(1);

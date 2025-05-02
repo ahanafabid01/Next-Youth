@@ -7,6 +7,7 @@ import { FaRegFileAlt, FaSpinner, FaExclamationCircle, FaClock, FaCheckCircle, F
          FaFacebook, FaTwitter, FaInstagram, FaTrash } from 'react-icons/fa';
 import './FindJobs.css';
 import './EmployeeDashboard.css'; // Import the EmployeeDashboard styles
+import API_BASE_URL from '../../config';
 
 const FindJobs = () => {
     const navigate = useNavigate();
@@ -52,8 +53,6 @@ const FindJobs = () => {
     });
     const profileDropdownRef = useRef(null);
     const notificationsRef = useRef(null);
-
-    const API_BASE_URL = 'http://localhost:4000/api';
 
     // Close dropdown when clicking outside
     useEffect(() => {

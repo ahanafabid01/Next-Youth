@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback, memo } from "react";
 import { useNavigate } from "react-router-dom"; // Add this import
 import axios from "axios";
+import API_BASE_URL from '../../config';
 import { 
   FaTrash, 
   FaRegFileAlt, 
@@ -217,7 +218,7 @@ const MyJobs = ({ onPostJobClick }) => {
         const fetchJobs = async () => {
             try {
                 setLoading(true);
-                const response = await axios.get("http://localhost:4000/api/jobs", { 
+                const response = await axios.get(`${API_BASE_URL}/jobs`, { 
                     withCredentials: true 
                 });
                 if (response.data.success) {
@@ -244,7 +245,7 @@ const MyJobs = ({ onPostJobClick }) => {
 
         try {
             const response = await axios.delete(
-                `http://localhost:4000/api/jobs/${jobId}`,
+                `${API_BASE_URL}/jobs/${jobId}`,
                 { withCredentials: true }
             );
             if (response.data.success) {

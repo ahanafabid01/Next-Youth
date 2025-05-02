@@ -4,6 +4,7 @@ import "./BusinessSolutions.css"; // Reuse existing styles
 import "./Homepage.css"; // Reuse homepage styles
 import "./contact.css"; // New separated CSS
 import axios from "axios"; // Add this import
+import API_BASE_URL from '../config';
 
 const ScheduleConsultation = () => {
   const [searchParams] = useSearchParams();
@@ -200,7 +201,7 @@ const ScheduleConsultation = () => {
         
         // Updated with the correct server URL
         const response = await axios.post(
-          "http://localhost:4000/api/contact/create", 
+          `${API_BASE_URL}/contact/create`, 
           formData
         );
         

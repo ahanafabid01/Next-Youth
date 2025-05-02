@@ -6,6 +6,7 @@ import { FaArrowLeft, FaDownload, FaRegFileAlt, FaSpinner,
          FaEdit, FaTrash, FaCheckCircle, FaBriefcase, 
          FaFileContract, FaCommentDots } from 'react-icons/fa';
 import './ViewApplication.css';
+import API_BASE_URL from '../../config';
 
 const ViewApplication = () => {
     const { applicationId } = useParams();
@@ -22,7 +23,7 @@ const ViewApplication = () => {
             try {
                 setLoading(true);
                 const response = await axios.get(
-                    `http://localhost:4000/api/jobs/application/${applicationId}`, 
+                    `${API_BASE_URL}/jobs/application/${applicationId}`, 
                     { withCredentials: true }
                 );
                 
@@ -48,7 +49,7 @@ const ViewApplication = () => {
         try {
             setLoading(true);
             const response = await axios.delete(
-                `http://localhost:4000/api/jobs/application/${applicationId}`,
+                `${API_BASE_URL}/jobs/application/${applicationId}`,
                 { withCredentials: true }
             );
             

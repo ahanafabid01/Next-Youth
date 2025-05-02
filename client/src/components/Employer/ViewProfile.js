@@ -7,6 +7,7 @@ import {
   FaGlobe, FaUserCircle, FaCheckCircle
 } from 'react-icons/fa';
 import './ViewProfile.css'; // Import specific styles for ViewProfile
+import API_BASE_URL from '../../config';
 
 const ViewProfile = () => {
   const [profileData, setProfileData] = useState({});
@@ -14,7 +15,6 @@ const ViewProfile = () => {
   const [error, setError] = useState(null);
   const { userId } = useParams();
   const navigate = useNavigate();
-  const API_BASE_URL = 'http://localhost:4000/api';
 
   useEffect(() => {
     const fetchUserProfile = async () => {

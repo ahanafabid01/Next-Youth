@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { FaTimes, FaCloudUploadAlt, FaEdit, FaCheckCircle, FaSpinner } from 'react-icons/fa';
 import axios from "axios";
 import './PostJob.css';
+import API_BASE_URL from '../../config';
 
 const PostJob = () => {
   const [currentStep, setCurrentStep] = useState(1);
@@ -145,7 +146,7 @@ const PostJob = () => {
       });
 
       const response = await axios.post(
-        "http://localhost:4000/api/jobs",
+        `${API_BASE_URL}/jobs`,
         formDataToSend,
         { 
           withCredentials: true,

@@ -3,6 +3,7 @@ import React, { useEffect, useState } from "react";
 import axios from "axios";
 import { FaList, FaClock, FaSpinner, FaCheckCircle, FaPauseCircle } from "react-icons/fa";
 import './ClientDashboard.css';
+import API_BASE_URL from '../../config';
 
 // Map each stat key to an icon component
 const iconsMap = {
@@ -33,7 +34,7 @@ const ClientDashboard = () => {
   useEffect(() => {
     const fetchJobStats = async () => {
       try {
-        const response = await axios.get("http://localhost:4000/api/jobs", { withCredentials: true });
+        const response = await axios.get(`${API_BASE_URL}/jobs`, { withCredentials: true });
         if (response.data.success && Array.isArray(response.data.jobs)) {
           const jobs = response.data.jobs;
           const stats = {

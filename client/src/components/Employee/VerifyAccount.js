@@ -1,6 +1,7 @@
 import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import axios from 'axios';
+import API_BASE_URL from '../../config';  // Add this import
 import { 
     FaArrowLeft, 
     FaUpload, 
@@ -47,9 +48,6 @@ const VerifyAccount = () => {
     // Refs for dropdowns
     const profileDropdownRef = useRef(null);
     const notificationsRef = useRef(null);
-
-    // API base URL
-    const API_BASE_URL = 'http://localhost:4000/api';
 
     // Clean up object URLs when component unmounts or when images change
     useEffect(() => {

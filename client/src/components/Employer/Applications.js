@@ -3,6 +3,7 @@ import axios from "axios";
 import { FaCheck, FaTimes, FaEye, FaSpinner, FaExclamationCircle } from "react-icons/fa";
 import { useNavigate } from "react-router-dom";
 import "./Applications.css";
+import API_BASE_URL from '../../config';
 
 const Applications = () => {
   const [applications, setApplications] = useState([]);
@@ -22,7 +23,7 @@ const Applications = () => {
       setError(null);
       
       // Use the new endpoint specifically for employer applications
-      const response = await axios.get("http://localhost:4000/api/jobs/employer-applications", {
+      const response = await axios.get(`${API_BASE_URL}/jobs/employer-applications`, {
         withCredentials: true
       });
       

@@ -3,6 +3,7 @@ import Sidebar from "./Sidebar";
 import "./AdminDashboard.css";
 import "./Users.css"; // <-- Add this line
 import axios from "axios";
+import API_BASE_URL from '../../config';  // Add this import statement
 
 const AdminDashboard = () => {
     const [users, setUsers] = useState([]);
@@ -21,7 +22,7 @@ const AdminDashboard = () => {
 
     const fetchUsers = async () => {
         try {
-            const response = await axios.get("http://localhost:4000/api/auth/admin/users", {
+            const response = await axios.get(`${API_BASE_URL}/auth/admin/users`, {
                 withCredentials: true
             });
             
@@ -74,7 +75,7 @@ const AdminDashboard = () => {
         setActionLoading(true);
         try {
             const response = await axios.post(
-                `http://localhost:4000/api/auth/admin/verify-user`,
+                `${API_BASE_URL}/auth/admin/verify-user`,
                 {
                     userId: selectedUser._id,
                     status: action,
@@ -112,7 +113,7 @@ const AdminDashboard = () => {
             
             console.log("Attempting to delete user with ID:", userId);
             
-            const response = await axios.delete(`http://localhost:4000/api/auth/delete-user/${userId}`, {
+            const response = await axios.delete(`${API_BASE_URL}/auth/delete-user/${userId}`, {
                 withCredentials: true, // Ensure cookies (like the auth token) are sent
             });
             

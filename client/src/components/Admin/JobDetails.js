@@ -1,8 +1,10 @@
 import React, { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import Sidebar from "./Sidebar";
 import "./AdminDashboard.css";
 import "./JobDetails.css";
 import axios from "axios";
+import API_BASE_URL from '../../config';  // Add this import statement
 import { FaTrash, FaEdit, FaRegFileAlt } from "react-icons/fa";
 
 const JobDetails = () => {
@@ -17,7 +19,7 @@ const JobDetails = () => {
     const fetchJobs = async () => {
         try {
             // Use the regular jobs endpoint instead of admin-only endpoint
-            const response = await axios.get("http://localhost:4000/api/jobs/available", {
+            const response = await axios.get(`${API_BASE_URL}/jobs/available`, {
                 withCredentials: true
             });
 
@@ -66,7 +68,7 @@ const JobDetails = () => {
         
         try {
             setLoading(true); // Show loading indicator
-            const response = await axios.delete(`http://localhost:4000/api/jobs/${jobId}`, { 
+            const response = await axios.delete(`${API_BASE_URL}/jobs/${jobId}`, { 
                 withCredentials: true 
             });
             

@@ -4,6 +4,8 @@ import axios from "axios";
 import Sidebar from "./Sidebar";
 import "./DemoConsultations.css";
 
+const API_BASE_URL = "http://localhost:4000/api";
+
 const DemoConsultations = () => {
   const [demoRequests, setDemoRequests] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -19,9 +21,8 @@ const DemoConsultations = () => {
     const fetchDemoRequests = async () => {
       try {
         setLoading(true);
-        // Corrected endpoint path
-        const response = await axios.get("http://localhost:4000/api/contact/requests", {
-          withCredentials: true // Cookie-based auth, no token needed
+        const response = await axios.get(`${API_BASE_URL}/contact/demo-requests`, {
+          withCredentials: true
         });
         setDemoRequests(response.data);
         setLoading(false);
@@ -92,7 +93,7 @@ const DemoConsultations = () => {
   const handleStatusChange = async (id, newStatus) => {
     try {
       await axios.put(
-        `http://localhost:4000/api/contact/requests/${id}/status`,
+        `${API_BASE_URL}/contact/requests/${id}/status`,
         { status: newStatus },
         { withCredentials: true }
       );

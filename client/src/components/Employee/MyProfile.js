@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import axios from 'axios';
+import API_BASE_URL from '../../config';  // Add this import
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import { 
@@ -73,7 +74,6 @@ const MyProfile = () => {
   const navigate = useNavigate();
   const profileDropdownRef = useRef(null);
   const notificationsRef = useRef(null);
-  const API_BASE_URL = 'http://localhost:4000/api';
 
   // Fetch user profile data
   const fetchUserData = useCallback(async () => {

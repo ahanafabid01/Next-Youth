@@ -32,7 +32,7 @@ app.use(express.json());
 app.use(cookieParser());
 app.use(cors({
     credentials: true,
-    origin: process.env.CLIENT_URL || "http://localhost:3000",
+    origin: process.env.CLIENT_URL || "https://next-youth-client.onrender.com",
 })); // Allow credentials and specify origin
 
 // Use body-parser for JSON requests only

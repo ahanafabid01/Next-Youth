@@ -6,6 +6,7 @@ import { FaArrowLeft, FaPlus, FaMinus, FaFileUpload, FaRegFileAlt,
          FaUserCircle, FaBell, FaSun, FaMoon, FaChevronDown, FaDownload,
          FaBriefcase, FaFileContract, FaCommentDots, FaDollarSign, FaClock, FaStar, FaEdit } from 'react-icons/fa';
 import './JobApplication.css';
+import API_BASE_URL from '../../config';
 
 const JobApplication = () => {
     const { jobId } = useParams();
@@ -78,7 +79,7 @@ const JobApplication = () => {
     useEffect(() => {
         const fetchUserData = async () => {
             try {
-                const employeeResponse = await axios.get("http://localhost:4000/api/auth/employee-profile", { 
+                const employeeResponse = await axios.get(`${API_BASE_URL}/auth/employee-profile`, { 
                     withCredentials: true 
                 });
                 
@@ -120,13 +121,11 @@ const JobApplication = () => {
 
     const handleLogout = async () => {
         try {
-            const response = await axios.post("http://localhost:4000/api/auth/logout", {}, { 
-                withCredentials: true 
-            });
-            if (response.data.success) navigate('/login');
+            await axios.post(`${API_BASE_URL}/auth/logout`, {}, { withCredentials: true });
+            navigate('/login');
         } catch (error) {
-            console.error('Error logging out:', error);
-        }
+            console.error('Error during logout:', error);
+        };
     };
 
     // Fetch job details
@@ -333,7 +332,7 @@ const JobApplication = () => {
             });
             
             const response = await axios.post(
-                'http://localhost:4000/api/jobs/apply-with-details',
+                `${API_BASE_URL}/jobs/apply-with-details`,
                 formData,
                 { 
                     withCredentials: true,
