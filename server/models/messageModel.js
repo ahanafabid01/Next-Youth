@@ -1,52 +1,35 @@
-import mongoose from "mongoose";
+// server/models/messageModel.js
+const mongoose = require('mongoose');
 
-const messageSchema = new mongoose.Schema(
-  {
-    sender: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: "User",
-      required: true,
-    },
-    recipient: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: "User",
-      required: true,
-    },
-    jobId: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: "Job",
-      required: true,
-    },
-    applicationId: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: "Application",
-      required: true,
-    },
-    content: {
-      type: String,
-      trim: true,
-      default: "",
-    },
-    attachments: [
-      {
-        filename: String,
-        path: String,
-        mimetype: String,
-      },
-    ],
-    isRead: {
-      type: Boolean,
-      default: false,
-    },
+const messageSchema = new mongoose.Schema({
+  conversationId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Conversation',
+    required: true
   },
-  { timestamps: true }
-);
+  senderId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'User',
+    required: true
+  },
+  receiverId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'User',
+    required: true
+  },
+  text: {
+    type: String,
+    required: true
+  },
+  read: {
+    type: Boolean,
+    default: false
+  },
+  timestamp: {
+    type: Date,
+    default: Date.now
+  }
+});
 
-// Index for faster message retrieval
-messageSchema.index({ sender: 1, recipient: 1 });
-messageSchema.index({ jobId: 1, applicationId: 1 });
-messageSchema.index({ createdAt: -1 });
-
-const Message = mongoose.model("Message", messageSchema);
-
-export default Message;
+const Message = mongoose.model('Message', messageSchema);
+module.exports = Message;

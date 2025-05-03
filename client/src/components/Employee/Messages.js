@@ -1,478 +1,883 @@
-import React, { useState, useEffect, useRef, useCallback } from "react";
-import { useNavigate } from "react-router-dom";
-import axios from "axios";
-import {
+import React, { useState, useEffect, useRef, useCallback } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
+import axios from 'axios';
+import { 
+  FaBell, 
   FaUserCircle,
+  FaChevronDown,
+  FaEnvelope,
   FaPaperPlane,
-  FaRegClock,
-  FaTimes,
-  FaArrowLeft,
-  FaPaperclip,
-  FaSpinner,
-  FaExclamationCircle,
+  FaEllipsisV,
   FaSearch,
-} from "react-icons/fa";
-import "./Messages.css";
+  FaCheckCircle,
+  FaClock,
+  FaSun,
+  FaMoon,
+  FaCircle,
+  FaFacebook,
+  FaTwitter,
+  FaLinkedin,
+  FaInstagram
+} from 'react-icons/fa';
+import { useSocket } from '../../context/SocketContext';
+import './EmployeeDashboard.css';
+import './Messages.css';
 
 const Messages = () => {
-  const [conversations, setConversations] = useState([]);
-  const [activeConversation, setActiveConversation] = useState(null);
-  const [messages, setMessages] = useState([]);
-  const [newMessage, setNewMessage] = useState("");
-  const [loading, setLoading] = useState(false);
-  const [loadingMessages, setLoadingMessages] = useState(false);
-  const [error, setError] = useState("");
-  const [searchTerm, setSearchTerm] = useState("");
-  const messagesEndRef = useRef(null);
   const navigate = useNavigate();
-  const API_BASE_URL = "http://localhost:4000/api";
-  const messageContainerRef = useRef(null);
-  const fileInputRef = useRef(null);
-  const [attachments, setAttachments] = useState([]);
-  const [sendingMessage, setSendingMessage] = useState(false);
+  const { socket, isUserOnline } = useSocket();
+  const [conversations, setConversations] = useState([]);
+  const [selectedConversation, setSelectedConversation] = useState(null);
+  const [messages, setMessages] = useState([]);
+  const [newMessage, setNewMessage] = useState('');
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
+  const [user, setUser] = useState({ name: '', profilePicture: '', isVerified: false });
+  const [typingUsers, setTypingUsers] = useState({});
+  const [showProfileDropdown, setShowProfileDropdown] = useState(false);
+  const [showNotifications, setShowNotifications] = useState(false);
+  const [showMobileNav, setShowMobileNav] = useState(false);
+  const [isDarkMode, setIsDarkMode] = useState(() => localStorage.getItem("dashboard-theme") === "dark");
+  const [unreadNotifications, setUnreadNotifications] = useState(() => parseInt(localStorage.getItem("unread-notifications") || "2"));
+  
+  const messageListRef = useRef(null);
+  const profileDropdownRef = useRef(null);
+  const notificationsRef = useRef(null);
+  const typingTimeoutRef = useRef(null);
+  const API_BASE_URL = 'http://localhost:4000/api';
+
+  // Fetch user data
+  const fetchUserData = useCallback(async () => {
+    try {
+      const [userResponse, verificationResponse] = await Promise.all([
+        axios.get(`${API_BASE_URL}/auth/me`, { withCredentials: true }),
+        axios.get(`${API_BASE_URL}/auth/verification-status`, { withCredentials: true })
+      ]);
+      
+      if (userResponse.data.success) {
+        const userData = userResponse.data.user;
+        
+        let verificationData = null;
+        let verificationStatus = null;
+        
+        if (verificationResponse.data.success) {
+          if (verificationResponse.data.verification) {
+            verificationData = verificationResponse.data.verification;
+            verificationStatus = verificationData.status;
+          }
+        }
+        
+        setUser({
+          ...userData,
+          idVerification: verificationData,
+          isVerified: verificationStatus === 'verified'
+        });
+      }
+    } catch (error) {
+      console.error('Error fetching user data:', error);
+      if (error.response?.status === 401) {
+        navigate('/login');
+      }
+    }
+  }, [API_BASE_URL, navigate]);
 
   // Fetch conversations
   const fetchConversations = useCallback(async () => {
     try {
       setLoading(true);
-      const response = await axios.get(`${API_BASE_URL}/messages/conversations`, {
-        withCredentials: true,
+      const response = await axios.get(`${API_BASE_URL}/messages/conversations`, { 
+        withCredentials: true 
       });
-
+      
       if (response.data.success) {
         setConversations(response.data.conversations);
-      } else {
-        setError("Failed to load conversations");
+        
+        // If there are conversations and none selected, select the first one
+        if (response.data.conversations.length > 0 && !selectedConversation) {
+          setSelectedConversation(response.data.conversations[0]);
+          fetchMessages(response.data.conversations[0].id);
+        }
       }
-    } catch (err) {
-      console.error("Error fetching conversations:", err);
-      setError("Error loading conversations. Please try again.");
-      if (err.response?.status === 401) {
-        navigate("/login");
-      }
+    } catch (error) {
+      console.error('Error fetching conversations:', error);
+      setError('Failed to load conversations');
     } finally {
       setLoading(false);
     }
-  }, [API_BASE_URL, navigate]);
+  }, [API_BASE_URL, selectedConversation]);
 
   // Fetch messages for a conversation
-  const fetchMessages = useCallback(async (conversationId) => {
+  const fetchMessages = async (conversationId) => {
     try {
-      setLoadingMessages(true);
-      const response = await axios.get(
-        `${API_BASE_URL}/messages/conversations/${conversationId}`,
-        { withCredentials: true }
-      );
-
+      const response = await axios.get(`${API_BASE_URL}/messages/${conversationId}`, {
+        withCredentials: true
+      });
+      
       if (response.data.success) {
         setMessages(response.data.messages);
-      } else {
-        setError("Failed to load messages");
+        scrollToBottom();
       }
-    } catch (err) {
-      console.error("Error fetching messages:", err);
-      setError("Error loading messages. Please try again.");
-    } finally {
-      setLoadingMessages(false);
+    } catch (error) {
+      console.error('Error fetching messages:', error);
+      setError('Failed to load messages');
     }
-  }, [API_BASE_URL]);
+  };
 
-  // Handle file selection
-  const handleFileSelect = (e) => {
-    const files = Array.from(e.target.files);
-    const maxSize = 5 * 1024 * 1024; // 5MB
-    const allowedTypes = [
-      "image/jpeg",
-      "image/png",
-      "image/gif",
-      "application/pdf",
-      "application/msword",
-      "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-    ];
-
-    const validFiles = files.filter((file) => {
-      if (!allowedTypes.includes(file.type)) {
-        alert(`File type not allowed: ${file.name}`);
-        return false;
-      }
-      if (file.size > maxSize) {
-        alert(`File too large (max 5MB): ${file.name}`);
-        return false;
-      }
-      return true;
+  // Send a new message using Socket.IO
+  const sendMessage = async (e) => {
+    e.preventDefault();
+    
+    if (!newMessage.trim() || !selectedConversation || !socket) return;
+    
+    // Clear typing indicator
+    if (typingTimeoutRef.current) {
+      clearTimeout(typingTimeoutRef.current);
+      socket.emit('typing', {
+        conversationId: selectedConversation.id,
+        isTyping: false
+      });
+    }
+    
+    // Emit the sendMessage event
+    socket.emit('sendMessage', {
+      conversationId: selectedConversation.id,
+      text: newMessage.trim(),
+      receiverId: selectedConversation.employer._id
     });
-
-    setAttachments((prev) => [...prev, ...validFiles]);
+    
+    // Optimistically add the message to UI
+    const optimisticMessage = {
+      _id: Date.now().toString(),
+      conversationId: selectedConversation.id,
+      senderId: {
+        _id: user._id,
+        name: user.name,
+        profilePicture: user.profilePicture
+      },
+      text: newMessage.trim(),
+      timestamp: new Date(),
+      pending: true // Mark as pending until server confirms
+    };
+    
+    setMessages(prev => [...prev, optimisticMessage]);
+    setNewMessage('');
+    scrollToBottom();
   };
 
-  // Remove attachment
-  const removeAttachment = (index) => {
-    setAttachments((prev) => prev.filter((_, i) => i !== index));
+  const scrollToBottom = () => {
+    setTimeout(() => {
+      if (messageListRef.current) {
+        messageListRef.current.scrollTop = messageListRef.current.scrollHeight;
+      }
+    }, 100);
   };
 
-  // Select conversation
   const selectConversation = (conversation) => {
-    setActiveConversation(conversation);
-    fetchMessages(conversation._id);
+    setSelectedConversation(conversation);
+    
+    // Join the conversation room
+    if (socket) {
+      socket.emit('joinConversation', conversation.id);
+      // Mark messages as read when selecting a conversation
+      socket.emit('markAsRead', {
+        conversationId: conversation.id,
+        senderId: conversation.employer._id
+      });
+    }
+    
+    fetchMessages(conversation.id);
   };
 
-  // Send a new message
-  const sendMessage = async () => {
-    if ((!newMessage.trim() && attachments.length === 0) || !activeConversation) return;
+  // Handle typing indicator
+  const handleTyping = () => {
+    if (!socket || !selectedConversation) return;
+    
+    // Clear existing timeout
+    if (typingTimeoutRef.current) {
+      clearTimeout(typingTimeoutRef.current);
+    } else {
+      // Only emit if we weren't already typing
+      socket.emit('typing', {
+        conversationId: selectedConversation.id,
+        isTyping: true
+      });
+    }
+    
+    // Set a new timeout
+    typingTimeoutRef.current = setTimeout(() => {
+      socket.emit('typing', {
+        conversationId: selectedConversation.id,
+        isTyping: false
+      });
+      typingTimeoutRef.current = null;
+    }, 2000);
+  };
 
-    try {
-      setSendingMessage(true);
+  // Socket.IO event listeners
+  useEffect(() => {
+    if (!socket) return;
+
+    // Handle receiving messages
+    const handleReceiveMessage = (message) => {
+      setMessages(prev => {
+        // Check if this is a message we already have (from optimistic update)
+        const messageExists = prev.some(m => 
+          (!m._id.toString().includes('temp-') && m._id === message._id) || 
+          (m.timestamp === message.timestamp && m.text === message.text)
+        );
+        
+        if (messageExists) return prev;
+        
+        // If this is a new message, add it
+        return [...prev, message];
+      });
       
-      // Handle file uploads if any
-      let uploadedAttachments = [];
-      if (attachments.length > 0) {
-        for (const file of attachments) {
-          const formData = new FormData();
-          formData.append('file', file);
-          
-          const uploadResponse = await axios.post(
-            `${API_BASE_URL}/auth/upload-file`,
-            formData,
-            { withCredentials: true }
-          );
-          
-          if (uploadResponse.data.success) {
-            uploadedAttachments.push({
-              filename: file.name,
-              path: uploadResponse.data.url,
-              mimetype: file.type
-            });
+      // Update conversation list to show most recent message
+      setConversations(prev => {
+        return prev.map(conv => {
+          if (conv.id === message.conversationId) {
+            return {
+              ...conv,
+              lastMessage: {
+                text: message.text,
+                timestamp: message.timestamp
+              },
+              unreadCount: message.senderId._id !== user._id ? conv.unreadCount + 1 : conv.unreadCount
+            };
           }
-        }
+          return conv;
+        }).sort((a, b) => {
+          // Sort by most recent message
+          return new Date(b.lastMessage.timestamp) - new Date(a.lastMessage.timestamp);
+        });
+      });
+      
+      // If message is in current conversation, mark as read
+      if (selectedConversation?.id === message.conversationId && 
+          message.senderId._id !== user._id) {
+        socket.emit('markAsRead', {
+          conversationId: message.conversationId,
+          senderId: message.senderId._id
+        });
       }
       
-      const response = await axios.post(
-        `${API_BASE_URL}/messages/send`,
-        {
-          conversationId: activeConversation._id,
-          content: newMessage.trim(),
-          attachments: uploadedAttachments,
-        },
-        { withCredentials: true }
-      );
+      scrollToBottom();
+    };
 
-      if (response.data.success) {
-        setMessages((prev) => [...prev, response.data.message]);
-        setNewMessage("");
-        setAttachments([]);
-      } else {
-        setError("Failed to send message");
+    // Handle typing indicators
+    const handleUserTyping = ({ userId, conversationId, isTyping }) => {
+      if (selectedConversation?.id === conversationId) {
+        setTypingUsers(prev => ({
+          ...prev,
+          [userId]: isTyping
+        }));
       }
-    } catch (err) {
-      console.error("Error sending message:", err);
-      setError("Error sending message. Please try again.");
-    } finally {
-      setSendingMessage(false);
-    }
-  };
+    };
 
-  // Format date for display
-  const formatMessageDate = (dateString) => {
-    const date = new Date(dateString);
-    const now = new Date();
-    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-    const yesterday = new Date(today);
-    yesterday.setDate(yesterday.getDate() - 1);
+    // Handle messages being read
+    const handleMessagesRead = ({ conversationId, readBy }) => {
+      if (readBy !== user._id) {
+        setMessages(prev => 
+          prev.map(msg => 
+            msg.senderId._id === user._id && !msg.read ? { ...msg, read: true } : msg
+          )
+        );
+        
+        // Update unread count in conversation list
+        setConversations(prev => 
+          prev.map(conv => 
+            conv.id === conversationId ? { ...conv, unreadCount: 0 } : conv
+          )
+        );
+      }
+    };
 
-    // If today, return only time
-    if (date.toDateString() === today.toDateString()) {
-      return date.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
-    }
-    // If yesterday, return "Yesterday" and time
-    if (date.toDateString() === yesterday.toDateString()) {
-      return `Yesterday, ${date.toLocaleTimeString([], {
-        hour: "2-digit",
-        minute: "2-digit",
-      })}`;
-    }
-    // Otherwise, return full date
-    return date.toLocaleDateString([], {
-      year: "numeric",
-      month: "short",
-      day: "numeric",
-      hour: "2-digit",
-      minute: "2-digit",
-    });
-  };
+    // Handle new message notifications
+    const handleNewMessageNotification = ({ message }) => {
+      // Play notification sound
+      const notificationSound = new Audio('/message-notification.mp3');
+      notificationSound.play().catch(err => console.log('Error playing sound:', err));
+      
+      // Update unread counts if not in the conversation
+      if (!selectedConversation || selectedConversation.id !== message.conversationId) {
+        setConversations(prev => 
+          prev.map(conv => 
+            conv.id === message.conversationId ? 
+              { ...conv, unreadCount: conv.unreadCount + 1 } : conv
+          )
+        );
+      }
+    };
 
-  // Format date for conversation list
-  const formatConversationDate = (dateString) => {
-    const date = new Date(dateString);
-    const now = new Date();
-    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-    const yesterday = new Date(today);
-    yesterday.setDate(yesterday.getDate() - 1);
+    // Register event listeners
+    socket.on('receiveMessage', handleReceiveMessage);
+    socket.on('userTyping', handleUserTyping);
+    socket.on('messagesRead', handleMessagesRead);
+    socket.on('newMessageNotification', handleNewMessageNotification);
 
-    // If today, return only time
-    if (date.toDateString() === today.toDateString()) {
-      return date.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
-    }
-    // If yesterday, return "Yesterday"
-    if (date.toDateString() === yesterday.toDateString()) {
-      return "Yesterday";
-    }
-    // If within the past week, return day name
-    if (now - date < 7 * 24 * 60 * 60 * 1000) {
-      return date.toLocaleDateString([], { weekday: "short" });
-    }
-    // Otherwise, return date
-    return date.toLocaleDateString([], { month: "short", day: "numeric" });
-  };
+    // Clean up
+    return () => {
+      socket.off('receiveMessage', handleReceiveMessage);
+      socket.off('userTyping', handleUserTyping);
+      socket.off('messagesRead', handleMessagesRead);
+      socket.off('newMessageNotification', handleNewMessageNotification);
+    };
+  }, [socket, selectedConversation, user._id]);
 
-  // Load conversations on mount
+  // Update dark mode
   useEffect(() => {
+    document.body.classList.toggle('dark-mode', isDarkMode);
+    localStorage.setItem("dashboard-theme", isDarkMode ? "dark" : "light");
+  }, [isDarkMode]);
+
+  // Handle outside clicks for dropdowns
+  const handleOutsideClick = useCallback((event) => {
+    if (notificationsRef.current && !notificationsRef.current.contains(event.target)) {
+      setShowNotifications(false);
+    }
+    if (profileDropdownRef.current && !profileDropdownRef.current.contains(event.target)) {
+      setShowProfileDropdown(false);
+    }
+    if (!event.target.closest('.dashboard-nav')) {
+      setShowMobileNav(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    document.addEventListener('click', handleOutsideClick);
+    return () => document.removeEventListener('click', handleOutsideClick);
+  }, [handleOutsideClick]);
+
+  useEffect(() => {
+    fetchUserData();
     fetchConversations();
-    
-    // Set up periodic refresh of conversations
-    const intervalId = setInterval(fetchConversations, 30000); // every 30 seconds
-    
-    return () => clearInterval(intervalId);
-  }, [fetchConversations]);
+  }, [fetchUserData, fetchConversations]);
 
-  // Scroll to bottom of messages when they change
-  useEffect(() => {
-    if (messagesEndRef.current) {
-      messagesEndRef.current.scrollIntoView({ behavior: "smooth" });
+  // Toggle functions
+  const toggleMobileNav = useCallback((e) => {
+    e.stopPropagation();
+    setShowMobileNav(prev => !prev);
+  }, []);
+
+  const toggleProfileDropdown = useCallback((e) => {
+    e.stopPropagation();
+    setShowProfileDropdown(prev => !prev);
+  }, []);
+
+  const toggleNotifications = useCallback((e) => {
+    e.stopPropagation();
+    setShowNotifications(prev => !prev);
+  }, []);
+
+  const toggleDarkMode = useCallback(() => {
+    setIsDarkMode(prev => !prev);
+  }, []);
+
+  const handleMarkAllAsRead = useCallback((e) => {
+    e.stopPropagation();
+    setUnreadNotifications(0);
+    localStorage.setItem("unread-notifications", "0");
+  }, []);
+
+  const handleLogout = useCallback(async () => {
+    try {
+      const response = await axios.post(`${API_BASE_URL}/auth/logout`, {}, { withCredentials: true });
+      if (response.data.success) navigate('/login');
+    } catch (error) {
+      console.error('Error logging out:', error);
     }
-  }, [messages]);
+  }, [API_BASE_URL, navigate]);
 
-  // Filter conversations based on search term
-  const filteredConversations = conversations.filter((conversation) =>
-    conversation.participant.name.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  const formatMessageTime = (dateString) => {
+    const date = new Date(dateString);
+    return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+  };
+
+  const formatLastMessageTime = (dateString) => {
+    const date = new Date(dateString);
+    const now = new Date();
+    const diffDays = Math.floor((now - date) / (1000 * 60 * 60 * 24));
+    
+    if (diffDays === 0) {
+      return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    } else if (diffDays === 1) {
+      return 'Yesterday';
+    } else if (diffDays < 7) {
+      return date.toLocaleDateString([], { weekday: 'short' });
+    } else {
+      return date.toLocaleDateString([], { month: 'short', day: 'numeric' });
+    }
+  };
+
+  const isEmployerTyping = selectedConversation && 
+    Object.entries(typingUsers).some(([id, isTyping]) => 
+      id === selectedConversation.employer._id && isTyping
+    );
+
+  const currentYear = new Date().getFullYear();
 
   return (
-    <div className="messages-container">
-      <div className="messages-header">
-        <h1>Messages</h1>
-        <p>Communicate with employers about your accepted applications</p>
-      </div>
+    <div className={`employee-dashboard messages-page ${isDarkMode ? 'dark-mode' : ''}`}>
+      <header className="dashboard-header">
+        <div className="dashboard-header-container">
+          <div className="dashboard-header-left">
+            <button 
+              className="dashboard-nav-toggle"
+              onClick={toggleMobileNav}
+              aria-label="Toggle navigation"
+            >
+              ☰
+            </button>
+            <Link to="/" className="dashboard-logo">Next Youth</Link>
+            
+            <nav className={`dashboard-nav ${showMobileNav ? 'active' : ''}`}>
+              <Link to="/find-jobs" className="nav-link">Find Work</Link>
+              <Link to="/find-jobs/saved" className="nav-link">Saved Jobs</Link>
+              <Link to="/find-jobs/proposals" className="nav-link">Proposals</Link>
+              <Link to="/messages" className="nav-link active">Messages</Link>
+              <Link to="/help" className="nav-link">Help</Link>
+            </nav>
+          </div>
+          
+          <div className="dashboard-header-right">
+            <div className="message-container">
+              <Link to="/messages" className="message-button" aria-label="Messages">
+                <FaEnvelope />
+              </Link>
+            </div>
+            
+            <div className="notification-container" ref={notificationsRef}>
+              <button 
+                className="notification-button"
+                onClick={toggleNotifications}
+                aria-label="Notifications"
+              >
+                <FaBell />
+                {unreadNotifications > 0 && (
+                  <span className="notification-badge">{unreadNotifications}</span>
+                )}
+              </button>
+              
+              {showNotifications && (
+                <div className="notifications-dropdown">
+                  <div className="notification-header">
+                    <h3>Notifications</h3>
+                    <button className="mark-all-read" onClick={handleMarkAllAsRead}>Mark all as read</button>
+                  </div>
+                  <div className="notification-list">
+                    <div className="notification-item unread">
+                      <div className="notification-icon">
+                        {(!user.idVerification || 
+                          !user.idVerification.frontImage || 
+                          !user.idVerification.backImage || 
+                          user.idVerification.status === 'rejected') ? (
+                          <FaUserCircle />
+                        ) : user.idVerification.status === 'verified' ? (
+                          <FaCheckCircle />
+                        ) : (
+                          <FaClock />
+                        )}
+                      </div>
+                      <div className="notification-content">
+                        <p>
+                          {(!user.idVerification || 
+                            !user.idVerification.frontImage || 
+                            !user.idVerification.backImage || 
+                            user.idVerification.status === 'rejected') ? (
+                            "Please verify your account"
+                          ) : user.idVerification.status === 'verified' ? (
+                            "Your profile has been verified!"
+                          ) : (
+                            "Your verification is pending approval"
+                          )}
+                        </p>
+                        <span className="notification-time">2 hours ago</span>
+                      </div>
+                    </div>
+                    <div className="notification-item unread">
+                      <div className="notification-icon">
+                        <FaEnvelope />
+                      </div>
+                      <div className="notification-content">
+                        <p>New job matching your skills is available</p>
+                        <span className="notification-time">1 day ago</span>
+                      </div>
+                    </div>
+                  </div>
+                  <div className="notification-footer">
+                    <Link to="/notifications">View all notifications</Link>
+                  </div>
+                </div>
+              )}
+            </div>
+            
+            <button
+              className="theme-toggle-button"
+              onClick={toggleDarkMode}
+              aria-label={isDarkMode ? "Switch to light mode" : "Switch to dark mode"}
+            >
+              {isDarkMode ? <FaSun /> : <FaMoon />}
+            </button>
 
-      <div className="messages-content">
-        <div className={`conversations-panel ${activeConversation ? "hidden-mobile" : ""}`}>
-          <div className="search-bar">
-            <FaSearch className="search-icon" />
-            <input
-              type="text"
-              placeholder="Search conversations"
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-            />
+            <div className="profile-dropdown-container" ref={profileDropdownRef}>
+              <button 
+                className="profile-button" 
+                onClick={toggleProfileDropdown}
+                aria-label="User profile"
+              >
+                {user.profilePicture ? (
+                  <img 
+                    src={user.profilePicture}
+                    alt="Profile"
+                    className="profile-avatar"
+                  />
+                ) : (
+                  <FaUserCircle className="profile-avatar-icon" />
+                )}
+                <FaChevronDown className={`dropdown-icon ${showProfileDropdown ? 'rotate' : ''}`} />
+              </button>
+              
+              {showProfileDropdown && (
+                <div className="profile-dropdown">
+                  <div className="profile-dropdown-header">
+                    <div className="profile-dropdown-avatar">
+                      {user.profilePicture ? (
+                        <img 
+                          src={user.profilePicture}
+                          alt={`${user.name}'s profile`}
+                        />
+                      ) : (
+                        <FaUserCircle />
+                      )}
+                    </div>
+                    <div className="profile-dropdown-info">
+                      <h4>{user.name || 'User'}</h4>
+                      <span className="profile-status">
+                        {!user.idVerification ? (
+                          'Not Verified'
+                        ) : user.idVerification.status === 'verified' ? (
+                          <><FaCheckCircle className="verified-icon" /> Verified</>
+                        ) : user.idVerification.status === 'pending' && user.idVerification.frontImage && user.idVerification.backImage ? (
+                          <><FaClock className="pending-icon" /> Verification Pending</>
+                        ) : user.idVerification.status === 'rejected' ? (
+                          <>Verification Rejected</>
+                        ) : (
+                          'Not Verified'
+                        )}
+                      </span>
+                    </div>
+                  </div>
+                  <div className="profile-dropdown-links">
+                    <button 
+                      className="profile-dropdown-link"
+                      onClick={() => navigate('/my-profile')}
+                    >
+                      <FaUserCircle /> View Profile
+                    </button>
+                    
+                    {(!user.idVerification || 
+                      !user.idVerification.frontImage || 
+                      !user.idVerification.backImage || 
+                      user.idVerification.status === 'rejected') && (
+                      <button 
+                        className="profile-dropdown-link"
+                        onClick={() => navigate('/verify-account')}
+                      >
+                        Verify Account
+                      </button>
+                    )}
+                    
+                    <button 
+                      className="profile-dropdown-link"
+                      onClick={() => navigate('/settings')}
+                    >
+                      Settings
+                    </button>
+                    <button 
+                      className="profile-dropdown-link"
+                      onClick={handleLogout}
+                    >
+                      Logout
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      </header>
+
+      <main className="messages-container">
+        <div className="messages-sidebar">
+          <div className="messages-sidebar-header">
+            <h2>Messages</h2>
+            <div className="messages-search-container">
+              <FaSearch className="search-icon" />
+              <input 
+                type="text" 
+                placeholder="Search messages" 
+                className="messages-search" 
+              />
+            </div>
           </div>
 
-          {loading ? (
-            <div className="loading-spinner">
-              <FaSpinner className="spinning" />
-              <p>Loading conversations...</p>
-            </div>
-          ) : error ? (
-            <div className="error-message">
-              <FaExclamationCircle />
-              <p>{error}</p>
-            </div>
-          ) : filteredConversations.length === 0 ? (
-            <div className="no-conversations">
-              <p>No conversations yet</p>
-              <p className="hint-text">
-                When employers accept your job applications, you can start conversations here.
-              </p>
-            </div>
-          ) : (
-            <div className="conversations-list">
-              {filteredConversations.map((conversation) => (
-                <div
-                  key={conversation._id}
-                  className={`conversation-item ${
-                    activeConversation && activeConversation._id === conversation._id ? "active" : ""
-                  } ${conversation.unreadCount > 0 ? "unread" : ""}`}
+          <div className="conversations-list">
+            {loading && conversations.length === 0 ? (
+              <div className="loading-state">Loading conversations...</div>
+            ) : error ? (
+              <div className="error-state">{error}</div>
+            ) : conversations.length === 0 ? (
+              <div className="empty-state">
+                <FaEnvelope className="empty-icon" />
+                <p>No conversations yet</p>
+                <p className="empty-hint">Your message threads with employers will appear here after your job applications are accepted</p>
+              </div>
+            ) : (
+              conversations.map(conversation => (
+                <div 
+                  key={conversation.id}
+                  className={`conversation-item ${selectedConversation?.id === conversation.id ? 'active' : ''}`}
                   onClick={() => selectConversation(conversation)}
                 >
                   <div className="conversation-avatar">
-                    {conversation.participant.profilePicture ? (
-                      <img
-                        src={conversation.participant.profilePicture}
-                        alt={conversation.participant.name}
+                    {conversation.employer.profilePicture ? (
+                      <img 
+                        src={conversation.employer.profilePicture} 
+                        alt={conversation.employer.name} 
                       />
                     ) : (
                       <FaUserCircle />
                     )}
+                    {isUserOnline(conversation.employer._id) && (
+                      <span className="online-indicator"></span>
+                    )}
                   </div>
-                  <div className="conversation-info">
+                  <div className="conversation-content">
                     <div className="conversation-header">
-                      <h3>{conversation.participant.name}</h3>
-                      <span className="conversation-time">
-                        {conversation.lastMessage
-                          ? formatConversationDate(conversation.lastMessage.createdAt)
-                          : formatConversationDate(conversation.updatedAt)}
-                      </span>
+                      <h3 className="conversation-name">
+                        {conversation.employer.name}
+                      </h3>
+                      <span className="conversation-time">{formatLastMessageTime(conversation.lastMessage.timestamp)}</span>
                     </div>
-                    <p className="conversation-job">
-                      {conversation.jobId ? conversation.jobId.title : "Job"}
-                    </p>
-                    {conversation.lastMessage && (
-                      <p className="conversation-preview">
-                        {conversation.lastMessage.content.length > 30
-                          ? `${conversation.lastMessage.content.substring(0, 30)}...`
-                          : conversation.lastMessage.content}
+                    <div className="conversation-preview">
+                      <p>{conversation.lastMessage.text.length > 35 ? 
+                        `${conversation.lastMessage.text.substring(0, 35)}...` : 
+                        conversation.lastMessage.text}
                       </p>
-                    )}
-                    {conversation.unreadCount > 0 && (
-                      <span className="unread-badge">{conversation.unreadCount}</span>
-                    )}
+                      {conversation.unreadCount > 0 && (
+                        <span className="unread-count">{conversation.unreadCount}</span>
+                      )}
+                    </div>
+                    <div className="conversation-job">
+                      <span>Re: {conversation.job.title}</span>
+                    </div>
                   </div>
                 </div>
-              ))}
-            </div>
-          )}
+              ))
+            )}
+          </div>
         </div>
 
-        <div className={`message-panel ${!activeConversation ? "hidden-mobile" : ""}`}>
-          {!activeConversation ? (
+        <div className="messages-content">
+          {!selectedConversation ? (
             <div className="no-conversation-selected">
-              <p>Select a conversation to view messages</p>
+              <FaEnvelope className="no-conversation-icon" />
+              <h3>Select a conversation to start messaging</h3>
+              <p>Messages are available for jobs where your application has been accepted</p>
             </div>
           ) : (
             <>
-              <div className="message-header">
-                <button
-                  className="back-button mobile-only"
-                  onClick={() => setActiveConversation(null)}
-                >
-                  <FaArrowLeft />
+              <div className="messages-header">
+                <div className="messages-header-info">
+                  <div className="conversation-avatar large">
+                    {selectedConversation.employer.profilePicture ? (
+                      <img 
+                        src={selectedConversation.employer.profilePicture} 
+                        alt={selectedConversation.employer.name} 
+                      />
+                    ) : (
+                      <FaUserCircle />
+                    )}
+                    {isUserOnline(selectedConversation.employer._id) && (
+                      <span className="online-indicator"></span>
+                    )}
+                  </div>
+                  <div className="messages-header-details">
+                    <h2>{selectedConversation.employer.name}</h2>
+                    <p>
+                      {isUserOnline(selectedConversation.employer._id) ? (
+                        <span className="online-status">
+                          <FaCircle className="online-dot" /> Online
+                        </span>
+                      ) : (
+                        "Re: " + selectedConversation.job.title
+                      )}
+                    </p>
+                  </div>
+                </div>
+                <button className="messages-menu-button">
+                  <FaEllipsisV />
                 </button>
-                <div className="conversation-avatar">
-                  {activeConversation.participant.profilePicture ? (
-                    <img
-                      src={activeConversation.participant.profilePicture}
-                      alt={activeConversation.participant.name}
-                    />
-                  ) : (
-                    <FaUserCircle />
-                  )}
-                </div>
-                <div>
-                  <h3>{activeConversation.participant.name}</h3>
-                  <p>{activeConversation.jobId && activeConversation.jobId.title}</p>
-                </div>
               </div>
 
-              <div className="messages-list" ref={messageContainerRef}>
-                {loadingMessages ? (
-                  <div className="loading-messages">
-                    <FaSpinner className="spinning" />
-                    <p>Loading messages...</p>
-                  </div>
+              <div className="messages-list" ref={messageListRef}>
+                {loading ? (
+                  <div className="loading-state">Loading messages...</div>
+                ) : error ? (
+                  <div className="error-state">{error}</div>
                 ) : messages.length === 0 ? (
-                  <div className="no-messages">
+                  <div className="empty-messages">
                     <p>No messages yet</p>
-                    <p className="hint-text">Send a message to start the conversation</p>
+                    <p className="empty-hint">Send a message to start the conversation</p>
                   </div>
                 ) : (
                   <>
-                    {messages.map((message, index) => (
-                      <div
+                    {messages.map(message => (
+                      <div 
                         key={message._id}
-                        className={`message-item ${
-                          message.sender._id === activeConversation.participant._id
-                            ? "received"
-                            : "sent"
-                        }`}
+                        className={`message-item ${message.senderId._id === user._id ? 'outgoing' : 'incoming'}`}
                       >
-                        <div className="message-content">
-                          <p>{message.content}</p>
-                          {message.attachments && message.attachments.length > 0 && (
-                            <div className="message-attachments">
-                              {message.attachments.map((attachment, i) => (
-                                <a
-                                  key={i}
-                                  href={attachment.path}
-                                  target="_blank"
-                                  rel="noopener noreferrer"
-                                  className="attachment-link"
-                                >
-                                  <FaPaperclip />
-                                  {attachment.filename}
-                                </a>
-                              ))}
-                            </div>
-                          )}
-                          <span className="message-time">
-                            <FaRegClock /> {formatMessageDate(message.createdAt)}
-                          </span>
+                        {message.senderId._id !== user._id && (
+                          <div className="message-avatar">
+                            {selectedConversation.employer.profilePicture ? (
+                              <img 
+                                src={selectedConversation.employer.profilePicture} 
+                                alt={selectedConversation.employer.name} 
+                              />
+                            ) : (
+                              <FaUserCircle />
+                            )}
+                          </div>
+                        )}
+                        <div className={`message-bubble ${message.pending ? 'pending' : ''}`}>
+                          <div className="message-text">{message.text}</div>
+                          <div className="message-time">
+                            {formatMessageTime(message.timestamp)}
+                            {message.senderId._id === user._id && (
+                              <span className="message-status">
+                                {message.pending ? "• Sending" : message.read ? "• Read" : "• Sent"}
+                              </span>
+                            )}
+                          </div>
                         </div>
                       </div>
                     ))}
-                    <div ref={messagesEndRef} />
+                    {isEmployerTyping && (
+                      <div className="message-item incoming">
+                        <div className="message-avatar">
+                          {selectedConversation.employer.profilePicture ? (
+                            <img 
+                              src={selectedConversation.employer.profilePicture} 
+                              alt={selectedConversation.employer.name} 
+                            />
+                          ) : (
+                            <FaUserCircle />
+                          )}
+                        </div>
+                        <div className="typing-indicator">
+                          <span></span>
+                          <span></span>
+                          <span></span>
+                        </div>
+                      </div>
+                    )}
                   </>
                 )}
               </div>
 
-              <div className="message-compose">
-                {attachments.length > 0 && (
-                  <div className="attachments-preview">
-                    {attachments.map((file, index) => (
-                      <div key={index} className="attachment-item">
-                        <span className="attachment-name">{file.name}</span>
-                        <button
-                          className="remove-attachment"
-                          onClick={() => removeAttachment(index)}
-                        >
-                          <FaTimes />
-                        </button>
-                      </div>
-                    ))}
-                  </div>
-                )}
-
-                <div className="compose-input-container">
-                  <input
-                    type="file"
-                    multiple
-                    ref={fileInputRef}
-                    onChange={handleFileSelect}
-                    style={{ display: "none" }}
-                  />
-
-                  <button
-                    className="attachment-button"
-                    onClick={() => fileInputRef.current.click()}
-                    disabled={sendingMessage}
-                  >
-                    <FaPaperclip />
-                  </button>
-
-                  <input
-                    type="text"
-                    placeholder="Type your message..."
-                    value={newMessage}
-                    onChange={(e) => setNewMessage(e.target.value)}
-                    onKeyPress={(e) => {
-                      if (e.key === "Enter" && !e.shiftKey) {
-                        e.preventDefault();
-                        sendMessage();
-                      }
-                    }}
-                    disabled={sendingMessage}
-                  />
-
-                  <button
-                    className="send-button"
-                    onClick={sendMessage}
-                    disabled={(!newMessage.trim() && attachments.length === 0) || sendingMessage}
-                  >
-                    {sendingMessage ? <FaSpinner className="spinning" /> : <FaPaperPlane />}
-                  </button>
-                </div>
-              </div>
+              <form className="message-input-container" onSubmit={sendMessage}>
+                <input 
+                  type="text"
+                  className="message-input"
+                  placeholder="Type your message..."
+                  value={newMessage}
+                  onChange={(e) => setNewMessage(e.target.value)}
+                  onKeyDown={handleTyping}
+                  disabled={!socket}
+                />
+                <button 
+                  type="submit" 
+                  className="send-button"
+                  disabled={!newMessage.trim() || !socket}
+                >
+                  <FaPaperPlane />
+                </button>
+              </form>
             </>
           )}
         </div>
-      </div>
+      </main>
+
+      <footer className="dashboard-footer">
+        <div className="footer-grid">
+          <div className="footer-column">
+            <h3>For Freelancers</h3>
+            <ul>
+              <li><Link to="/find-jobs">Find Work</Link></li>
+              <li><Link to="/resources">Resources</Link></li>
+              <li><Link to="/freelancer-tips">Tips & Guides</Link></li>
+              <li><Link to="/freelancer-forum">Community Forum</Link></li>
+              <li><Link to="/freelancer-stories">Success Stories</Link></li>
+            </ul>
+          </div>
+          
+          <div className="footer-column">
+            <h3>Resources</h3>
+            <ul>
+              <li><Link to="/help-center">Help Center</Link></li>
+              <li><Link to="/webinars">Webinars</Link></li>
+              <li><Link to="/blog">Blog</Link></li>
+              <li><Link to="/api-docs">Developer API</Link></li>
+              <li><Link to="/partner-program">Partner Program</Link></li>
+            </ul>
+          </div>
+          
+          <div className="footer-column">
+            <h3>Company</h3>
+            <ul>
+              <li><Link to="/about">About Us</Link></li>
+              <li><Link to="/leadership">Leadership</Link></li>
+              <li><Link to="/careers">Careers</Link></li>
+              <li><Link to="/press">Press</Link></li>
+              <li><Link to="/contact">Contact Us</Link></li>
+            </ul>
+          </div>
+        </div>
+        
+        <div className="footer-bottom">
+          <div className="footer-bottom-container">
+            <div className="footer-logo">
+              <Link to="/">Next Youth</Link>
+            </div>
+            
+            <div className="footer-legal-links">
+              <Link to="/terms">Terms of Service</Link>
+              <Link to="/privacy">Privacy Policy</Link>
+              <Link to="/accessibility">Accessibility</Link>
+              <Link to="/sitemap">Site Map</Link>
+            </div>
+            
+            <div className="footer-social">
+              <a href="https://facebook.com" aria-label="Facebook">
+                <FaFacebook />
+              </a>
+              <a href="https://twitter.com" aria-label="Twitter">
+                <FaTwitter />
+              </a>
+              <a href="https://linkedin.com" aria-label="LinkedIn">
+                <FaLinkedin />
+              </a>
+              <a href="https://instagram.com" aria-label="Instagram">
+                <FaInstagram />
+              </a>
+            </div>
+          </div>
+          
+          <div className="footer-copyright">
+            <p>&copy; {currentYear} Next Youth. All rights reserved.</p>
+          </div>
+        </div>
+      </footer>
     </div>
   );
 };

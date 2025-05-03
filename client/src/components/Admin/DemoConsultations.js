@@ -55,34 +55,6 @@ const DemoConsultations = () => {
     }
   };
 
-  // Function to send status update email notification
-  const sendStatusUpdateEmail = async (demo, newStatus) => {
-    try {
-      const response = await axios.post(
-        "http://localhost:4000/api/contact/notify",
-        {
-          recipientEmail: demo.email,
-          recipientName: demo.fullName,
-          status: "confirmed", // Use "confirmed" instead of "scheduled" to match what the server expects
-          preferredDate: demo.preferredDate,
-          preferredTime: demo.preferredTime,
-          serviceType: "demo", // Identify this as a demo request
-          consultationNotes: demo.message || ""
-        },
-        { withCredentials: true }
-      );
-
-      if (response.data.success) {
-        console.log("Demo status notification email sent successfully");
-      } else {
-        throw new Error(response.data.message || "Failed to send notification email");
-      }
-    } catch (err) {
-      console.error("Error sending demo status notification email:", err);
-      // Don't alert here as it's a secondary action
-    }
-  };
-
   // Handle sorting
   const handleSort = (key) => {
     let direction = "asc";
@@ -119,14 +91,11 @@ const DemoConsultations = () => {
   // Handle demo status change - update to match backend API
   const handleStatusChange = async (id, newStatus) => {
     try {
-      const response = await axios.put(
+      await axios.put(
         `http://localhost:4000/api/contact/requests/${id}/status`,
         { status: newStatus },
         { withCredentials: true }
       );
-      
-      // Find the demo object that was updated
-      const updatedDemo = demoRequests.find(demo => demo._id === id);
       
       // Update local state
       setDemoRequests(
@@ -134,11 +103,6 @@ const DemoConsultations = () => {
           demo._id === id ? { ...demo, status: newStatus } : demo
         )
       );
-      
-      // Send email notification when status is changed to scheduled (confirmed)
-      if (updatedDemo && newStatus === "scheduled") {
-        await sendStatusUpdateEmail(updatedDemo, newStatus);
-      }
       
       // Close modal if open
       if (showModal) {
@@ -255,21 +219,9 @@ const DemoConsultations = () => {
                         <td>{formatTimePreference(demo.preferredTime)}</td>
                         <td>{demo.businessSize}</td>
                         <td>
-                          <div className="status-cell">
-                            <select 
-                              value={demo.status || 'pending'}
-                              onChange={(e) => handleStatusChange(demo._id, e.target.value)}
-                              className="status-select"
-                            >
-                              <option value="pending">Pending</option>
-                              <option value="scheduled">Scheduled</option>
-                              <option value="completed">Completed</option>
-                              <option value="cancelled">Cancelled</option>
-                            </select>
-                            <span className={`status-badge ${demo.status || 'pending'}`}>
-                              {demo.status ? demo.status.charAt(0).toUpperCase() + demo.status.slice(1) : 'Pending'}
-                            </span>
-                          </div>
+                          <span className={`status-badge ${demo.status || 'pending'}`}>
+                            {demo.status ? demo.status.charAt(0).toUpperCase() + demo.status.slice(1) : 'Pending'}
+                          </span>
                         </td>
                         <td className="action-buttons">
                           <button
@@ -354,6 +306,35 @@ const DemoConsultations = () => {
                   </div>
                 )}
                 
+                <div className="detail-group">
+                  <h3>Status Management</h3>
+                  <div className="status-buttons">
+                    <button 
+                      className="status-btn pending"
+                      onClick={() => handleStatusChange(selectedDemo._id, "pending")}
+                    >
+                      Mark as Pending
+                    </button>
+                    <button 
+                      className="status-btn scheduled"
+                      onClick={() => handleStatusChange(selectedDemo._id, "scheduled")}
+                    >
+                      Mark as Scheduled
+                    </button>
+                    <button 
+                      className="status-btn completed"
+                      onClick={() => handleStatusChange(selectedDemo._id, "completed")}
+                    >
+                      Mark as Completed
+                    </button>
+                    <button 
+                      className="status-btn cancelled"
+                      onClick={() => handleStatusChange(selectedDemo._id, "cancelled")}
+                    >
+                      Cancel Demo
+                    </button>
+                  </div>
+                </div>
               </div>
               <div className="modal-footer">
                 <button className="close-btn" onClick={() => setShowModal(false)}>Close</button>

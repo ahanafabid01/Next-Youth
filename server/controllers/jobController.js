@@ -76,15 +76,39 @@ export const deleteJob = async (req, res) => {
 
 export const updateJobStatus = async (req, res) => {
     const { status } = req.body;
+    const userId = req.user.id;
+    
     try {
+        // First, find the job to check ownership
+        const existingJob = await jobModel.findById(req.params.id);
+        
+        if (!existingJob) {
+            return res.status(404).json({ success: false, message: "Job not found" });
+        }
+        
+        // Check if user owns this job
+        if (existingJob.employer.toString() !== userId) {
+            return res.status(403).json({ 
+                success: false, 
+                message: "You don't have permission to update this job" 
+            });
+        }
+        
+        // Validate the status value against the allowed enum values
+        if (!["Available", "In Progress", "On Hold", "Completed"].includes(status)) {
+            return res.status(400).json({ 
+                success: false, 
+                message: "Invalid job status value" 
+            });
+        }
+        
+        // Update the job status
         const job = await jobModel.findByIdAndUpdate(
             req.params.id,
             { status },
             { new: true }
         );
-        if (!job) {
-            return res.status(404).json({ success: false, message: "Job not found" });
-        }
+        
         res.status(200).json({ success: true, job });
     } catch (error) {
         console.error("Error updating job status:", error);
