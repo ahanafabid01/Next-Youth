@@ -11,6 +11,7 @@ import bodyParser from "body-parser";
 import { fileURLToPath } from "url";
 import fs from "fs";
 import demoRoutes from './routes/demoRoutes.js'; // Import the demo routes
+import adminRoutes from './routes/adminRoutes.js'; // Import the admin routes
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -52,6 +53,7 @@ app.use('/api/auth', authRoutes);
 app.use("/api/jobs", jobRoutes); // Multer will handle multipart/form-data for this route
 app.use("/api/contact", contactRoutes); // Add this line
 app.use('/api/contact', demoRoutes); // Add demo routes
+app.use('/api/admin', adminRoutes); // Add admin routes
 
 // Default route
 app.get('/', (req, res) => {

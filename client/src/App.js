@@ -14,6 +14,7 @@ import Consultations from "./components/Admin/Consultations";
 import DemoConsultations from "./components/Admin/DemoConsultations";
 import EmployeeDashboard from "./components/Employee/EmployeeDashboard";
 import EmployerDashboard from "./components/Employer/EmployerDashboard";
+import MailSystem from "./components/Admin/MailSystem";
 import ForgotPassword from "./components/Auth/ForgotPassword";
 import Profile from "./components/Employer/Profile";
 import EmployeeProfile from "./components/Employee/EmployeeProfile";
@@ -48,6 +49,7 @@ const App = () => {
                 <Route path="/admin-dashboard/demo-consultations" element={<DemoConsultations />} />
                 <Route path="/employee-dashboard" element={<EmployeeDashboard />} />
                 <Route path="/employer-dashboard" element={<EmployerDashboard />} />
+                <Route path="/admin-dashboard/mail-system" element={<MailSystem />} />
                 <Route path="/forgot-password" element={<ForgotPassword />} />
                 <Route path="/profile" element={<Profile />} />
                 <Route path="/employee-profile" element={<EmployeeProfile />} />

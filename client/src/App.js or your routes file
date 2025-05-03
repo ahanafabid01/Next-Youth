@@ -1,0 +1,10 @@
+import React from "react";
+import { Route } from "react-router-dom";
+import MailSystem from "./components/Admin/MailSystem";
+
+// ...existing code...
+
+// Add the new route inside your admin routes
+<Route path="/admin-dashboard/mail-system" element={<MailSystem />} />
+
+// ...existing code...
