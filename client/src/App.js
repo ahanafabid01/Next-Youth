@@ -28,7 +28,6 @@ import RequestDemo from "./Homepages/RequestDemo";
 import ViewApplication from "./components/Employee/ViewApplication";
 import ViewProfile from './components/Employer/ViewProfile';
 import EmployerVerification from './components/Employer/EmployerVerification';
-import EmployeeMessages from './components/Employee/Messages';
 import "./App.css";
 
 const App = () => {
@@ -66,7 +65,6 @@ const App = () => {
                 <Route path="/request-demo" element={<RequestDemo />} />
                 <Route path="/view-application/:applicationId" element={<ViewApplication />} />
                 <Route path="/view-profile/:userId" element={<ViewProfile />} />
-                <Route path="/messages" element={<EmployeeMessages />} />
             </Routes>
         </Router>
     );

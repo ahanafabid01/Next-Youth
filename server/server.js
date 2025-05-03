@@ -11,8 +11,6 @@ import bodyParser from "body-parser";
 import { fileURLToPath } from "url";
 import fs from "fs";
 import demoRoutes from './routes/demoRoutes.js'; // Import the demo routes
-const http = require('http');
-const setupSocketIO = require('./socketServer');
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -66,14 +64,8 @@ app.use((err, req, res, next) => {
     res.status(500).json({ success: false, message: 'Internal server error' });
 });
 
-const server = http.createServer(app);
-const io = setupSocketIO(server);
-
-// Store io instance to use in routes if needed
-app.set('io', io);
-
 // Start the server
-server.listen(PORT, () => {
+app.listen(PORT, () => {
     console.log(`Server is running on port ${PORT}`);
 });
 

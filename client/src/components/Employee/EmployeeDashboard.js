@@ -19,7 +19,6 @@ import {
   FaLinkedin,
   FaInstagram,
   FaClock,
-  FaEnvelope,
 } from 'react-icons/fa';
 import './EmployeeDashboard.css';
 
@@ -60,7 +59,6 @@ const EmployeeDashboard = () => {
   const [appliedJobsCount, setAppliedJobsCount] = useState(0);
   const [categoryFilter, setCategoryFilter] = useState('All Categories');
   const [sortOption, setSortOption] = useState('Latest First');
-  const [unreadMessages, setUnreadMessages] = useState(0);
 
   const fetchUserData = useCallback(async () => {
     try {
@@ -468,15 +466,6 @@ const EmployeeDashboard = () => {
           </div>
           
           <div className="dashboard-header-right">
-            <div className="message-container">
-              <Link to="/messages" className="message-button" aria-label="Messages">
-                <FaEnvelope />
-                {unreadMessages > 0 && (
-                  <span className="message-badge">{unreadMessages}</span>
-                )}
-              </Link>
-            </div>
-            
             <div className="notification-container" ref={notificationsRef}>
               <button 
                 className="notification-button"
