@@ -1,25 +1,28 @@
 import nodemailer from 'nodemailer';
+import dotenv from 'dotenv';
 
-console.log("SMTP_USER:", process.env.SMTP_USER);
-console.log("SMTP_PASS:", process.env.SMTP_PASS);
+dotenv.config();
 
 const transporter = nodemailer.createTransport({
-    host: 'smtp-relay.brevo.com',
-    port: 587,
-    secure: false, // Use STARTTLS for port 587
-    auth: {
-        user: process.env.SMTP_USER,
-        pass: process.env.SMTP_PASS,
-    },
+  host: "smtp-relay.brevo.com",  // Corrected Brevo SMTP server
+  port: 587,
+  secure: false, // Use TLS
+  auth: {
+    user: process.env.SMTP_USER,
+    pass: process.env.SMTP_PASS
+  },
+  tls: {
+    rejectUnauthorized: false // For development only, remove in production
+  }
 });
 
-// Optional: Verify the transporter configuration
-transporter.verify((error, success) => {
-    if (error) {
-        console.error("Error configuring Nodemailer transporter:", error);
-    } else {
-        console.log("Nodemailer transporter is configured and ready to send emails.");
-    }
+// Verify connection
+transporter.verify(function(error, success) {
+  if (error) {
+    console.error("SMTP Connection Error:", error);
+  } else {
+    console.log("SMTP server connection established successfully");
+  }
 });
 
 export default transporter;

@@ -1,12 +1,10 @@
-import express from 'express';
-import { sendMassEmail } from '../controllers/adminEmailController.js';
-import adminAuth from '../middleware/adminAuth.js';
+import express from "express";
+import userAuth from "../middleware/userAuth.js";
+import { sendMassEmail } from "../controllers/adminEmailController.js";
 
 const router = express.Router();
 
-// Add this to your existing admin routes
-router.post('/send-mass-email', adminAuth, sendMassEmail);
-
-// ...your existing routes...
+// Connect the controller to the route
+router.post("/send-mass-email", userAuth, sendMassEmail);
 
 export default router;

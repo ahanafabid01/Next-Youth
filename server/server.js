@@ -1,6 +1,7 @@
 import express from 'express';
 import cors from 'cors';
-import 'dotenv/config';
+import dotenv from 'dotenv';
+dotenv.config();
 import cookieParser from 'cookie-parser'; // Fixed typo
 import connectDB from './config/mongodb.js';
 import authRoutes from './routes/authRoutes.js';
@@ -57,7 +58,7 @@ app.use('/api/admin', adminRoutes); // Add admin routes
 
 // Default route
 app.get('/', (req, res) => {
-    res.status(200).send('API is running...');
+    res.status(200).send('API is running...'); 
 });
 
 // Global error handling middleware
