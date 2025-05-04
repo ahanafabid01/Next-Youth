@@ -1,5 +1,4 @@
 import React, { useState, useEffect, useCallback, memo } from "react";
-import { useNavigate } from "react-router-dom"; // Add this import
 import axios from "axios";
 import { 
   FaTrash, 
@@ -15,6 +14,7 @@ import {
   FaPlus
 } from "react-icons/fa";
 import "./MyJobs.css";
+import RatingModal from '../Connections/RatingModal';
 
 // Memoized Job Card component for better performance
 const JobCard = memo(({ 
@@ -26,6 +26,41 @@ const JobCard = memo(({
   updatingJobIds, 
   formatDate 
 }) => {
+  const [showRatingModal, setShowRatingModal] = useState(false);
+  const [applicantInfo, setApplicantInfo] = useState(null);
+
+  // Add this function to fetch applicant info
+  const fetchApplicantInfo = async (jobId) => {
+    try {
+      const response = await axios.get(
+        `http://localhost:4000/api/jobs/job-application/${jobId}`,
+        { withCredentials: true }
+      );
+      if (response.data.success && response.data.application) {
+        setApplicantInfo(response.data.application.applicant);
+      }
+    } catch (err) {
+      console.error("Error fetching applicant info:", err);
+    }
+  };
+
+  // Modify the click handler for Completed status
+  const handleComplete = async (e) => {
+    e.stopPropagation();
+    // First update the job status
+    await handleUpdateJobStatus(job._id, "Completed", e);
+    
+    // Get the dropdown menu element
+    const dropdownMenu = e.target.closest('.status-dropdown-menu');
+    if (dropdownMenu) {
+      dropdownMenu.classList.remove("show");
+    }
+    
+    // Fetch applicant info and show rating modal
+    await fetchApplicantInfo(job._id);
+    setShowRatingModal(true);
+  };
+
   // Helper function to format status class correctly
   const getStatusClass = (status) => {
     if (!status) return "status-available";
@@ -93,11 +128,7 @@ const JobCard = memo(({
               </div>
               <div
                 className="status-option status-completed"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  handleUpdateJobStatus(job._id, "Completed", e);
-                  e.currentTarget.parentElement.classList.remove("show");
-                }}
+                onClick={handleComplete}
               >
                 Completed
               </div>
@@ -201,17 +232,33 @@ const JobCard = memo(({
           <FaTrash aria-hidden="true" /> <span className="btn-text">Delete</span>
         </button>
       </div>
+
+      {showRatingModal && applicantInfo && (
+        <RatingModal
+          isOpen={showRatingModal}
+          onClose={() => {
+            setShowRatingModal(false);
+            setApplicantInfo(null);
+          }}
+          jobTitle={job.title}
+          applicant={applicantInfo}
+          jobId={job._id}
+          onRatingSubmit={() => {
+            setShowRatingModal(false);
+            setApplicantInfo(null);
+          }}
+        />
+      )}
     </div>
   );
 });
 
-const MyJobs = ({ onPostJobClick }) => {
+const MyJobs = () => {
     const [jobs, setJobs] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState("");
     const [updatingJobIds, setUpdatingJobIds] = useState([]);
     const [expandedJobId, setExpandedJobId] = useState(null);
-    const navigate = useNavigate();
 
     useEffect(() => {
         const fetchJobs = async () => {
@@ -322,13 +369,8 @@ const MyJobs = ({ onPostJobClick }) => {
     }, []);
 
     const navigateToPostJob = useCallback(() => {
-        if (onPostJobClick) {
-            onPostJobClick();
-        } else {
-            // Fallback to direct navigation if not in dashboard context
-            navigate('/post-job');
-        }
-    }, [onPostJobClick, navigate]);
+        window.location.href = "/post-job";
+    }, []);
 
     if (loading) {
         return (

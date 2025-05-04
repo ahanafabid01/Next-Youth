@@ -781,3 +781,47 @@ export const getUserProfileById = async (req, res) => {
         });
     }
 };
+
+// Add this new controller function
+
+export const getMyRatings = async (req, res) => {
+    try {
+        const userId = req.user.id;
+
+        const user = await userModel.findById(userId)
+            .populate({
+                path: 'ratings.job',
+                select: 'title scope budgetType fixedAmount hourlyFrom hourlyTo skills',
+                model: 'job'
+            })
+            .populate({
+                path: 'ratings.employer',
+                select: 'name',
+                model: 'user'
+            });
+
+        if (!user) {
+            return res.status(404).json({
+                success: false,
+                message: "User not found"
+            });
+        }
+
+        // Sort ratings by date, most recent first
+        const sortedRatings = user.ratings.sort((a, b) => 
+            new Date(b.createdAt) - new Date(a.createdAt)
+        );
+
+        return res.status(200).json({
+            success: true,
+            ratings: sortedRatings
+        });
+
+    } catch (error) {
+        console.error("Error fetching user ratings:", error);
+        return res.status(500).json({
+            success: false,
+            message: "Error fetching ratings"
+        });
+    }
+};

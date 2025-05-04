@@ -1,5 +1,5 @@
 import express from "express";
-import { addJob, getJobs, deleteJob, updateJobStatus, getAvailableJobs, saveJob, applyForJob, getSavedJobs, getAppliedJobs, removeSavedJob, applyWithDetails, getApplicationById, deleteApplication, getUserApplications, getApplicationByJobId, getEmployerApplications, updateApplicationStatus, getAllJobs, isAdmin } from "../controllers/jobController.js";
+import { addJob, getJobs, deleteJob, updateJobStatus, getAvailableJobs, saveJob, applyForJob, getSavedJobs, getAppliedJobs, removeSavedJob, applyWithDetails, getApplicationById, deleteApplication, getUserApplications, getApplicationByJobId, getEmployerApplications, updateApplicationStatus, getAllJobs, isAdmin, rateApplicant } from "../controllers/jobController.js";
 import userAuth from "../middleware/userAuth.js";
 import upload from "../middleware/uploadMiddleware.js";
 
@@ -23,5 +23,6 @@ router.get("/job-application/:jobId", userAuth, getApplicationByJobId); // Get a
 router.get("/employer-applications", userAuth, getEmployerApplications);
 router.put("/application/:id/status", userAuth, updateApplicationStatus);
 router.get("/admin/all-jobs", userAuth, isAdmin, getAllJobs); // Get all jobs for admin
+router.post('/rate-applicant', userAuth, rateApplicant); // Rate an applicant
 
 export default router;

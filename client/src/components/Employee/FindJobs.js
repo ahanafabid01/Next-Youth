@@ -4,9 +4,10 @@ import axios from 'axios';
 import { FaRegFileAlt, FaSpinner, FaExclamationCircle, FaClock, FaCheckCircle, FaRegBookmark,
          FaBookmark, FaSearch, FaChevronDown, FaArrowLeft, FaSun, FaMoon, FaUserCircle, 
          FaBell, FaHome, FaQuestionCircle, FaBriefcase, FaLinkedinIn, FaGlobe, 
-         FaFacebook, FaTwitter, FaInstagram, FaTrash } from 'react-icons/fa';
+         FaFacebook, FaTwitter, FaInstagram, FaTrash, FaStar } from 'react-icons/fa';
 import './FindJobs.css';
 import './EmployeeDashboard.css'; // Import the EmployeeDashboard styles
+import RatingModal from '../Connections/RatingModal';
 
 const FindJobs = () => {
     const navigate = useNavigate();
@@ -34,6 +35,7 @@ const FindJobs = () => {
     const [viewMode, setViewMode] = useState('list'); // 'list' or 'detail'
     const [showFiltersDropdown, setShowFiltersDropdown] = useState(false);
     const filtersDropdownRef = useRef(null);
+    const [showRatingModal, setShowRatingModal] = useState(false);
 
     // Header and footer state variables
     const [showProfileDropdown, setShowProfileDropdown] = useState(false);
@@ -911,6 +913,16 @@ const FindJobs = () => {
                                         
                                         <button 
                                             className="profile-dropdown-link"
+                                            onClick={() => {
+                                                setShowRatingModal(true);
+                                                setShowProfileDropdown(false);
+                                            }}
+                                        >
+                                            <FaStar /> My Ratings & Reviews
+                                        </button>
+                                        
+                                        <button 
+                                            className="profile-dropdown-link"
                                             onClick={() => navigate('/settings')}
                                         >
                                             Settings
@@ -1241,6 +1253,14 @@ const FindJobs = () => {
                     </>
                 )}
             </div>
+
+            {showRatingModal && (
+                <RatingModal
+                    isOpen={true}
+                    onClose={() => setShowRatingModal(false)}
+                    viewOnly={true}
+                />
+            )}
 
             <footer className="dashboard-footer">
                 <div className="footer-grid">

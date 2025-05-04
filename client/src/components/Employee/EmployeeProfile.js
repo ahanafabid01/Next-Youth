@@ -34,10 +34,12 @@ import {
   FaCommentDots,
   FaTimes,
   FaInfoCircle,
-  FaArrowLeft
+  FaArrowLeft,
+  FaStar  // Add this line
 } from 'react-icons/fa';
 import './EmployeeProfile.css';
 import './EmployeeDashboard.css';
+import RatingModal from '../Connections/RatingModal';
 
 const skillsList = [
   'JavaScript', 'React', 'Node.js', 'Python', 'Java', 'C++', 'HTML', 'CSS',
@@ -99,6 +101,7 @@ const EmployeeProfile = () => {
   const [selectedSkill, setSelectedSkill] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [isInitialLoading, setIsInitialLoading] = useState(true);
+  const [showRatingModal, setShowRatingModal] = useState(false);
   const navigate = useNavigate();
   const profileDropdownRef = useRef(null);
   const notificationsRef = useRef(null);
@@ -672,6 +675,16 @@ const EmployeeProfile = () => {
                         Verify Account
                       </button>
                     )}
+
+                    <button 
+                      className="profile-dropdown-link"
+                      onClick={() => {
+                          setShowRatingModal(true);
+                          setShowProfileDropdown(false);
+                      }}
+                    >
+                      <FaStar /> My Ratings & Reviews
+                    </button>
                     
                     <button 
                       className="profile-dropdown-link"
@@ -1591,6 +1604,14 @@ const EmployeeProfile = () => {
         <div className="loading-overlay">
           <div className="spinner"></div>
         </div>
+      )}
+
+      {showRatingModal && (
+        <RatingModal
+            isOpen={true}
+            onClose={() => setShowRatingModal(false)}
+            viewOnly={true}
+        />
       )}
     </div>
   );

@@ -6,6 +6,7 @@ import { FaArrowLeft, FaPlus, FaMinus, FaFileUpload, FaRegFileAlt,
          FaUserCircle, FaBell, FaSun, FaMoon, FaChevronDown, FaDownload,
          FaBriefcase, FaFileContract, FaCommentDots, FaDollarSign, FaClock, FaStar, FaEdit } from 'react-icons/fa';
 import './JobApplication.css';
+import RatingModal from '../Connections/RatingModal';
 
 const JobApplication = () => {
     const { jobId } = useParams();
@@ -50,6 +51,13 @@ const JobApplication = () => {
     const [showDeleteModal, setShowDeleteModal] = useState(false);
     const [applicationData, setApplicationData] = useState(null);
     const [isEditing, setIsEditing] = useState(false);
+
+    // Add the unreadNotifications state
+    const [unreadNotifications, setUnreadNotifications] = useState(() => {
+        return parseInt(localStorage.getItem("unread-notifications") || "2");
+    });
+
+    const [showRatingModal, setShowRatingModal] = useState(false);
 
     // Close dropdowns when clicking outside
     useEffect(() => {
@@ -359,6 +367,12 @@ const JobApplication = () => {
         }
     };
 
+    const handleMarkAllAsRead = (e) => {
+        e.stopPropagation();
+        setUnreadNotifications(0);
+        localStorage.setItem("unread-notifications", "0");
+    };
+
     if (loading) {
         return (
             <div className="application-loading">
@@ -424,32 +438,55 @@ const JobApplication = () => {
                     </div>
                     
                     <div className="dashboard-header-right">
-                        <div className="notifications-container" ref={notificationsRef}>
+                        <div className="notification-container" ref={notificationsRef}>
                             <button 
-                                className="notifications-button"
+                                className="notification-button"
                                 onClick={toggleNotifications}
                                 aria-label="Notifications"
                             >
                                 <FaBell />
-                                <span className="notification-badge">2</span>
+                                {unreadNotifications > 0 && (
+                                    <span className="notification-badge">{unreadNotifications}</span>
+                                )}
                             </button>
                             
                             {showNotifications && (
                                 <div className="notifications-dropdown">
-                                    <div className="notifications-header">
+                                    <div className="notification-header">
                                         <h3>Notifications</h3>
+                                        <button className="mark-all-read" onClick={handleMarkAllAsRead}>Mark all as read</button>
                                     </div>
-                                    <div className="notifications-list">
-                                        <div className="notification-item">
+                                    <div className="notification-list">
+                                        <div className="notification-item unread">
                                             <div className="notification-icon">
+                                                {(!userData.idVerification || 
+                                                !userData.idVerification.frontImage || 
+                                                !userData.idVerification.backImage || 
+                                                userData.idVerification.status === 'rejected') ? (
+                                                <FaRegFileAlt />
+                                                ) : userData.idVerification.status === 'verified' ? (
                                                 <FaCheckCircle />
+                                                ) : (
+                                                <FaClock />
+                                                )}
                                             </div>
                                             <div className="notification-content">
-                                                <p>Your profile has been verified</p>
-                                                <span className="notification-time">Just now</span>
+                                                <p>
+                                                {(!userData.idVerification || 
+                                                    !userData.idVerification.frontImage || 
+                                                    !userData.idVerification.backImage || 
+                                                    userData.idVerification.status === 'rejected') ? (
+                                                    "Please verify your account"
+                                                ) : userData.idVerification.status === 'verified' ? (
+                                                    "Your profile has been verified!"
+                                                ) : (
+                                                    "Your verification is pending approval"
+                                                )}
+                                                </p>
+                                                <span className="notification-time">2 hours ago</span>
                                             </div>
                                         </div>
-                                        <div className="notification-item">
+                                        <div className="notification-item unread">
                                             <div className="notification-icon">
                                                 <FaRegFileAlt />
                                             </div>
@@ -530,9 +567,12 @@ const JobApplication = () => {
                                         
                                         <button 
                                             className="profile-dropdown-link"
-                                            onClick={() => navigate('/verify-account')}
+                                            onClick={() => {
+                                                setShowRatingModal(true);
+                                                setShowProfileDropdown(false);
+                                            }}
                                         >
-                                            Verify Account
+                                            <FaStar /> My Ratings & Reviews
                                         </button>
                                         
                                         <button 
@@ -1028,6 +1068,14 @@ const JobApplication = () => {
                     </div>
                 </div>
             </footer>
+
+            {showRatingModal && (
+                <RatingModal
+                    isOpen={true}
+                    onClose={() => setShowRatingModal(false)}
+                    viewOnly={true}
+                />
+            )}
         </div>
     );
 };
