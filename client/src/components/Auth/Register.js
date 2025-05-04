@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import axios from "axios";
 import { useNavigate, Link } from "react-router-dom";
 import "./Auth.css";
+import SplineBackground from "./SplineBackground";
 
 const Register = () => {
     const [name, setName] = useState("");
@@ -20,225 +21,6 @@ const Register = () => {
     useEffect(() => {
         document.body.classList.toggle("dark-mode", isDarkMode);
     }, []);
-
-    // Create background particles effect
-    useEffect(() => {
-        createParticles();
-        // Cleanup function
-        return () => {
-            const container = document.querySelector('.background-animation');
-            if (container) {
-                container.remove();
-            }
-            const mobileBackground = document.querySelector('.mobile-background');
-            if (mobileBackground) {
-                mobileBackground.remove();
-            }
-        };
-    }, [isDarkMode]);
-
-    // Add listener to check screen size on resize
-    useEffect(() => {
-        const handleResize = () => {
-            createParticles();
-        };
-        
-        window.addEventListener('resize', handleResize);
-        
-        // Cleanup
-        return () => {
-            window.removeEventListener('resize', handleResize);
-            const container = document.querySelector('.background-animation');
-            if (container) {
-                container.remove();
-            }
-            const mobileBackground = document.querySelector('.mobile-background');
-            if (mobileBackground) {
-                mobileBackground.remove();
-            }
-        };
-    }, [isDarkMode]);
-
-    const createParticles = () => {
-        // Check if we're on mobile or desktop
-        const isMobile = window.innerWidth <= 768;
-        
-        // Clear existing background elements
-        const existingAnimation = document.querySelector('.background-animation');
-        if (existingAnimation) {
-            existingAnimation.remove();
-        }
-        
-        const existingMobileBackground = document.querySelector('.mobile-background');
-        if (existingMobileBackground) {
-            existingMobileBackground.remove();
-        }
-        
-        if (isMobile) {
-            // Create simple mobile background
-            const mobileBackground = document.createElement('div');
-            mobileBackground.className = 'mobile-background';
-            document.body.appendChild(mobileBackground);
-            return;
-        }
-        
-        // Create interactive desktop background
-        const container = document.createElement('div');
-        container.className = 'background-animation';
-        document.body.appendChild(container);
-        
-        // Create initial bubbles
-        for (let i = 0; i < 20; i++) {
-            createBubble();
-        }
-        
-        // Add click handler to container to create bubbles on click
-        container.addEventListener('click', (e) => {
-            // Create a bubble at click position
-            createBubbleAtPosition(e.clientX, e.clientY);
-        });
-        
-        // Function to create a bubble
-        function createBubble() {
-            const bubble = document.createElement('div');
-            bubble.className = 'bubble';
-            
-            // Random properties
-            const size = Math.random() * 100 + 40;
-            const posX = Math.random() * window.innerWidth;
-            const posY = Math.random() * window.innerHeight;
-            const speedX = Math.random() * 1 - 0.5;
-            const speedY = Math.random() * 1 - 0.5;
-            
-            // Store speed as data attributes
-            bubble.dataset.speedX = speedX;
-            bubble.dataset.speedY = speedY;
-            bubble.dataset.initialSize = size;
-            
-            // Apply styles
-            bubble.style.width = `${size}px`;
-            bubble.style.height = `${size}px`;
-            bubble.style.left = `${posX}px`;
-            bubble.style.top = `${posY}px`;
-            
-            // Add event handlers
-            bubble.addEventListener('mouseenter', () => {
-                bubble.style.transform = 'scale(1.1)';
-                bubble.style.opacity = '0.6';
-            });
-            
-            bubble.addEventListener('mouseleave', () => {
-                bubble.style.transform = 'scale(1)';
-                bubble.style.opacity = '0.4';
-            });
-            
-            bubble.addEventListener('click', (e) => {
-                e.stopPropagation();
-                popBubble(bubble);
-                // Create two smaller bubbles
-                setTimeout(() => {
-                    createBubbleAtPosition(parseFloat(bubble.style.left), parseFloat(bubble.style.top), size * 0.6);
-                    createBubbleAtPosition(parseFloat(bubble.style.left) + 20, parseFloat(bubble.style.top) - 20, size * 0.5);
-                }, 200);
-            });
-            
-            container.appendChild(bubble);
-        }
-        
-        // Create a bubble at specific position
-        function createBubbleAtPosition(x, y, size = null) {
-            const bubble = document.createElement('div');
-            bubble.className = 'bubble';
-            
-            // Size properties
-            const bubbleSize = size || Math.random() * 80 + 40;
-            const speedX = Math.random() * 1 - 0.5;
-            const speedY = Math.random() * 1 - 0.5;
-            
-            // Store speed as data attributes
-            bubble.dataset.speedX = speedX;
-            bubble.dataset.speedY = speedY;
-            bubble.dataset.initialSize = bubbleSize;
-            
-            // Apply styles
-            bubble.style.width = `${bubbleSize}px`;
-            bubble.style.height = `${bubbleSize}px`;
-            bubble.style.left = `${x - bubbleSize/2}px`;
-            bubble.style.top = `${y - bubbleSize/2}px`;
-            
-            // Add event handlers
-            bubble.addEventListener('mouseenter', () => {
-                bubble.style.transform = 'scale(1.1)';
-                bubble.style.opacity = '0.6';
-            });
-            
-            bubble.addEventListener('mouseleave', () => {
-                bubble.style.transform = 'scale(1)';
-                bubble.style.opacity = '0.4';
-            });
-            
-            bubble.addEventListener('click', (e) => {
-                e.stopPropagation();
-                popBubble(bubble);
-                // Create two smaller bubbles
-                setTimeout(() => {
-                    if (bubbleSize > 30) {
-                        createBubbleAtPosition(parseFloat(bubble.style.left), parseFloat(bubble.style.top), bubbleSize * 0.6);
-                        createBubbleAtPosition(parseFloat(bubble.style.left) + 20, parseFloat(bubble.style.top) - 20, bubbleSize * 0.5);
-                    }
-                }, 200);
-            });
-            
-            container.appendChild(bubble);
-        }
-        
-        // Function to handle bubble popping
-        function popBubble(bubble) {
-            bubble.classList.add('pop');
-            setTimeout(() => {
-                bubble.remove();
-            }, 500);
-        }
-        
-        // Animate bubbles
-        function animateBubbles() {
-            const bubbles = document.querySelectorAll('.bubble');
-            
-            bubbles.forEach(bubble => {
-                const rect = bubble.getBoundingClientRect();
-                let speedX = parseFloat(bubble.dataset.speedX);
-                let speedY = parseFloat(bubble.dataset.speedY);
-                
-                let left = rect.left + speedX;
-                let top = rect.top + speedY;
-                
-                // Bounce off walls
-                if (left <= 0 || left + rect.width >= window.innerWidth) {
-                    bubble.dataset.speedX = -speedX;
-                }
-                
-                if (top <= 0 || top + rect.height >= window.innerHeight) {
-                    bubble.dataset.speedY = -speedY;
-                }
-                
-                bubble.style.left = `${left}px`;
-                bubble.style.top = `${top}px`;
-            });
-            
-            requestAnimationFrame(animateBubbles);
-        }
-        
-        // Start animation
-        animateBubbles();
-        
-        // Periodically add new bubbles
-        setInterval(() => {
-            const bubbleCount = document.querySelectorAll('.bubble').length;
-            if (bubbleCount < 30) {
-                createBubble();
-            }
-        }, 3000);
-    };
 
     const handleRegister = async (e) => {
         e.preventDefault();
@@ -465,6 +247,9 @@ const Register = () => {
 
     return (
         <div className={`auth-page ${isDarkMode ? "dark-mode" : ""}`}>
+            {/* Add Spline Background Component */}
+            <SplineBackground />
+            
             <header className="auth-header">
                 <Link to="/">
                     <h1>Next <span className="text-gradient">Youth</span></h1>
