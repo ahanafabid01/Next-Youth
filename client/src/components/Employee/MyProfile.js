@@ -163,6 +163,27 @@ const MyProfile = () => {
           isVerified: verificationStatus === 'verified'
         }));
       }
+
+      // Fetch user ratings
+      try {
+        const ratingsResponse = await axios.get(`${API_BASE_URL}/auth/my-ratings`, { withCredentials: true });
+        if (ratingsResponse.data.success) {
+          const ratings = ratingsResponse.data.ratings || [];
+          const averageRating = ratings.length > 0 
+            ? ratings.reduce((acc, curr) => acc + curr.rating, 0) / ratings.length 
+            : 0;
+          
+          // Update the setProfileData call to include ratings data
+          setProfileData(prevData => ({
+            ...prevData,
+            averageRating: averageRating,
+            totalRatings: ratings.length
+          }));
+        }
+      } catch (error) {
+        console.error('Error fetching ratings:', error);
+        // Don't show error toast as this is not critical
+      }
     } catch (error) {
       console.error('Error in fetch user data flow:', error);
       toast.error('An unexpected error occurred loading your profile');
@@ -709,6 +730,40 @@ const MyProfile = () => {
                     ) : (
                       <p className="no-data-message">No career goals specified</p>
                     )}
+                  </div>
+                </div>
+
+                {/* Overall Ratings Section */}
+                <div className="profile-section">
+                  <h2 className="profile-section-title">
+                    <FaStar /> Overall Ratings
+                  </h2>
+                  <div className="profile-section-content">
+                    <div className="profile-ratings">
+                      <div className="rating-stars-display">
+                        {[...Array(5)].map((_, index) => (
+                          <FaStar
+                            key={index}
+                            className="star"
+                            color={index < Math.round(profileData.averageRating || 0) ? "#ffc107" : "#e4e5e9"}
+                          />
+                        ))}
+                      </div>
+                      <div className="rating-stats">
+                        <span className="rating-number">
+                          {(profileData.averageRating || 0).toFixed(1)}
+                        </span>
+                        <span className="rating-count">
+                          ({profileData.totalRatings || 0} {(profileData.totalRatings || 0) === 1 ? 'review' : 'reviews'})
+                        </span>
+                      </div>
+                      <button 
+                        className="view-ratings-button"
+                        onClick={() => setShowRatingModal(true)}
+                      >
+                        View All Reviews
+                      </button>
+                    </div>
                   </div>
                 </div>
                 
