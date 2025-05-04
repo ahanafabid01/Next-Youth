@@ -1,6 +1,6 @@
-import multer from "multer";
-import path from "path";
-import fs from "fs";
+import multer from 'multer';
+import path from 'path';
+import fs from 'fs';
 
 // Configure storage for uploaded files
 const storage = multer.diskStorage({
@@ -12,25 +12,26 @@ const storage = multer.diskStorage({
         cb(null, uploadPath);
     },
     filename: (req, file, cb) => {
-        const uniqueSuffix = Date.now() + "-" + Math.round(Math.random() * 1e9);
-        cb(null, `${file.fieldname}-${uniqueSuffix}${path.extname(file.originalname)}`);
+        cb(null, Date.now() + path.extname(file.originalname));
     },
 });
 
 // File filter to allow specific file types
 const fileFilter = (req, file, cb) => {
-    const allowedTypes = ["application/pdf", "application/msword", "image/png", "image/jpeg"];
-    if (allowedTypes.includes(file.mimetype)) {
+    if (file.mimetype.startsWith('image/') || 
+        file.mimetype === 'application/pdf' ||
+        file.mimetype === 'application/msword' ||
+        file.mimetype === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document') {
         cb(null, true);
     } else {
-        cb(new Error("Only PDF, DOC, PNG, and JPEG files are allowed"), false);
+        cb(new Error('Unsupported file format'), false);
     }
 };
 
 const upload = multer({ 
     storage, 
     fileFilter,
-    limits: { fileSize: 5 * 1024 * 1024 } // Limit file size to 5MB
+    limits: { fileSize: 10 * 1024 * 1024 } // Limit file size to 10MB
 });
 
 export default upload;

@@ -1,10 +1,13 @@
-import React, { useState } from "react";
+import React, { useState, useRef } from "react";
 import axios from "axios";
 import { 
   FaPaperPlane, 
   FaSpinner, 
   FaEye,
-  FaEdit 
+  FaEdit,
+  FaPaperclip,
+  FaTimes,
+  FaImage
 } from "react-icons/fa";
 import "./MailSystem.css";
 import Sidebar from "./Sidebar";
@@ -17,58 +20,101 @@ const MailSystem = () => {
   const [success, setSuccess] = useState("");
   const [previewMode, setPreviewMode] = useState(false);
   const [selectedRecipients, setSelectedRecipients] = useState("all");
+  const [attachments, setAttachments] = useState([]);
+  const [photoAttachments, setPhotoAttachments] = useState([]);
+  const fileInputRef = useRef(null);
+  const photoInputRef = useRef(null);
   const API_BASE_URL = 'http://localhost:4000/api';
   
+  const handleAttachmentChange = (e) => {
+    const files = Array.from(e.target.files);
+    setAttachments(prev => [...prev, ...files]);
+    // Reset file input
+    e.target.value = "";
+  };
+  
+  const handlePhotoChange = (e) => {
+    const files = Array.from(e.target.files).filter(file => 
+      file.type.startsWith('image/')
+    );
+    
+    if (files.length > 0) {
+      setPhotoAttachments(prev => [...prev, ...files]);
+    }
+    
+    // Reset file input
+    e.target.value = "";
+  };
+  
+  const removeAttachment = (indexToRemove) => {
+    setAttachments(prev => prev.filter((_, index) => index !== indexToRemove));
+  };
+  
+  const removePhotoAttachment = (indexToRemove) => {
+    setPhotoAttachments(prev => prev.filter((_, index) => index !== indexToRemove));
+  };
+
   const handleSendMail = async (e) => {
     e.preventDefault();
     
-    if (!subject.trim()) {
-      setError("Subject cannot be empty");
+    if (!subject || !emailContent) {
+      setError("Subject and email content are required");
       return;
     }
-
-    if (!emailContent.trim()) {
-      setError("Email body cannot be empty");
-      return;
-    }
-
+    
     try {
       setSending(true);
       setError("");
       setSuccess("");
-
-      // Send to backend endpoint
-      const response = await axios.post(
-        `${API_BASE_URL}/admin/send-mass-email`, 
-        {
-          subject,
-          htmlContent: emailContent,
-          recipientType: selectedRecipients
-        }, 
-        {
-          headers: {
-            "Content-Type": "application/json"
-          },
-          withCredentials: true
-        }
-      );
-
-      // Add more detailed logging
-      console.log("Email sending successful:", response.data);
-
-      setSending(false);
-      setSuccess(`Email successfully sent to ${response.data.recipientCount || 'multiple'} recipients!`);
       
-      // Clear form
-      setSubject("");
-      setEmailContent("");
+      // Create form data
+      const formData = new FormData();
+      formData.append("subject", subject);
+      formData.append("textContent", emailContent); // Make sure this matches what server expects
+      formData.append("recipientType", selectedRecipients);
       
-    } catch (err) {
+      // Add file attachments if any
+      attachments.forEach(file => {
+        formData.append("attachments", file);
+      });
+      
+      // Add photo attachments if any
+      photoAttachments.forEach(photo => {
+        formData.append("photos", photo);
+      });
+      
+      // Log the request (for debugging)
+      console.log("Sending email with:", {
+        subject,
+        recipientType: selectedRecipients,
+        attachmentsCount: attachments.length,
+        photosCount: photoAttachments.length
+      });
+      
+      // Send the request
+      const response = await fetch(`${API_BASE_URL}/admin/send-mass-email`, {
+        method: "POST",
+        body: formData,
+        credentials: 'include'
+      });
+      
+      const data = await response.json();
+      
+      if (response.ok && data.success) {
+        setSuccess(`Email sent successfully to ${data.recipientCount} recipients`);
+        // Clear form after successful send
+        setSubject("");
+        setEmailContent("");
+        setAttachments([]);
+        setPhotoAttachments([]);
+      } else {
+        throw new Error(data.message || "Failed to send email");
+      }
+    } catch (error) {
+      console.error("Email sending error:", error);
+      setError(error.message || "Failed to send email. Please try again.");
+    } finally {
       setSending(false);
-      // Improved error handling
-      console.error("Email sending error details:", err.response?.data || err.message);
-      setError(err.response?.data?.message || "Failed to send email. Please try again.");
-      console.error("Error sending email:", err);
     }
   };
 
@@ -76,30 +122,18 @@ const MailSystem = () => {
     setPreviewMode(!previewMode);
   };
 
-  const getEmailPreview = (content) => {
-    // Add your default header/footer to match what the backend will render
-    return `
-      <div style="font-family: 'Arial', sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e0e0e0; border-radius: 10px;">
-        <div style="text-align: center; padding-bottom: 20px; border-bottom: 1px solid #e0e0e0;">
-          <h1 style="color: #3b82f6; margin-bottom: 5px;">Next Youth</h1>
-        </div>
-        
-        <div style="padding: 20px 0;">
-          ${content}
-        </div>
-        
-        <div style="text-align: center; margin-top: 20px; padding-top: 20px; border-top: 1px solid #e0e0e0;">
-          <p style="color: #6c757d; font-size: 14px;">© ${new Date().getFullYear()} Next Youth. All rights reserved.</p>
-        </div>
-      </div>
-    `;
+  const formatEmailPreview = (content) => {
+    // Convert plain text to display with line breaks
+    return content.split('\n').map((line, i) => (
+      <p key={i} style={{ margin: '0 0 10px 0' }}>{line || <br />}</p>
+    ));
   };
 
   return (
-    <div className="admin-page">
+    <div className="admin-dashboard">
       <Sidebar />
       
-      <div className="admin-content">
+      <div className="main-content">
         <div className="mail-system-container">
           <div className="mail-system-header">
             <h1>Central Mailing System</h1>
@@ -123,7 +157,35 @@ const MailSystem = () => {
                     <strong>Subject:</strong> {subject}
                   </div>
                   <div className="preview-body">
-                    <div dangerouslySetInnerHTML={{ __html: getEmailPreview(emailContent) }} />
+                    {formatEmailPreview(emailContent)}
+                    
+                    {photoAttachments.length > 0 && (
+                      <div className="preview-photos">
+                        <h4>Images ({photoAttachments.length}):</h4>
+                        <div className="photo-preview-grid">
+                          {photoAttachments.map((photo, index) => (
+                            <div key={index} className="photo-preview-item">
+                              <img 
+                                src={URL.createObjectURL(photo)} 
+                                alt={`Preview ${index+1}`} 
+                                className="photo-preview" 
+                              />
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                    
+                    {attachments.length > 0 && (
+                      <div className="preview-attachments">
+                        <h4>Attachments ({attachments.length}):</h4>
+                        <ul>
+                          {attachments.map((file, index) => (
+                            <li key={index}>{file.name} ({Math.round(file.size / 1024)} KB)</li>
+                          ))}
+                        </ul>
+                      </div>
+                    )}
                   </div>
                 </div>
               </div>
@@ -162,15 +224,104 @@ const MailSystem = () => {
                     id="emailContent"
                     value={emailContent}
                     onChange={(e) => setEmailContent(e.target.value)}
-                    placeholder="Enter your email content here... (HTML is supported)"
+                    placeholder="Enter your email content here..."
                     required
                     className="email-content-textarea"
                     rows="12"
                   />
                   <p className="helper-text">
-                    You can use HTML tags for formatting: &lt;h1&gt; for headers, &lt;p&gt; for paragraphs, 
-                    &lt;a href="..."&gt; for links, &lt;strong&gt; for bold text
+                    Type your message using regular text format. Use line breaks for new paragraphs.
                   </p>
+                </div>
+
+                <div className="form-group">
+                  <label>Photos & Attachments:</label>
+                  <div className="file-upload-container">
+                    <button 
+                      type="button" 
+                      className="photo-button"
+                      onClick={() => photoInputRef.current.click()}
+                    >
+                      <FaImage /> Add Photos
+                    </button>
+                    <input
+                      type="file"
+                      ref={photoInputRef}
+                      onChange={handlePhotoChange}
+                      multiple
+                      accept="image/*"
+                      className="file-input"
+                      style={{ display: 'none' }}
+                    />
+                    
+                    <button 
+                      type="button" 
+                      className="attachment-button"
+                      onClick={() => fileInputRef.current.click()}
+                    >
+                      <FaPaperclip /> Add Files
+                    </button>
+                    <input
+                      type="file"
+                      ref={fileInputRef}
+                      onChange={handleAttachmentChange}
+                      multiple
+                      className="file-input"
+                      style={{ display: 'none' }}
+                    />
+                    <span className="helper-text">
+                      Maximum total size: 10MB
+                    </span>
+                  </div>
+                  
+                  {photoAttachments.length > 0 && (
+                    <div className="photo-gallery">
+                      <h4>Selected Photos ({photoAttachments.length})</h4>
+                      <div className="photo-grid">
+                        {photoAttachments.map((photo, index) => (
+                          <div key={index} className="photo-item">
+                            <img 
+                              src={URL.createObjectURL(photo)} 
+                              alt={`Photo ${index+1}`}
+                              className="photo-thumbnail" 
+                            />
+                            <button 
+                              type="button"
+                              className="remove-photo"
+                              onClick={() => removePhotoAttachment(index)}
+                              title="Remove photo"
+                            >
+                              <FaTimes />
+                            </button>
+                            <span className="photo-size">
+                              {Math.round(photo.size / 1024)} KB
+                            </span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                  
+                  {attachments.length > 0 && (
+                    <div className="attachment-list">
+                      <h4>Selected Files ({attachments.length})</h4>
+                      <ul>
+                        {attachments.map((file, index) => (
+                          <li key={index} className="attachment-item">
+                            <span className="attachment-name">{file.name}</span>
+                            <span className="attachment-size">({Math.round(file.size / 1024)} KB)</span>
+                            <button 
+                              type="button"
+                              className="remove-attachment"
+                              onClick={() => removeAttachment(index)}
+                            >
+                              <FaTimes />
+                            </button>
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
                 </div>
 
                 <div className="button-group">
