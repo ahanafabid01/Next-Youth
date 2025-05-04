@@ -583,7 +583,8 @@ export const updateEmployeeProfile = async (req, res) => {
           name, bio, education, skills, languageSkills, address, country,
           phoneNumber, email, linkedInProfile, socialMediaLink, goals,
           questions, resumeUrl, freelanceExperience, paymentType,
-          fixedRate, hourlyRate, weeklyAvailability, openToContractToHire
+          fixedRate, hourlyRate, weeklyAvailability, openToContractToHire,
+          profilePicture, profilePic  // ADD THESE TWO FIELDS
         } = req.body;
         
         // Create update object with all possible fields
@@ -604,6 +605,13 @@ export const updateEmployeeProfile = async (req, res) => {
         if (goals !== undefined) updateObject.goals = goals;
         if (questions) updateObject.questions = questions;
         if (resumeUrl) updateObject.resume = resumeUrl;
+        
+        // ADD THESE LINES FOR PROFILE PICTURE
+        if (profilePicture) updateObject.profilePicture = profilePicture;
+        if (profilePic) updateObject.profilePic = profilePic;
+        // If only one is provided, use it for both fields for consistency
+        if (profilePicture && !profilePic) updateObject.profilePic = profilePicture;
+        if (!profilePicture && profilePic) updateObject.profilePicture = profilePic;
         
         // Add price preference fields
         if (freelanceExperience !== undefined) updateObject.freelanceExperience = freelanceExperience;

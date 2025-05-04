@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import axios from 'axios';
+import API_BASE_URL from '../../config';  // Add this import
 import { toast, ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import { 
@@ -34,12 +35,10 @@ import {
   FaCommentDots,
   FaTimes,
   FaInfoCircle,
-  FaArrowLeft,
-  FaStar  // Add this line
+  FaArrowLeft
 } from 'react-icons/fa';
 import './EmployeeProfile.css';
 import './EmployeeDashboard.css';
-import RatingModal from '../Connections/RatingModal';
 
 const skillsList = [
   'JavaScript', 'React', 'Node.js', 'Python', 'Java', 'C++', 'HTML', 'CSS',
@@ -101,11 +100,9 @@ const EmployeeProfile = () => {
   const [selectedSkill, setSelectedSkill] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [isInitialLoading, setIsInitialLoading] = useState(true);
-  const [showRatingModal, setShowRatingModal] = useState(false);
   const navigate = useNavigate();
   const profileDropdownRef = useRef(null);
   const notificationsRef = useRef(null);
-  const API_BASE_URL = 'http://localhost:4000/api';
 
   const fetchUserData = useCallback(async () => {
     try {
@@ -301,7 +298,6 @@ const EmployeeProfile = () => {
     if (!file) return;
     
     if (field === 'profilePic') {
-      // Set preview immediately for better UX
       setFormData({
         ...formData,
         profilePicPreview: URL.createObjectURL(file),
@@ -319,17 +315,10 @@ const EmployeeProfile = () => {
         );
         
         if (response.data.success) {
-          console.log('Profile picture uploaded successfully:', response.data.url);
-          
-          // Update both profilePicture and profilePic in formData with the URL
           setFormData(prev => ({
             ...prev,
-            profilePicture: response.data.url,
-            profilePic: response.data.url // Add this line to ensure both fields are updated
+            profilePicture: response.data.url
           }));
-          
-          // Update state to force re-render (show the new image)
-          toast.success('Profile picture updated!');
         }
       } catch (error) {
         console.error('Error uploading profile picture:', error);
@@ -416,13 +405,8 @@ const EmployeeProfile = () => {
       // Compare form data with original data and only include changed fields with non-empty values
       if (shouldIncludeField(formData.name, originalUserData?.name)) payload.name = formData.name;
       if (shouldIncludeField(formData.bio, originalUserData?.bio)) payload.bio = formData.bio;
-      
-      // IMPORTANT: Fix for profile picture update - add to both fields to ensure compatibility
-      if (shouldIncludeField(formData.profilePicture, originalUserData?.profilePicture)) {
+      if (shouldIncludeField(formData.profilePicture, originalUserData?.profilePicture)) 
         payload.profilePicture = formData.profilePicture;
-        // Also include as profilePic for backward compatibility
-        payload.profilePic = formData.profilePicture;
-      }
       
       // Handle education fields - only include if something changed and fields are not empty
       const origEducation = originalUserData?.education || {};
@@ -688,16 +672,6 @@ const EmployeeProfile = () => {
                         Verify Account
                       </button>
                     )}
-
-                    <button 
-                      className="profile-dropdown-link"
-                      onClick={() => {
-                          setShowRatingModal(true);
-                          setShowProfileDropdown(false);
-                      }}
-                    >
-                      <FaStar /> My Ratings & Reviews
-                    </button>
                     
                     <button 
                       className="profile-dropdown-link"
@@ -1617,14 +1591,6 @@ const EmployeeProfile = () => {
         <div className="loading-overlay">
           <div className="spinner"></div>
         </div>
-      )}
-
-      {showRatingModal && (
-        <RatingModal
-            isOpen={true}
-            onClose={() => setShowRatingModal(false)}
-            viewOnly={true}
-        />
       )}
     </div>
   );
