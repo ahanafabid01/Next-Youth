@@ -73,8 +73,8 @@ body {
   position: relative;
 }
 
-/* Spline Background styling */
-.spline-background {
+/* Background container for both types */
+.background-container {
   position: fixed;
   top: 0;
   left: 0;
@@ -82,20 +82,23 @@ body {
   height: 100%;
   z-index: -1;
   overflow: hidden;
+}
+
+/* Spline Background styling */
+.spline-background {
+  width: 100%;
+  height: 100%;
   pointer-events: auto; /* Enable interactions */
 }
 
-spline-viewer {
+/* Static background for mobile devices */
+.static-background {
   width: 100%;
   height: 100%;
-  border: none;
-}
-
-/* Responsive adjustments for spline background */
-@media (max-width: 768px) {
-  .spline-background {
-    opacity: 0.5; /* Make background lighter on mobile */
-  }
+  background-image: url('../../assets/images/auth.png');
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
 }
 
 .auth-page {
@@ -146,6 +149,16 @@ spline-viewer {
   background: var(--gradient);
   border-radius: 3px;
   transition: background 0.3s ease;
+}
+
+.auth-header .logo {
+  height: 130px;
+  width: auto;
+  transition: transform 0.3s ease;
+}
+
+.auth-header .logo:hover {
+  transform: scale(1.05);
 }
 
 .theme-toggle {
@@ -609,6 +622,33 @@ spline-viewer {
   
   .form-group input {
     padding: 1rem;
+  }
+}
+
+/* Remove the previous responsive rule that only reduced opacity */
+@media (max-width: 768px) {
+  .spline-background {
+    display: none;
+  }
+
+  /* Fix transparent header in mobile view */
+  .auth-header {
+    background-color: var(--card-bg);
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+    box-shadow: var(--shadow);
+  }
+  
+  /* Add opacity to ensure it's fully visible */
+  .auth-header::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: var(--card-bg);
+    z-index: -1;
   }
 }
 

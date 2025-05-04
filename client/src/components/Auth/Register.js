@@ -3,6 +3,7 @@ import axios from "axios";
 import { useNavigate, Link } from "react-router-dom";
 import "./Auth.css";
 import SplineBackground from "./SplineBackground";
+import logo from "../../assets/images/logo.png";
 
 const Register = () => {
     const [name, setName] = useState("");
@@ -252,7 +253,7 @@ const Register = () => {
             
             <header className="auth-header">
                 <Link to="/">
-                    <h1>Next <span className="text-gradient">Youth</span></h1>
+                    <img src={logo} alt="Next Youth" className="logo" />
                 </Link>
                 <button className="theme-toggle" onClick={toggleDarkMode}>
                     <i className="fas fa-sun"></i>
