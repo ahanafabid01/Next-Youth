@@ -11,6 +11,7 @@ import {
 } from "react-icons/fa";
 import "./MailSystem.css";
 import Sidebar from "./Sidebar";
+import EmojiPicker from 'emoji-picker-react';
 
 const MailSystem = () => {
   const [subject, setSubject] = useState("");
@@ -22,6 +23,7 @@ const MailSystem = () => {
   const [selectedRecipients, setSelectedRecipients] = useState("all");
   const [attachments, setAttachments] = useState([]);
   const [photoAttachments, setPhotoAttachments] = useState([]);
+  const [showEmojiPicker, setShowEmojiPicker] = useState(false);
   const fileInputRef = useRef(null);
   const photoInputRef = useRef(null);
   const API_BASE_URL = 'http://localhost:4000/api';
@@ -129,6 +131,19 @@ const MailSystem = () => {
     ));
   };
 
+  const handleEmojiSelect = (emojiData) => {
+    // Get current cursor position
+    const cursorPosition = document.getElementById('emailContent').selectionStart;
+    const textBeforeCursor = emailContent.substring(0, cursorPosition);
+    const textAfterCursor = emailContent.substring(cursorPosition);
+    
+    // Insert emoji at cursor position
+    setEmailContent(textBeforeCursor + emojiData.emoji + textAfterCursor);
+    
+    // Close emoji picker after selection
+    setShowEmojiPicker(false);
+  };
+
   return (
     <div className="admin-dashboard">
       <Sidebar />
@@ -220,17 +235,39 @@ const MailSystem = () => {
 
                 <div className="form-group">
                   <label htmlFor="emailContent">Email Body:</label>
-                  <textarea
-                    id="emailContent"
-                    value={emailContent}
-                    onChange={(e) => setEmailContent(e.target.value)}
-                    placeholder="Enter your email content here..."
-                    required
-                    className="email-content-textarea"
-                    rows="12"
-                  />
+                  <div className="textarea-container">
+                    <textarea
+                      id="emailContent"
+                      value={emailContent}
+                      onChange={(e) => setEmailContent(e.target.value)}
+                      placeholder="Enter your email content here..."
+                      required
+                      className="email-content-textarea"
+                      rows="12"
+                    />
+                    
+                    <button 
+                      type="button" 
+                      className="emoji-button"
+                      onClick={() => setShowEmojiPicker(!showEmojiPicker)}
+                    >
+                      😊
+                    </button>
+                    
+                    {showEmojiPicker && (
+                      <div className="emoji-picker-container">
+                        <div className="emoji-picker-backdrop" onClick={() => setShowEmojiPicker(false)}></div>
+                        <EmojiPicker
+                          onEmojiClick={handleEmojiSelect}
+                          disableAutoFocus={true}
+                          native={true}
+                        />
+                      </div>
+                    )}
+                  </div>
                   <p className="helper-text">
                     Type your message using regular text format. Use line breaks for new paragraphs.
+                    Click the emoji button to add emojis.
                   </p>
                 </div>
 

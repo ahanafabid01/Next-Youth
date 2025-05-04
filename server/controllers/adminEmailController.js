@@ -72,41 +72,43 @@ export const sendMassEmail = async (req, res) => {
         <html>
         <head>
           <meta charset="utf-8">
+          <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
           <meta name="viewport" content="width=device-width, initial-scale=1.0">
           <title>${subject}</title>
-          <style>
-            .header-title {
-              font-size: 32px;
-              font-weight: bold;
-              color: #3b82f6;
-              text-align: center;
-              margin: 0;
-              padding: 15px 0;
-              letter-spacing: 1px;
-              text-transform: uppercase;
-            }
-          </style>
         </head>
-        <body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px;">
-          <!-- Next Youth header at the top middle -->
-          <div style="text-align: center; padding: 20px 0; border-bottom: 2px solid #e0e0e0; margin-bottom: 20px;">
-            <h1 class="header-title">Next Youth</h1>
-          </div>
-          
-          <div style="padding: 20px; background-color: #ffffff; border-radius: 5px; box-shadow: 0 2px 5px rgba(0,0,0,0.1);">
-            <p style="margin-top: 0;">Hello ${userName || 'there'},</p>
+        <body style="margin: 0; padding: 0; font-family: 'Segoe UI', Arial, sans-serif; line-height: 1.6; color: #333;">
+          <table width="100%" cellpadding="0" cellspacing="0" style="max-width: 650px; margin: 0 auto; background-color: #ffffff;">
+            <!-- Header with Next Youth prominently displayed -->
+            <tr>
+              <td style="padding: 30px 0; text-align: center; background-color: #f8fafc; border-bottom: 3px solid #3b82f6;">
+                <h1 style="font-size: 32px; color: #3b82f6; margin: 0; letter-spacing: 1px; font-weight: 700;">NEXT YOUTH</h1>
+              </td>
+            </tr>
             
-            ${textContent.split('\n').map(line => 
-              `<p style="margin-bottom: 16px;">${line || '<br>'}</p>`
-            ).join('')}
+            <!-- Email content -->
+            <tr>
+              <td style="padding: 30px 25px;">
+                <p style="margin-top: 0; font-size: 17px;">Hello ${userName || 'there'},</p>
+                
+                <div style="font-size: 16px; line-height: 1.6; color: #4b5563; margin: 25px 0;">
+                  ${textContent.split('\n').map(line => 
+                    `<p style="margin-bottom: 16px;">${line || '<br>'}</p>`
+                  ).join('')}
+                </div>
+                
+                <p style="margin-top: 30px; margin-bottom: 10px; font-size: 16px;">Best regards,</p>
+                <p style="margin-top: 0; font-weight: 600; color: #3b82f6; font-size: 16px;">Next Youth Team</p>
+              </td>
+            </tr>
             
-            <p style="margin-bottom: 0;">Best regards,<br>Next Youth Team</p>
-          </div>
-          
-          <div style="text-align: center; padding-top: 20px; font-size: 12px; color: #6c757d;">
-            <p>© ${new Date().getFullYear()} Next Youth. All rights reserved.</p>
-            <p>Find Your First Job. Build Your Best Future.</p>
-          </div>
+            <!-- Footer with the new text -->
+            <tr>
+              <td style="padding: 20px; text-align: center; background-color: #f8fafc; border-top: 1px solid #e5e7eb;">
+                <p style="color: #6b7280; font-size: 14px; margin: 5px 0;">© ${new Date().getFullYear()} Next Youth. All rights reserved.</p>
+                <p style="color: #6b7280; font-size: 14px; margin: 8px 0; font-style: italic; font-weight: 500;">Find Your First Job. Build Your Best Future.</p>
+              </td>
+            </tr>
+          </table>
         </body>
         </html>
       `;
