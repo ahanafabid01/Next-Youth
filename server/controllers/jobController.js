@@ -541,6 +541,73 @@ export const updateApplicationStatus = async (req, res) => {
     }
 };
 
+export const updateApplication = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const { bid, receivedAmount, duration, coverLetter } = req.body;
+        const userId = req.user.id;
+
+        // Find the application
+        const applicationModel = await import("../models/applicationModel.js").then(module => module.default);
+        const application = await applicationModel.findById(id);
+        
+        if (!application) {
+            return res.status(404).json({
+                success: false,
+                message: "Application not found"
+            });
+        }
+        
+        // Check if the application belongs to the current user
+        if (application.applicant.toString() !== userId) {
+            return res.status(403).json({
+                success: false,
+                message: "You don't have permission to update this application"
+            });
+        }
+        
+        // Check if the application is still in pending status
+        if (application.status !== 'pending') {
+            return res.status(400).json({
+                success: false,
+                message: "Only pending applications can be edited"
+            });
+        }
+        
+        // Handle uploaded files (if any)
+        const files = req.files?.map(file => ({
+            filename: file.filename,
+            path: `${req.protocol}://${req.get("host")}/uploads/${file.filename}`,
+        })) || [];
+        
+        // Update application fields
+        application.bid = parseFloat(bid);
+        application.receivedAmount = parseFloat(receivedAmount);
+        application.duration = duration;
+        application.coverLetter = coverLetter || "";
+        
+        // Add new files if provided
+        if (files.length > 0) {
+            application.attachments = [...application.attachments, ...files];
+        }
+        
+        await application.save();
+        
+        return res.status(200).json({
+            success: true,
+            message: "Application updated successfully",
+            application
+        });
+        
+    } catch (error) {
+        console.error("Error updating application:", error);
+        return res.status(500).json({
+            success: false,
+            message: "Internal server error"
+        });
+    }
+};
+
 // Add admin middleware check
 export const isAdmin = async (req, res, next) => {
     if (req.user.role === 'admin') {

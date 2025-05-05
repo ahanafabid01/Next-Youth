@@ -926,65 +926,7 @@ const JobApplication = () => {
                 </form>
             </div>
 
-            {/* Sidebar Section */}
-            <div className="application-sidebar">
-                {/* Client Information Section */}
-                <div className="sidebar-section">
-                    <h3 className="sidebar-title">Client Information</h3>
-                    <div className="client-info">
-                        <div className="client-avatar">
-                            {job?.employer?.profilePicture ? (
-                                <img src={job?.employer?.profilePicture} alt="Client" />
-                            ) : (
-                                <div className="avatar-placeholder">
-                                    {job?.employer?.name ? job.employer.name.charAt(0) : "C"}
-                                </div>
-                            )}
-                        </div>
-                        <div className="client-details">
-                            <h4>{job?.employer?.name || "Client Name"}</h4>
-                            <p className="client-location">{job?.employer?.location || "Location"}</p>
-                            <p className="client-rating">
-                                <FaStar className="rating-icon" /> 
-                                {job?.employer?.rating || "4.8"} ({job?.employer?.reviews || "10"} reviews)
-                            </p>
-                        </div>
-                    </div>
-                </div>
 
-                {/* Application Management Section */}
-                <div className="sidebar-section">
-                    <h3 className="sidebar-title">Application Management</h3>
-                    <div className="sidebar-buttons">
-                        <button 
-                            className="sidebar-button edit-button"
-                            onClick={handleEditApplication}
-                        >
-                            <FaEdit /> Edit Application
-                        </button>
-                        <button 
-                            className="sidebar-button delete-button"
-                            onClick={handleDeleteConfirmation}
-                        >
-                            <FaTimes /> Delete Application
-                        </button>
-                    </div>
-                </div>
-                
-                {/* Delete Confirmation Modal */}
-                {showDeleteModal && (
-                    <div className="modal-overlay">
-                        <div className="delete-confirmation-modal">
-                            <h3>Delete Application</h3>
-                            <p>Are you sure you want to delete this application? This action cannot be undone.</p>
-                            <div className="modal-actions">
-                                <button className="cancel-modal-btn" onClick={() => setShowDeleteModal(false)}>Cancel</button>
-                                <button className="delete-modal-btn" onClick={handleDeleteApplication}>Delete</button>
-                            </div>
-                        </div>
-                    </div>
-                )}
-            </div>
 
             {/* Footer Section */}
             <footer className="dashboard-footer">

@@ -28,6 +28,7 @@ import RequestDemo from "./Homepages/RequestDemo";
 import ViewApplication from "./components/Employee/ViewApplication";
 import ViewProfile from './components/Employer/ViewProfile';
 import EmployerVerification from './components/Employer/EmployerVerification';
+import EditApplication from './components/Employee/EditApplication';
 import "./App.css";
 
 const App = () => {
@@ -65,6 +66,7 @@ const App = () => {
                 <Route path="/request-demo" element={<RequestDemo />} />
                 <Route path="/view-application/:applicationId" element={<ViewApplication />} />
                 <Route path="/view-profile/:userId" element={<ViewProfile />} />
+                <Route path="/edit-application/:applicationId" element={<EditApplication />} />
             </Routes>
         </Router>
     );
