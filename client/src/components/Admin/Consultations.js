@@ -5,6 +5,7 @@ import "./Consultations.css";
 import axios from "axios";
 import { FaEdit, FaCheck, FaTimes, FaClock, FaCalendarCheck } from "react-icons/fa";
 import { notifyDataUpdate } from './Statistics';
+import { dataStore } from '../../utils/eventEmitter';
 
 const Consultations = () => {
     const [consultations, setConsultations] = useState([]);
@@ -22,17 +23,20 @@ const Consultations = () => {
 
     const fetchConsultations = async () => {
         try {
-            setLoading(true);
             const response = await axios.get("http://localhost:4000/api/contact/all", {
                 withCredentials: true
             });
 
-            if (response.data.success) {
+            if (response.data && response.data.success) {
                 setConsultations(response.data.consultations);
+                
+                // Store the data in our shared dataStore
+                dataStore.setConsultations(response.data.consultations);
+                
+                setLoading(false);
             } else {
-                throw new Error("Failed to fetch consultations");
+                throw new Error(response.data?.message || "Failed to fetch consultations");
             }
-            setLoading(false);
         } catch (err) {
             console.error("Error fetching consultations:", err);
             setError(`Failed to load consultations: ${err.response?.data?.message || err.message}`);

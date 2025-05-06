@@ -5,6 +5,7 @@ import "./JobDetails.css";
 import axios from "axios";
 import { FaTrash, FaEdit, FaRegFileAlt } from "react-icons/fa";
 import { notifyDataUpdate } from './Statistics';
+import { dataStore } from '../../utils/eventEmitter';
 
 const JobDetails = () => {
     const [jobs, setJobs] = useState([]);
@@ -25,6 +26,9 @@ const JobDetails = () => {
             if (response.data && response.data.success) {
                 console.log("Jobs data received:", response.data.jobs);
                 setJobs(response.data.jobs);
+                
+                // Store the data in our shared dataStore
+                dataStore.setJobs(response.data.jobs);
             } else {
                 throw new Error(response.data?.message || "Failed to fetch jobs");
             }
