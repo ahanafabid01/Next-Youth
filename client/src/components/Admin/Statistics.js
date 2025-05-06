@@ -3,7 +3,7 @@ import Sidebar from "./Sidebar";
 import "./Statistics.css";
 import axios from "axios";
 import { 
-    LineChart, Line, BarChart, Bar, PieChart, Pie, Cell, Area, AreaChart,
+    LineChart, Line, BarChart, Bar, PieChart, Pie, Cell, Area, AreaChart, ComposedChart,
     XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer 
 } from "recharts";
 import { 
@@ -28,6 +28,23 @@ export const notifyDataUpdate = (dataType) => {
             updateListeners[dataType].forEach(callback => callback());
         }
     }, 500);
+};
+
+// Custom tooltip component
+const CustomTooltip = ({ active, payload, label }) => {
+    if (active && payload && payload.length) {
+        return (
+            <div className="custom-tooltip">
+                <p className="label">{`${label}`}</p>
+                {payload.map((entry, index) => (
+                    <p key={`item-${index}`} style={{ color: entry.color }}>
+                        {`${entry.name}: ${entry.value}`}
+                    </p>
+                ))}
+            </div>
+        );
+    }
+    return null;
 };
 
 const Statistics = () => {
@@ -361,6 +378,66 @@ const Statistics = () => {
         return consultationsByMonth;
     };
 
+    // Add this new function to prepare user growth trend data
+    const prepareUserGrowthTrendData = () => {
+        if (!users.length) return [];
+        
+        // Get all users sorted by creation date
+        const sortedUsers = [...users].sort((a, b) => 
+            new Date(a.createdAt) - new Date(b.createdAt)
+        );
+        
+        // Get the date of the first user registration
+        const firstUserDate = new Date(sortedUsers[0]?.createdAt || new Date());
+        
+        // Create monthly data points from first user until now
+        const months = [];
+        const now = new Date();
+        let currentDate = new Date(firstUserDate);
+        currentDate.setDate(1); // Start from the 1st of the month
+        
+        while (currentDate <= now) {
+            months.push(new Date(currentDate));
+            currentDate.setMonth(currentDate.getMonth() + 1);
+        }
+        
+        // Make sure we have at least 6 months of data
+        if (months.length < 6) {
+            const oldestDate = new Date(now);
+            oldestDate.setMonth(now.getMonth() - 5);
+            
+            months.length = 0; // Clear the array
+            currentDate = new Date(oldestDate);
+            currentDate.setDate(1); // Start from the 1st of the month
+            
+            while (currentDate <= now) {
+                months.push(new Date(currentDate));
+                currentDate.setMonth(currentDate.getMonth() + 1);
+            }
+        }
+        
+        // Calculate cumulative users for each month
+        return months.map((month, index) => {
+            const nextMonth = new Date(month);
+            nextMonth.setMonth(nextMonth.getMonth() + 1);
+            
+            const totalUsersUntilNow = sortedUsers.filter(user => 
+                new Date(user.createdAt) < nextMonth
+            ).length;
+            
+            const newUsersThisMonth = sortedUsers.filter(user => {
+                const creationDate = new Date(user.createdAt);
+                return creationDate >= month && creationDate < nextMonth;
+            }).length;
+            
+            return {
+                name: month.toLocaleDateString('en-US', { month: 'short', year: 'numeric' }),
+                'Total Users': totalUsersUntilNow,
+                'New Users': newUsersThisMonth
+            };
+        });
+    };
+
     // Calculate growth rates
     const calculateGrowthRate = (currentValue, previousValue) => {
         if (!previousValue) return 100; // First data point, assume 100% growth
@@ -372,6 +449,14 @@ const Statistics = () => {
     const handleRefresh = () => {
         fetchData();
     };
+
+    // Calculate the chart data
+    const userStatusData = prepareUserStatusData();
+    const consultationStatusData = prepareConsultationStatusData();
+    const jobStatusData = prepareJobStatusData();
+    const userRegistrationData = prepareWeeklyRegistrationsData();
+    const consultationTrendData = prepareConsultationTrendData();
+    const userGrowthTrendData = prepareUserGrowthTrendData();
 
     // Loading state with skeleton UI
     if (loading) {
@@ -452,29 +537,12 @@ const Statistics = () => {
     const avgBudget = jobs.length ? 
         Math.round(jobs.reduce((sum, job) => sum + (job.fixedAmount || 0), 0) / jobs.length) : 0;
 
-    // Prepare chart data
-    const userRegistrationData = prepareWeeklyRegistrationsData();
-    const userStatusData = prepareUserStatusData();
-    const consultationStatusData = prepareConsultationStatusData();
-    const jobStatusData = prepareJobStatusData();
-    const consultationTrendData = prepareConsultationTrendData();
+    // Update job availability calculation logic
+    console.log("Job statuses:", jobs.map(job => job.status));
 
-    // Custom tooltip for charts
-    const CustomTooltip = ({ active, payload, label }) => {
-        if (active && payload && payload.length) {
-            return (
-                <div className="custom-tooltip">
-                    <p className="tooltip-label">{`${label}`}</p>
-                    {payload.map((entry, index) => (
-                        <p key={`item-${index}`} style={{ color: entry.color || entry.fill }}>
-                            {`${entry.name}: ${entry.value}`}
-                        </p>
-                    ))}
-                </div>
-            );
-        }
-        return null;
-    };
+    // For now, consider all jobs as available for testing
+    const availableJobs = jobs.length;
+    const notAvailableJobs = 0;
 
     return (
         <div className="admin-dashboard">
@@ -611,23 +679,24 @@ const Statistics = () => {
                             <div className="charts-grid">
                                 <div className="chart-card">
                                     <div className="chart-header">
-                                        <h3 className="chart-title">User Registrations (Last 7 Days)</h3>
+                                        <h3 className="chart-title">User Verification Status</h3>
                                     </div>
                                     <div className="chart-container">
                                         <ResponsiveContainer width="100%" height={300}>
-                                            <AreaChart data={userRegistrationData} margin={{ top: 10, right: 30, left: 0, bottom: 0 }}>
-                                                <defs>
-                                                    <linearGradient id="colorUsers" x1="0" y1="0" x2="0" y2="1">
-                                                        <stop offset="5%" stopColor={colorPalette.primary} stopOpacity={0.8}/>
-                                                        <stop offset="95%" stopColor={colorPalette.primary} stopOpacity={0.1}/>
-                                                    </linearGradient>
-                                                </defs>
+                                            <BarChart 
+                                                data={[
+                                                    { name: 'User Verification', 'Verified Users': verifiedUsers, 'Not Verified': totalUsers - verifiedUsers }
+                                                ]} 
+                                                margin={{ top: 10, right: 30, left: 0, bottom: 0 }}
+                                            >
                                                 <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
                                                 <XAxis dataKey="name" tick={{ fontSize: 12 }} />
                                                 <YAxis tick={{ fontSize: 12 }} />
                                                 <Tooltip content={<CustomTooltip />} />
-                                                <Area type="monotone" dataKey="Users" stroke={colorPalette.primary} fillOpacity={1} fill="url(#colorUsers)" />
-                                            </AreaChart>
+                                                <Legend wrapperStyle={{ fontSize: '12px' }} />
+                                                <Bar dataKey="Verified Users" fill={colorPalette.secondary} radius={[4, 4, 0, 0]} />
+                                                <Bar dataKey="Not Verified" fill={colorPalette.danger} radius={[4, 4, 0, 0]} />
+                                            </BarChart>
                                         </ResponsiveContainer>
                                     </div>
                                 </div>
@@ -665,21 +734,25 @@ const Statistics = () => {
                                                     data={userStatusData}
                                                     cx="50%"
                                                     cy="50%"
-                                                    innerRadius={60}
-                                                    outerRadius={80}
+                                                    innerRadius={50}
+                                                    outerRadius={70}
                                                     paddingAngle={5}
                                                     fill="#8884d8"
                                                     dataKey="value"
-                                                    label={({name, percent}) => 
-                                                        percent > 0.05 ? `${name}: ${(percent * 100).toFixed(0)}%` : ''
-                                                    }
+                                                    label={({percent}) => percent > 0.08 ? `${(percent * 100).toFixed(0)}%` : ''}
+                                                    labelLine={false}
                                                 >
                                                     {userStatusData.map((entry, index) => (
                                                         <Cell key={`cell-${index}`} fill={entry.color} />
                                                     ))}
                                                 </Pie>
                                                 <Tooltip content={<CustomTooltip />} />
-                                                <Legend layout="vertical" verticalAlign="middle" align="right" />
+                                                <Legend 
+                                                    layout="horizontal" 
+                                                    verticalAlign="bottom" 
+                                                    align="center"
+                                                    wrapperStyle={{ paddingTop: '20px' }}
+                                                />
                                             </PieChart>
                                         </ResponsiveContainer>
                                     </div>
@@ -696,21 +769,25 @@ const Statistics = () => {
                                                     data={consultationStatusData}
                                                     cx="50%"
                                                     cy="50%"
-                                                    innerRadius={60}
-                                                    outerRadius={80}
+                                                    innerRadius={50}
+                                                    outerRadius={70}
                                                     paddingAngle={5}
                                                     fill="#8884d8"
                                                     dataKey="value"
-                                                    label={({name, percent}) => 
-                                                        percent > 0.05 ? `${name}: ${(percent * 100).toFixed(0)}%` : ''
-                                                    }
+                                                    label={({percent}) => percent > 0.08 ? `${(percent * 100).toFixed(0)}%` : ''}
+                                                    labelLine={false}
                                                 >
                                                     {consultationStatusData.map((entry, index) => (
                                                         <Cell key={`cell-${index}`} fill={entry.color} />
                                                     ))}
                                                 </Pie>
                                                 <Tooltip content={<CustomTooltip />} />
-                                                <Legend layout="vertical" verticalAlign="middle" align="right" />
+                                                <Legend 
+                                                    layout="horizontal" 
+                                                    verticalAlign="bottom" 
+                                                    align="center"
+                                                    wrapperStyle={{ paddingTop: '20px' }}
+                                                />
                                             </PieChart>
                                         </ResponsiveContainer>
                                     </div>
@@ -727,21 +804,25 @@ const Statistics = () => {
                                                     data={jobStatusData}
                                                     cx="50%"
                                                     cy="50%"
-                                                    innerRadius={60}
-                                                    outerRadius={80}
+                                                    innerRadius={50}
+                                                    outerRadius={70}
                                                     paddingAngle={5}
                                                     fill="#8884d8"
                                                     dataKey="value"
-                                                    label={({name, percent}) => 
-                                                        percent > 0.05 ? `${name}: ${(percent * 100).toFixed(0)}%` : ''
-                                                    }
+                                                    label={({percent}) => percent > 0.08 ? `${(percent * 100).toFixed(0)}%` : ''}
+                                                    labelLine={false}
                                                 >
                                                     {jobStatusData.map((entry, index) => (
                                                         <Cell key={`cell-${index}`} fill={entry.color} />
                                                     ))}
                                                 </Pie>
                                                 <Tooltip content={<CustomTooltip />} />
-                                                <Legend layout="vertical" verticalAlign="middle" align="right" />
+                                                <Legend 
+                                                    layout="horizontal" 
+                                                    verticalAlign="bottom" 
+                                                    align="center"
+                                                    wrapperStyle={{ paddingTop: '20px' }}
+                                                />
                                             </PieChart>
                                         </ResponsiveContainer>
                                     </div>
@@ -769,17 +850,17 @@ const Statistics = () => {
                                     </div>
                                 </div>
                                 <div className="summary-card">
-                                    <div className="summary-icon"><FaCheckCircle /></div>
+                                    <div className="summary-icon" style={{color: colorPalette.secondary}}><FaCheckCircle /></div>
                                     <div className="summary-details">
                                         <h3>{verifiedUsers}</h3>
                                         <p>Verified Users</p>
                                     </div>
                                 </div>
                                 <div className="summary-card">
-                                    <div className="summary-icon"><FaRegClock /></div>
+                                    <div className="summary-icon" style={{color: colorPalette.danger}}><FaTimesCircle /></div>
                                     <div className="summary-details">
-                                        <h3>{pendingVerifications}</h3>
-                                        <p>Pending Verifications</p>
+                                        <h3>{totalUsers - verifiedUsers}</h3>
+                                        <p>Not Verified</p>
                                     </div>
                                 </div>
                             </div>
@@ -819,23 +900,24 @@ const Statistics = () => {
                                 
                                 <div className="chart-card full-width">
                                     <div className="chart-header">
-                                        <h3 className="chart-title">User Growth Trend</h3>
+                                        <h3 className="chart-title">User Verification Comparison</h3>
                                     </div>
                                     <div className="chart-container">
                                         <ResponsiveContainer width="100%" height={300}>
-                                            <AreaChart data={userRegistrationData} margin={{ top: 10, right: 30, left: 0, bottom: 0 }}>
-                                                <defs>
-                                                    <linearGradient id="colorUsersGrowth" x1="0" y1="0" x2="0" y2="1">
-                                                        <stop offset="5%" stopColor={colorPalette.primary} stopOpacity={0.8}/>
-                                                        <stop offset="95%" stopColor={colorPalette.primary} stopOpacity={0.1}/>
-                                                    </linearGradient>
-                                                </defs>
-                                                <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
-                                                <XAxis dataKey="name" tick={{ fontSize: 12 }} />
-                                                <YAxis tick={{ fontSize: 12 }} />
+                                            <BarChart 
+                                                data={[
+                                                    { name: 'User Verification Status', 'Verified Users': verifiedUsers, 'Not Verified': totalUsers - verifiedUsers }
+                                                ]} 
+                                                margin={{ top: 20, right: 30, left: 20, bottom: 5 }}
+                                            >
+                                                <CartesianGrid strokeDasharray="3 3" />
+                                                <XAxis dataKey="name" />
+                                                <YAxis />
                                                 <Tooltip content={<CustomTooltip />} />
-                                                <Area type="monotone" dataKey="Users" stroke={colorPalette.primary} fillOpacity={1} fill="url(#colorUsersGrowth)" />
-                                            </AreaChart>
+                                                <Legend />
+                                                <Bar dataKey="Verified Users" fill={colorPalette.secondary} />
+                                                <Bar dataKey="Not Verified" fill={colorPalette.danger} />
+                                            </BarChart>
                                         </ResponsiveContainer>
                                     </div>
                                 </div>
@@ -898,8 +980,22 @@ const Statistics = () => {
                                 <div className="summary-card">
                                     <div className="summary-icon" style={{color: colorPalette.primary}}><FaRegClock /></div>
                                     <div className="summary-details">
+                                        <h3>{confirmedConsultations}</h3>
+                                        <p>Confirmed</p>
+                                    </div>
+                                </div>
+                                <div className="summary-card">
+                                    <div className="summary-icon" style={{color: colorPalette.accent}}><FaInfoCircle /></div>
+                                    <div className="summary-details">
                                         <h3>{pendingConsultations}</h3>
                                         <p>Pending</p>
+                                    </div>
+                                </div>
+                                <div className="summary-card">
+                                    <div className="summary-icon" style={{color: colorPalette.danger}}><FaTimesCircle /></div>
+                                    <div className="summary-details">
+                                        <h3>{consultations.filter(c => c.status === 'cancelled').length}</h3>
+                                        <p>Cancelled</p>
                                     </div>
                                 </div>
                             </div>
@@ -1003,8 +1099,15 @@ const Statistics = () => {
                                 <div className="summary-card">
                                     <div className="summary-icon" style={{color: colorPalette.secondary}}><FaCheckCircle /></div>
                                     <div className="summary-details">
-                                        <h3>{activeJobs}</h3>
-                                        <p>Active Jobs</p>
+                                        <h3>{availableJobs}</h3>
+                                        <p>Available</p>
+                                    </div>
+                                </div>
+                                <div className="summary-card">
+                                    <div className="summary-icon" style={{color: colorPalette.danger}}><FaTimesCircle /></div>
+                                    <div className="summary-details">
+                                        <h3>{notAvailableJobs}</h3>
+                                        <p>Not Available</p>
                                     </div>
                                 </div>
                                 <div className="summary-card">
@@ -1039,6 +1142,14 @@ const Statistics = () => {
                                                     new Date(job.createdAt) > new Date(Date.now() - 7 * 24 * 60 * 60 * 1000)
                                                 ).length}
                                             </span>
+                                        </li>
+                                        <li className="stat-item">
+                                            <span className="stat-label">Available Jobs</span>
+                                            <span className="stat-value">{availableJobs}</span>
+                                        </li>
+                                        <li className="stat-item">
+                                            <span className="stat-label">Not Available Jobs</span>
+                                            <span className="stat-value">{notAvailableJobs}</span>
                                         </li>
                                     </ul>
                                 </div>
