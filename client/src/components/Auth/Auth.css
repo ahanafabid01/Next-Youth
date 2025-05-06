@@ -29,6 +29,18 @@
   /* Light mode RGB values */
   --primary-rgb: 79, 70, 229;
   --secondary-rgb: 124, 58, 237;
+
+  /* Additional light mode variables */
+  --light-background-primary: #f8f9fa;
+  --light-background-secondary: #e9ecef;
+  --light-accent: #4e6bff;
+  --light-pattern: rgba(0, 0, 0, 0.03);
+
+  /* Dark mode variables */
+  --dark-background-primary: #121212;
+  --dark-background-secondary: #1e1e1e;
+  --dark-accent: #6c7aff;
+  --dark-pattern: rgba(255, 255, 255, 0.03);
 }
 
 /* Dark mode variables */
@@ -82,6 +94,76 @@ body {
   height: 100%;
   z-index: -1;
   overflow: hidden;
+}
+
+/* Professional background styles */
+.auth-background {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: -1;
+  overflow: hidden;
+  background: linear-gradient(135deg, var(--light-background-primary), var(--light-background-secondary));
+  transition: background 0.3s ease;
+}
+
+.dark-mode .auth-background {
+  background: linear-gradient(135deg, var(--dark-background-primary), var(--dark-background-secondary));
+}
+
+.auth-background-pattern {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-image: 
+    radial-gradient(var(--light-pattern) 2px, transparent 2px),
+    radial-gradient(var(--light-pattern) 2px, transparent 2px);
+  background-size: 40px 40px;
+  background-position: 0 0, 20px 20px;
+  opacity: 0.6;
+}
+
+.dark-mode .auth-background-pattern {
+  background-image: 
+    radial-gradient(var(--dark-pattern) 2px, transparent 2px),
+    radial-gradient(var(--dark-pattern) 2px, transparent 2px);
+}
+
+/* Additional decorative elements */
+.auth-background::before {
+  content: "";
+  position: absolute;
+  top: -50%;
+  right: -50%;
+  width: 90%;
+  height: 90%;
+  border-radius: 50%;
+  background: radial-gradient(circle, var(--light-accent) 0%, transparent 70%);
+  opacity: 0.05;
+}
+
+.dark-mode .auth-background::before {
+  background: radial-gradient(circle, var(--dark-accent) 0%, transparent 70%);
+}
+
+.auth-background::after {
+  content: "";
+  position: absolute;
+  bottom: -30%;
+  left: -30%;
+  width: 80%;
+  height: 80%;
+  border-radius: 50%;
+  background: radial-gradient(circle, var(--light-accent) 0%, transparent 70%);
+  opacity: 0.05;
+}
+
+.dark-mode .auth-background::after {
+  background: radial-gradient(circle, var(--dark-accent) 0%, transparent 70%);
 }
 
 /* Spline Background styling */
@@ -152,7 +234,7 @@ body {
 }
 
 .auth-header .logo {
-  height: 130px;
+  height: 90px;
   width: auto;
   transition: transform 0.3s ease;
 }

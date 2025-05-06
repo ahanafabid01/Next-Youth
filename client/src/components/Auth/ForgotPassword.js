@@ -2,7 +2,6 @@ import React, { useState, useEffect } from "react";
 import axios from "axios";
 import { Link } from "react-router-dom";
 import "./Auth.css";
-import SplineBackground from "./SplineBackground";
 import logo from "../../assets/images/logo.png";
 
 const ForgotPassword = () => {
@@ -61,8 +60,10 @@ const ForgotPassword = () => {
 
     return (
         <div className={`auth-page ${isDarkMode ? "dark-mode" : ""}`}>
-            {/* Add Spline Background Component */}
-            <SplineBackground />
+            {/* Replace SplineBackground with professional background */}
+            <div className="auth-background">
+                <div className="auth-background-pattern"></div>
+            </div>
             
             <header className="auth-header">
                 <Link to="/">
