@@ -170,6 +170,7 @@
   padding: 0;
 }
 
+/* Enhanced styling for recent activities */
 .recent-activities ul li {
   padding: 16px;
   margin-bottom: 12px;
@@ -177,6 +178,26 @@
   border-left: 4px solid #3b82f6;
   background-color: #f8fafc;
   box-shadow: 0 2px 6px rgba(0, 0, 0, 0.04);
+  transition: all 0.2s ease;
+}
+
+.recent-activities ul li:hover {
+  background-color: #f1f5f9;
+  border-left-width: 6px;
+}
+
+.recent-activities ul li:first-child {
+  border-left-color: #10b981; /* Highlight the most recent item */
+  background-color: rgba(16, 185, 129, 0.05);
+}
+
+/* Add to your AdminDashboard.css file */
+.activity-time {
+  font-size: 0.8rem;
+  color: #666;
+  margin-left: 8px;
+  font-style: italic;
+  display: inline-block;
 }
 
 /* Job Cards */
@@ -229,6 +250,134 @@
 .recharts-surface {
   border-radius: 10px;
   overflow: hidden;
+}
+
+/* Dashboard grid layout */
+.dashboard-grid {
+  display: grid;
+  grid-template-columns: 2fr 1fr;
+  gap: 24px;
+  margin-bottom: 32px;
+}
+
+@media (max-width: 1024px) {
+  .dashboard-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* Loading and error states */
+.loading, .error-message {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 300px;
+  font-size: 1.2rem;
+  color: #64748b;
+  background-color: white;
+  border-radius: 12px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.06);
+}
+
+.error-message {
+  color: #dc2626;
+}
+
+/* Quick actions - Fixed uniform sizing */
+.quick-actions {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 24px;
+  margin-top: 16px;
+}
+
+.quick-actions a {
+  text-decoration: none;
+  color: inherit;
+  display: block; /* Makes link take full card size */
+  height: 100%;
+}
+
+.action-card {
+  display: flex;
+  align-items: center;
+  padding: 20px;
+  height: 110px; /* Fixed height for all cards */
+  background-color: #fff;
+  border-radius: 12px;
+  border: 1px solid #e2e8f0;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.06);
+  transition: all 0.2s ease;
+}
+
+.action-card:hover {
+  transform: translateY(-4px);
+  border-color: #3b82f6;
+  box-shadow: 0 8px 16px rgba(59, 130, 246, 0.15);
+}
+
+.action-icon {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-width: 50px; /* Fixed minimum width */
+  height: 50px;
+  background-color: rgba(59, 130, 246, 0.1);
+  border-radius: 10px;
+  font-size: 1.4rem;
+  color: #3b82f6;
+  margin-right: 16px;
+}
+
+.action-card:nth-child(2) .action-icon {
+  color: #10b981;
+  background-color: rgba(16, 185, 129, 0.1);
+}
+
+.action-card:nth-child(3) .action-icon {
+  color: #f59e0b;
+  background-color: rgba(245, 158, 11, 0.1);
+}
+
+.action-card:nth-child(4) .action-icon {
+  color: #6366f1;
+  background-color: rgba(99, 102, 241, 0.1);
+}
+
+.action-text {
+  flex: 1; /* Takes remaining space */
+}
+
+.action-text h3 {
+  margin: 0;
+  font-size: 1.1rem;
+  margin-bottom: 6px;
+  color: #1e293b;
+  white-space: nowrap; /* Prevents wrapping of titles */
+}
+
+.action-text p {
+  margin: 0;
+  font-size: 0.85rem;
+  color: #64748b;
+  line-height: 1.4;
+}
+
+/* Responsive adjustments for quick actions */
+@media (max-width: 1200px) {
+  .quick-actions {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 768px) {
+  .quick-actions {
+    grid-template-columns: 1fr;
+  }
+  
+  .action-card {
+    height: 90px;
+  }
 }
 
 /* Responsive adjustments */
