@@ -4,6 +4,7 @@ import "./AdminDashboard.css";
 import "./Consultations.css";
 import axios from "axios";
 import { FaEdit, FaCheck, FaTimes, FaClock, FaCalendarCheck } from "react-icons/fa";
+import { notifyDataUpdate } from './Statistics';
 
 const Consultations = () => {
     const [consultations, setConsultations] = useState([]);
@@ -115,6 +116,9 @@ const Consultations = () => {
                 
                 // Send notification email about status change
                 await sendStatusUpdateEmail(updatedConsultation, newStatus);
+                
+                // Notify the Statistics component that data has changed
+                notifyDataUpdate('consultations');
             } else {
                 throw new Error(response.data.message || "Failed to update consultation status");
             }
@@ -217,6 +221,9 @@ const Consultations = () => {
                 
                 closeModals();
                 alert("Consultation updated successfully");
+                
+                // Notify the Statistics component that data has changed
+                notifyDataUpdate('consultations');
             } else {
                 throw new Error(response.data.message || "Failed to update consultation");
             }

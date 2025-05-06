@@ -3,6 +3,7 @@ import Sidebar from "./Sidebar";
 import "./AdminDashboard.css";
 import "./Users.css"; // <-- Add this line
 import axios from "axios";
+import { notifyDataUpdate } from './Statistics';
 
 const AdminDashboard = () => {
     const [users, setUsers] = useState([]);
@@ -93,6 +94,7 @@ const AdminDashboard = () => {
                 setUsers(updatedUsers);
                 closeModal();
                 alert(`User verification ${action === 'verified' ? 'approved' : 'rejected'} successfully!`);
+                notifyDataUpdate('users');
             }
         } catch (err) {
             console.error(`Error ${action} verification:`, err);
@@ -123,6 +125,7 @@ const AdminDashboard = () => {
                 setShowDeleteModal(false);
                 setUserToDelete(null);
                 alert('User deleted successfully!');
+                notifyDataUpdate('users');
             }
         } catch (err) {
             console.error("Error deleting user:", err);
