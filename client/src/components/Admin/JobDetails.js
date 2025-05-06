@@ -4,6 +4,8 @@ import "./AdminDashboard.css";
 import "./JobDetails.css";
 import axios from "axios";
 import { FaTrash, FaEdit, FaRegFileAlt } from "react-icons/fa";
+import { notifyDataUpdate } from './Statistics';
+import { dataStore } from '../../utils/eventEmitter';
 
 const JobDetails = () => {
     const [jobs, setJobs] = useState([]);
@@ -24,6 +26,9 @@ const JobDetails = () => {
             if (response.data && response.data.success) {
                 console.log("Jobs data received:", response.data.jobs);
                 setJobs(response.data.jobs);
+                
+                // Store the data in our shared dataStore
+                dataStore.setJobs(response.data.jobs);
             } else {
                 throw new Error(response.data?.message || "Failed to fetch jobs");
             }
@@ -72,6 +77,10 @@ const JobDetails = () => {
             
             if (response.data.success) {
                 setJobs(jobs.filter(job => job._id !== jobId));
+                
+                // Notify the Statistics component that data has changed
+                notifyDataUpdate('jobs');
+                
                 alert("Job deleted successfully");
             } else {
                 alert(response.data.message || "Failed to delete job");

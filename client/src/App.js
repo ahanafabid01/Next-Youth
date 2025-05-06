@@ -11,7 +11,7 @@ import Applications from "./components/Admin/Applications";
 import Statistics from "./components/Admin/Statistics";
 import JobDetails from "./components/Admin/JobDetails";
 import Consultations from "./components/Admin/Consultations";
-import DemoConsultations from "./components/Admin/DemoConsultations";
+import MailSystem from "./components/Admin/MailSystem";
 import EmployeeDashboard from "./components/Employee/EmployeeDashboard";
 import EmployerDashboard from "./components/Employer/EmployerDashboard";
 import ForgotPassword from "./components/Auth/ForgotPassword";
@@ -24,7 +24,6 @@ import Notifications from './components/Employee/Notifications';
 import JobApplication from "./components/Employee/JobApplication";
 import BusinessSolutions from "./Homepages/BusinessSolutions";
 import ScheduleConsultation from "./Homepages/contact";
-import RequestDemo from "./Homepages/RequestDemo";
 import ViewApplication from "./components/Employee/ViewApplication";
 import ViewProfile from './components/Employer/ViewProfile';
 import EmployerVerification from './components/Employer/EmployerVerification';
@@ -46,7 +45,8 @@ const App = () => {
                 <Route path="/admin-dashboard/statistics" element={<Statistics />} />
                 <Route path="/admin-dashboard/job-details" element={<JobDetails />} />
                 <Route path="/admin-dashboard/consultations" element={<Consultations />} />
-                <Route path="/admin-dashboard/demo-consultations" element={<DemoConsultations />} />
+                
+                <Route path="/admin-dashboard/mail-system" element={<MailSystem />} />
                 <Route path="/employee-dashboard" element={<EmployeeDashboard />} />
                 <Route path="/employer-dashboard" element={<EmployerDashboard />} />
                 <Route path="/forgot-password" element={<ForgotPassword />} />
@@ -63,7 +63,6 @@ const App = () => {
                 <Route path="/jobs/apply/:jobId" element={<JobApplication />} />
                 <Route path="/business-solutions" element={<BusinessSolutions />} />
                 <Route path="/contact" element={<ScheduleConsultation />} />
-                <Route path="/request-demo" element={<RequestDemo />} />
                 <Route path="/view-application/:applicationId" element={<ViewApplication />} />
                 <Route path="/view-profile/:userId" element={<ViewProfile />} />
                 <Route path="/edit-application/:applicationId" element={<EditApplication />} />

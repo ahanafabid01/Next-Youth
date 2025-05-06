@@ -40,3 +40,14 @@
   flex: 1;
   padding: 20px;
 }
+
+.main-content h1 {
+  margin-bottom: 1rem;
+  font-size: 2rem;
+  color: #2d3748;
+}
+
+.main-content p {
+  color: #718096;
+  font-size: 1.1rem;
+}

@@ -701,3 +701,35 @@ export const rateApplicant = async (req, res) => {
         });
     }
 };
+
+// Add this new controller function
+export const getAllApplications = async (req, res) => {
+    try {
+        // Check if user is admin
+        if (req.user.user_type !== 'admin') {
+            return res.status(403).json({ 
+                success: false, 
+                message: "Unauthorized. Only admin can access this resource." 
+            });
+        }
+        
+        const applicationModel = await import("../models/applicationModel.js").then(module => module.default);
+        
+        // Get all applications with populated job and applicant details
+        const applications = await applicationModel.find()
+            .populate('job', 'title description')
+            .populate('applicant', 'name email')
+            .sort({ createdAt: -1 });
+        
+        return res.status(200).json({
+            success: true,
+            applications
+        });
+    } catch (error) {
+        console.error("Error fetching all applications:", error);
+        return res.status(500).json({
+            success: false,
+            message: "Internal server error"
+        });
+    }
+};

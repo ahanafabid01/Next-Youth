@@ -3,8 +3,9 @@ import Sidebar from "./Sidebar";
 import "./AdminDashboard.css";
 import "./Users.css"; // <-- Add this line
 import axios from "axios";
+import { notifyDataUpdate } from './Statistics';
 
-const AdminDashboard = () => {
+const Users = () => {
     const [users, setUsers] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
@@ -26,7 +27,14 @@ const AdminDashboard = () => {
             });
             
             if (response.data && response.data.success) {
-                setUsers(response.data.users);
+                // Sort users by creation date (newest first) with more robust date handling
+                const sortedUsers = [...response.data.users].sort((a, b) => {
+                    // Handle potential invalid dates
+                    const dateA = new Date(a.createdAt).getTime() || 0;
+                    const dateB = new Date(b.createdAt).getTime() || 0;
+                    return dateB - dateA; // Descending order (newest first)
+                });
+                setUsers(sortedUsers);
             } else {
                 throw new Error(response.data?.message || "Failed to fetch users");
             }
@@ -84,15 +92,22 @@ const AdminDashboard = () => {
             );
             
             if (response.data && response.data.success) {
-                // Update the user in the local state
+                // Update the user in the local state and maintain sort
                 const updatedUsers = users.map(user => 
                     user._id === selectedUser._id 
                     ? {...user, idVerification: {...user.idVerification, status: action, notes: verificationNote}} 
                     : user
                 );
-                setUsers(updatedUsers);
+                // Re-sort to ensure order is maintained
+                const sortedUsers = [...updatedUsers].sort((a, b) => {
+                    const dateA = new Date(a.createdAt).getTime() || 0;
+                    const dateB = new Date(b.createdAt).getTime() || 0;
+                    return dateB - dateA;
+                });
+                setUsers(sortedUsers);
                 closeModal();
                 alert(`User verification ${action === 'verified' ? 'approved' : 'rejected'} successfully!`);
+                notifyDataUpdate('users');
             }
         } catch (err) {
             console.error(`Error ${action} verification:`, err);
@@ -123,6 +138,7 @@ const AdminDashboard = () => {
                 setShowDeleteModal(false);
                 setUserToDelete(null);
                 alert('User deleted successfully!');
+                notifyDataUpdate('users');
             }
         } catch (err) {
             console.error("Error deleting user:", err);
@@ -131,6 +147,15 @@ const AdminDashboard = () => {
             alert(`Failed to delete user: ${errorMessage}`);
             setShowDeleteModal(false);
         }
+    };
+
+    // Add this helper function
+    const isNewUser = (date) => {
+        const userDate = new Date(date);
+        const now = new Date();
+        const diffTime = Math.abs(now - userDate);
+        const diffHours = diffTime / (1000 * 60 * 60);
+        return diffHours < 24;
     };
 
     if (loading) return <div className="loading">Loading users data...</div>;
@@ -167,20 +192,25 @@ const AdminDashboard = () => {
                                     <th>Phone</th>
                                     <th>User Type</th>
                                     <th>ID Verification</th>
+                                    <th>Registration Date</th>
                                     <th>Actions</th>
                                 </tr>
                             </thead>
                             <tbody>
                                 {users.length > 0 ? (
                                     users.map(user => (
-                                        <tr key={user._id}>
-                                            <td>{user.name}</td>
+                                        <tr key={user._id} className={isNewUser(user.createdAt) ? "new-user-row" : ""}>
+                                            <td>
+                                                {user.name}
+                                                {isNewUser(user.createdAt) && <span className="new-user-badge">New</span>}
+                                            </td>
                                             <td>{user.email}</td>
                                             <td>{user.phoneNumber || "Not provided"}</td>
                                             <td className="user-type">{user.user_type}</td>
                                             <td>
                                                 {getVerificationBadge(user.idVerification?.status)}
                                             </td>
+                                            <td>{new Date(user.createdAt).toLocaleDateString()}</td>
                                             <td className="action-buttons-cell">
                                                 {user.idVerification?.frontImage && user.idVerification?.backImage && (
                                                     <button 
@@ -319,4 +349,4 @@ const AdminDashboard = () => {
     );
 };
 
-export default AdminDashboard;
+export default Users;

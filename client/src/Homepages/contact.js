@@ -3,7 +3,6 @@ import { Link, useSearchParams } from "react-router-dom";
 import "./BusinessSolutions.css"; // Reuse existing styles
 import "./Homepage.css"; // Reuse homepage styles
 import "./contact.css"; // New separated CSS
-import "./RequestDemo.css"; // Add this import for demo styles
 import axios from "axios";
 
 const ScheduleConsultation = () => {

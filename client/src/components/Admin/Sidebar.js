@@ -8,7 +8,8 @@ import {
   FaSearch, 
   FaBriefcase,
   FaMoon,
-  FaSun 
+  FaSun,
+  FaPaperPlane // Added new icon for mail system
 } from "react-icons/fa";
 import "./Sidebar.css";
 import AdminLogout from "./AdminLogout";
@@ -90,14 +91,7 @@ const Sidebar = () => {
               <FaEnvelope /> Consultations
             </Link>
           </li>
-          <li>
-            <Link 
-              to="/admin-dashboard/demo-consultations" 
-              className={location.pathname === "/admin-dashboard/demo-consultations" ? "active" : ""}
-            >
-              <FaEnvelope /> Demo Consultations
-            </Link>
-          </li>
+
           <li>
             <Link 
               to="/admin-dashboard/applications" 
@@ -120,6 +114,15 @@ const Sidebar = () => {
               className={location.pathname === "/admin-dashboard/job-details" ? "active" : ""}
             >
               <FaBriefcase /> Job Details
+            </Link>
+          </li>
+          {/* New Central Mailing System link */}
+          <li>
+            <Link 
+              to="/admin-dashboard/mail-system" 
+              className={location.pathname === "/admin-dashboard/mail-system" ? "active" : ""}
+            >
+              <FaPaperPlane /> Central Mailing System
             </Link>
           </li>
           <li className="theme-toggle" onClick={toggleTheme}>
