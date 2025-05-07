@@ -1,6 +1,15 @@
 import React, { useState, useRef, useEffect } from "react";
 import { Link } from "react-router-dom";
 import "./Homepage.css";
+import { initFaqToggle } from "../utils/faqToggle"; // Add this import
+import heroImage from '../assets/images/hero.jpg';
+import logoLight from '../assets/images/logo-light.png';
+import logoDark from '../assets/images/logo-dark.png';
+import featureImage from '../assets/images/feature.jpg';
+import testimonial1 from '../assets/images/testimonial-1.jpg';
+import testimonial2 from '../assets/images/testimonial-2.jpg';
+import testimonial3 from '../assets/images/testimonial-3.jpg';
+import testimonial4 from '../assets/images/testimonial-4.jpg';
 
 const Homepage = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -11,45 +20,7 @@ const Homepage = () => {
   const [toastMessage, setToastMessage] = useState("");
   const hamburgerRef = useRef(null);
   const menuRef = useRef(null);
-  const heroRef = useRef(null);
-
-  // Create particles for hero section
-  useEffect(() => {
-    if (!heroRef.current) return;
-    
-    const heroSection = heroRef.current;
-    const particlesContainer = document.createElement('div');
-    particlesContainer.className = 'hero-particles';
-    heroSection.appendChild(particlesContainer);
-    
-    // Create particles
-    for (let i = 0; i < 50; i++) {
-      const particle = document.createElement('div');
-      particle.className = 'particle';
-      
-      // Random particle properties
-      const size = Math.random() * 5 + 2;
-      const posX = Math.random() * 100;
-      const posY = Math.random() * 100;
-      const delay = Math.random() * 5;
-      const duration = Math.random() * 10 + 10;
-      
-      particle.style.width = `${size}px`;
-      particle.style.height = `${size}px`;
-      particle.style.left = `${posX}%`;
-      particle.style.top = `${posY}%`;
-      particle.style.opacity = Math.random() * 0.5 + 0.1;
-      particle.style.animation = `float ${duration}s ease-in-out ${delay}s infinite`;
-      
-      particlesContainer.appendChild(particle);
-    }
-    
-    return () => {
-      if (heroSection.contains(particlesContainer)) {
-        heroSection.removeChild(particlesContainer);
-      }
-    };
-  }, []);
+  const faqContainerRef = useRef(null); // Add this ref
 
   // Handle click outside menu
   useEffect(() => {
@@ -77,57 +48,6 @@ const Homepage = () => {
       showToastNotification("Light mode activated");
     }
   }, [isDarkMode]);
-  
-  // Scroll animation
-  useEffect(() => {
-    const observer = new IntersectionObserver((entries) => {
-      entries.forEach((entry, index) => {
-        if (entry.isIntersecting) {
-          // Add staggered delay based on index
-          setTimeout(() => {
-            entry.target.classList.add('visible');
-          }, index * 100);
-        }
-      });
-    }, { threshold: 0.1 });
-    
-    document.querySelectorAll('.category-card, .service-card, .section-title').forEach(el => {
-      el.classList.add('fade-in');
-      observer.observe(el);
-    });
-    
-    return () => observer.disconnect();
-  }, []);
-
-  // Add parallax effect to service cards - Only on desktop devices
-  useEffect(() => {
-    const isMobile = window.matchMedia('(max-width: 768px)').matches;
-    if (isMobile) return; // Skip parallax effect on mobile
-    
-    const handleMouseMove = (e) => {
-      document.querySelectorAll('.service-card').forEach(card => {
-        const rect = card.getBoundingClientRect();
-        const x = e.clientX - rect.left;
-        const y = e.clientY - rect.top;
-        
-        const centerX = rect.width / 2;
-        const centerY = rect.height / 2;
-        
-        const tiltX = (x - centerX) / centerX;
-        const tiltY = (y - centerY) / centerY;
-        
-        if (rect.left <= e.clientX && e.clientX <= rect.right &&
-            rect.top <= e.clientY && e.clientY <= rect.bottom) {
-          card.style.transform = `perspective(1000px) rotateX(${tiltY * 3}deg) rotateY(${-tiltX * 3}deg) scale3d(1.02, 1.02, 1.02)`;
-        } else {
-          card.style.transform = '';
-        }
-      });
-    };
-    
-    window.addEventListener('mousemove', handleMouseMove);
-    return () => window.removeEventListener('mousemove', handleMouseMove);
-  }, []);
 
   // Add scroll progress indicator
   useEffect(() => {
@@ -149,72 +69,6 @@ const Homepage = () => {
       if (progressBar.parentNode) {
         document.body.removeChild(progressBar);
       }
-    };
-  }, []);
-
-  // Improved typing effect implementation
-  useEffect(() => {
-    const heroHeading = document.querySelector('.hero h1');
-    if (!heroHeading) return;
-    
-    // First make sure text is visible immediately for users who prefer reduced motion
-    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
-      heroHeading.textContent = "Find the perfect freelance services for your business";
-      heroHeading.classList.remove('typing-effect');
-      return;
-    }
-    
-    // Store the original text and clear it
-    const originalText = "Find the perfect freelance services for your business";
-    heroHeading.textContent = '';
-    heroHeading.classList.add('typing-effect');
-    
-    // Track animation state to prevent duplicate animations
-    let isAnimating = true;
-    let animationFrame = null;
-    
-    // Use a more controlled typing approach
-    let index = 0;
-    let lastTypingTime = 0;
-    const typingSpeed = 40; // ms per character
-    
-    const typeCharacter = (timestamp) => {
-      if (!isAnimating) return;
-      
-      if (!lastTypingTime) lastTypingTime = timestamp;
-      
-      // Only type a new character if enough time has passed
-      if (timestamp - lastTypingTime >= typingSpeed) {
-        if (index < originalText.length) {
-          // Add exactly one character at a time
-          heroHeading.textContent = originalText.substring(0, index + 1);
-          index++;
-          lastTypingTime = timestamp;
-        } else {
-          // Typing finished - remove typing effect after a delay
-          setTimeout(() => {
-            heroHeading.classList.remove('typing-effect');
-          }, 1000);
-          isAnimating = false;
-          return; // Stop animation
-        }
-      }
-      
-      // Continue animation
-      animationFrame = requestAnimationFrame(typeCharacter);
-    };
-    
-    // Start animation
-    animationFrame = requestAnimationFrame(typeCharacter);
-    
-    return () => {
-      // Clean up - cancel animation and set full text if component unmounts during animation
-      isAnimating = false;
-      if (animationFrame) {
-        cancelAnimationFrame(animationFrame);
-      }
-      heroHeading.textContent = originalText;
-      heroHeading.classList.remove('typing-effect');
     };
   }, []);
 
@@ -271,6 +125,16 @@ const Homepage = () => {
     });
   }, [isMenuOpen]);
 
+  // Add this useEffect after your other useEffect hooks
+  useEffect(() => {
+    if (faqContainerRef.current) {
+      // Small delay to ensure DOM is fully rendered
+      setTimeout(() => {
+        initFaqToggle(faqContainerRef.current);
+      }, 100);
+    }
+  }, []); // Only run once on mount
+
   const showToastNotification = (message) => {
     setToastMessage(message);
     setShowToast(true);
@@ -300,18 +164,81 @@ const Homepage = () => {
     };
   }, [isMenuOpen]);
 
+  // Categories for the services section
+  const serviceCategories = [
+    { icon: "fa-pencil-alt", title: "Writing & Translation", description: "Quality content from expert writers", count: "12,400+" },
+    { icon: "fa-desktop", title: "Web Development", description: "Custom websites and applications", count: "10,250+" },
+    { icon: "fa-paint-brush", title: "Graphics & Design", description: "Creative visual solutions for any need", count: "15,780+" },
+    { icon: "fa-video", title: "Video & Animation", description: "Engaging video content production", count: "9,630+" },
+    { icon: "fa-chart-line", title: "Digital Marketing", description: "Effective strategies for online growth", count: "8,920+" },
+    { icon: "fa-music", title: "Music & Audio", description: "Professional sound production", count: "7,450+" },
+    { icon: "fa-mobile-alt", title: "Mobile Development", description: "Apps for iOS and Android platforms", count: "6,830+" },
+    { icon: "fa-camera", title: "Photography", description: "High-quality images for all purposes", count: "5,240+" }
+  ];
+
+  // Testimonials data
+  const testimonials = [
+    {
+      name: "Sarah Johnson",
+      role: "Marketing Director",
+      company: "TechFlow Inc.",
+      content: "Next Youth has transformed how we find talent. The quality of work and response time is exceptional. We've been able to scale our content production by 200% in just three months.",
+      avatar: testimonial1
+    },
+    {
+      name: "Michael Chen",
+      role: "Startup Founder",
+      company: "Innovate Labs",
+      content: "As a startup with limited resources, Next Youth has been a game-changer. Access to world-class talent at affordable rates helped us launch faster than expected.",
+      avatar: testimonial2
+    },
+    {
+      name: "Emma Rodriguez",
+      role: "Creative Director",
+      company: "Design Collective",
+      content: "The platform's ease of use and quality control measures ensure we always get exceptional work. Our projects are completed on time and exceed expectations.",
+      avatar: testimonial3
+    },
+    {
+      name: "David Smith",
+      role: "E-commerce Manager",
+      company: "ShopSmart",
+      content: "Next Youth has been instrumental in our marketing campaigns. The freelancers are professional, and the platform is user-friendly. Highly recommend!",
+      avatar: testimonial4
+    }
+
+  ];
+
+  // Feature list data
+  const features = [
+    { icon: "fa-check-circle", text: "Vetted professionals" },
+    { icon: "fa-check-circle", text: "Secure payments" },
+    { icon: "fa-check-circle", text: "24/7 customer support" },
+    { icon: "fa-check-circle", text: "Money-back guarantee" },
+    { icon: "fa-check-circle", text: "Quality assurance" },
+    { icon: "fa-check-circle", text: "Fast delivery" }
+  ];
+
   return (
     <div className={`homepage-container ${isDarkMode ? 'dark-mode' : ''}`}>
       <header>
         <div className="header-container">
-          <div className="logo float">Next Youth</div>
+          <div className="logo">
+            <Link to="/">
+              <img 
+                src={isDarkMode ? logoDark : logoLight} 
+                alt="Next Youth" 
+                className="logo-image" 
+              />
+            </Link>
+          </div>
           
           <nav className="desktop-nav">
             <ul>
               <li><Link to="/business-solutions"><i className="fas fa-briefcase"></i>Business Solutions</Link></li>
               <li><a href="#"><i className="fas fa-compass"></i>Explore</a></li>
               <li><a href="#"><i className="fas fa-globe"></i>English</a></li>
-              <li><a href="#"><i className="fas fa-store"></i>Become a Seller</a></li>
+              <li><Link to="/become-seller"><i className="fas fa-store"></i>Become a Seller</Link></li>
               <li>
                 <button 
                   className="theme-toggle"
@@ -356,7 +283,7 @@ const Homepage = () => {
             <li className="nav-fade-in"><Link to="/business-solutions" onClick={handleMenuClick}><i className="fas fa-briefcase"></i>Business Solutions</Link></li>
             <li className="nav-fade-in"><a href="#" onClick={handleMenuClick}><i className="fas fa-compass"></i>Explore</a></li>
             <li className="nav-fade-in"><a href="#" onClick={handleMenuClick}><i className="fas fa-globe"></i>English</a></li>
-            <li className="nav-fade-in"><a href="#" onClick={handleMenuClick}><i className="fas fa-store"></i>Become a Seller</a></li>
+            <li className="nav-fade-in"><Link to="/become-seller" onClick={handleMenuClick}><i className="fas fa-store"></i>Become a Seller</Link></li>
             <li className="nav-fade-in"><Link to="/login" className="login" onClick={handleMenuClick}><i className="fas fa-sign-in-alt"></i>Log In</Link></li>
             <li className="nav-fade-in"><Link to="/register" className="signup" onClick={handleMenuClick}><i className="fas fa-user-plus"></i>Sign Up</Link></li>
             <li className="nav-fade-in">
@@ -375,74 +302,242 @@ const Homepage = () => {
         </div>
       </header>
 
-      <section className="hero" ref={heroRef}>
-        <div className="hero-content">
-          <h1 className="hero-heading visible-heading">Find the perfect freelance services for your business</h1>
-          <p className="float">Join millions of people who commission freelancers on the world's most popular freelance services website.</p>
-          <div className="search-bar">
-            <input 
-              type="text" 
-              placeholder="What service are you looking for today?" 
-              aria-label="Search services"
-            />
-            <button className="search-button">
-              <i className="fas fa-search"></i>Search
-            </button>
-          </div>
-        </div>
-      </section>
-
-      <section className="categories">
-        <h2 className="section-title">Popular professional services</h2>
-        <div className="category-grid">
-          {['Logo Design', 'WordPress', 'Voice Over', 'Video Explainer', 'Social Media', 'SEO', 'App Design', 'Video Editing', 'Web Design', 'Digital Marketing'].map((service, index) => (
-            <div className="category-card glow-on-hover" key={index}>
-              <div className="category-icon">
-                <i className={`fas fa-${['pencil-alt', 'wordpress', 'microphone', 'video', 'hashtag', 'chart-line', 'mobile-alt', 'film', 'desktop', 'bullhorn'][index]}`}></i>
-              </div>
-              <h3>{service}</h3>
-              <p>{[
-                'Build your brand',
-                'Customize your site',
-                'Share your message',
-                'Engage your audience',
-                'Reach more customers',
-                'Unlock growth online',
-                'Design your app',
-                'Edit your videos',
-                'Create your website',
-                'Promote your business'
-              ][index]}</p>
+      <div className="main-content-container">
+        {/* Hero Section */}
+        <section className="hero-section">
+          <div className="hero-content">
+            <h1 className="hero-title">Find the perfect <span className="highlight">freelance</span> services for your business</h1>
+            <p className="hero-subtitle">Connect with talented professionals from around the world to get your projects done quickly and efficiently.</p>
+            
+            <div className="search-container">
+              <input type="text" placeholder="What service are you looking for today?" className="search-input" />
+              <button className="search-button">
+                <i className="fas fa-search"></i>
+                Search
+              </button>
             </div>
-          ))}
-        </div>
-      </section>
+            
+            <div className="popular-searches">
+              <span>Popular:</span>
+              <a href="#">Website Design</a>
+              <a href="#">Logo Design</a>
+              <a href="#">Content Writing</a>
+              <a href="#">Video Editing</a>
+            </div>
+          </div>
+          
+          <div className="hero-image">
+            <img src={heroImage} alt="Freelancers working together" />
+          </div>
+        </section>
 
-      <section className="popular-services">
-        <div className="services-container">
-          <h2 className="section-title">Popular services</h2>
-          <div className="services-grid parallax-container">
-            {[1, 2, 3, 4].map((item) => (
-              <div className="service-card parallax-layer" key={item}>
-                <div className="service-image" style={{ backgroundImage: "url('https://source.unsplash.com/random/800x600')" }}>
-                  <div className="service-overlay"></div>
+        {/* Trusted By Section */}
+        <section className="trusted-by-section">
+          <h2>Trusted by leading brands and startups</h2>
+          <div className="company-logos">
+            <div className="company-logo"><i className="fab fa-google"></i> Google</div>
+            <div className="company-logo"><i className="fab fa-facebook"></i> Facebook</div>
+            <div className="company-logo"><i className="fab fa-paypal"></i> PayPal</div>
+            <div className="company-logo"><i className="fab fa-netflix"></i> Netflix</div>
+            <div className="company-logo"><i className="fab fa-spotify"></i> Spotify</div>
+          </div>
+        </section>
+
+        {/* Services Section */}
+        <section className="services-section">
+          <div className="section-header">
+            <h2>Popular Professional Services</h2>
+            <p>Explore the boundaries of art and technology with Next Youth's digital services</p>
+          </div>
+          
+          <div className="service-categories">
+            {serviceCategories.map((category, index) => (
+              <div className="service-card" key={index}>
+                <div className="service-icon">
+                  <i className={`fas ${category.icon}`}></i>
                 </div>
-                <div className="service-info">
-                  <div className="seller-info">
-                    <div className="seller-avatar">JD</div>
-                    <div className="seller-details">
-                      <span className="seller-name">John Doe</span>
-                      <span className="seller-rating"><i className="fas fa-star"></i>5.0</span>
-                    </div>
-                  </div>
-                  <h3 className="service-title">Professional {['Logo Design', 'Website Development', 'Voice Over', 'Video Editing'][item-1]}</h3>
-                  <div className="price">From ${[20, 50, 10, 35][item-1]}</div>
+                <h3>{category.title}</h3>
+                <p>{category.description}</p>
+                <div className="service-stats">
+                  <span>{category.count} services</span>
                 </div>
               </div>
             ))}
           </div>
-        </div>
-      </section>
+        </section>
+
+        {/* How It Works Section */}
+        <section className="how-it-works-section">
+          <div className="section-header">
+            <h2>How Next Youth Works</h2>
+            <p>Get your projects done in just 4 simple steps</p>
+          </div>
+          
+          <div className="steps-container">
+            <div className="step">
+              <div className="step-number">1</div>
+              <div className="step-icon">
+                <i className="fas fa-search"></i>
+              </div>
+              <h3>Browse Services</h3>
+              <p>Explore thousands of services and find the perfect match for your needs</p>
+            </div>
+            
+            <div className="step">
+              <div className="step-number">2</div>
+              <div className="step-icon">
+                <i className="fas fa-comments"></i>
+              </div>
+              <h3>Contact Freelancer</h3>
+              <p>Discuss project details and requirements directly with professionals</p>
+            </div>
+            
+            <div className="step">
+              <div className="step-number">3</div>
+              <div className="step-icon">
+                <i className="fas fa-credit-card"></i>
+              </div>
+              <h3>Pay Securely</h3>
+              <p>Payment is held securely until you approve the completed work</p>
+            </div>
+            
+            <div className="step">
+              <div className="step-number">4</div>
+              <div className="step-icon">
+                <i className="fas fa-check-circle"></i>
+              </div>
+              <h3>Receive & Review</h3>
+              <p>Get your completed project and provide feedback to the freelancer</p>
+            </div>
+          </div>
+        </section>
+
+        {/* Features Section */}
+        <section className="features-section">
+          <div className="features-content">
+            <h2>Why Choose Next Youth</h2>
+            <p>Our platform provides everything you need to get quality work done quickly</p>
+            
+            <div className="feature-list">
+              {features.map((feature, index) => (
+                <div className="feature-item" key={index}>
+                  <i className={`fas ${feature.icon}`}></i>
+                  <span>{feature.text}</span>
+                </div>
+              ))}
+            </div>
+            
+            <Link to="/register" className="cta-button">
+              Get Started <i className="fas fa-arrow-right"></i>
+            </Link>
+          </div>
+          
+          <div className="features-image">
+            <img src={featureImage} alt="Next Youth features" />
+          </div>
+        </section>
+
+        {/* Testimonials Section */}
+        <section className="testimonials-section">
+          <div className="section-header">
+            <h2>What Our Clients Say</h2>
+            <p>Thousands of satisfied customers trust Next Youth for their project needs</p>
+          </div>
+          
+          <div className="testimonials-container">
+            {testimonials.map((testimonial, index) => (
+              <div className="testimonial-card" key={index}>
+                <div className="testimonial-content">
+                  <p>"{testimonial.content}"</p>
+                </div>
+                <div className="testimonial-author">
+                  <div className="author-avatar">
+                    <img src={testimonial.avatar} alt={testimonial.name} onError={(e) => {
+                      e.target.onerror = null;
+                      e.target.src = "/api/placeholder/50/50";
+                    }} />
+                  </div>
+                  <div className="author-info">
+                    <h4>{testimonial.name}</h4>
+                    <p>{testimonial.role}, {testimonial.company}</p>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </section>
+
+        {/* CTA Section */}
+        <section className="cta-section">
+          <div className="cta-content">
+            <h2>Join thousands of satisfied clients today</h2>
+            <p>Find talented professionals to bring your projects to life or offer your services to clients worldwide.</p>
+            
+            <div className="cta-buttons">
+              <Link to="/register" className="cta-primary">
+                Join as Client <i className="fas fa-user-plus"></i>
+              </Link>
+              <Link to="/become-seller" className="cta-secondary">
+                Become a Seller <i className="fas fa-store"></i>
+              </Link>
+            </div>
+          </div>
+        </section>
+
+        {/* FAQ Section */}
+        <section className="faq-section">
+          <div className="section-header">
+            <h2>Frequently Asked Questions</h2>
+            <p>Find answers to common questions about Next Youth</p>
+          </div>
+          
+          <div className="faq-container" ref={faqContainerRef}>
+            <div className="seller-faq-item">
+              <div className="seller-faq-question">
+                <h3>How do I get started on Next Youth?</h3>
+                <i className="fas fa-chevron-down"></i>
+              </div>
+              <div className="seller-faq-answer">
+                <p>Simply create an account, browse available services, and place an order with your chosen freelancer. You can also post a project and have freelancers bid on it.</p>
+              </div>
+            </div>
+            
+            <div className="seller-faq-item">
+              <div className="seller-faq-question">
+                <h3>How does payment work?</h3>
+                <i className="fas fa-chevron-down"></i>
+              </div>
+              <div className="seller-faq-answer">
+                <p>Payments are held securely in escrow until you approve the completed work. This protects both clients and freelancers and ensures quality delivery.</p>
+              </div>
+            </div>
+            
+            <div className="seller-faq-item">
+              <div className="seller-faq-question">
+                <h3>Can I work with the same freelancer again?</h3>
+                <i className="fas fa-chevron-down"></i>
+              </div>
+              <div className="seller-faq-answer">
+                <p>Absolutely! You can save your favorite freelancers, rehire them for new projects, and build long-term working relationships.</p>
+              </div>
+            </div>
+            
+            <div className="seller-faq-item">
+              <div className="seller-faq-question">
+                <h3>What if I'm not satisfied with the work?</h3>
+                <i className="fas fa-chevron-down"></i>
+              </div>
+              <div className="seller-faq-answer">
+                <p>We have a revision policy that allows you to request changes before accepting delivery. If issues persist, our customer support team will help resolve any disputes.</p>
+              </div>
+            </div>
+          </div>
+          
+          <div className="more-questions">
+            <p>Have more questions? <a href="/help-support">Contact our support team</a></p>
+          </div>
+        </section>
+      </div>
 
       <footer>
         <div className="footer-container">
@@ -466,7 +561,7 @@ const Homepage = () => {
             <h3>Support</h3>
             <ul>
               {['Help & Support', 'Trust & Safety', 'Selling Guide', 'Buying Guide'].map((item, i) => (
-                <li key={i}><a href="#"><i className={`fas fa-${['question-circle', 'shield-alt', 'store', 'shopping-cart'][i]}`}></i>{item}</a></li>
+                <li key={i}><a href="/help-support"><i className={`fas fa-${['question-circle', 'shield-alt', 'store', 'shopping-cart'][i]}`}></i>{item}</a></li>
               ))}
             </ul>
           </div>

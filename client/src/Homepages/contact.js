@@ -4,6 +4,10 @@ import "./BusinessSolutions.css"; // Reuse existing styles
 import "./Homepage.css"; // Reuse homepage styles
 import "./contact.css"; // New separated CSS
 import axios from "axios";
+import logoLight from '../assets/images/logo-light.png';
+import logoDark from '../assets/images/logo-dark.png';
+import davidWilson from '../assets/images/david-willson.jpg';
+import aliciaZhang from '../assets/images/alicia-zhang.jpg';
 
 const ScheduleConsultation = () => {
   const [searchParams] = useSearchParams();
@@ -316,14 +320,22 @@ const ScheduleConsultation = () => {
       {/* Header Section */}
       <header>
         <div className="header-container">
-          <div className="logo float">Next Youth</div>
+          <div className="logo">
+            <Link to="/">
+              <img 
+                src={isDarkMode ? logoDark : logoLight} 
+                alt="Next Youth" 
+                className="logo-image" 
+              />
+            </Link>
+          </div>
           
           <nav className="desktop-nav">
             <ul>
               <li><Link to="/business-solutions"><i className="fas fa-briefcase"></i>Business Solutions</Link></li>
               <li><a href="#"><i className="fas fa-compass"></i>Explore</a></li>
               <li><a href="#"><i className="fas fa-globe"></i>English</a></li>
-              <li><a href="#"><i className="fas fa-store"></i>Become a Seller</a></li>
+              <li><Link to="/become-seller"><i className="fas fa-store"></i>Become a Seller</Link></li>
               <li>
                 <button 
                   className="theme-toggle"
@@ -368,7 +380,7 @@ const ScheduleConsultation = () => {
             <li className="nav-fade-in"><Link to="/business-solutions" onClick={handleMenuClick}><i className="fas fa-briefcase"></i>Business Solutions</Link></li>
             <li className="nav-fade-in"><a href="#" onClick={handleMenuClick}><i className="fas fa-compass"></i>Explore</a></li>
             <li className="nav-fade-in"><a href="#" onClick={handleMenuClick}><i className="fas fa-globe"></i>English</a></li>
-            <li className="nav-fade-in"><a href="#" onClick={handleMenuClick}><i className="fas fa-store"></i>Become a Seller</a></li>
+            <li className="nav-fade-in"><Link to="/become-seller" onClick={handleMenuClick}><i className="fas fa-store"></i>Become a Seller</Link></li>
             <li className="nav-fade-in"><Link to="/login" className="login" onClick={handleMenuClick}><i className="fas fa-sign-in-alt"></i>Log In</Link></li>
             <li className="nav-fade-in"><Link to="/register" className="signup" onClick={handleMenuClick}><i className="fas fa-user-plus"></i>Sign Up</Link></li>
             <li className="nav-fade-in">
@@ -800,7 +812,7 @@ const ScheduleConsultation = () => {
               </div>
               <div className="demo-testimonial-author">
                 <div className="demo-author-image">
-                  <img src="https://source.unsplash.com/random/100x100/?ceo" alt="CEO" />
+                  <img src={davidWilson} alt="David Wilson, CEO" />
                 </div>
                 <div className="demo-author-details">
                   <h4>David Wilson</h4>
@@ -816,7 +828,7 @@ const ScheduleConsultation = () => {
               </div>
               <div className="demo-testimonial-author">
                 <div className="demo-author-image">
-                  <img src="https://source.unsplash.com/random/100x100/?cto" alt="CTO" />
+                  <img src={aliciaZhang} alt="Alicia Zhang, CTO" />
                 </div>
                 <div className="demo-author-details">
                   <h4>Alicia Zhang</h4>

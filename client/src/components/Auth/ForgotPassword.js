@@ -2,7 +2,8 @@ import React, { useState, useEffect } from "react";
 import axios from "axios";
 import { Link } from "react-router-dom";
 import "./Auth.css";
-import logo from "../../assets/images/logo.png";
+import logoLight from "../../assets/images/logo-light.png";
+import logoDark from "../../assets/images/logo-dark.png";
 
 const ForgotPassword = () => {
     const [email, setEmail] = useState("");
@@ -60,14 +61,17 @@ const ForgotPassword = () => {
 
     return (
         <div className={`auth-page ${isDarkMode ? "dark-mode" : ""}`}>
-            {/* Replace SplineBackground with professional background */}
             <div className="auth-background">
                 <div className="auth-background-pattern"></div>
             </div>
             
             <header className="auth-header">
                 <Link to="/">
-                    <img src={logo} alt="Next Youth" className="logo" />
+                    <img 
+                        src={isDarkMode ? logoDark : logoLight} 
+                        alt="Next Youth" 
+                        className="logo" 
+                    />
                 </Link>
                 <button className="theme-toggle" onClick={toggleDarkMode}>
                     <i className="fas fa-sun"></i>

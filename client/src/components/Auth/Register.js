@@ -2,7 +2,8 @@ import React, { useState, useEffect } from "react";
 import axios from "axios";
 import { useNavigate, Link } from "react-router-dom";
 import "./Auth.css";
-import logo from "../../assets/images/logo.png";
+import logoLight from "../../assets/images/logo-light.png";
+import logoDark from "../../assets/images/logo-dark.png";
 
 const Register = () => {
     const [name, setName] = useState("");
@@ -253,7 +254,11 @@ const Register = () => {
             
             <header className="auth-header">
                 <Link to="/">
-                    <img src={logo} alt="Next Youth" className="logo" />
+                    <img 
+                        src={isDarkMode ? logoDark : logoLight} 
+                        alt="Next Youth" 
+                        className="logo" 
+                    />
                 </Link>
                 <button className="theme-toggle" onClick={toggleDarkMode}>
                     <i className="fas fa-sun"></i>

@@ -22,12 +22,15 @@ import VerifyAccount from './components/Employee/VerifyAccount';
 import MyProfile from './components/Employee/MyProfile';
 import Notifications from './components/Employee/Notifications';
 import JobApplication from "./components/Employee/JobApplication";
+import Settings from "./components/Employee/Settings";
 import BusinessSolutions from "./Homepages/BusinessSolutions";
 import ScheduleConsultation from "./Homepages/contact";
 import ViewApplication from "./components/Employee/ViewApplication";
 import ViewProfile from './components/Employer/ViewProfile';
 import EmployerVerification from './components/Employer/EmployerVerification';
 import EditApplication from './components/Employee/EditApplication';
+import BecomeSeller from "./Homepages/BecomeSeller";
+import HelpAndSupport from './Homepages/Help&Support';
 import "./App.css";
 
 const App = () => {
@@ -53,6 +56,7 @@ const App = () => {
                 <Route path="/profile" element={<Profile />} />
                 <Route path="/employee-profile" element={<EmployeeProfile />} />
                 <Route path="/find-jobs" element={<FindJobs />} />
+                <Route path="/settings" element={<Settings />} />
                 <Route path="/find-jobs/saved" element={<FindJobs />} />
                 <Route path="/find-jobs/proposals" element={<FindJobs />} />
                 <Route path="/find-jobs/details/:jobId" element={<FindJobs />} />
@@ -66,6 +70,8 @@ const App = () => {
                 <Route path="/view-application/:applicationId" element={<ViewApplication />} />
                 <Route path="/view-profile/:userId" element={<ViewProfile />} />
                 <Route path="/edit-application/:applicationId" element={<EditApplication />} />
+                <Route path="/become-seller" element={<BecomeSeller />} />
+                <Route path="/help-support" element={<HelpAndSupport />} />
             </Routes>
         </Router>
     );

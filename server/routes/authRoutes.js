@@ -1,6 +1,6 @@
 import express from "express";
 import { register, Login, Logout, verifyEmail, resendOtp, resetPassword, getUserProfile, updateUserProfile, verifyIdentity,
-    getVerificationStatus, updateEmployeeProfile, getEmployeeProfile, getAllUsers, verifyUserIdentity, deleteUser, getUserProfileById, getMyRatings } from "../controllers/authController.js";
+    getVerificationStatus, updateEmployeeProfile, getEmployeeProfile, getAllUsers, verifyUserIdentity, deleteUser, getUserProfileById, getMyRatings, changePassword } from "../controllers/authController.js";
 import userAuth from "../middleware/userAuth.js"; // Import userAuth middleware
 import upload from "../middleware/uploadMiddleware.js"; // Import upload middleware
 import userModel from "../models/userModel.js"; // Add this import
@@ -81,5 +81,6 @@ authRouter.delete('/delete-user/:id', userAuth, deleteUser);
 
 // Add this new route
 authRouter.get('/my-ratings', userAuth, getMyRatings);
+authRouter.put('/change-password', userAuth, changePassword);
 
 export default authRouter;
