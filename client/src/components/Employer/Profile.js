@@ -11,7 +11,9 @@ import {
   FaCamera,
   FaChevronLeft,
   FaExclamationCircle,
-  FaIdCard // Add this import for the verification icon
+  FaShieldAlt,
+  FaCheck,
+  FaHourglassHalf
 } from "react-icons/fa";
 import { useNavigate } from "react-router-dom";
 import "./Profile.css";
@@ -32,7 +34,7 @@ const Profile = () => {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
     const [previewImage, setPreviewImage] = useState(null);
-    const [verificationStatus, setVerificationStatus] = useState(null); // Add state for verification status
+    const [verificationStatus, setVerificationStatus] = useState(null);
 
     useEffect(() => {
         const fetchUserProfile = async () => {
@@ -129,15 +131,23 @@ const Profile = () => {
                 setProfile(response.data.user);
                 setIsEditing(false);
                 setPreviewImage(null);
+                setProfilePictureFile(null);
                 setError(null);
                 
-                const successMessage = document.createElement('div');
-                successMessage.className = 'success-toast';
-                successMessage.textContent = 'Profile updated successfully!';
-                document.body.appendChild(successMessage);
+                // Create success toast
+                const successToast = document.createElement('div');
+                successToast.className = 'success-toast';
+                const checkIcon = document.createElement('span');
+                checkIcon.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>';
+                const message = document.createTextNode('Profile updated successfully!');
+                successToast.appendChild(checkIcon);
+                successToast.appendChild(message);
+                document.body.appendChild(successToast);
                 
                 setTimeout(() => {
-                    document.body.removeChild(successMessage);
+                    if (document.body.contains(successToast)) {
+                        document.body.removeChild(successToast);
+                    }
                 }, 3000);
             }
         } catch (error) {
@@ -150,19 +160,30 @@ const Profile = () => {
 
     const getProgressColor = () => {
         if (progress < 30) return '#e74c3c';
-        if (progress < 70) return '#f39c12';
-        return '#27ae60';
+        if (progress < 70) return '#f59e0b';
+        return '#10b981';
     };
 
     const handleNavigateToVerification = () => {
         navigate('/employer-verification');
+    };
+    
+    const formatDate = (dateString) => {
+        if (!dateString) return "Not specified";
+        try {
+            const date = new Date(dateString);
+            if (isNaN(date.getTime())) return dateString; // Return original if invalid
+            return date.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
+        } catch (error) {
+            return dateString;
+        }
     };
 
     if (loading && !profile.name) {
         return (
             <div className="profile-loading">
                 <div className="loading-spinner"></div>
-                <p>Loading profile...</p>
+                <p>Loading your profile...</p>
             </div>
         );
     }
@@ -173,7 +194,7 @@ const Profile = () => {
                 {error && (
                     <div className="error-banner">
                         <FaExclamationCircle /> {error}
-                        <button onClick={() => setError(null)} className="close-error">×</button>
+                        <button onClick={() => setError(null)} className="close-error" aria-label="Close error message">×</button>
                     </div>
                 )}
 
@@ -187,6 +208,10 @@ const Profile = () => {
                                     width: `${progress}%`,
                                     backgroundColor: getProgressColor()
                                 }}
+                                role="progressbar"
+                                aria-valuenow={Math.round(progress)}
+                                aria-valuemin="0"
+                                aria-valuemax="100"
                             ></div>
                         </div>
                         <span className="progress-text">{Math.round(progress)}% Profile Complete</span>
@@ -198,13 +223,6 @@ const Profile = () => {
                         <div className="profile-card">
                             <div className="profile-card-header">
                                 <h2>Personal Information</h2>
-                                <button 
-                                    className="edit-btn" 
-                                    onClick={() => setIsEditing(true)}
-                                    aria-label="Edit profile"
-                                >
-                                    <FaEdit /> <span className="btn-text">Edit Profile</span>
-                                </button>
                             </div>
 
                             <div className="profile-content">
@@ -215,28 +233,27 @@ const Profile = () => {
                                             alt={profile.name || "Profile"} 
                                             className="profile-avatar"
                                             onError={(e) => {
-                                                console.log("Image failed to load:", e.target.src);
                                                 e.target.src = "https://via.placeholder.com/160x160?text=User";
                                                 e.target.onerror = null;
                                             }}
                                         />
                                     </div>
-                                    <h3 className="profile-name">{profile.name}</h3>
+                                    <h3 className="profile-name">{profile.name || "Your Name"}</h3>
                                     
                                     {verificationStatus === 'verified' ? (
                                         <div className="verification-badge verified">
-                                            <FaIdCard /> Verified Account
+                                            <FaCheck /> Verified Account
                                         </div>
                                     ) : verificationStatus === 'pending' ? (
                                         <div className="verification-badge pending">
-                                            <FaIdCard /> Verification Pending
+                                            <FaHourglassHalf /> Verification Pending
                                         </div>
                                     ) : (
                                         <button 
                                             className="verify-account-btn" 
                                             onClick={handleNavigateToVerification}
                                         >
-                                            <FaIdCard /> Verify Your Account
+                                            <FaShieldAlt /> Verify Your Account
                                         </button>
                                     )}
                                     
@@ -253,8 +270,8 @@ const Profile = () => {
                                     <div className="info-item">
                                         <FaEnvelope className="info-icon" />
                                         <div className="info-content">
-                                            <span className="info-label">Email</span>
-                                            <span className="info-value">{profile.email}</span>
+                                            <span className="info-label">Email Address</span>
+                                            <span className="info-value">{profile.email || "Not specified"}</span>
                                         </div>
                                     </div>
                                     
@@ -262,16 +279,14 @@ const Profile = () => {
                                         <FaCalendar className="info-icon" />
                                         <div className="info-content">
                                             <span className="info-label">Date of Birth</span>
-                                            <span className="info-value">
-                                                {profile.dateOfBirth || "Not specified"}
-                                            </span>
+                                            <span className="info-value">{formatDate(profile.dateOfBirth)}</span>
                                         </div>
                                     </div>
                                     
                                     <div className="info-item">
                                         <FaLinkedin className="info-icon" />
                                         <div className="info-content">
-                                            <span className="info-label">LinkedIn</span>
+                                            <span className="info-label">LinkedIn Profile</span>
                                             <span className="info-value">
                                                 {profile.linkedInId ? (
                                                     <a href={profile.linkedInId.startsWith('http') ? profile.linkedInId : `https://${profile.linkedInId}`} 
@@ -290,9 +305,9 @@ const Profile = () => {
                                     <div className="info-item bio-item">
                                         <FaInfoCircle className="info-icon" />
                                         <div className="info-content">
-                                            <span className="info-label">About Me</span>
+                                            <span className="info-label">About</span>
                                             <p className="info-bio">
-                                                {profile.otherInfo || "No bio added yet. Tell us about yourself!"}
+                                                {profile.otherInfo || "No information added yet. Tell potential candidates about yourself or your company!"}
                                             </p>
                                         </div>
                                     </div>
@@ -307,12 +322,16 @@ const Profile = () => {
                                 <button 
                                     type="button" 
                                     className="back-btn" 
-                                    onClick={() => setIsEditing(false)}
+                                    onClick={() => {
+                                        setIsEditing(false);
+                                        setPreviewImage(null);
+                                        setProfilePictureFile(null);
+                                    }}
                                     aria-label="Cancel editing"
                                 >
                                     <FaChevronLeft /> <span>Back</span>
                                 </button>
-                                <h2>Edit Profile</h2>
+                                <h2>Edit Your Profile</h2>
                             </div>
 
                             <div className="avatar-edit-section">
@@ -322,7 +341,6 @@ const Profile = () => {
                                         alt="Profile Preview" 
                                         className="avatar-preview"
                                         onError={(e) => {
-                                            console.log("Preview image failed to load:", e.target.src);
                                             e.target.src = "https://via.placeholder.com/140x140?text=User";
                                             e.target.onerror = null;
                                         }}
@@ -338,7 +356,7 @@ const Profile = () => {
                                         className="avatar-input"
                                     />
                                 </div>
-                                <p className="avatar-hint">Click on the camera icon to change your profile picture</p>
+                                <p className="avatar-hint">Click the camera icon to upload a new profile picture</p>
                             </div>
 
                             <div className="form-section">
@@ -382,7 +400,7 @@ const Profile = () => {
                             </div>
 
                             <div className="form-section">
-                                <h3><FaLinkedin className="section-icon" /> Social Links</h3>
+                                <h3><FaLinkedin className="section-icon" /> Professional Presence</h3>
                                 <div className="form-group">
                                     <label htmlFor="linkedInId"><FaLinkedin /> LinkedIn Profile</label>
                                     <input
@@ -393,6 +411,7 @@ const Profile = () => {
                                         onChange={handleInputChange}
                                         placeholder="https://linkedin.com/in/username"
                                     />
+                                    <small className="text-helper">Adding your LinkedIn profile helps build trust with candidates</small>
                                 </div>
                             </div>
 
@@ -405,10 +424,10 @@ const Profile = () => {
                                         name="otherInfo"
                                         value={profile.otherInfo}
                                         onChange={handleInputChange}
-                                        placeholder="Tell us about yourself..."
+                                        placeholder="Share information about yourself or your company..."
                                         rows="4"
                                     ></textarea>
-                                    <small className="text-helper">Share your skills, experience, or interests. This helps others get to know you better.</small>
+                                    <small className="text-helper">Tell candidates about your company culture, values, and what makes you unique</small>
                                 </div>
                             </div>
 
@@ -436,6 +455,7 @@ const Profile = () => {
                                     onClick={() => {
                                         setIsEditing(false);
                                         setPreviewImage(null);
+                                        setProfilePictureFile(null);
                                     }}
                                 >
                                     Cancel

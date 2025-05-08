@@ -7,6 +7,7 @@ import authRouter from "./routes/authRoutes.js";
 import jobRouter from "./routes/jobRoutes.js";
 import contactRouter from "./routes/contactRoutes.js";
 import adminRouter from "./routes/adminRoutes.js"; // Add this
+import employerPaymentRoutes from "./routes/EmployerPaymentRoutes.js"; // Add this
 import path from "path";
 import bodyParser from "body-parser";
 import { fileURLToPath } from "url";
@@ -52,6 +53,7 @@ app.use("/api/auth", authRouter);
 app.use("/api/jobs", jobRouter); // Multer will handle multipart/form-data for this route
 app.use("/api/contact", contactRouter);
 app.use("/api/admin", adminRouter); // Add this
+app.use("/api/payment", employerPaymentRoutes); // Add this
 
 // Default route
 app.get('/', (req, res) => {

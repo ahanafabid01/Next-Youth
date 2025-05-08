@@ -876,3 +876,46 @@ export const changePassword = async (req, res) => {
         });
     }
 };
+
+// Add this new controller function
+export const deleteMyAccount = async (req, res) => {
+    try {
+        const { password } = req.body;
+        const userId = req.user.id;
+
+        // Find the user
+        const user = await userModel.findById(userId);
+        if (!user) {
+            return res.status(404).json({
+                success: false,
+                message: "User not found"
+            });
+        }
+
+        // Verify password
+        const isPasswordValid = await bcrypt.compare(password, user.password);
+        if (!isPasswordValid) {
+            return res.status(401).json({
+                success: false,
+                message: "Incorrect password"
+            });
+        }
+
+        // Delete the user's account
+        await userModel.findByIdAndDelete(userId);
+
+        // Additionally, you might want to delete related data
+        // such as job postings, applications, etc.
+
+        return res.status(200).json({
+            success: true,
+            message: "Account deleted successfully"
+        });
+    } catch (error) {
+        console.error("Error deleting account:", error);
+        return res.status(500).json({
+            success: false,
+            message: "Internal server error"
+        });
+    }
+};

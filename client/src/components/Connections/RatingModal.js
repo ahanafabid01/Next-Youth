@@ -1,5 +1,6 @@
-import React, { useState, useEffect } from 'react';
-import { FaStar, FaTimes, FaArrowLeft, FaSpinner } from 'react-icons/fa';
+import React, { useState, useEffect, useRef } from 'react';
+import { createPortal } from 'react-dom';
+import { FaStar, FaTimes, FaSpinner, FaQuoteLeft, FaBriefcase, FaCalendarAlt, FaDollarSign, FaUser } from 'react-icons/fa';
 import axios from 'axios';
 import './RatingModal.css';
 
@@ -12,12 +13,139 @@ const RatingModal = ({ isOpen, onClose, jobTitle, applicant, jobId, onRatingSubm
     const [userRatings, setUserRatings] = useState([]);
     const [loading, setLoading] = useState(false);
     const [averageRating, setAverageRating] = useState(0);
+    const [isVisible, setIsVisible] = useState(false);
+    const [isDarkTheme, setIsDarkTheme] = useState(false);
+    const modalRef = useRef(null);
+    const portalRef = useRef(null);
+
+    useEffect(() => {
+        let portalContainer = document.getElementById('rating-modal-portal');
+        
+        if (!portalContainer) {
+            portalContainer = document.createElement('div');
+            portalContainer.id = 'rating-modal-portal';
+            document.body.appendChild(portalContainer);
+        }
+        
+        portalRef.current = portalContainer;
+        
+        return () => {
+            if (portalRef.current && portalRef.current.childNodes.length === 0) {
+                document.body.removeChild(portalRef.current);
+            }
+        };
+    }, []);
 
     useEffect(() => {
         if (viewOnly && isOpen) {
             fetchUserRatings();
         }
     }, [viewOnly, isOpen]);
+
+    useEffect(() => {
+        if (isOpen) {
+            const originalOverflow = document.body.style.overflow;
+            const originalPaddingRight = document.body.style.paddingRight;
+            const originalPosition = document.body.style.position;
+            const originalWidth = document.body.style.width;
+            const originalHeight = document.body.style.height;
+            const scrollbarWidth = window.innerWidth - document.documentElement.clientWidth;
+            
+            document.body.style.overflow = 'hidden';
+            document.body.style.paddingRight = `${scrollbarWidth}px`;
+            document.body.style.position = 'fixed';
+            document.body.style.width = '100%';
+            document.body.style.height = '100%';
+            document.body.style.top = `-${window.scrollY}px`; 
+            
+            const timer = setTimeout(() => setIsVisible(true), 10);
+            
+            return () => {
+                clearTimeout(timer);
+                const scrollY = document.body.style.top;
+                document.body.style.overflow = originalOverflow;
+                document.body.style.paddingRight = originalPaddingRight;
+                document.body.style.position = originalPosition;
+                document.body.style.width = originalWidth;
+                document.body.style.height = originalHeight;
+                document.body.style.top = '';
+                
+                window.scrollTo(0, parseInt(scrollY || '0') * -1);
+                
+                setIsVisible(false);
+            };
+        }
+    }, [isOpen]);
+
+    useEffect(() => {
+        if (!isOpen || !isVisible) return;
+        
+        const modalElement = modalRef.current;
+        if (!modalElement) return;
+        
+        const focusableElements = modalElement.querySelectorAll(
+            'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
+        );
+        const firstElement = focusableElements[0];
+        const lastElement = focusableElements[focusableElements.length - 1];
+        
+        if (firstElement) {
+            setTimeout(() => firstElement.focus(), 50);
+        }
+        
+        const handleTabKey = (e) => {
+            if (e.key === 'Tab') {
+                if (e.shiftKey) {
+                    if (document.activeElement === firstElement) {
+                        e.preventDefault();
+                        lastElement.focus();
+                    }
+                } else {
+                    if (document.activeElement === lastElement) {
+                        e.preventDefault();
+                        firstElement.focus();
+                    }
+                }
+            }
+            
+            if (e.key === 'Escape') {
+                onClose();
+            }
+        };
+        
+        document.addEventListener('keydown', handleTabKey);
+        
+        return () => {
+            document.removeEventListener('keydown', handleTabKey);
+        };
+    }, [isOpen, isVisible, onClose]);
+
+    useEffect(() => {
+        const checkTheme = () => {
+            const isDark = document.body.classList.contains('dark-theme') || 
+                           document.querySelector('.dashboard-wrapper')?.classList.contains('dark-theme');
+            setIsDarkTheme(isDark);
+        };
+        
+        checkTheme();
+        
+        const observer = new MutationObserver(mutations => {
+            for (const mutation of mutations) {
+                if (mutation.type === 'attributes' && mutation.attributeName === 'class') {
+                    checkTheme();
+                }
+            }
+        });
+        
+        observer.observe(document.body, { attributes: true });
+        
+        const dashboardEl = document.querySelector('.dashboard-wrapper');
+        if (dashboardEl) {
+            observer.observe(dashboardEl, { attributes: true });
+        }
+        
+        return () => observer.disconnect();
+    }, []);
 
     const fetchUserRatings = async () => {
         setLoading(true);
@@ -65,7 +193,6 @@ const RatingModal = ({ isOpen, onClose, jobTitle, applicant, jobId, onRatingSubm
 
         setSubmitting(true);
         try {
-            // Ensure we have the applicant ID, either as string or from object
             const applicantId = typeof applicant === 'object' ? applicant._id : applicant;
             
             if (!applicantId) {
@@ -96,14 +223,14 @@ const RatingModal = ({ isOpen, onClose, jobTitle, applicant, jobId, onRatingSubm
         }
     };
 
-    if (!isOpen) return null;
+    if (!isOpen || !portalRef.current) return null;
 
     const renderRatingStars = (rating) => {
         return [...Array(5)].map((_, index) => (
             <FaStar
                 key={index}
                 className="star"
-                color={index < rating ? "#ffc107" : "#e4e5e9"}
+                color={index < rating ? "var(--rating-star-active)" : "var(--rating-star-inactive)"}
             />
         ));
     };
@@ -131,148 +258,203 @@ const RatingModal = ({ isOpen, onClose, jobTitle, applicant, jobId, onRatingSubm
         return 'No budget information';
     };
 
-    if (viewOnly) {
-        return (
-            <div className="rating-modal-overlay">
-                <div className="rating-modal ratings-view">
-                    <button className="close-modal" onClick={onClose}>
+    const modalContent = (
+        <div 
+            className={`rating-modal-overlay ${isVisible ? 'visible' : ''} ${isDarkTheme ? 'dark-theme' : ''}`} 
+            onClick={(e) => {
+                if (e.target === e.currentTarget) {
+                    onClose();
+                }
+            }}
+            aria-modal="true"
+            role="dialog"
+        >
+            {viewOnly ? (
+                <div 
+                    className={`rating-modal ratings-view ${isDarkTheme ? 'dark-theme' : ''}`} 
+                    ref={modalRef} 
+                    onClick={(e) => e.stopPropagation()}
+                >
+                    <button className="close-btn" onClick={onClose} aria-label="Close">
                         <FaTimes />
                     </button>
 
-                    <h2>My Ratings & Reviews</h2>
+                    <div className="rating-modal-header">
+                        <h2>Performance Ratings</h2>
+                        <p className="rating-modal-subtitle">Review your professional feedback history</p>
+                    </div>
 
                     <div className="ratings-summary">
                         <div className="average-rating">
-                            <h3>Overall Rating</h3>
-                            <div className="rating-display">
-                                {renderRatingStars(averageRating)}
-                                <span className="rating-number">
-                                    {averageRating.toFixed(1)}
-                                </span>
+                            <div className="rating-overview">
+                                <div className="rating-number-display">{averageRating.toFixed(1)}</div>
+                                <div className="rating-stars-display">
+                                    {renderRatingStars(averageRating)}
+                                    <p className="total-reviews">
+                                        ({userRatings.length} {userRatings.length === 1 ? 'review' : 'reviews'})
+                                    </p>
+                                </div>
                             </div>
-                            <p className="total-reviews">
-                                ({userRatings.length} {userRatings.length === 1 ? 'review' : 'reviews'})
-                            </p>
                         </div>
                     </div>
 
                     {loading ? (
-                        <div className="loading-spinner">
-                            <FaSpinner className="spin" /> Loading ratings...
+                        <div className="loading-state">
+                            <FaSpinner className="spin" /> 
+                            <p>Loading your performance history...</p>
                         </div>
                     ) : error ? (
-                        <div className="error-message">{error}</div>
+                        <div className="error-state">
+                            <p>{error}</p>
+                            <button className="retry-btn" onClick={fetchUserRatings}>Try Again</button>
+                        </div>
                     ) : userRatings.length === 0 ? (
-                        <div className="no-ratings-message">
-                            <p>You haven't received any ratings yet.</p>
+                        <div className="empty-state">
+                            <div className="empty-icon">
+                                <FaStar />
+                            </div>
+                            <h3>No Ratings Yet</h3>
+                            <p>Complete jobs successfully to receive employer ratings and build your professional profile.</p>
                         </div>
                     ) : (
                         <div className="ratings-list">
                             {userRatings.map((item, index) => (
-                                <div key={index} className="rating-item">
-                                    <div className="rating-header">
-                                        <div className="rating-stars">
+                                <div key={index} className="rating-card">
+                                    <div className="rating-card-header">
+                                        <div className="rating-stars-wrapper">
                                             {renderRatingStars(item.rating)}
                                         </div>
                                         <span className="rating-date">
-                                            {formatDate(item.createdAt)}
+                                            <FaCalendarAlt /> {formatDate(item.createdAt)}
                                         </span>
                                     </div>
                                     <div className="rating-job-details">
                                         <h4 className="rating-job-title">
-                                            Job: {item.job?.title || 'Unknown job'}
+                                            <FaBriefcase /> {item.job?.title || 'Unknown job'}
                                         </h4>
-                                        <p className="rating-job-scope">
-                                            {item.job?.scope || 'Not specified'}
-                                        </p>
-                                        <div className="rating-job-budget">
-                                            Budget: {formatBudget(item.job)}
+                                        <div className="rating-job-meta">
+                                            <span className="job-scope">
+                                                {item.job?.scope || 'Not specified'}
+                                            </span>
+                                            <span className="job-budget">
+                                                <FaDollarSign /> {formatBudget(item.job)}
+                                            </span>
                                         </div>
+                                        
                                         {item.job?.skills?.length > 0 && (
                                             <div className="rating-skills">
                                                 {item.job.skills.slice(0, 5).map((skill, idx) => (
-                                                    <span key={idx} className="skill-tag">{skill}</span>
+                                                    <span key={idx} className="skill-pill">{skill}</span>
                                                 ))}
                                                 {item.job.skills.length > 5 && (
-                                                    <span className="skill-tag">+{item.job.skills.length - 5} more</span>
+                                                    <span className="skill-pill more-skills">+{item.job.skills.length - 5}</span>
                                                 )}
                                             </div>
                                         )}
                                     </div>
-                                    <p className="rating-review">{item.review}</p>
-                                    <div className="rating-employer">
-                                        Rated by: {item.employer?.name || 'Unknown employer'}
+                                    
+                                    <div className="rating-review-content">
+                                        <FaQuoteLeft className="quote-icon" />
+                                        <p>{item.review}</p>
+                                    </div>
+                                    
+                                    <div className="rating-employer-info">
+                                        <FaUser className="employer-icon" />
+                                        <span>{item.employer?.name || 'Unknown employer'}</span>
                                     </div>
                                 </div>
                             ))}
                         </div>
                     )}
                 </div>
-            </div>
-        );
-    }
-
-    return (
-        <div className="rating-modal-overlay">
-            <div className="rating-modal">
-                <button className="close-modal" onClick={onClose}>
-                    <FaTimes />
-                </button>
-
-                <h2>Rate Applicant</h2>
-                <div className="rating-job-info">
-                    <h3>{jobTitle || 'Job'}</h3>
-                    <p>Applicant: {applicant?.name || 'Applicant'}</p>
-                </div>
-
-                <div className="star-rating">
-                    {[...Array(5)].map((_, index) => {
-                        const ratingValue = index + 1;
-                        return (
-                            <label key={index}>
-                                <input
-                                    type="radio"
-                                    name="rating"
-                                    value={ratingValue}
-                                    onClick={() => setRating(ratingValue)}
-                                />
-                                <FaStar
-                                    className="star"
-                                    color={ratingValue <= (hover || rating) ? "#ffc107" : "#e4e5e9"}
-                                    onMouseEnter={() => setHover(ratingValue)}
-                                    onMouseLeave={() => setHover(0)}
-                                />
-                            </label>
-                        );
-                    })}
-                </div>
-
-                <textarea
-                    placeholder="Write your review here..."
-                    value={review}
-                    onChange={(e) => setReview(e.target.value)}
-                    maxLength={500}
-                    className="review-input"
-                ></textarea>
-
-                {error && <div className="error-message">{error}</div>}
-
-                <button 
-                    className="submit-rating-btn"
-                    onClick={handleSubmit}
-                    disabled={submitting}
+            ) : (
+                <div 
+                    className={`rating-modal rating-form-modal ${isDarkTheme ? 'dark-theme' : ''}`} 
+                    ref={modalRef}
+                    onClick={(e) => e.stopPropagation()}
                 >
-                    {submitting ? (
-                        <>
-                            <FaSpinner className="spin" /> Submitting...
-                        </>
-                    ) : (
-                        'Submit Rating'
-                    )}
-                </button>
-            </div>
+                    <button className="close-btn" onClick={onClose} aria-label="Close">
+                        <FaTimes />
+                    </button>
+
+                    <div className="rating-modal-header">
+                        <h2>Rate Project Performance</h2>
+                        <p className="rating-modal-subtitle">Provide feedback for your completed project</p>
+                    </div>
+
+                    <div className="rating-job-info">
+                        <div className="rating-job-title-wrapper">
+                            <FaBriefcase className="job-icon" />
+                            <h3>{jobTitle || 'Job'}</h3>
+                        </div>
+                        <div className="rating-applicant-info">
+                            <FaUser className="applicant-icon" />
+                            <p>Applicant: <strong>{applicant?.name || 'Applicant'}</strong></p>
+                        </div>
+                    </div>
+
+                    <div className="rating-form">
+                        <div className="rating-label">Performance Rating</div>
+                        <div className="star-rating-container">
+                            {[...Array(5)].map((_, index) => {
+                                const ratingValue = index + 1;
+                                return (
+                                    <label key={index} onClick={(e) => e.stopPropagation()}>
+                                        <input
+                                            type="radio"
+                                            name="rating"
+                                            value={ratingValue}
+                                            onClick={() => setRating(ratingValue)}
+                                        />
+                                        <FaStar
+                                            className="star"
+                                            color={ratingValue <= (hover || rating) ? "var(--rating-star-active)" : "var(--rating-star-inactive)"}
+                                            onMouseEnter={() => setHover(ratingValue)}
+                                            onMouseLeave={() => setHover(0)}
+                                        />
+                                    </label>
+                                );
+                            })}
+                        </div>
+                        
+                        <div className="review-label">Detailed Feedback</div>
+                        <textarea
+                            placeholder="Share your experience working with this applicant..."
+                            value={review}
+                            onChange={(e) => setReview(e.target.value)}
+                            onClick={(e) => e.stopPropagation()}
+                            maxLength={500}
+                            className="review-textarea"
+                        ></textarea>
+                        <div className="chars-remaining">
+                            {500 - review.length} characters remaining
+                        </div>
+
+                        {error && <div className="error-message">{error}</div>}
+
+                        <button 
+                            className="submit-rating-button"
+                            onClick={(e) => {
+                                e.stopPropagation();
+                                handleSubmit(e);
+                            }}
+                            disabled={submitting}
+                        >
+                            {submitting ? (
+                                <>
+                                    <FaSpinner className="spin" /> Submitting...
+                                </>
+                            ) : (
+                                'Submit Rating'
+                            )}
+                        </button>
+                    </div>
+                </div>
+            )}
         </div>
     );
+
+    return createPortal(modalContent, portalRef.current);
 };
 
 export default RatingModal;

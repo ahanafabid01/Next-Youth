@@ -14,10 +14,21 @@ const Login = () => {
     });
     const navigate = useNavigate();
 
-    // Apply dark mode on initial load
+    // Replace the existing useEffect hook with this improved version
     useEffect(() => {
+        // Apply dark mode on initial load
         document.body.classList.toggle("dark-mode", isDarkMode);
-    }, []);
+        
+        // Add auth-body-reset class to prevent auth styles affecting other pages
+        document.body.classList.add("auth-body-reset");
+        
+        // Cleanup function when component unmounts
+        return () => {
+            // Remove dark-mode class when leaving auth pages
+            document.body.classList.remove("dark-mode");
+            document.body.classList.remove("auth-body-reset");
+        };
+    }, [isDarkMode]);
 
     const handleSubmit = async (e) => {
         e.preventDefault();

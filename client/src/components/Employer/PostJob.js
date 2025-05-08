@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { FaTimes, FaCloudUploadAlt, FaEdit, FaCheckCircle, FaSpinner } from 'react-icons/fa';
+import { FaTimes, FaCloudUploadAlt, FaEdit, FaCheckCircle, FaSpinner, FaExclamationTriangle, FaArrowRight, FaArrowLeft, FaRegLightbulb } from 'react-icons/fa';
 import axios from "axios";
 import './PostJob.css';
 
@@ -8,6 +8,7 @@ const PostJob = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [successMessage, setSuccessMessage] = useState('');
   const [errors, setErrors] = useState({});
+  const [darkTheme, setDarkTheme] = useState(() => document.body.classList.contains('dark-mode'));
   const [formData, setFormData] = useState({
     title: '',
     skills: [],
@@ -21,6 +22,31 @@ const PostJob = () => {
   });
 
   const totalSteps = 6;
+  
+  // Listen for theme changes
+  useEffect(() => {
+    const handleThemeChange = () => {
+      setDarkTheme(document.body.classList.contains('dark-mode'));
+    };
+    
+    // Initial check
+    handleThemeChange();
+    
+    // Create a MutationObserver to watch for class changes on the body element
+    const observer = new MutationObserver((mutations) => {
+      mutations.forEach((mutation) => {
+        if (mutation.attributeName === 'class') {
+          handleThemeChange();
+        }
+      });
+    });
+    
+    // Start observing the body element for class changes
+    observer.observe(document.body, { attributes: true });
+    
+    // Clean up the observer on component unmount
+    return () => observer.disconnect();
+  }, []);
 
   const validateStep = (step) => {
     const newErrors = {};
@@ -181,10 +207,19 @@ const PostJob = () => {
     }
   };
 
+  // Tips for each step
+  const stepTips = {
+    1: "Clear job titles attract 30% more qualified candidates. Be specific about the role.",
+    2: "Including 3-5 key skills helps candidates determine if they're a good fit for your job.",
+    3: "Setting the right project scope sets expectations and helps find candidates with matching availability.",
+    4: "Transparent budget information increases application rates by up to 40%.",
+    5: "Detailed descriptions (150+ words) typically receive twice as many qualified applications."
+  };
+
   return (
-    <div className="post-job-container">
-      <h1 className="post-job-title">Post a New Job</h1>
-      <p className="post-job-subtitle">Create an engaging job post to attract the perfect candidates</p>
+    <div className={`post-job-container ${darkTheme ? 'dark-theme' : ''}`}>
+      <h1 className="post-job-title">Create a Job Posting</h1>
+      <p className="post-job-subtitle">Define your project needs to attract the right talent</p>
       
       {successMessage && (
         <div className="success-message">
@@ -194,7 +229,7 @@ const PostJob = () => {
       
       {errors.submit && (
         <div className="error-message">
-          {errors.submit}
+          <FaExclamationTriangle /> {errors.submit}
         </div>
       )}
       
@@ -220,35 +255,43 @@ const PostJob = () => {
       <div className="form-steps-container">
         {currentStep === 1 && (
           <div className="step-content">
-            <h2>Write a title for your job post</h2>
-            <p>A clear title helps candidates understand your job at a glance.</p>
+            <h2>Create an Engaging Job Title</h2>
+            <p>A specific, descriptive title will attract qualified candidates who match your needs.</p>
+            
             <div className="form-group">
               <label htmlFor="jobTitle">Job Title</label>
               <input
                 id="jobTitle"
                 type="text"
                 className={`input-field ${errors.title ? 'input-error' : ''}`}
-                placeholder="E.g. Senior React Developer for E-commerce Website"
+                placeholder="E.g. React Developer for E-commerce Dashboard"
                 name="title"
                 value={formData.title}
                 onChange={handleInputChange}
               />
               {errors.title && <div className="error-text">{errors.title}</div>}
+              
+              {stepTips[1] && (
+                <div className="tip-box">
+                  <FaRegLightbulb className="tip-icon" /> {stepTips[1]}
+                </div>
+              )}
             </div>
           </div>
         )}
 
         {currentStep === 2 && (
           <div className="step-content">
-            <h2>What skills are required?</h2>
-            <p>List the specific skills candidates need to have.</p>
+            <h2>Specify Required Skills</h2>
+            <p>List the technical skills and competencies needed for this job.</p>
+            
             <div className="form-group">
-              <label htmlFor="skillInput">Skills (press enter to add)</label>
+              <label htmlFor="skillInput">Skills (press Enter to add)</label>
               <input
                 id="skillInput"
                 type="text"
                 className={`input-field ${errors.skills ? 'input-error' : ''}`}
-                placeholder="E.g. JavaScript, React, Node.js"
+                placeholder="E.g. React, Node.js, AWS"
                 onKeyPress={handleSkillKeyPress}
               />
               {errors.skills && <div className="error-text">{errors.skills}</div>}
@@ -261,20 +304,28 @@ const PostJob = () => {
                       type="button"
                       className="remove-skill-btn"
                       onClick={() => removeSkill(skill)}
+                      aria-label={`Remove ${skill}`}
                     >
                       <FaTimes />
                     </button>
                   </div>
                 ))}
               </div>
+              
+              {stepTips[2] && (
+                <div className="tip-box">
+                  <FaRegLightbulb className="tip-icon" /> {stepTips[2]}
+                </div>
+              )}
             </div>
           </div>
         )}
 
         {currentStep === 3 && (
           <div className="step-content">
-            <h2>Project Scope</h2>
-            <p>Define the estimated time frame of your project.</p>
+            <h2>Define Project Scope</h2>
+            <p>Select the estimated duration that best fits your project needs.</p>
+            
             <div className="form-group">
               <div className="scope-options">
                 {['large', 'medium', 'small'].map((scope) => (
@@ -300,21 +351,32 @@ const PostJob = () => {
                       onChange={handleInputChange}
                     />
                     <div className="scope-info">
-                      <h3>{scope.charAt(0).toUpperCase() + scope.slice(1)} Project</h3>
-                      <p>{scope === 'large' ? '6+ months' : scope === 'medium' ? '3-6 months' : '1-3 months'}</p>
+                      <h3>{scope === 'large' ? 'Large Project' : scope === 'medium' ? 'Medium Project' : 'Small Project'}</h3>
+                      <p>
+                        {scope === 'large' ? '6+ months, complex work' : 
+                         scope === 'medium' ? '3-6 months, moderate complexity' : 
+                         '1-3 months, well-defined tasks'}
+                      </p>
                     </div>
                   </div>
                 ))}
               </div>
               {errors.scope && <div className="error-text">{errors.scope}</div>}
+              
+              {stepTips[3] && (
+                <div className="tip-box">
+                  <FaRegLightbulb className="tip-icon" /> {stepTips[3]}
+                </div>
+              )}
             </div>
           </div>
         )}
 
         {currentStep === 4 && (
           <div className="step-content">
-            <h2>Budget & Pricing</h2>
-            <p>Define how you want to pay for this job.</p>
+            <h2>Set Your Budget</h2>
+            <p>Define a reasonable budget that reflects the project scope and required expertise.</p>
+            
             <div className="form-group">
               <div className="budget-options">
                 <div 
@@ -330,7 +392,7 @@ const PostJob = () => {
                   />
                   <div className="budget-info">
                     <h3>Hourly Rate</h3>
-                    <p>Pay based on hours worked</p>
+                    <p>Pay by the hour, ideal for ongoing work</p>
                   </div>
                 </div>
                 
@@ -347,7 +409,7 @@ const PostJob = () => {
                   />
                   <div className="budget-info">
                     <h3>Fixed Price</h3>
-                    <p>Pay a single price for the project</p>
+                    <p>Pay a set amount for the entire project</p>
                   </div>
                 </div>
               </div>
@@ -364,6 +426,7 @@ const PostJob = () => {
                       value={formData.hourlyFrom}
                       onChange={handleInputChange}
                       min="1"
+                      placeholder="15"
                     />
                     {errors.hourlyFrom && <div className="error-text">{errors.hourlyFrom}</div>}
                   </div>
@@ -377,6 +440,7 @@ const PostJob = () => {
                       value={formData.hourlyTo}
                       onChange={handleInputChange}
                       min={formData.hourlyFrom || 1}
+                      placeholder="50"
                     />
                     {errors.hourlyTo && <div className="error-text">{errors.hourlyTo}</div>}
                   </div>
@@ -396,8 +460,15 @@ const PostJob = () => {
                     value={formData.fixedAmount}
                     onChange={handleInputChange}
                     min="1"
+                    placeholder="1000"
                   />
                   {errors.fixedAmount && <div className="error-text">{errors.fixedAmount}</div>}
+                </div>
+              )}
+              
+              {stepTips[4] && (
+                <div className="tip-box">
+                  <FaRegLightbulb className="tip-icon" /> {stepTips[4]}
                 </div>
               )}
             </div>
@@ -406,19 +477,27 @@ const PostJob = () => {
 
         {currentStep === 5 && (
           <div className="step-content">
-            <h2>Job Description</h2>
-            <p>Provide details about the job requirements and expectations.</p>
+            <h2>Craft a Detailed Description</h2>
+            <p>Provide specific information about the project, deliverables, and expectations.</p>
+            
             <div className="form-group">
-              <label htmlFor="description">Description</label>
+              <label htmlFor="description">Job Description</label>
               <textarea
                 id="description"
                 className={`input-field description-area ${errors.description ? 'input-error' : ''}`}
-                placeholder="Describe your job requirements, expectations, timeline, deliverables, etc."
+                placeholder="Describe your project in detail. Include background information, goals, specific requirements, timeline expectations, and any other details that will help candidates understand the job."
                 name="description"
                 value={formData.description}
                 onChange={handleInputChange}
               />
               {errors.description && <div className="error-text">{errors.description}</div>}
+              
+              {formData.description && (
+                <div className="character-count">
+                  {formData.description.length} characters
+                  {formData.description.length < 150 && " (we recommend at least 150 for best results)"}
+                </div>
+              )}
               
               <div className="file-upload-section">
                 <label className="file-upload-label">
@@ -431,14 +510,14 @@ const PostJob = () => {
                   />
                   <div className="upload-card">
                     <FaCloudUploadAlt className="upload-icon" />
-                    <p>Upload supporting documents</p>
-                    <span>PDF, DOC, PNG (Max 5MB)</span>
+                    <p>Add Supporting Documents</p>
+                    <span>PDFs, DOCs, Images (Max 5MB each)</span>
                   </div>
                 </label>
                 
                 {formData.files.length > 0 && (
                   <div className="file-list">
-                    <h4>Uploaded Files ({formData.files.length})</h4>
+                    <h4>Attached Files ({formData.files.length})</h4>
                     <ul>
                       {formData.files.map((file, index) => (
                         <li key={index} className="file-item">
@@ -447,6 +526,7 @@ const PostJob = () => {
                             type="button" 
                             className="remove-file-btn"
                             onClick={() => removeFile(index)}
+                            aria-label={`Remove ${file.name}`}
                           >
                             <FaTimes />
                           </button>
@@ -456,14 +536,21 @@ const PostJob = () => {
                   </div>
                 )}
               </div>
+              
+              {stepTips[5] && (
+                <div className="tip-box">
+                  <FaRegLightbulb className="tip-icon" /> {stepTips[5]}
+                </div>
+              )}
             </div>
           </div>
         )}
 
         {currentStep === 6 && (
           <div className="step-content">
-            <h2>Review Job Post</h2>
-            <p>Review your job details before posting.</p>
+            <h2>Review Your Job Posting</h2>
+            <p>Please verify all information before publishing your job.</p>
+            
             <div className="review-section">
               <div className="review-card">
                 <div className="review-item">
@@ -487,8 +574,12 @@ const PostJob = () => {
                 </div>
                 
                 <div className="review-item">
-                  <div className="review-label">Scope</div>
-                  <div className="review-value">{formData.scope ? `${formData.scope.charAt(0).toUpperCase() + formData.scope.slice(1)} Project` : ''}</div>
+                  <div className="review-label">Project Scope</div>
+                  <div className="review-value">
+                    {formData.scope ? 
+                      `${formData.scope.charAt(0).toUpperCase() + formData.scope.slice(1)} Project` : 
+                      'Not specified'}
+                  </div>
                   <button type="button" className="edit-btn" onClick={() => editStep(3)}>
                     <FaEdit /> Edit
                   </button>
@@ -498,7 +589,7 @@ const PostJob = () => {
                   <div className="review-label">Budget</div>
                   <div className="review-value">
                     {formData.budgetType === 'hourly' 
-                      ? `$${formData.hourlyFrom} - $${formData.hourlyTo} / hour`
+                      ? `$${formData.hourlyFrom} - $${formData.hourlyTo} per hour`
                       : `Fixed Price: $${formData.fixedAmount}`}
                   </div>
                   <button type="button" className="edit-btn" onClick={() => editStep(4)}>
@@ -540,7 +631,7 @@ const PostJob = () => {
             className="btn-secondary" 
             onClick={previousStep}
           >
-            Back
+            <FaArrowLeft /> Back
           </button>
         )}
         <button 
@@ -552,10 +643,10 @@ const PostJob = () => {
           {currentStep === totalSteps 
             ? isSubmitting 
               ? <>
-                  <FaSpinner className="spinner-icon" /> Posting...
+                  <FaSpinner className="spinner-icon" /> Publishing...
                 </> 
-              : 'Post Job' 
-            : 'Continue'}
+              : 'Publish Job' 
+            : <>Continue <FaArrowRight /></>}
         </button>
       </div>
     </div>

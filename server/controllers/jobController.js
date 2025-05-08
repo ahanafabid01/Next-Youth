@@ -458,9 +458,12 @@ export const getEmployerApplications = async (req, res) => {
         
         // Find all applications for these jobs
         const applicationModel = await import("../models/applicationModel.js").then(module => module.default);
-        const applications = await applicationModel.find({ job: { $in: jobIds } })
+        let applications = await applicationModel.find({ job: { $in: jobIds } })
             .populate('job')
-            .populate('applicant', 'name email profilePicture'); // Just get basic applicant info
+            .populate('applicant', 'name email profilePicture');
+        
+        // Filter out applications with null applicant or job
+        applications = applications.filter(app => app.applicant && app.job);
         
         return res.status(200).json({ 
             success: true, 

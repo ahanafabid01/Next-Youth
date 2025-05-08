@@ -31,6 +31,7 @@ import EmployerVerification from './components/Employer/EmployerVerification';
 import EditApplication from './components/Employee/EditApplication';
 import BecomeSeller from "./Homepages/BecomeSeller";
 import HelpAndSupport from './Homepages/Help&Support';
+import EmployerSettings from "./components/Employer/EmployerSettings";
 import "./App.css";
 
 const App = () => {
@@ -72,6 +73,7 @@ const App = () => {
                 <Route path="/edit-application/:applicationId" element={<EditApplication />} />
                 <Route path="/become-seller" element={<BecomeSeller />} />
                 <Route path="/help-support" element={<HelpAndSupport />} />
+                <Route path="/employer-settings" element={<EmployerSettings />} />
             </Routes>
         </Router>
     );

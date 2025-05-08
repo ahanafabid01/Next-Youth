@@ -1,351 +1,958 @@
+/* Rating Modal - Minimalist Professional Theme */
+/* Uses the same design system as EmployerDashboard for consistency */
+
+:root {
+  --rating-star-active: #ffc107;
+  --rating-star-inactive: #e4e5e9;
+}
+
+/* Rating Modal Portal - Container for modal */
+#rating-modal-portal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  z-index: 9999; /* Extremely high z-index */
+  pointer-events: none; /* Don't capture events unless modal is open */
+  /* Add containment for better performance */
+  contain: layout size paint;
+}
+
+/* Modal Overlay - Background Screen */
 .rating-modal-overlay {
-    position: fixed;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background-color: rgba(0, 0, 0, 0.5);
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    z-index: 1000;
+  opacity: 0;
+  visibility: hidden;
+  position: fixed;
+  inset: 0; /* Modern shorthand for top/right/bottom/left: 0 */
+  background-color: rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(2px);
+  -webkit-backdrop-filter: blur(2px); 
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 10000; 
+  padding: 1rem;
+  pointer-events: none;
+  will-change: opacity;
+  transition: opacity 0.25s ease, visibility 0.25s ease;
+  /* Better iOS compatibility */
+  -webkit-tap-highlight-color: transparent;
 }
 
+.rating-modal-overlay.visible {
+  opacity: 1;
+  visibility: visible;
+  pointer-events: auto;
+}
+
+/* Add this class to body when modal is open */
+body.modal-open {
+  overflow: hidden;
+  position: fixed;
+  width: 100%;
+  height: 100%;
+}
+
+/* Base Modal Styling */
 .rating-modal {
-    background-color: white;
-    border-radius: 12px;
-    padding: 2rem;
-    width: 90%;
-    max-width: 500px;
-    position: relative;
-    box-shadow: 0 5px 20px rgba(0, 0, 0, 0.2);
+  isolation: isolate; /* Creates a new stacking context */
+  position: relative;
+  background-color: var(--light-card);
+  border-radius: var(--border-radius);
+  padding: 2rem;
+  width: 95%;
+  max-width: 550px;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15), 0 5px 10px rgba(0, 0, 0, 0.12);
+  border: 1px solid var(--border-light);
+  opacity: 0;
+  transform: translateY(20px);
+  will-change: opacity, transform;
+  transition: opacity 0.3s ease-out, transform 0.3s ease-out;
+  margin: auto; /* Center even on very small screens */
+  max-height: 90vh; /* Prevent overflowing the viewport */
+  overflow-y: auto; /* Enable scrolling if content is too tall */
+  -webkit-overflow-scrolling: touch; /* Smooth scrolling on iOS */
+  overscroll-behavior: contain; /* Prevent scroll chaining */
+  z-index: 10001; /* Ensure higher than overlay */
 }
 
-.close-modal {
-    position: absolute;
-    top: 1rem;
-    right: 1rem;
-    background: none;
-    border: none;
-    font-size: 1.5rem;
-    cursor: pointer;
-    color: #666;
-    transition: color 0.2s;
+.dark-theme .rating-modal {
+  background-color: var(--dark-card);
+  border: 1px solid var(--border-dark);
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3), 0 5px 10px rgba(0, 0, 0, 0.25);
 }
 
-.close-modal:hover {
-    color: #333;
+/* Animation when modal becomes visible */
+.rating-modal-overlay.visible .rating-modal {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+/* Enhanced focus trap for accessibility */
+.rating-modal:focus {
+  outline: none;
+}
+
+/* Improve focus styles for form elements */
+.rating-modal input:focus,
+.rating-modal textarea:focus,
+.rating-modal button:focus {
+  outline: 2px solid var(--primary-color);
+  outline-offset: 1px;
+}
+
+/* Style scrollbars for better visual integration */
+.rating-modal::-webkit-scrollbar {
+  width: 6px;
+}
+
+.rating-modal::-webkit-scrollbar-track {
+  background: rgba(0, 0, 0, 0.04);
+  border-radius: 10px;
+}
+
+.dark-theme .rating-modal::-webkit-scrollbar-track {
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.rating-modal::-webkit-scrollbar-thumb {
+  background: rgba(0, 0, 0, 0.2);
+  border-radius: 10px;
+}
+
+.dark-theme .rating-modal::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.2);
+}
+
+/* Make modal content more stable */
+.rating-modal > * {
+  transform: translateZ(0);
+  backface-visibility: hidden;
+}
+
+/* Prevent touch action issues on mobile */
+.star-rating-container label,
+.submit-rating-button,
+.close-btn {
+  touch-action: manipulation;
+}
+
+/* Add "active state" for mobile touch - better feedback */
+@media (hover: none) {
+  .star:active {
+    transform: scale(1.2);
+  }
+  
+  .close-btn:active {
+    background-color: rgba(0, 0, 0, 0.1);
+  }
+  
+  .dark-theme .close-btn:active {
+    background-color: rgba(255, 255, 255, 0.1);
+  }
+  
+  .submit-rating-button:active {
+    background-color: var(--primary-dark);
+  }
+}
+
+/* Close Button */
+.close-btn {
+  position: absolute;
+  top: 1rem;
+  right: 1rem;
+  background: none;
+  border: none;
+  width: 2rem;
+  height: 2rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  font-size: 1.2rem;
+  cursor: pointer;
+  color: #64748b;
+  transition: all 0.2s ease;
+  padding: 0;
+}
+
+.close-btn:hover {
+  background-color: rgba(0, 0, 0, 0.05);
+  color: var(--dark-text);
+}
+
+.dark-theme .close-btn {
+  color: #94a3b8;
+}
+
+.dark-theme .close-btn:hover {
+  background-color: rgba(255, 255, 255, 0.05);
+  color: var(--light-text);
+}
+
+/* Modal Header */
+.rating-modal-header {
+  margin-bottom: 1.75rem;
+}
+
+.rating-modal-header h2 {
+  font-size: 1.75rem;
+  font-weight: 700;
+  margin: 0 0 0.5rem 0;
+  background: linear-gradient(90deg, var(--primary-color), var(--accent-color));
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+.rating-modal-subtitle {
+  color: #64748b;
+  margin: 0;
+}
+
+.dark-theme .rating-modal-subtitle {
+  color: #94a3b8;
+}
+
+/* Rating Form Styling */
+.rating-form-modal {
+  max-width: 500px;
 }
 
 .rating-job-info {
-    margin: 1.5rem 0;
-    padding-bottom: 1rem;
-    border-bottom: 1px solid #eee;
+  background: linear-gradient(135deg, rgba(58, 134, 255, 0.05), rgba(76, 201, 240, 0.05));
+  border-radius: var(--border-radius-sm);
+  padding: 1.25rem;
+  margin-bottom: 1.75rem;
+  border: 1px solid rgba(58, 134, 255, 0.1);
 }
 
-.rating-job-info h3 {
-    margin: 0 0 0.5rem 0;
-    color: #333;
+.dark-theme .rating-job-info {
+  background: linear-gradient(135deg, rgba(58, 134, 255, 0.08), rgba(76, 201, 240, 0.08));
+  border: 1px solid rgba(58, 134, 255, 0.2);
 }
 
-.rating-job-info p {
-    margin: 0;
-    color: #666;
+.rating-job-title-wrapper {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-bottom: 0.75rem;
 }
 
-.star-rating {
-    display: flex;
-    justify-content: center;
-    margin: 2rem 0;
+.rating-job-title-wrapper h3 {
+  font-size: 1.2rem;
+  font-weight: 600;
+  margin: 0;
+  color: var(--dark-text);
 }
 
-.star-rating input[type="radio"] {
-    display: none;
+.dark-theme .rating-job-title-wrapper h3 {
+  color: var(--light-text);
 }
 
-.star-rating label {
-    cursor: pointer;
-    padding: 0.25rem;
+.job-icon,
+.applicant-icon {
+  color: var(--primary-color);
+  font-size: 1.1rem;
+}
+
+.rating-applicant-info {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  color: #64748b;
+}
+
+.dark-theme .rating-applicant-info {
+  color: #94a3b8;
+}
+
+.rating-applicant-info strong {
+  font-weight: 600;
+  color: var(--dark-text);
+}
+
+.dark-theme .rating-applicant-info strong {
+  color: var(--light-text);
+}
+
+.rating-form {
+  display: flex;
+  flex-direction: column;
+  will-change: transform;
+  transform: translateZ(0);
+  backface-visibility: hidden;
+  pointer-events: auto; /* Ensure form elements always receive events */
+}
+
+.rating-label, 
+.review-label {
+  font-weight: 600;
+  margin-bottom: 0.75rem;
+  color: var(--dark-text);
+  font-size: 1rem;
+}
+
+.dark-theme .rating-label, 
+.dark-theme .review-label {
+  color: var(--light-text);
+}
+
+.star-rating-container {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 1.75rem;
+  gap: 0.35rem;
+}
+
+.star-rating-container label {
+  cursor: pointer;
+  padding: 0.25rem;
+}
+
+.star-rating-container input[type="radio"] {
+  display: none;
 }
 
 .star {
-    font-size: 2rem;
-    transition: color 0.2s;
+  font-size: 2rem;
+  transition: all 0.2s ease;
 }
 
-.review-input {
-    width: 100%;
-    min-height: 120px;
-    padding: 1rem;
-    border: 1px solid #ddd;
-    border-radius: 8px;
-    margin: 1rem 0;
-    font-family: inherit;
-    resize: vertical;
+.star:hover {
+  transform: scale(1.2);
+}
+
+.review-textarea {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 100%;
+  min-height: 150px;
+  padding: 1rem;
+  border: 1px solid var(--border-light);
+  border-radius: var(--border-radius-sm);
+  font-family: inherit;
+  resize: vertical;
+  margin-bottom: 0.25rem;
+  font-size: 0.95rem;
+  background-color: var(--light-bg);
+  color: var(--dark-text);
+  transition: all 0.2s ease;
+  z-index: 1; /* Ensure higher z-index than overlay */
+}
+
+.dark-theme .review-textarea {
+  background-color: var(--dark-bg);
+  border-color: var(--border-dark);
+  color: var(--light-text);
+}
+
+.review-textarea:focus {
+  outline: none;
+  border-color: var(--primary-color);
+  box-shadow: 0 0 0 3px rgba(58, 134, 255, 0.15);
+}
+
+.chars-remaining {
+  text-align: right;
+  font-size: 0.8rem;
+  color: #64748b;
+  margin-bottom: 1.5rem;
+}
+
+.dark-theme .chars-remaining {
+  color: #94a3b8;
 }
 
 .error-message {
-    color: #dc3545;
-    margin: 0.5rem 0;
-    font-size: 0.9rem;
+  padding: 0.75rem;
+  margin-bottom: 1rem;
+  color: var(--danger-color);
+  background-color: rgba(239, 68, 68, 0.08);
+  border-radius: var(--border-radius-sm);
+  font-size: 0.9rem;
 }
 
-.submit-rating-btn {
-    width: 100%;
-    padding: 1rem;
-    background-color: #4361ee;
-    color: white;
-    border: none;
-    border-radius: 8px;
-    font-size: 1rem;
-    font-weight: 600;
-    cursor: pointer;
-    transition: background-color 0.2s;
+.submit-rating-button {
+  background-color: var(--primary-color);
+  color: white;
+  border: none;
+  padding: 0.9rem 1.5rem;
+  border-radius: var(--border-radius);
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 12px rgba(58, 134, 255, 0.2);
+  display: flex;
+  gap: 0.75rem;
+  align-items: center;
+  justify-content: center;
+  font-size: 1rem;
 }
 
-.submit-rating-btn:hover {
-    background-color: #3651d4;
+.submit-rating-button:hover {
+  background-color: var(--primary-dark);
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(58, 134, 255, 0.3);
 }
 
-.submit-rating-btn:disabled {
-    background-color: #ccc;
-    cursor: not-allowed;
+.submit-rating-button:active {
+  transform: translateY(0);
+  box-shadow: 0 4px 8px rgba(58, 134, 255, 0.2);
 }
 
-/* Dark mode support */
-@media (prefers-color-scheme: dark) {
-    .rating-modal {
-        background-color: #1a1a1a;
-        color: #fff;
-    }
-
-    .rating-job-info h3 {
-        color: #fff;
-    }
-
-    .rating-job-info p {
-        color: #ccc;
-    }
-
-    .review-input {
-        background-color: #333;
-        border-color: #444;
-        color: #fff;
-    }
-
-    .close-modal {
-        color: #ccc;
-    }
-
-    .close-modal:hover {
-        color: #fff;
-    }
+.submit-rating-button:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
 }
 
+/* Ratings View Styling */
 .ratings-view {
-    max-width: 800px;
-    width: 95%;
-    max-height: 90vh;
-    overflow-y: auto;
+  max-width: 700px;
+  max-height: 90vh;
+  overflow-y: auto;
+  padding-right: 1.25rem;
+  /* Add GPU acceleration for smooth scrolling */
+  -webkit-overflow-scrolling: touch;
+  will-change: transform;
 }
 
+/* Customize scrollbar for better UI */
+.ratings-view::-webkit-scrollbar {
+  width: 8px;
+}
+
+.ratings-view::-webkit-scrollbar-track {
+  background: rgba(0, 0, 0, 0.04);
+  border-radius: 10px;
+}
+
+.dark-theme .ratings-view::-webkit-scrollbar-track {
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.ratings-view::-webkit-scrollbar-thumb {
+  background: rgba(0, 0, 0, 0.2);
+  border-radius: 10px;
+}
+
+.dark-theme .ratings-view::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.2);
+}
+
+.ratings-view::-webkit-scrollbar-thumb:hover {
+  background: rgba(0, 0, 0, 0.3);
+}
+
+.dark-theme .ratings-view::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.3);
+}
+
+/* Summary */
 .ratings-summary {
-    text-align: center;
-    padding: 2rem 0;
-    border-bottom: 1px solid #eee;
-    margin-bottom: 2rem;
+  margin-bottom: 2rem;
+  padding: 1.5rem;
+  border-radius: var(--border-radius);
+  background: linear-gradient(135deg, rgba(58, 134, 255, 0.05), rgba(76, 201, 240, 0.05));
+  border: 1px solid rgba(58, 134, 255, 0.1);
 }
 
-.average-rating {
-    margin-bottom: 1rem;
+.dark-theme .ratings-summary {
+  background: linear-gradient(135deg, rgba(58, 134, 255, 0.08), rgba(76, 201, 240, 0.08));
+  border: 1px solid rgba(58, 134, 255, 0.2);
 }
 
-.average-rating h3 {
-    margin-bottom: 1rem;
-    color: #333;
+.rating-overview {
+  display: flex;
+  align-items: center;
+  gap: 1.5rem;
 }
 
-.rating-display {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 0.5rem;
+.rating-number-display {
+  font-size: 3rem;
+  font-weight: 700;
+  color: var(--rating-star-active);
 }
 
-.rating-number {
-    font-size: 1.5rem;
-    font-weight: 600;
-    color: #ffc107;
+.rating-stars-display {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
 }
 
 .total-reviews {
-    color: #666;
-    margin-top: 0.5rem;
+  color: #64748b;
+  font-size: 0.9rem;
+  margin: 0;
 }
 
-.ratings-list {
-    display: flex;
-    flex-direction: column;
-    gap: 1.5rem;
+.dark-theme .total-reviews {
+  color: #94a3b8;
 }
 
-.rating-item {
-    padding: 1.5rem;
-    border: 1px solid #eee;
-    border-radius: 8px;
-    background: white;
+/* Rating Cards */
+.rating-card {
+  background-color: var(--light-card);
+  border-radius: var(--border-radius);
+  border: 1px solid var(--border-light);
+  padding: 1.5rem;
+  box-shadow: var(--shadow-light);
+  margin-bottom: 1.25rem;
+  transition: all 0.3s ease;
+  position: relative;
 }
 
-.rating-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 1rem;
+.dark-theme .rating-card {
+  background-color: var(--dark-card);
+  border: 1px solid var(--border-dark);
+  box-shadow: var(--shadow-dark);
 }
 
-.rating-stars {
-    display: flex;
-    gap: 0.25rem;
+.rating-card:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 12px 24px rgba(0, 0, 0, 0.06);
+}
+
+.dark-theme .rating-card:hover {
+  box-shadow: 0 12px 24px rgba(0, 0, 0, 0.15);
+}
+
+.rating-card:last-child {
+  margin-bottom: 0;
+}
+
+.rating-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1.25rem;
 }
 
 .rating-date {
-    color: #666;
-    font-size: 0.9rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: #64748b;
+  font-size: 0.9rem;
+}
+
+.dark-theme .rating-date {
+  color: #94a3b8;
+}
+
+.rating-job-details {
+  background-color: rgba(0, 0, 0, 0.02);
+  border-radius: var(--border-radius-sm);
+  padding: 1rem;
+  margin-bottom: 1.25rem;
+  will-change: transform;
+  transform: translateZ(0);
+  backface-visibility: hidden;
+}
+
+.dark-theme .rating-job-details {
+  background-color: rgba(255, 255, 255, 0.03);
 }
 
 .rating-job-title {
-    font-weight: 600;
-    margin-bottom: 0.5rem;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin: 0 0 0.75rem 0;
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: var(--dark-text);
 }
 
-.rating-review {
-    color: #444;
-    line-height: 1.5;
-    margin-bottom: 1rem;
+.dark-theme .rating-job-title {
+  color: var(--light-text);
 }
 
-.rating-employer {
-    font-size: 0.9rem;
-    color: #666;
-    font-style: italic;
+.rating-job-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+  margin-bottom: 1rem;
 }
 
-/* Dark mode support */
-.dark-mode .ratings-view {
-    background-color: #1a1a1a;
-    color: #fff;
+.job-scope,
+.job-budget {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: #64748b;
+  font-size: 0.9rem;
 }
 
-.dark-mode .rating-item {
-    background-color: #2a2a2a;
-    border-color: #444;
+.dark-theme .job-scope,
+.dark-theme .job-budget {
+  color: #94a3b8;
 }
 
-.dark-mode .rating-job-title,
-.dark-mode .rating-review {
-    color: #fff;
+.job-budget {
+  color: var(--primary-color);
 }
 
-.dark-mode .rating-date,
-.dark-mode .rating-employer {
-    color: #aaa;
+/* Skills pills */
+.rating-skills {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
 }
 
-.loading-spinner {
-    text-align: center;
-    padding: 2rem;
-    color: #666;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 1rem;
+.skill-pill {
+  background-color: rgba(58, 134, 255, 0.1);
+  color: var(--primary-color);
+  padding: 0.35rem 0.75rem;
+  border-radius: 20px;
+  font-size: 0.8rem;
+  font-weight: 500;
 }
 
-.loading-spinner .spin {
-    font-size: 2rem;
+.dark-theme .skill-pill {
+  background-color: rgba(58, 134, 255, 0.15);
 }
 
-/* Add this spinning animation for the loading spinner */
+.more-skills {
+  background-color: rgba(139, 92, 246, 0.1);
+  color: #8b5cf6;
+}
+
+.dark-theme .more-skills {
+  background-color: rgba(139, 92, 246, 0.15);
+}
+
+/* Review content */
+.rating-review-content {
+  position: relative;
+  padding: 0.5rem 0 0.5rem 1.75rem;
+  margin-bottom: 1.25rem;
+  color: var(--dark-text);
+  line-height: 1.6;
+}
+
+.dark-theme .rating-review-content {
+  color: var(--light-text);
+}
+
+.quote-icon {
+  position: absolute;
+  left: 0;
+  top: 0.5rem;
+  font-size: 1.2rem;
+  color: var(--primary-color);
+  opacity: 0.5;
+}
+
+/* Employer info */
+.rating-employer-info {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  color: #64748b;
+  font-size: 0.9rem;
+  border-top: 1px solid var(--border-light);
+  padding-top: 1.25rem;
+}
+
+.dark-theme .rating-employer-info {
+  color: #94a3b8;
+  border-top: 1px solid var(--border-dark);
+}
+
+.employer-icon {
+  color: var(--primary-color);
+}
+
+/* Empty states */
+.empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 2.5rem 1.5rem;
+  text-align: center;
+}
+
+.empty-icon {
+  width: 70px;
+  height: 70px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, rgba(58, 134, 255, 0.1), rgba(76, 201, 240, 0.1));
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 1.5rem;
+  font-size: 2rem;
+  color: var(--primary-color);
+}
+
+.dark-theme .empty-icon {
+  background: linear-gradient(135deg, rgba(58, 134, 255, 0.15), rgba(76, 201, 240, 0.15));
+}
+
+.empty-state h3 {
+  font-size: 1.4rem;
+  margin: 0 0 0.75rem 0;
+  color: var(--dark-text);
+}
+
+.dark-theme .empty-state h3 {
+  color: var(--light-text);
+}
+
+.empty-state p {
+  color: #64748b;
+  margin: 0;
+  max-width: 400px;
+  line-height: 1.6;
+}
+
+.dark-theme .empty-state p {
+  color: #94a3b8;
+}
+
+/* Loading and error states */
+.loading-state,
+.error-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 2.5rem 1.5rem;
+  text-align: center;
+}
+
+.loading-state {
+  color: var(--primary-color);
+  gap: 1rem;
+  font-size: 1.1rem;
+}
+
+.loading-state p {
+  color: #64748b;
+  margin: 0;
+}
+
+.dark-theme .loading-state p {
+  color: #94a3b8;
+}
+
+.error-state {
+  color: var(--danger-color);
+  gap: 1rem;
+}
+
+.retry-btn {
+  padding: 0.75rem 1.5rem;
+  background-color: var(--primary-color);
+  color: white;
+  border: none;
+  border-radius: var(--border-radius);
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.retry-btn:hover {
+  background-color: var(--primary-dark);
+}
+
+/* Animations */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes simpleModalIn {
+  from {
+    opacity: 0;
+    transform: translateY(20px) translateZ(0);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) translateZ(0);
+  }
+}
+
 @keyframes spin {
-  0% { transform: rotate(0deg); }
-  100% { transform: rotate(360deg); }
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
 }
 
 .spin {
-  animation: spin 1s linear infinite;
+  animation: spin 1.2s linear infinite;
 }
 
-.no-ratings-message {
-    text-align: center;
-    padding: 2rem;
-    color: #666;
+/* Responsiveness */
+@media (max-width: 768px) {
+  .rating-modal {
+    padding: 1.75rem;
+    width: 100%;
+    max-width: 100%;
+    margin: 1rem;
+  }
+
+  .rating-modal-header h2 {
+    font-size: 1.5rem;
+  }
+
+  .rating-overview {
+    flex-direction: column;
+    gap: 0.75rem;
+    align-items: center;
+  }
+
+  .star {
+    font-size: 1.75rem;
+  }
 }
 
-.error-message {
-    text-align: center;
-    padding: 2rem;
-    color: #dc3545;
-}
-
-/* Add these new styles */
-.rating-job-details {
-    margin: 1rem 0;
+@media (max-width: 640px) {
+  .rating-job-info {
     padding: 1rem;
-    background: rgba(0, 0, 0, 0.02);
-    border-radius: 8px;
-}
+  }
+  
+  .rating-card {
+    padding: 1.25rem;
+  }
 
-.rating-job-title {
-    color: #333;
-    margin: 0 0 0.5rem 0;
-    font-size: 1.1rem;
-}
+  .rating-card-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.75rem;
+  }
 
-.rating-job-scope {
-    color: #666;
-    font-size: 0.9rem;
-    margin-bottom: 0.5rem;
-}
-
-.rating-job-budget {
-    color: #2557a7;
-    font-weight: 500;
-    font-size: 0.9rem;
-}
-
-.rating-skills {
-    display: flex;
-    flex-wrap: wrap;
+  .rating-job-meta {
+    flex-direction: column;
     gap: 0.5rem;
-    margin-top: 1rem;
+  }
+
+  .rating-modal-header h2 {
+    font-size: 1.35rem;
+  }
+
+  .rating-job-title-wrapper h3 {
+    font-size: 1.1rem;
+  }
+
+  .rating-label, 
+  .review-label {
+    font-size: 0.95rem;
+  }
+
+  .empty-icon {
+    width: 60px;
+    height: 60px;
+    font-size: 1.75rem;
+  }
+
+  .empty-state h3 {
+    font-size: 1.3rem;
+  }
 }
 
-.skill-tag {
-    background: #f0f0f0;
-    padding: 0.25rem 0.75rem;
-    border-radius: 20px;
-    font-size: 0.8rem;
-    color: #666;
+@media (max-width: 480px) {
+  .rating-modal {
+    padding: 1.5rem;
+  }
+
+  .rating-modal-header h2 {
+    font-size: 1.25rem;
+  }
+
+  .rating-modal-subtitle {
+    font-size: 0.9rem;
+  }
+
+  .star {
+    font-size: 1.5rem;
+  }
+
+  .rating-job-details {
+    padding: 0.75rem;
+  }
+
+  .rating-job-title {
+    font-size: 1rem;
+  }
+
+  .submit-rating-button {
+    padding: 0.85rem 1.25rem;
+  }
 }
 
-/* Dark mode support */
-.dark-mode .rating-job-details {
-    background: rgba(255, 255, 255, 0.05);
+/* Tiny mobile screens */
+@media (max-width: 360px) {
+  .rating-modal {
+    padding: 1.25rem;
+    width: calc(100% - 20px);
+  }
+  
+  .rating-modal-header h2 {
+    font-size: 1.15rem;
+  }
+  
+  .rating-modal-subtitle {
+    font-size: 0.85rem;
+  }
+  
+  .star {
+    font-size: 1.4rem;
+  }
+  
+  .rating-job-info {
+    padding: 0.75rem;
+  }
+  
+  .rating-job-title-wrapper h3 {
+    font-size: 0.95rem;
+  }
+  
+  .submit-rating-button {
+    padding: 0.75rem 1rem;
+    font-size: 0.9rem;
+  }
+  
+  .rating-job-title {
+    font-size: 0.9rem;
+  }
+  
+  /* Adjust margins for tighter space */
+  .rating-form > * {
+    margin-bottom: 0.65rem;
+  }
+  
+  .review-textarea {
+    min-height: 100px;
+  }
 }
 
-.dark-mode .rating-job-title {
-    color: #fff;
+/* Optimize performance by pre-rendering elements */
+.rating-modal::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: -1;
 }
 
-.dark-mode .rating-job-scope {
-    color: #ccc;
-}
-
-.dark-mode .rating-job-budget {
-    color: #66b3ff;
-}
-
-.dark-mode .skill-tag {
-    background: #333;
-    color: #ccc;
+/* Additional styles for improved performance and stability */
+.ratings-list {
+  will-change: transform;
+  transform: translateZ(0);
+  backface-visibility: hidden;
 }

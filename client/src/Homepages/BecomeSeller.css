@@ -1006,3 +1006,6 @@
     font-size: 2.5rem;
   }
 }
+.dark-mode .section-title {
+  color: var(--seller-light-text);
+}
