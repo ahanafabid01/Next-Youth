@@ -751,24 +751,28 @@ export const deleteUser = async (req, res) => {
     }
 };
 
+// Update the getUserProfileById function to populate ratings
 export const getUserProfileById = async (req, res) => {
     try {
         const { userId } = req.params;
-        
-        if (!userId) {
-            return res.status(400).json({ 
-                success: false, 
-                message: "User ID is required" 
+
+        // Find user and populate their ratings with job and employer information
+        const user = await userModel.findById(userId)
+            .select(
+                "name email profilePicture bio country skills education languageSkills " + 
+                "linkedInProfile resume socialMediaLink goals ratings " + 
+                "freelanceExperience paymentType hourlyRate weeklyAvailability idVerification"
+            )
+            .populate({
+                path: 'ratings.job',
+                select: 'title scope budgetType fixedAmount hourlyFrom hourlyTo skills',
+                model: 'job'
+            })
+            .populate({
+                path: 'ratings.employer',
+                select: 'name',
+                model: 'user'
             });
-        }
-        
-        // Find user with public profile information
-        // Exclude sensitive info like password, verification data, etc.
-        const user = await userModel.findById(userId).select(
-            "name bio profilePicture education skills languageSkills country " +
-            "linkedInProfile socialMediaLink goals questions resume " +
-            "freelanceExperience paymentType hourlyRate weeklyAvailability idVerification"
-        );
 
         if (!user) {
             return res.status(404).json({ 
