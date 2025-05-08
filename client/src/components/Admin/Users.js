@@ -5,7 +5,7 @@ import "./Users.css"; // <-- Add this line
 import axios from "axios";
 import { notifyDataUpdate } from './Statistics';
 
-const AdminDashboard = () => {
+const Users = () => {
     const [users, setUsers] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
@@ -349,4 +349,4 @@ const AdminDashboard = () => {
     );
 };
 
-export default AdminDashboard;
+export default Users;

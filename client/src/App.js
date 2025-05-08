@@ -11,10 +11,9 @@ import Applications from "./components/Admin/Applications";
 import Statistics from "./components/Admin/Statistics";
 import JobDetails from "./components/Admin/JobDetails";
 import Consultations from "./components/Admin/Consultations";
-import DemoConsultations from "./components/Admin/DemoConsultations";
+import MailSystem from "./components/Admin/MailSystem";
 import EmployeeDashboard from "./components/Employee/EmployeeDashboard";
 import EmployerDashboard from "./components/Employer/EmployerDashboard";
-import MailSystem from "./components/Admin/MailSystem";
 import ForgotPassword from "./components/Auth/ForgotPassword";
 import Profile from "./components/Employer/Profile";
 import EmployeeProfile from "./components/Employee/EmployeeProfile";
@@ -23,12 +22,16 @@ import VerifyAccount from './components/Employee/VerifyAccount';
 import MyProfile from './components/Employee/MyProfile';
 import Notifications from './components/Employee/Notifications';
 import JobApplication from "./components/Employee/JobApplication";
+import Settings from "./components/Employee/Settings";
 import BusinessSolutions from "./Homepages/BusinessSolutions";
 import ScheduleConsultation from "./Homepages/contact";
-import RequestDemo from "./Homepages/RequestDemo";
 import ViewApplication from "./components/Employee/ViewApplication";
 import ViewProfile from './components/Employer/ViewProfile';
 import EmployerVerification from './components/Employer/EmployerVerification';
+import EditApplication from './components/Employee/EditApplication';
+import BecomeSeller from "./Homepages/BecomeSeller";
+import HelpAndSupport from './Homepages/Help&Support';
+import EmployerSettings from "./components/Employer/EmployerSettings";
 import "./App.css";
 
 const App = () => {
@@ -46,14 +49,15 @@ const App = () => {
                 <Route path="/admin-dashboard/statistics" element={<Statistics />} />
                 <Route path="/admin-dashboard/job-details" element={<JobDetails />} />
                 <Route path="/admin-dashboard/consultations" element={<Consultations />} />
-                <Route path="/admin-dashboard/demo-consultations" element={<DemoConsultations />} />
+                
+                <Route path="/admin-dashboard/mail-system" element={<MailSystem />} />
                 <Route path="/employee-dashboard" element={<EmployeeDashboard />} />
                 <Route path="/employer-dashboard" element={<EmployerDashboard />} />
-                <Route path="/admin-dashboard/mail-system" element={<MailSystem />} />
                 <Route path="/forgot-password" element={<ForgotPassword />} />
                 <Route path="/profile" element={<Profile />} />
                 <Route path="/employee-profile" element={<EmployeeProfile />} />
                 <Route path="/find-jobs" element={<FindJobs />} />
+                <Route path="/settings" element={<Settings />} />
                 <Route path="/find-jobs/saved" element={<FindJobs />} />
                 <Route path="/find-jobs/proposals" element={<FindJobs />} />
                 <Route path="/find-jobs/details/:jobId" element={<FindJobs />} />
@@ -64,9 +68,12 @@ const App = () => {
                 <Route path="/jobs/apply/:jobId" element={<JobApplication />} />
                 <Route path="/business-solutions" element={<BusinessSolutions />} />
                 <Route path="/contact" element={<ScheduleConsultation />} />
-                <Route path="/request-demo" element={<RequestDemo />} />
                 <Route path="/view-application/:applicationId" element={<ViewApplication />} />
                 <Route path="/view-profile/:userId" element={<ViewProfile />} />
+                <Route path="/edit-application/:applicationId" element={<EditApplication />} />
+                <Route path="/become-seller" element={<BecomeSeller />} />
+                <Route path="/help-support" element={<HelpAndSupport />} />
+                <Route path="/employer-settings" element={<EmployerSettings />} />
             </Routes>
         </Router>
     );

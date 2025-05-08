@@ -7,10 +7,8 @@ import {
   FaSun, 
   FaMoon, 
   FaUserCircle, 
-  FaBell, 
   FaChevronDown,
   FaCheck,
-  FaClock,
   FaGraduationCap,
   FaCode,
   FaMapMarkerAlt,
@@ -29,11 +27,15 @@ import {
   FaFacebook,
   FaTwitter,
   FaInstagram,
+  FaBell, 
+  FaClock, 
+  FaRegFileAlt,
   FaCheckCircle,
-  FaRegFileAlt
+  FaStar,
 } from 'react-icons/fa';
 import './MyProfile.css'; // You'll need to create this CSS file
 import './EmployeeDashboard.css'; // Import for header and footer styling
+import RatingModal from '../Connections/RatingModal';
 
 const MyProfile = () => {
   const [profileData, setProfileData] = useState({
@@ -68,6 +70,10 @@ const MyProfile = () => {
     return localStorage.getItem("dashboard-theme") === "dark";
   });
   const [isLoading, setIsLoading] = useState(true);
+  const [unreadNotifications, setUnreadNotifications] = useState(() => {
+    return parseInt(localStorage.getItem("unread-notifications") || "2");
+  });
+  const [showRatingModal, setShowRatingModal] = useState(false);
 
   // Refs and navigation
   const navigate = useNavigate();
@@ -157,6 +163,27 @@ const MyProfile = () => {
           isVerified: verificationStatus === 'verified'
         }));
       }
+
+      // Fetch user ratings
+      try {
+        const ratingsResponse = await axios.get(`${API_BASE_URL}/auth/my-ratings`, { withCredentials: true });
+        if (ratingsResponse.data.success) {
+          const ratings = ratingsResponse.data.ratings || [];
+          const averageRating = ratings.length > 0 
+            ? ratings.reduce((acc, curr) => acc + curr.rating, 0) / ratings.length 
+            : 0;
+          
+          // Update the setProfileData call to include ratings data
+          setProfileData(prevData => ({
+            ...prevData,
+            averageRating: averageRating,
+            totalRatings: ratings.length
+          }));
+        }
+      } catch (error) {
+        console.error('Error fetching ratings:', error);
+        // Don't show error toast as this is not critical
+      }
     } catch (error) {
       console.error('Error in fetch user data flow:', error);
       toast.error('An unexpected error occurred loading your profile');
@@ -216,6 +243,12 @@ const MyProfile = () => {
   const handleNavigateToProfile = useCallback(() => {
     navigate('/my-profile');
   }, [navigate]);
+
+  const handleMarkAllAsRead = useCallback((e) => {
+    e.stopPropagation();
+    setUnreadNotifications(0);
+    localStorage.setItem("unread-notifications", "0");
+  }, []);
 
   // Effect hooks
   useEffect(() => {
@@ -332,22 +365,44 @@ const MyProfile = () => {
                 aria-label="Notifications"
               >
                 <FaBell />
-                <span className="notification-badge">2</span>
+                {unreadNotifications > 0 && (
+                  <span className="notification-badge">{unreadNotifications}</span>
+                )}
               </button>
               
               {showNotifications && (
                 <div className="notifications-dropdown">
                   <div className="notification-header">
                     <h3>Notifications</h3>
-                    <button className="mark-all-read">Mark all as read</button>
+                    <button className="mark-all-read" onClick={handleMarkAllAsRead}>Mark all as read</button>
                   </div>
                   <div className="notification-list">
                     <div className="notification-item unread">
                       <div className="notification-icon">
-                        <FaCheckCircle />
+                        {(!profileData.idVerification || 
+                          !profileData.idVerification.frontImage || 
+                          !profileData.idVerification.backImage || 
+                          profileData.idVerification.status === 'rejected') ? (
+                          <FaRegFileAlt />
+                        ) : profileData.idVerification.status === 'verified' ? (
+                          <FaCheckCircle />
+                        ) : (
+                          <FaClock />
+                        )}
                       </div>
                       <div className="notification-content">
-                        <p>Your profile has been verified!</p>
+                        <p>
+                          {(!profileData.idVerification || 
+                            !profileData.idVerification.frontImage || 
+                            !profileData.idVerification.backImage || 
+                            profileData.idVerification.status === 'rejected') ? (
+                            "Please verify your account"
+                          ) : profileData.idVerification.status === 'verified' ? (
+                            "Your profile has been verified!"
+                          ) : (
+                            "Your verification is pending approval"
+                          )}
+                        </p>
                         <span className="notification-time">2 hours ago</span>
                       </div>
                     </div>
@@ -444,6 +499,16 @@ const MyProfile = () => {
                         Verify Account
                       </button>
                     )}
+
+                    <button 
+                      className="profile-dropdown-link"
+                      onClick={() => {
+                          setShowRatingModal(true);
+                          setShowProfileDropdown(false);
+                      }}
+                    >
+                      <FaStar /> My Ratings & Reviews
+                    </button>
                     
                     <button 
                       className="profile-dropdown-link"
@@ -667,6 +732,40 @@ const MyProfile = () => {
                     )}
                   </div>
                 </div>
+
+                {/* Overall Ratings Section */}
+                <div className="profile-section">
+                  <h2 className="profile-section-title">
+                    <FaStar /> Overall Ratings
+                  </h2>
+                  <div className="profile-section-content">
+                    <div className="profile-ratings">
+                      <div className="rating-stars-display">
+                        {[...Array(5)].map((_, index) => (
+                          <FaStar
+                            key={index}
+                            className="star"
+                            color={index < Math.round(profileData.averageRating || 0) ? "#ffc107" : "#e4e5e9"}
+                          />
+                        ))}
+                      </div>
+                      <div className="rating-stats">
+                        <span className="rating-number">
+                          {(profileData.averageRating || 0).toFixed(1)}
+                        </span>
+                        <span className="rating-count">
+                          ({profileData.totalRatings || 0} {(profileData.totalRatings || 0) === 1 ? 'review' : 'reviews'})
+                        </span>
+                      </div>
+                      <button 
+                        className="view-ratings-button"
+                        onClick={() => setShowRatingModal(true)}
+                      >
+                        View All Reviews
+                      </button>
+                    </div>
+                  </div>
+                </div>
                 
                 {/* Resume Section */}
                 {profileData.resumeUrl && (
@@ -778,6 +877,13 @@ const MyProfile = () => {
           </div>
         </div>
       </footer>
+      {showRatingModal && (
+        <RatingModal
+          isOpen={true}
+          onClose={() => setShowRatingModal(false)}
+          viewOnly={true}
+        />
+      )}
     </div>
   );
 };

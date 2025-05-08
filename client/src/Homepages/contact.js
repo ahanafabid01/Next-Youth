@@ -3,7 +3,11 @@ import { Link, useSearchParams } from "react-router-dom";
 import "./BusinessSolutions.css"; // Reuse existing styles
 import "./Homepage.css"; // Reuse homepage styles
 import "./contact.css"; // New separated CSS
-import axios from "axios"; // Add this import
+import axios from "axios";
+import logoLight from '../assets/images/logo-light.png';
+import logoDark from '../assets/images/logo-dark.png';
+import davidWilson from '../assets/images/david-willson.jpg';
+import aliciaZhang from '../assets/images/alicia-zhang.jpg';
 
 const ScheduleConsultation = () => {
   const [searchParams] = useSearchParams();
@@ -41,6 +45,64 @@ const ScheduleConsultation = () => {
   const [toastMessage, setToastMessage] = useState("");
   const hamburgerRef = useRef(null);
   const menuRef = useRef(null);
+  
+  // Solution categories with icons and descriptions from RequestDemo.js
+  const demoSolutions = [
+    {
+      icon: "chart-line",
+      title: "Analytics Dashboard",
+      description: "Interactive visualization of your business metrics and KPIs"
+    },
+    {
+      icon: "users",
+      title: "Team Management",
+      description: "Collaborate effectively across departments and projects"
+    },
+    {
+      icon: "tasks",
+      title: "Project Workflow",
+      description: "Streamline your operations with our intuitive workflow tools"
+    },
+    {
+      icon: "shield-alt",
+      title: "Security Features",
+      description: "Enterprise-grade security protocols for your data"
+    },
+    {
+      icon: "bullhorn",
+      title: "Marketing Tools",
+      description: "Reach your audience with integrated marketing solutions"
+    },
+    {
+      icon: "headset",
+      title: "Customer Service",
+      description: "Enhanced customer support and engagement tools"
+    }
+  ];
+
+  // Benefits of our solutions from RequestDemo.js
+  const benefits = [
+    {
+      icon: "clock",
+      title: "Save Time",
+      description: "Reduce manual processes by up to 75% with automated workflows"
+    },
+    {
+      icon: "coins",
+      title: "Cost Efficient",
+      description: "Lower operational costs and increase ROI with optimized systems"
+    },
+    {
+      icon: "chart-bar",
+      title: "Scale Easily",
+      description: "Flexible solutions that grow with your business needs"
+    },
+    {
+      icon: "bolt",
+      title: "Boost Productivity",
+      description: "Empower your team with tools designed for maximum efficiency"
+    }
+  ];
 
   // Intersection observer for animations
   useEffect(() => {
@@ -258,14 +320,22 @@ const ScheduleConsultation = () => {
       {/* Header Section */}
       <header>
         <div className="header-container">
-          <div className="logo float">Next Youth</div>
+          <div className="logo">
+            <Link to="/">
+              <img 
+                src={isDarkMode ? logoDark : logoLight} 
+                alt="Next Youth" 
+                className="logo-image" 
+              />
+            </Link>
+          </div>
           
           <nav className="desktop-nav">
             <ul>
               <li><Link to="/business-solutions"><i className="fas fa-briefcase"></i>Business Solutions</Link></li>
               <li><a href="#"><i className="fas fa-compass"></i>Explore</a></li>
               <li><a href="#"><i className="fas fa-globe"></i>English</a></li>
-              <li><a href="#"><i className="fas fa-store"></i>Become a Seller</a></li>
+              <li><Link to="/become-seller"><i className="fas fa-store"></i>Become a Seller</Link></li>
               <li>
                 <button 
                   className="theme-toggle"
@@ -310,7 +380,7 @@ const ScheduleConsultation = () => {
             <li className="nav-fade-in"><Link to="/business-solutions" onClick={handleMenuClick}><i className="fas fa-briefcase"></i>Business Solutions</Link></li>
             <li className="nav-fade-in"><a href="#" onClick={handleMenuClick}><i className="fas fa-compass"></i>Explore</a></li>
             <li className="nav-fade-in"><a href="#" onClick={handleMenuClick}><i className="fas fa-globe"></i>English</a></li>
-            <li className="nav-fade-in"><a href="#" onClick={handleMenuClick}><i className="fas fa-store"></i>Become a Seller</a></li>
+            <li className="nav-fade-in"><Link to="/become-seller" onClick={handleMenuClick}><i className="fas fa-store"></i>Become a Seller</Link></li>
             <li className="nav-fade-in"><Link to="/login" className="login" onClick={handleMenuClick}><i className="fas fa-sign-in-alt"></i>Log In</Link></li>
             <li className="nav-fade-in"><Link to="/register" className="signup" onClick={handleMenuClick}><i className="fas fa-user-plus"></i>Sign Up</Link></li>
             <li className="nav-fade-in">
@@ -329,33 +399,59 @@ const ScheduleConsultation = () => {
         </div>
       </header>
 
-      {/* Schedule Consultation Content */}
+      {/* Contact Content with Sections from Demo Page */}
       <div className={`business-solutions-container ${isDarkMode ? "dark-mode" : ""}`}>
-        {/* Hero Section */}
+        {/* Hero Section - Enhanced with Demo Page Style */}
         <section 
-          className={`bs-hero ${isDarkMode ? "dark-bg" : "light-bg"}`}
+          className="demo-hero" 
           id="sc-hero"
           ref={addToRefs}
         >
-          <div className={`bs-hero-content ${isVisible["sc-hero"] ? "bs-animate-in" : ""}`}>
-            <h1>Schedule A Consultation</h1>
-            <p>Take the first step towards transforming your business with our expert consultation services</p>
-            <div className="bs-cta-buttons">
+          <div className={`demo-hero-content ${isVisible["sc-hero"] ? "demo-animate-in" : ""}`}>
+            <h1>Transform Your Business Today</h1>
+            <p>Schedule a consultation with our experts and discover tailored solutions for your unique challenges</p>
+            <div className="demo-cta-buttons">
               <a 
                 href="#sc-form" 
-                className="bs-primary-btn"
+                className="demo-primary-btn"
                 onClick={(e) => handleSmoothScroll(e, "sc-form")}
               >
                 <i className="fas fa-calendar-alt"></i> Schedule Now
               </a>
-              <a href="#sc-benefits" className="bs-secondary-btn" onClick={(e) => handleSmoothScroll(e, "sc-benefits")}>
+              <a href="#sc-benefits" className="demo-secondary-btn" onClick={(e) => handleSmoothScroll(e, "sc-expect")}>
                 <i className="fas fa-info-circle"></i> Learn More
               </a>
             </div>
           </div>
+          <div className={`demo-hero-image ${isVisible["sc-hero"] ? "demo-animate-in" : ""}`}>
+          </div>
         </section>
 
-        {/* What to Expect Section */}
+        {/* Solutions Preview Section - From Demo Page */}
+        <section 
+          className="demo-solutions-preview" 
+          id="demo-solutions"
+          ref={addToRefs}
+        >
+          <div className={`demo-section-title ${isVisible["demo-solutions"] ? "demo-animate-in" : ""}`}>
+            <h2>Our Comprehensive Solutions</h2>
+            <p>Discover how our suite of tools can help your business thrive in today's competitive market</p>
+          </div>
+
+          <div className={`demo-solutions-grid ${isVisible["demo-solutions"] ? "demo-animate-in" : ""}`}>
+            {demoSolutions.map((solution, index) => (
+              <div className="demo-solution-card" key={index}>
+                <div className="demo-solution-icon">
+                  <i className={`fas fa-${solution.icon}`}></i>
+                </div>
+                <h3>{solution.title}</h3>
+                <p>{solution.description}</p>
+              </div>
+            ))}
+          </div>
+        </section>
+
+        {/* What to Expect Section - Keep Original */}
         <section 
           className={`bs-process ${isDarkMode ? "dark-bg-alt" : "light-bg-alt"}`}
           id="sc-expect"
@@ -409,54 +505,67 @@ const ScheduleConsultation = () => {
           </div>
         </section>
 
-        {/* Consultation Process Section */}
+        {/* Benefits Section - From Demo Page */}
         <section 
-          className="bs-process" 
+          className="demo-benefits" 
+          id="demo-benefits"
+          ref={addToRefs}
+        >
+          <div className={`demo-section-title ${isVisible["demo-benefits"] ? "demo-animate-in" : ""}`}>
+            <h2>Why Work With Us?</h2>
+            <p>Experience firsthand how our solutions drive measurable business results</p>
+          </div>
+
+          <div className={`demo-benefits-grid ${isVisible["demo-benefits"] ? "demo-animate-in" : ""}`}>
+            {benefits.map((benefit, index) => (
+              <div className="demo-benefit-card" key={index}>
+                <div className="demo-benefit-icon">
+                  <i className={`fas fa-${benefit.icon}`}></i>
+                </div>
+                <h3>{benefit.title}</h3>
+                <p>{benefit.description}</p>
+              </div>
+            ))}
+          </div>
+        </section>
+
+        {/* Consultation Process Section - Enhanced with Demo Page Style */}
+        <section 
+          className="demo-process" 
           id="sc-process"
           ref={addToRefs}
         >
-          <div className={`bs-section-title ${isVisible["sc-process"] ? "bs-animate-in" : ""}`}>
-            <h2>Our Consultation Process</h2>
-            <p>A simple four-step journey to transform your business challenges into opportunities</p>
+          <div className={`demo-section-title ${isVisible["sc-process"] ? "demo-animate-in" : ""}`}>
+            <h2>Our Simple Consultation Process</h2>
+            <p>How we help transform your business challenges into opportunities</p>
           </div>
 
-          <div className={`bs-timeline ${isVisible["sc-process"] ? "bs-animate-in" : ""}`}>
-            <div className="bs-timeline-item">
-              <div className="bs-timeline-marker">1</div>
-              <div className="bs-timeline-content">
-                <h4>Schedule & Prepare</h4>
-                <p>Book your consultation and complete a brief pre-consultation questionnaire to help us understand your needs.</p>
+          <div className={`demo-process-steps ${isVisible["sc-process"] ? "demo-animate-in" : ""}`}>
+            <div className="demo-process-step">
+              <div className="demo-step-number">1</div>
+              <div className="demo-step-content">
+                <h3>Schedule</h3>
+                <p>Book your consultation and complete a brief questionnaire to help us understand your needs</p>
               </div>
             </div>
-            
-            <div className="bs-timeline-item">
-              <div className="bs-timeline-marker">2</div>
-              <div className="bs-timeline-content">
-                <h4>Discovery Session</h4>
-                <p>Meet with our expert consultants who will dive deep into your business challenges and objectives.</p>
+            <div className="demo-process-step">
+              <div className="demo-step-number">2</div>
+              <div className="demo-step-content">
+                <h3>Analyze</h3>
+                <p>Our experts will assess your business situation and develop tailored recommendations</p>
               </div>
             </div>
-            
-            <div className="bs-timeline-item">
-              <div className="bs-timeline-marker">3</div>
-              <div className="bs-timeline-content">
-                <h4>Strategy Development</h4>
-                <p>Our team creates a customized action plan based on your unique situation and goals.</p>
-              </div>
-            </div>
-            
-            <div className="bs-timeline-item">
-              <div className="bs-timeline-marker">4</div>
-              <div className="bs-timeline-content">
-                <h4>Implementation Support</h4>
-                <p>Receive guidance and support as you put the recommended strategies into action within your business.</p>
+            <div className="demo-process-step">
+              <div className="demo-step-number">3</div>
+              <div className="demo-step-content">
+                <h3>Implement</h3>
+                <p>Receive a comprehensive action plan with ongoing support during implementation</p>
               </div>
             </div>
           </div>
-
         </section>
 
-        {/* Form Section */}
+        {/* Form Section - Keep Original */}
         <section 
           className="bs-solutions" 
           id="sc-form"
@@ -683,74 +792,69 @@ const ScheduleConsultation = () => {
             )}
           </div>
         </section>
-
-        {/* Why Book Section */}
+        
+        {/* Testimonials Section - From Demo Page */}
         <section 
-          className={`bs-process ${isDarkMode ? "dark-bg-alt" : "light-bg-alt"}`}
-          id="sc-why"
+          className="demo-testimonials" 
+          id="demo-testimonials"
           ref={addToRefs}
         >
-          <div className={`bs-section-title ${isVisible["sc-why"] ? "bs-animate-in" : ""}`}>
-            <h2>Why Book a Consultation?</h2>
-            <p>Discover how our personalized consultation process helps businesses like yours succeed</p>
+          <div className={`demo-section-title ${isVisible["demo-testimonials"] ? "demo-animate-in" : ""}`}>
+            <h2>What Our Clients Say</h2>
+            <p>Hear from businesses that have transformed after working with us</p>
           </div>
 
-          <div className={`bs-timeline ${isVisible["sc-why"] ? "bs-animate-in" : ""}`}>
-            <div className="bs-timeline-item">
-              <div className="bs-timeline-marker">1</div>
-              <div className="bs-timeline-content">
-                <h4>Expert Assessment</h4>
-                <p>Our specialists will analyze your current business operations and identify opportunities for growth and optimization.</p>
+          <div className={`demo-testimonial-cards ${isVisible["demo-testimonials"] ? "demo-animate-in" : ""}`}>
+            <div className="demo-testimonial-card">
+              <div className="demo-testimonial-content">
+                <i className="fas fa-quote-left"></i>
+                <p>"The personalized consultation showed us exactly how their solutions could solve our specific challenges. We implemented the recommendations the following week and saw immediate results."</p>
+              </div>
+              <div className="demo-testimonial-author">
+                <div className="demo-author-image">
+                  <img src={davidWilson} alt="David Wilson, CEO" />
+                </div>
+                <div className="demo-author-details">
+                  <h4>David Wilson</h4>
+                  <span>CEO, TechInnovate</span>
+                </div>
               </div>
             </div>
-            
-            <div className="bs-timeline-item">
-              <div className="bs-timeline-marker">2</div>
-              <div className="bs-timeline-content">
-                <h4>Tailored Solutions</h4>
-                <p>We'll create a customized strategy that addresses your specific business challenges and aligns with your goals.</p>
+
+            <div className="demo-testimonial-card">
+              <div className="demo-testimonial-content">
+                <i className="fas fa-quote-left"></i>
+                <p>"The live consultation was eye-opening. We could immediately see how their approach would transform our decision-making process. Six months later, our efficiency has increased by 43%."</p>
               </div>
-            </div>
-            
-            <div className="bs-timeline-item">
-              <div className="bs-timeline-marker">3</div>
-              <div className="bs-timeline-content">
-                <h4>Implementation Roadmap</h4>
-                <p>Receive a clear step-by-step plan that outlines how to implement our recommended solutions effectively.</p>
-              </div>
-            </div>
-            
-            <div className="bs-timeline-item">
-              <div className="bs-timeline-marker">4</div>
-              <div className="bs-timeline-content">
-                <h4>Ongoing Support</h4>
-                <p>Our relationship doesn't end after the consultation. We provide continuous support to ensure your success.</p>
+              <div className="demo-testimonial-author">
+                <div className="demo-author-image">
+                  <img src={aliciaZhang} alt="Alicia Zhang, CTO" />
+                </div>
+                <div className="demo-author-details">
+                  <h4>Alicia Zhang</h4>
+                  <span>CTO, Global Solutions Inc.</span>
+                </div>
               </div>
             </div>
           </div>
         </section>
 
-        {/* CTA Section */}
+        {/* Final CTA Section - From Demo Page */}
         <section 
-          className={`bs-cta ${isDarkMode ? "dark-cta-bg" : "light-cta-bg"}`}
-          id="sc-cta"
+          className="demo-final-cta" 
+          id="demo-final-cta"
           ref={addToRefs}
         >
-          <div className={`bs-cta-container ${isVisible["sc-cta"] ? "bs-animate-in" : ""}`}>
-            <h2>Ready to Transform Your Business?</h2>
-            <p>Our experts are waiting to help you take your business to the next level with tailored solutions.</p>
-            <div className="bs-cta-buttons">
-              <a 
-                href="#sc-form" 
-                className="bs-primary-btn"
-                onClick={(e) => handleSmoothScroll(e, "sc-form")}
-              >
-                <i className="fas fa-calendar-alt"></i> Schedule Now
-              </a>
-              <a href="#" className="bs-secondary-btn">
-                <i className="fas fa-phone"></i> Contact Sales Team
-              </a>
-            </div>
+          <div className={`demo-cta-container ${isVisible["demo-final-cta"] ? "demo-animate-in" : ""}`}>
+            <h2>Ready to transform your business?</h2>
+            <p>Schedule your personalized consultation today and discover how we can help your business thrive</p>
+            <a 
+              href="#sc-form" 
+              className="demo-primary-btn"
+              onClick={(e) => handleSmoothScroll(e, "sc-form")}
+            >
+              <i className="fas fa-calendar-check"></i> Book Your Consultation Now
+            </a>
           </div>
         </section>
       </div>

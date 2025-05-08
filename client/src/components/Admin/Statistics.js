@@ -9,7 +9,7 @@ import {
 import { 
     FaUsers, FaChartLine, FaCalendarCheck, FaBriefcase, 
     FaRegClock, FaSync, FaCheckCircle, FaTimesCircle,
-    FaArrowUp, FaArrowDown, FaThumbsUp, FaInfoCircle
+    FaArrowUp, FaArrowDown, FaThumbsUp, FaInfoCircle, FaClipboardList
 } from "react-icons/fa";
 
 // Create an event system for real-time updates
@@ -52,6 +52,7 @@ const Statistics = () => {
     const [users, setUsers] = useState([]);
     const [consultations, setConsultations] = useState([]);
     const [jobs, setJobs] = useState([]);
+    const [applications, setApplications] = useState([]); // Add applications state
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
     const [timeframe, setTimeframe] = useState('7d'); // Default timeframe is 7 days
@@ -119,6 +120,15 @@ const Statistics = () => {
                 setJobs(jobsResponse.data.jobs);
             }
             
+            // Fetch applications data
+            const applicationsResponse = await axios.get("http://localhost:4000/api/jobs/admin/applications", {
+                withCredentials: true
+            });
+            
+            if (applicationsResponse.data && applicationsResponse.data.success) {
+                setApplications(applicationsResponse.data.applications);
+            }
+            
             setLoading(false);
             setLastUpdated(new Date());
         } catch (err) {
@@ -174,10 +184,25 @@ const Statistics = () => {
             }
         };
         
+        const fetchApplicationsData = async () => {
+            try {
+                const response = await axios.get("http://localhost:4000/api/jobs/admin/applications", {
+                    withCredentials: true
+                });
+                if (response.data?.success) {
+                    setApplications(response.data.applications);
+                    setLastUpdated(new Date());
+                }
+            } catch (err) {
+                console.error("Error updating application stats:", err);
+            }
+        };
+        
         // Register update listeners
         updateListeners.users = [fetchUserData];
         updateListeners.consultations = [fetchConsultationData];
         updateListeners.jobs = [fetchJobsData];
+        updateListeners.applications = [fetchApplicationsData];
         
         // Initial data fetch
         fetchData();
@@ -187,6 +212,7 @@ const Statistics = () => {
             updateListeners.users = [];
             updateListeners.consultations = [];
             updateListeners.jobs = [];
+            updateListeners.applications = [];
         };
     }, [fetchData]);
 
@@ -307,6 +333,21 @@ const Statistics = () => {
         return jobsByStatus;
     };
 
+    // Prepare data for the Application Status Chart
+    const prepareApplicationStatusData = () => {
+        if (!applications.length) return [];
+        
+        const pendingApplications = applications.filter(app => app.status === 'pending').length;
+        const acceptedApplications = applications.filter(app => app.status === 'accepted').length;
+        const rejectedApplications = applications.filter(app => app.status === 'rejected').length;
+        
+        return [
+            { name: 'Pending', value: pendingApplications, color: colorPalette.accent },
+            { name: 'Accepted', value: acceptedApplications, color: colorPalette.secondary },
+            { name: 'Rejected', value: rejectedApplications, color: colorPalette.danger }
+        ];
+    };
+
     // Prepare weekly registration data
     const prepareWeeklyRegistrationsData = () => {
         if (!users.length) return [];
@@ -376,6 +417,45 @@ const Statistics = () => {
         });
         
         return consultationsByMonth;
+    };
+
+    // Prepare applications trend data
+    const prepareApplicationsTrendData = () => {
+        if (!applications.length) return [];
+        
+        // Get data for the last 6 months
+        const months = [];
+        for (let i = 5; i >= 0; i--) {
+            const date = new Date();
+            date.setMonth(date.getMonth() - i);
+            date.setDate(1);
+            date.setHours(0, 0, 0, 0);
+            months.push(date);
+        }
+        
+        // Count applications for each month
+        const applicationsByMonth = months.map(startDate => {
+            const endDate = new Date(startDate);
+            endDate.setMonth(endDate.getMonth() + 1);
+            
+            const count = applications.filter(app => {
+                const creationDate = new Date(app.createdAt);
+                return creationDate >= startDate && creationDate < endDate;
+            }).length;
+            
+            const acceptedCount = applications.filter(app => {
+                const creationDate = new Date(app.createdAt);
+                return creationDate >= startDate && creationDate < endDate && app.status === 'accepted';
+            }).length;
+            
+            return {
+                name: startDate.toLocaleDateString('en-US', { month: 'short' }),
+                'All Applications': count,
+                'Accepted': acceptedCount
+            };
+        });
+        
+        return applicationsByMonth;
     };
 
     // Add this new function to prepare user growth trend data
@@ -454,8 +534,10 @@ const Statistics = () => {
     const userStatusData = prepareUserStatusData();
     const consultationStatusData = prepareConsultationStatusData();
     const jobStatusData = prepareJobStatusData();
+    const applicationStatusData = prepareApplicationStatusData();
     const userRegistrationData = prepareWeeklyRegistrationsData();
     const consultationTrendData = prepareConsultationTrendData();
+    const applicationsTrendData = prepareApplicationsTrendData();
     const userGrowthTrendData = prepareUserGrowthTrendData();
 
     // Loading state with skeleton UI
@@ -544,6 +626,13 @@ const Statistics = () => {
     const availableJobs = jobs.length;
     const notAvailableJobs = 0;
 
+    // Calculate applications statistics
+    const totalApplications = applications.length;
+    const pendingApplications = applications.filter(app => app.status === 'pending').length;
+    const acceptedApplications = applications.filter(app => app.status === 'accepted').length;
+    const rejectedApplications = applications.filter(app => app.status === 'rejected').length;
+    const acceptanceRate = totalApplications ? Math.round((acceptedApplications / totalApplications) * 100) : 0;
+
     return (
         <div className="admin-dashboard">
             <Sidebar />
@@ -590,6 +679,12 @@ const Statistics = () => {
                             onClick={() => setActiveTab('jobs')}
                         >
                             Job Statistics
+                        </button>
+                        <button 
+                            className={`tab-button ${activeTab === 'applications' ? 'active' : ''}`}
+                            onClick={() => setActiveTab('applications')}
+                        >
+                            Applications
                         </button>
                     </div>
                     
@@ -671,6 +766,23 @@ const Statistics = () => {
                                     </p>
                                     <p className="stat-note">
                                         <FaInfoCircle /> Avg. Budget: ${avgBudget}
+                                    </p>
+                                </div>
+
+                                <div className="stat-card">
+                                    <div className="stat-header">
+                                        <h3 className="stat-title">Applications</h3>
+                                        <div className="stat-icon bg-blue"><FaClipboardList /></div>
+                                    </div>
+                                    <p className="stat-value">{totalApplications}</p>
+                                    <div className="progress-bar">
+                                        <div 
+                                            className="progress" 
+                                            style={{width: `${acceptanceRate}%`, backgroundColor: getStatusColor('verified')}}
+                                        ></div>
+                                    </div>
+                                    <p className="stat-note">
+                                        <FaThumbsUp /> {acceptanceRate}% acceptance rate
                                     </p>
                                 </div>
                             </div>
@@ -826,6 +938,42 @@ const Statistics = () => {
                                             </PieChart>
                                         </ResponsiveContainer>
                                     </div>
+                                </div>
+                            </div>
+
+                            {/* Additional chart for applications */}
+                            <div className="chart-card full-width">
+                                <div className="chart-header">
+                                    <h3 className="chart-title">Applications Status Overview</h3>
+                                </div>
+                                <div className="chart-container">
+                                    <ResponsiveContainer width="100%" height={280}>
+                                        <PieChart>
+                                            <Pie
+                                                data={applicationStatusData}
+                                                cx="50%"
+                                                cy="50%"
+                                                innerRadius={50}
+                                                outerRadius={70}
+                                                paddingAngle={5}
+                                                fill="#8884d8"
+                                                dataKey="value"
+                                                label={({percent}) => percent > 0.08 ? `${(percent * 100).toFixed(0)}%` : ''}
+                                                labelLine={false}
+                                            >
+                                                {applicationStatusData.map((entry, index) => (
+                                                    <Cell key={`cell-${index}`} fill={entry.color} />
+                                                ))}
+                                            </Pie>
+                                            <Tooltip content={<CustomTooltip />} />
+                                            <Legend 
+                                                layout="horizontal" 
+                                                verticalAlign="bottom" 
+                                                align="center"
+                                                wrapperStyle={{ paddingTop: '20px' }}
+                                            />
+                                        </PieChart>
+                                    </ResponsiveContainer>
                                 </div>
                             </div>
                         </>
@@ -1177,6 +1325,127 @@ const Statistics = () => {
                                                 <Tooltip content={<CustomTooltip />} />
                                                 <Legend />
                                             </PieChart>
+                                        </ResponsiveContainer>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    )}
+
+                    {/* Applications Tab Content */}
+                    {activeTab === 'applications' && (
+                        <div className="tab-content">
+                            <div className="section-header">
+                                <h2>Application Analytics</h2>
+                                <p className="section-description">
+                                    Detailed metrics about job applications, status distribution, and acceptance rates.
+                                </p>
+                            </div>
+                            
+                            <div className="stats-summary-cards">
+                                <div className="summary-card">
+                                    <div className="summary-icon"><FaClipboardList /></div>
+                                    <div className="summary-details">
+                                        <h3>{totalApplications}</h3>
+                                        <p>Total Applications</p>
+                                    </div>
+                                </div>
+                                <div className="summary-card">
+                                    <div className="summary-icon" style={{color: colorPalette.secondary}}><FaCheckCircle /></div>
+                                    <div className="summary-details">
+                                        <h3>{acceptedApplications}</h3>
+                                        <p>Accepted</p>
+                                    </div>
+                                </div>
+                                <div className="summary-card">
+                                    <div className="summary-icon" style={{color: colorPalette.accent}}><FaRegClock /></div>
+                                    <div className="summary-details">
+                                        <h3>{pendingApplications}</h3>
+                                        <p>Pending</p>
+                                    </div>
+                                </div>
+                                <div className="summary-card">
+                                    <div className="summary-icon" style={{color: colorPalette.danger}}><FaTimesCircle /></div>
+                                    <div className="summary-details">
+                                        <h3>{rejectedApplications}</h3>
+                                        <p>Rejected</p>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div className="detailed-stats">
+                                <div className="stat-type-card">
+                                    <h3>Application Statistics</h3>
+                                    <ul className="stat-list">
+                                        <li className="stat-item">
+                                            <span className="stat-label">Acceptance Rate</span>
+                                            <span className="stat-value">{acceptanceRate}%</span>
+                                        </li>
+                                        <li className="stat-item">
+                                            <span className="stat-label">Rejection Rate</span>
+                                            <span className="stat-value">
+                                                {totalApplications ? Math.round((rejectedApplications / totalApplications) * 100) : 0}%
+                                            </span>
+                                        </li>
+                                        <li className="stat-item">
+                                            <span className="stat-label">Pending Rate</span>
+                                            <span className="stat-value">
+                                                {totalApplications ? Math.round((pendingApplications / totalApplications) * 100) : 0}%
+                                            </span>
+                                        </li>
+                                        <li className="stat-item">
+                                            <span className="stat-label">New Applications (7 days)</span>
+                                            <span className="stat-value">
+                                                {applications.filter(app => 
+                                                    new Date(app.createdAt) > new Date(Date.now() - 7 * 24 * 60 * 60 * 1000)
+                                                ).length}
+                                            </span>
+                                        </li>
+                                    </ul>
+                                </div>
+                                
+                                <div className="chart-card full-width">
+                                    <div className="chart-header">
+                                        <h3 className="chart-title">Application Status Distribution</h3>
+                                    </div>
+                                    <div className="chart-container">
+                                        <ResponsiveContainer width="100%" height={300}>
+                                            <PieChart>
+                                                <Pie
+                                                    data={applicationStatusData}
+                                                    cx="50%"
+                                                    cy="50%"
+                                                    outerRadius={100}
+                                                    fill="#8884d8"
+                                                    dataKey="value"
+                                                    label={({name, percent}) => `${name}: ${(percent * 100).toFixed(0)}%`}
+                                                >
+                                                    {applicationStatusData.map((entry, index) => (
+                                                        <Cell key={`cell-${index}`} fill={entry.color} />
+                                                    ))}
+                                                </Pie>
+                                                <Tooltip content={<CustomTooltip />} />
+                                                <Legend />
+                                            </PieChart>
+                                        </ResponsiveContainer>
+                                    </div>
+                                </div>
+                                
+                                <div className="chart-card full-width">
+                                    <div className="chart-header">
+                                        <h3 className="chart-title">Monthly Application Trends</h3>
+                                    </div>
+                                    <div className="chart-container">
+                                        <ResponsiveContainer width="100%" height={300}>
+                                            <BarChart data={applicationsTrendData} margin={{ top: 10, right: 30, left: 0, bottom: 0 }}>
+                                                <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
+                                                <XAxis dataKey="name" tick={{ fontSize: 12 }} />
+                                                <YAxis tick={{ fontSize: 12 }} />
+                                                <Tooltip content={<CustomTooltip />} />
+                                                <Legend wrapperStyle={{ fontSize: '12px' }} />
+                                                <Bar dataKey="All Applications" fill={colorPalette.primary} radius={[4, 4, 0, 0]} />
+                                                <Bar dataKey="Accepted" fill={colorPalette.secondary} radius={[4, 4, 0, 0]} />
+                                            </BarChart>
                                         </ResponsiveContainer>
                                     </div>
                                 </div>

@@ -19,8 +19,10 @@ import {
   FaLinkedin,
   FaInstagram,
   FaClock,
+  FaStar,
 } from 'react-icons/fa';
 import './EmployeeDashboard.css';
+import RatingModal from '../Connections/RatingModal';
 
 const EmployeeDashboard = () => {
   const navigate = useNavigate();
@@ -59,6 +61,7 @@ const EmployeeDashboard = () => {
   const [appliedJobsCount, setAppliedJobsCount] = useState(0);
   const [categoryFilter, setCategoryFilter] = useState('All Categories');
   const [sortOption, setSortOption] = useState('Latest First');
+  const [showRatingModal, setShowRatingModal] = useState(false);
 
   const fetchUserData = useCallback(async () => {
     try {
@@ -610,6 +613,16 @@ const EmployeeDashboard = () => {
                     
                     <button 
                       className="profile-dropdown-link"
+                      onClick={() => {
+                        setShowRatingModal(true);
+                        setShowProfileDropdown(false);
+                      }}
+                    >
+                      <FaStar /> My Ratings & Reviews
+                    </button>
+                    
+                    <button 
+                      className="profile-dropdown-link"
                       onClick={() => navigate('/settings')}
                     >
                       Settings
@@ -844,6 +857,13 @@ const EmployeeDashboard = () => {
             )}
           </div>
         </div>
+        {showRatingModal && (
+          <RatingModal
+              isOpen={true}
+              onClose={() => setShowRatingModal(false)}
+              viewOnly={true}
+          />
+        )}
       </main>
 
       <footer className="dashboard-footer">

@@ -91,36 +91,31 @@ const Sidebar = () => {
               <FaEnvelope /> Consultations
             </Link>
           </li>
-          <li>
-            <Link 
-              to="/admin-dashboard/demo-consultations" 
-              className={location.pathname === "/admin-dashboard/demo-consultations" ? "active" : ""}
-            >
-              <FaEnvelope /> Demo Consultations
-            </Link>
-          </li>
+
           <li>
             <Link 
               to="/admin-dashboard/applications" 
               className={location.pathname === "/admin-dashboard/applications" ? "active" : ""}
             >
-              <FaClipboardList /> Applications
+              <FaClipboardList /> Job Applications
             </Link>
           </li>
-          <li>
-            <Link 
-              to="/admin-dashboard/statistics" 
-              className={location.pathname === "/admin-dashboard/statistics" ? "active" : ""}
-            >
-              <FaChartBar /> Statistics
-            </Link>
-          </li>
+
           <li>
             <Link 
               to="/admin-dashboard/job-details" 
               className={location.pathname === "/admin-dashboard/job-details" ? "active" : ""}
             >
               <FaBriefcase /> Job Details
+            </Link>
+          </li>
+          
+          <li>
+            <Link 
+              to="/admin-dashboard/statistics" 
+              className={location.pathname === "/admin-dashboard/statistics" ? "active" : ""}
+            >
+              <FaChartBar /> Statistics
             </Link>
           </li>
           {/* New Central Mailing System link */}

@@ -1,5 +1,4 @@
 import React, { useState, useEffect, useCallback, memo } from "react";
-import { useNavigate } from "react-router-dom"; // Add this import
 import axios from "axios";
 import { 
   FaTrash, 
@@ -15,6 +14,7 @@ import {
   FaPlus
 } from "react-icons/fa";
 import "./MyJobs.css";
+import RatingModal from '../Connections/RatingModal';
 
 // Memoized Job Card component for better performance
 const JobCard = memo(({ 
@@ -26,6 +26,49 @@ const JobCard = memo(({
   updatingJobIds, 
   formatDate 
 }) => {
+  const [showRatingModal, setShowRatingModal] = useState(false);
+  const [applicantInfo, setApplicantInfo] = useState(null);
+
+  // Add this function to fetch applicant info
+  const fetchApplicantInfo = async (jobId) => {
+    try {
+      const response = await axios.get(
+        `http://localhost:4000/api/jobs/job-application/${jobId}`,
+        { withCredentials: true }
+      );
+      if (response.data.success && response.data.application) {
+        setApplicantInfo(response.data.application.applicant);
+      }
+    } catch (err) {
+      console.error("Error fetching applicant info:", err);
+    }
+  };
+
+  // Modify the click handler for Completed status
+  const handleComplete = async (e) => {
+    e.stopPropagation();
+    
+    try {
+      // First update the job status
+      await handleUpdateJobStatus(job._id, "Completed", e);
+      
+      // Get the dropdown menu element
+      const dropdownMenu = e.target.closest('.status-dropdown-menu');
+      if (dropdownMenu) {
+        dropdownMenu.classList.remove("show");
+      }
+      
+      // Add a slight delay before showing the modal to ensure status update completes
+      setTimeout(async () => {
+        // Fetch applicant info and show rating modal
+        await fetchApplicantInfo(job._id);
+        setShowRatingModal(true);
+      }, 100);
+    } catch (error) {
+      console.error("Error completing job:", error);
+    }
+  };
+
   // Helper function to format status class correctly
   const getStatusClass = (status) => {
     if (!status) return "status-available";
@@ -93,11 +136,7 @@ const JobCard = memo(({
               </div>
               <div
                 className="status-option status-completed"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  handleUpdateJobStatus(job._id, "Completed", e);
-                  e.currentTarget.parentElement.classList.remove("show");
-                }}
+                onClick={handleComplete}
               >
                 Completed
               </div>
@@ -201,17 +240,42 @@ const JobCard = memo(({
           <FaTrash aria-hidden="true" /> <span className="btn-text">Delete</span>
         </button>
       </div>
+
+      {showRatingModal && applicantInfo && (
+        <RatingModal
+          isOpen={showRatingModal}
+          onClose={() => {
+            setShowRatingModal(false);
+            setApplicantInfo(null);
+          }}
+          jobTitle={job.title}
+          applicant={applicantInfo}
+          jobId={job._id}
+          onRatingSubmit={() => {
+            setShowRatingModal(false);
+            setApplicantInfo(null);
+          }}
+        />
+      )}
     </div>
   );
 });
 
-const MyJobs = ({ onPostJobClick }) => {
+const MyJobs = () => {
     const [jobs, setJobs] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState("");
     const [updatingJobIds, setUpdatingJobIds] = useState([]);
     const [expandedJobId, setExpandedJobId] = useState(null);
-    const navigate = useNavigate();
+    // Pagination state
+    const [currentPage, setCurrentPage] = useState(1);
+    const [itemsPerPage, setItemsPerPage] = useState(6);
+    // Add this state
+    const [paginationRange, setPaginationRange] = useState([]);
+
+    // Add these with your other pagination calculations
+    const indexOfLastJob = currentPage * itemsPerPage;
+    const indexOfFirstJob = indexOfLastJob - itemsPerPage;
 
     useEffect(() => {
         const fetchJobs = async () => {
@@ -221,7 +285,11 @@ const MyJobs = ({ onPostJobClick }) => {
                     withCredentials: true 
                 });
                 if (response.data.success) {
-                    setJobs(response.data.jobs);
+                    // Sort jobs by creation date (newest first)
+                    const sortedJobs = [...response.data.jobs].sort((a, b) => 
+                        new Date(b.createdAt) - new Date(a.createdAt)
+                    );
+                    setJobs(sortedJobs);
                 } else {
                     setError("Failed to fetch jobs.");
                 }
@@ -235,6 +303,107 @@ const MyJobs = ({ onPostJobClick }) => {
 
         fetchJobs();
     }, []);
+
+    // Calculate pagination values
+    const currentJobs = jobs.slice(indexOfFirstJob, indexOfLastJob);
+    const totalPages = Math.ceil(jobs.length / itemsPerPage);
+
+    // Add this effect to calculate pagination range with ellipsis
+    useEffect(() => {
+        const generatePaginationRange = () => {
+            const range = [];
+            const maxPagesVisible = 5; // Maximum number of page buttons to show
+            
+            if (totalPages <= maxPagesVisible) {
+                // If there are fewer pages than the max visible, show all pages
+                for (let i = 1; i <= totalPages; i++) {
+                    range.push(i);
+                }
+            } else {
+                // Always show the first page
+                range.push(1);
+                
+                const leftSideOffset = Math.floor(maxPagesVisible / 2);
+                const rightSideOffset = maxPagesVisible - leftSideOffset - 1;
+                
+                // Calculate start and end page
+                let startPage = Math.max(2, currentPage - leftSideOffset);
+                let endPage = Math.min(totalPages - 1, currentPage + rightSideOffset);
+                
+                // Adjust if the range is too small on either side
+                if (startPage <= 2) {
+                    endPage = Math.min(1 + maxPagesVisible - 1, totalPages - 1);
+                }
+                
+                if (endPage >= totalPages - 1) {
+                    startPage = Math.max(totalPages - maxPagesVisible + 1, 2);
+                }
+                
+                // Add ellipsis on left side if needed
+                if (startPage > 2) {
+                    range.push('...');
+                }
+                
+                // Add middle pages
+                for (let i = startPage; i <= endPage; i++) {
+                    range.push(i);
+                }
+                
+                // Add ellipsis on right side if needed
+                if (endPage < totalPages - 1) {
+                    range.push('...');
+                }
+                
+                // Always show the last page
+                if (totalPages > 1) {
+                    range.push(totalPages);
+                }
+            }
+            
+            setPaginationRange(range);
+        };
+        
+        generatePaginationRange();
+    }, [totalPages, currentPage]);
+
+    // Change page
+    const paginate = (pageNumber) => {
+        if (pageNumber > 0 && pageNumber <= totalPages) {
+            setCurrentPage(pageNumber);
+            // Scroll to top of job listings
+            window.scrollTo({
+                top: document.querySelector('.myjobs-container').offsetTop - 20,
+                behavior: 'smooth'
+            });
+        }
+    };
+
+    // Adjust items per page based on screen size
+    useEffect(() => {
+        const handleResize = () => {
+            if (window.innerWidth < 768) {
+                setItemsPerPage(4);
+            } else if (window.innerWidth < 1200) {
+                setItemsPerPage(6);
+            } else {
+                setItemsPerPage(8);
+            }
+        };
+
+        // Initial setup
+        handleResize();
+
+        // Add event listener
+        window.addEventListener('resize', handleResize);
+        
+        // Clean up
+        return () => window.removeEventListener('resize', handleResize);
+    }, []);
+
+    // Reset to first page when itemsPerPage changes
+    useEffect(() => {
+        setCurrentPage(1);
+    }, [itemsPerPage]);
 
     const handleDeleteJob = useCallback(async (jobId, event) => {
         // Prevent event bubbling to parent elements
@@ -322,13 +491,8 @@ const MyJobs = ({ onPostJobClick }) => {
     }, []);
 
     const navigateToPostJob = useCallback(() => {
-        if (onPostJobClick) {
-            onPostJobClick();
-        } else {
-            // Fallback to direct navigation if not in dashboard context
-            navigate('/post-job');
-        }
-    }, [onPostJobClick, navigate]);
+        window.location.href = "/post-job";
+    }, []);
 
     if (loading) {
         return (
@@ -380,7 +544,7 @@ const MyJobs = ({ onPostJobClick }) => {
                 </div>
             </div>
 
-            {jobs.length === 0 ? (
+            {jobs.length === 0 && !loading ? (
                 <div className="myjobs-empty-state">
                     <div className="empty-icon">
                         <FaBriefcase aria-hidden="true" />
@@ -396,20 +560,106 @@ const MyJobs = ({ onPostJobClick }) => {
                     </button>
                 </div>
             ) : (
-                <div className="myjobs-grid" role="list" aria-label="Your posted jobs">
-                    {jobs.map((job) => (
-                        <JobCard
-                            key={job._id}
-                            job={job}
-                            expandedJobId={expandedJobId}
-                            toggleJobExpansion={toggleJobExpansion}
-                            handleUpdateJobStatus={handleUpdateJobStatus}
-                            handleDeleteJob={handleDeleteJob}
-                            updatingJobIds={updatingJobIds}
-                            formatDate={formatDate}
-                        />
-                    ))}
-                </div>
+                <>
+                    <div className="myjobs-grid" role="list" aria-label="Your posted jobs">
+                        {currentJobs.map((job) => (
+                            <JobCard
+                                key={job._id}
+                                job={job}
+                                expandedJobId={expandedJobId}
+                                toggleJobExpansion={toggleJobExpansion}
+                                handleUpdateJobStatus={handleUpdateJobStatus}
+                                handleDeleteJob={handleDeleteJob}
+                                updatingJobIds={updatingJobIds}
+                                formatDate={formatDate}
+                            />
+                        ))}
+                    </div>
+                    
+                    {/* Pagination Controls */}
+                    {totalPages > 1 && (
+                        <div className="pagination-container">
+                            <div className="pagination-info">
+                                Showing {jobs.length > 0 ? indexOfFirstJob + 1 : 0} to {Math.min(indexOfLastJob, jobs.length)} of {jobs.length} jobs
+                            </div>
+                            
+                            <div className="pagination-controls">
+                                <button 
+                                    className="pagination-button" 
+                                    onClick={() => paginate(1)}
+                                    disabled={currentPage === 1}
+                                    title="First Page"
+                                    aria-label="Go to first page"
+                                >
+                                    <span className="pagination-arrow">«</span>
+                                </button>
+                                <button 
+                                    className="pagination-button" 
+                                    onClick={() => paginate(currentPage - 1)}
+                                    disabled={currentPage === 1}
+                                    title="Previous Page"
+                                    aria-label="Go to previous page"
+                                >
+                                    <span className="pagination-arrow">‹</span>
+                                </button>
+                                
+                                {/* Dynamic page numbers with ellipsis */}
+                                {paginationRange.map((page, index) => (
+                                    page === '...' ? (
+                                        <div key={`ellipsis-${index}`} className="pagination-ellipsis">...</div>
+                                    ) : (
+                                        <button
+                                            key={index}
+                                            onClick={() => paginate(page)}
+                                            className={`pagination-button ${currentPage === page ? 'active' : ''}`}
+                                            aria-label={`Page ${page}`}
+                                            aria-current={currentPage === page}
+                                        >
+                                            {page}
+                                        </button>
+                                    )
+                                ))}
+                                
+                                <button 
+                                    className="pagination-button" 
+                                    onClick={() => paginate(currentPage + 1)}
+                                    disabled={currentPage === totalPages}
+                                    title="Next Page"
+                                    aria-label="Go to next page"
+                                >
+                                    <span className="pagination-arrow">›</span>
+                                </button>
+                                <button 
+                                    className="pagination-button" 
+                                    onClick={() => paginate(totalPages)}
+                                    disabled={currentPage === totalPages}
+                                    title="Last Page"
+                                    aria-label="Go to last page"
+                                >
+                                    <span className="pagination-arrow">»</span>
+                                </button>
+                            </div>
+                            
+                            <div className="pagination-options">
+                                <label htmlFor="jobs-per-page">Show</label>
+                                <select
+                                    id="jobs-per-page"
+                                    value={itemsPerPage}
+                                    onChange={(e) => {
+                                        setItemsPerPage(Number(e.target.value));
+                                        setCurrentPage(1); // Reset to first page when changing items per page
+                                    }}
+                                    aria-label="Select number of jobs per page"
+                                >
+                                    <option value="4">4</option>
+                                    <option value="6">6</option>
+                                    <option value="8">8</option>
+                                    <option value="12">12</option>
+                                </select>
+                            </div>
+                        </div>
+                    )}
+                </>
             )}
         </div>
     );

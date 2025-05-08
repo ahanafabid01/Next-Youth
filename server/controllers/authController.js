@@ -583,7 +583,8 @@ export const updateEmployeeProfile = async (req, res) => {
           name, bio, education, skills, languageSkills, address, country,
           phoneNumber, email, linkedInProfile, socialMediaLink, goals,
           questions, resumeUrl, freelanceExperience, paymentType,
-          fixedRate, hourlyRate, weeklyAvailability, openToContractToHire
+          fixedRate, hourlyRate, weeklyAvailability, openToContractToHire,
+          profilePicture, profilePic  // ADD THESE TWO FIELDS
         } = req.body;
         
         // Create update object with all possible fields
@@ -604,6 +605,13 @@ export const updateEmployeeProfile = async (req, res) => {
         if (goals !== undefined) updateObject.goals = goals;
         if (questions) updateObject.questions = questions;
         if (resumeUrl) updateObject.resume = resumeUrl;
+        
+        // ADD THESE LINES FOR PROFILE PICTURE
+        if (profilePicture) updateObject.profilePicture = profilePicture;
+        if (profilePic) updateObject.profilePic = profilePic;
+        // If only one is provided, use it for both fields for consistency
+        if (profilePicture && !profilePic) updateObject.profilePic = profilePicture;
+        if (!profilePicture && profilePic) updateObject.profilePicture = profilePic;
         
         // Add price preference fields
         if (freelanceExperience !== undefined) updateObject.freelanceExperience = freelanceExperience;
@@ -778,6 +786,136 @@ export const getUserProfileById = async (req, res) => {
         return res.status(500).json({ 
             success: false, 
             message: "Internal server error" 
+        });
+    }
+};
+
+// Add this new controller function
+
+export const getMyRatings = async (req, res) => {
+    try {
+        const userId = req.user.id;
+
+        const user = await userModel.findById(userId)
+            .populate({
+                path: 'ratings.job',
+                select: 'title scope budgetType fixedAmount hourlyFrom hourlyTo skills',
+                model: 'job'
+            })
+            .populate({
+                path: 'ratings.employer',
+                select: 'name',
+                model: 'user'
+            });
+
+        if (!user) {
+            return res.status(404).json({
+                success: false,
+                message: "User not found"
+            });
+        }
+
+        // Sort ratings by date, most recent first
+        const sortedRatings = user.ratings.sort((a, b) => 
+            new Date(b.createdAt) - new Date(a.createdAt)
+        );
+
+        return res.status(200).json({
+            success: true,
+            ratings: sortedRatings
+        });
+
+    } catch (error) {
+        console.error("Error fetching user ratings:", error);
+        return res.status(500).json({
+            success: false,
+            message: "Error fetching ratings"
+        });
+    }
+};
+
+export const changePassword = async (req, res) => {
+    try {
+        const { currentPassword, newPassword } = req.body;
+        const userId = req.user.id;
+
+        // Find user by ID
+        const user = await userModel.findById(userId);
+        if (!user) {
+            return res.status(404).json({
+                success: false,
+                message: "User not found"
+            });
+        }
+
+        // Verify current password
+        const isPasswordValid = await bcrypt.compare(currentPassword, user.password);
+        if (!isPasswordValid) {
+            return res.status(401).json({
+                success: false,
+                message: "Current password is incorrect"
+            });
+        }
+
+        // Hash new password
+        const hashedPassword = await bcrypt.hash(newPassword, 10);
+
+        // Update password in database
+        user.password = hashedPassword;
+        await user.save();
+
+        return res.status(200).json({
+            success: true,
+            message: "Password updated successfully"
+        });
+    } catch (error) {
+        console.error("Error changing password:", error);
+        return res.status(500).json({
+            success: false,
+            message: "Internal server error"
+        });
+    }
+};
+
+// Add this new controller function
+export const deleteMyAccount = async (req, res) => {
+    try {
+        const { password } = req.body;
+        const userId = req.user.id;
+
+        // Find the user
+        const user = await userModel.findById(userId);
+        if (!user) {
+            return res.status(404).json({
+                success: false,
+                message: "User not found"
+            });
+        }
+
+        // Verify password
+        const isPasswordValid = await bcrypt.compare(password, user.password);
+        if (!isPasswordValid) {
+            return res.status(401).json({
+                success: false,
+                message: "Incorrect password"
+            });
+        }
+
+        // Delete the user's account
+        await userModel.findByIdAndDelete(userId);
+
+        // Additionally, you might want to delete related data
+        // such as job postings, applications, etc.
+
+        return res.status(200).json({
+            success: true,
+            message: "Account deleted successfully"
+        });
+    } catch (error) {
+        console.error("Error deleting account:", error);
+        return res.status(500).json({
+            success: false,
+            message: "Internal server error"
         });
     }
 };

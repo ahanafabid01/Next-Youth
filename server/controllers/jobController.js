@@ -76,39 +76,15 @@ export const deleteJob = async (req, res) => {
 
 export const updateJobStatus = async (req, res) => {
     const { status } = req.body;
-    const userId = req.user.id;
-    
     try {
-        // First, find the job to check ownership
-        const existingJob = await jobModel.findById(req.params.id);
-        
-        if (!existingJob) {
-            return res.status(404).json({ success: false, message: "Job not found" });
-        }
-        
-        // Check if user owns this job
-        if (existingJob.employer.toString() !== userId) {
-            return res.status(403).json({ 
-                success: false, 
-                message: "You don't have permission to update this job" 
-            });
-        }
-        
-        // Validate the status value against the allowed enum values
-        if (!["Available", "In Progress", "On Hold", "Completed"].includes(status)) {
-            return res.status(400).json({ 
-                success: false, 
-                message: "Invalid job status value" 
-            });
-        }
-        
-        // Update the job status
         const job = await jobModel.findByIdAndUpdate(
             req.params.id,
             { status },
             { new: true }
         );
-        
+        if (!job) {
+            return res.status(404).json({ success: false, message: "Job not found" });
+        }
         res.status(200).json({ success: true, job });
     } catch (error) {
         console.error("Error updating job status:", error);
@@ -441,31 +417,28 @@ export const getUserApplications = async (req, res) => {
 
 export const getApplicationByJobId = async (req, res) => {
     try {
-        const jobId = req.params.jobId;
-        const userId = req.user.id;
-        
-        // Find the application for this job submitted by current user
+        const { jobId } = req.params;
         const applicationModel = await import("../models/applicationModel.js").then(module => module.default);
-        const application = await applicationModel.findOne({
-            job: jobId,
-            applicant: userId
-        });
-        
+        const application = await applicationModel.findOne({ job: jobId })
+            .populate('applicant', 'name email'); // Add any other fields you need
+
         if (!application) {
-            return res.status(404).json({ 
-                success: false, 
-                message: "Application not found for this job" 
+            return res.status(404).json({
+                success: false,
+                message: "No application found for this job"
             });
         }
-        
-        return res.status(200).json({ 
-            success: true, 
-            application 
+
+        res.status(200).json({
+            success: true,
+            application
         });
-        
     } catch (error) {
-        console.error("Error finding application by job ID:", error);
-        return res.status(500).json({ success: false, message: "Internal server error" });
+        console.error("Error fetching application:", error);
+        res.status(500).json({
+            success: false,
+            message: "Internal server error"
+        });
     }
 };
 
@@ -485,9 +458,12 @@ export const getEmployerApplications = async (req, res) => {
         
         // Find all applications for these jobs
         const applicationModel = await import("../models/applicationModel.js").then(module => module.default);
-        const applications = await applicationModel.find({ job: { $in: jobIds } })
+        let applications = await applicationModel.find({ job: { $in: jobIds } })
             .populate('job')
-            .populate('applicant', 'name email profilePicture'); // Just get basic applicant info
+            .populate('applicant', 'name email profilePicture');
+        
+        // Filter out applications with null applicant or job
+        applications = applications.filter(app => app.applicant && app.job);
         
         return res.status(200).json({ 
             success: true, 
@@ -568,6 +544,73 @@ export const updateApplicationStatus = async (req, res) => {
     }
 };
 
+export const updateApplication = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const { bid, receivedAmount, duration, coverLetter } = req.body;
+        const userId = req.user.id;
+
+        // Find the application
+        const applicationModel = await import("../models/applicationModel.js").then(module => module.default);
+        const application = await applicationModel.findById(id);
+        
+        if (!application) {
+            return res.status(404).json({
+                success: false,
+                message: "Application not found"
+            });
+        }
+        
+        // Check if the application belongs to the current user
+        if (application.applicant.toString() !== userId) {
+            return res.status(403).json({
+                success: false,
+                message: "You don't have permission to update this application"
+            });
+        }
+        
+        // Check if the application is still in pending status
+        if (application.status !== 'pending') {
+            return res.status(400).json({
+                success: false,
+                message: "Only pending applications can be edited"
+            });
+        }
+        
+        // Handle uploaded files (if any)
+        const files = req.files?.map(file => ({
+            filename: file.filename,
+            path: `${req.protocol}://${req.get("host")}/uploads/${file.filename}`,
+        })) || [];
+        
+        // Update application fields
+        application.bid = parseFloat(bid);
+        application.receivedAmount = parseFloat(receivedAmount);
+        application.duration = duration;
+        application.coverLetter = coverLetter || "";
+        
+        // Add new files if provided
+        if (files.length > 0) {
+            application.attachments = [...application.attachments, ...files];
+        }
+        
+        await application.save();
+        
+        return res.status(200).json({
+            success: true,
+            message: "Application updated successfully",
+            application
+        });
+        
+    } catch (error) {
+        console.error("Error updating application:", error);
+        return res.status(500).json({
+            success: false,
+            message: "Internal server error"
+        });
+    }
+};
+
 // Add admin middleware check
 export const isAdmin = async (req, res, next) => {
     if (req.user.role === 'admin') {
@@ -585,5 +628,111 @@ export const getAllJobs = async (req, res) => {
     } catch (error) {
         console.error("Error fetching all jobs:", error);
         res.status(500).json({ success: false, message: "Internal server error" });
+    }
+};
+
+// Add this new controller function
+export const rateApplicant = async (req, res) => {
+    try {
+        const { jobId, applicantId, rating, review } = req.body;
+        const employerId = req.user.id;
+
+        // Validate rating
+        if (!rating || rating < 1 || rating > 5) {
+            return res.status(400).json({
+                success: false,
+                message: "Invalid rating value"
+            });
+        }
+
+        // Validate review
+        if (!review || review.trim().length === 0) {
+            return res.status(400).json({
+                success: false,
+                message: "Review is required"
+            });
+        }
+
+        // Get the job to verify employer
+        const job = await jobModel.findById(jobId);
+        if (!job) {
+            return res.status(404).json({
+                success: false,
+                message: "Job not found"
+            });
+        }
+
+        // Verify employer owns this job
+        if (job.employer.toString() !== employerId) {
+            return res.status(403).json({
+                success: false,
+                message: "Not authorized to rate for this job"
+            });
+        }
+
+        // Add rating to user's ratings array
+        const userModel = await import("../models/userModel.js").then(module => module.default);
+        const applicant = await userModel.findById(applicantId);
+        
+        if (!applicant) {
+            return res.status(404).json({
+                success: false,
+                message: "Applicant not found"
+            });
+        }
+
+        // Add the new rating
+        applicant.ratings.push({
+            job: jobId,
+            employer: employerId,
+            rating,
+            review
+        });
+
+        await applicant.save();
+
+        return res.status(200).json({
+            success: true,
+            message: "Rating submitted successfully"
+        });
+
+    } catch (error) {
+        console.error("Error submitting rating:", error);
+        return res.status(500).json({
+            success: false,
+            message: "Internal server error"
+        });
+    }
+};
+
+// Add this new controller function
+export const getAllApplications = async (req, res) => {
+    try {
+        // Check if user is admin
+        if (req.user.user_type !== 'admin') {
+            return res.status(403).json({ 
+                success: false, 
+                message: "Unauthorized. Only admin can access this resource." 
+            });
+        }
+        
+        const applicationModel = await import("../models/applicationModel.js").then(module => module.default);
+        
+        // Get all applications with populated job and applicant details
+        const applications = await applicationModel.find()
+            .populate('job', 'title description')
+            .populate('applicant', 'name email')
+            .sort({ createdAt: -1 });
+        
+        return res.status(200).json({
+            success: true,
+            applications
+        });
+    } catch (error) {
+        console.error("Error fetching all applications:", error);
+        return res.status(500).json({
+            success: false,
+            message: "Internal server error"
+        });
     }
 };

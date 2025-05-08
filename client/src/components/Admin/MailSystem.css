@@ -22,137 +22,253 @@
 
 .mail-system-header p {
   font-size: 1.1rem;
-  color: var(--text-secondary, #666);
+  color: #64748b;
+}
+
+.mail-content-area {
+  background-color: white;
+  border-radius: 12px;
+  padding: 30px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
 }
 
 .mail-form {
   display: flex;
   flex-direction: column;
-  gap: 20px;
+  gap: 24px;
 }
 
 .form-group {
   display: flex;
   flex-direction: column;
-  margin-bottom: 5px;
+  gap: 8px;
 }
 
 .form-group label {
-  font-weight: 600;
-  margin-bottom: 8px;
-  color: var(--text-color, #333);
-}
-
-.subject-input {
-  padding: 12px;
-  border: 1px solid var(--border-color, #ddd);
-  border-radius: 4px;
-  font-size: 1rem;
-  transition: border 0.2s;
-  background-color: var(--input-bg, white);
-  color: var(--text-color, #333);
-}
-
-.subject-input:focus {
-  border-color: var(--primary-color, #1a237e);
-  outline: none;
-}
-
-.email-content-textarea {
-  padding: 12px;
-  border: 1px solid var(--border-color, #ddd);
-  border-radius: 4px;
-  font-size: 1rem;
-  background-color: var(--input-bg, white);
-  color: var(--text-color, #333);
-  min-height: 250px;
-  resize: vertical;
-  font-family: inherit;
-  transition: border 0.2s;
-}
-
-.email-content-textarea:focus {
-  border-color: var(--primary-color, #1a237e);
-  outline: none;
+  font-weight: 500;
+  color: #334155;
 }
 
 .select-recipients {
   padding: 12px;
-  border: 1px solid var(--border-color, #ddd);
-  border-radius: 4px;
+  border-radius: 6px;
+  border: 1px solid #e2e8f0;
+  background-color: #f8fafc;
   font-size: 1rem;
-  background-color: var(--input-bg, white);
-  color: var(--text-color, #333);
-  max-width: 300px;
-  transition: border 0.2s;
+  color: #334155;
 }
 
-.select-recipients:focus {
-  border-color: var(--primary-color, #1a237e);
-  outline: none;
+.subject-input {
+  padding: 12px 16px;
+  border-radius: 6px;
+  border: 1px solid #e2e8f0;
+  font-size: 1rem;
+  width: 100%;
+}
+
+.textarea-container {
+  position: relative;
+}
+
+.email-content-textarea {
+  width: 100%;
+  padding: 16px;
+  border-radius: 6px;
+  border: 1px solid #e2e8f0;
+  font-size: 1rem;
+  font-family: Arial, sans-serif;
+  resize: vertical;
+  min-height: 200px;
+}
+
+.emoji-button {
+  position: absolute;
+  right: 12px;
+  bottom: 12px;
+  background: none;
+  border: none;
+  font-size: 1.2rem;
+  cursor: pointer;
+  opacity: 0.7;
+  transition: opacity 0.2s;
+}
+
+.emoji-button:hover {
+  opacity: 1;
+}
+
+.emoji-picker-container {
+  position: absolute;
+  bottom: 50px;
+  right: 10px;
+  z-index: 10;
+}
+
+.emoji-picker-backdrop {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: -1;
 }
 
 .helper-text {
-  font-size: 0.9rem;
-  color: var(--text-secondary, #666);
-  margin-top: 6px;
+  color: #64748b;
+  font-size: 0.85rem;
+  margin-top: 4px;
 }
 
-.editor-container {
-  border: 1px solid var(--border-color);
-  border-radius: 4px;
-  min-height: 300px;
+.file-upload-container {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 15px;
+  flex-wrap: wrap;
+}
+
+.photo-button, .attachment-button {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 10px 16px;
+  border: none;
+  border-radius: 6px;
+  font-size: 0.95rem;
+  font-weight: 500;
+  cursor: pointer;
+}
+
+.photo-button {
+  background-color: #4ade80;
+  color: white;
+}
+
+.attachment-button {
+  background-color: #3b82f6;
+  color: white;
+}
+
+.photo-gallery {
+  margin-top: 20px;
+}
+
+.photo-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+  gap: 15px;
+  margin-top: 10px;
+}
+
+.photo-item {
+  position: relative;
+  border-radius: 8px;
   overflow: hidden;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
 }
 
-.editor-wrapper {
-  min-height: 300px;
+.photo-thumbnail {
+  width: 100%;
+  height: 100px;
+  object-fit: cover;
+  display: block;
 }
 
-.editor-main {
-  min-height: 250px;
-  padding: 0 1rem;
-  background-color: var(--input-bg);
-  color: var(--text-color);
+.remove-photo {
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  background-color: rgba(255, 255, 255, 0.8);
+  border: none;
+  border-radius: 50%;
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  font-size: 0.8rem;
+  color: #ef4444;
+}
+
+.photo-size {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background-color: rgba(0, 0, 0, 0.6);
+  color: white;
+  font-size: 0.7rem;
+  padding: 3px 6px;
+  text-align: center;
+}
+
+.attachment-list {
+  margin-top: 20px;
+}
+
+.attachment-list ul {
+  list-style: none;
+  padding: 0;
+}
+
+.attachment-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  background-color: #f8fafc;
+  border-radius: 6px;
+  margin-bottom: 8px;
+}
+
+.attachment-name {
+  flex: 1;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.attachment-size {
+  color: #64748b;
+  font-size: 0.85rem;
+}
+
+.remove-attachment {
+  background: none;
+  border: none;
+  color: #ef4444;
+  cursor: pointer;
+  font-size: 0.9rem;
 }
 
 .button-group {
   display: flex;
-  gap: 15px;
-  margin-top: 20px;
   justify-content: flex-end;
+  gap: 12px;
+  margin-top: 20px;
 }
 
 .btn-primary, .btn-secondary {
   padding: 12px 24px;
-  border: none;
-  border-radius: 4px;
-  font-weight: 600;
+  border-radius: 6px;
+  font-weight: 500;
   font-size: 1rem;
-  cursor: pointer;
-  display: inline-flex;
+  display: flex;
   align-items: center;
-  justify-content: center;
-  gap: 10px;
-  transition: all 0.2s;
+  gap: 8px;
+  cursor: pointer;
+  border: none;
 }
 
 .btn-primary {
-  background-color: var(--primary-color, #1a237e);
+  background-color: #3b82f6;
   color: white;
 }
 
-.btn-primary:hover:not(:disabled) {
-  background-color: var(--primary-dark, #0d147a);
-}
-
 .btn-secondary {
-  background-color: #e0e0e0;
-  color: #333;
-}
-
-.btn-secondary:hover:not(:disabled) {
-  background-color: #d1d1d1;
+  background-color: #f1f5f9;
+  color: #475569;
 }
 
 .btn-primary:disabled, .btn-secondary:disabled {
@@ -165,692 +281,30 @@
 }
 
 @keyframes spin {
-  from { transform: rotate(0deg); }
-  to { transform: rotate(360deg); }
-}
-
-.mail-system-error, .mail-system-success {
-  padding: 15px;
-  margin-bottom: 20px;
-  border-radius: 4px;
-  font-weight: 500;
-}
-
-.mail-system-error {
-  background-color: rgba(255, 0, 0, 0.1);
-  color: #d32f2f;
-  border: 1px solid #ffcdd2;
-}
-
-.mail-system-success {
-  background-color: rgba(76, 175, 80, 0.1);
-  color: #388e3c;
-  border: 1px solid #c8e6c9;
-}
-
-.email-preview {
-  background-color: var(--card-bg, #f9f9f9);
-  border: 1px solid var(--border-color, #ddd);
-  border-radius: 8px;
-  padding: 2rem;
-}
-
-.preview-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 20px;
-  padding-bottom: 15px;
-  border-bottom: 1px solid var(--border-color, #ddd);
-}
-
-.preview-header h2 {
-  color: var(--primary-color, #1a237e);
-  margin: 0;
-}
-
-.preview-subject {
-  margin-bottom: 1rem;
-  padding: 15px;
-  background-color: var(--bg-light, #f5f5f5);
-  border-radius: 4px;
-  border-bottom: 1px solid #e0e0e0;
-  font-size: 1.1rem;
-}
-
-.preview-body {
-  padding: 25px;
-  background-color: #fff;
-  border-radius: 0 0 4px 4px;
-  color: #333;
-  min-height: 300px;
-  overflow: auto;
-}
-
-/* Dark mode specific adjustments */
-.admin-dark-mode .preview-body {
-  background-color: #2a2a2a;
-  color: #eaeaea;
-}
-
-.admin-dark-mode .email-content-textarea,
-.admin-dark-mode .subject-input,
-.admin-dark-mode .select-recipients {
-  background-color: #333;
-  color: #eaeaea;
-  border-color: #444;
-}
-
-/* Responsive adjustments */
-@media (max-width: 768px) {
-  .button-group {
-    flex-direction: column;
-  }
-  
-  .mail-system-container {
-    padding: 15px;
-  }
-  
-  .mail-content-area {
-    padding: 15px;
-  }
-  
-  .btn-primary, .btn-secondary {
-    width: 100%;
-  }
-  
-  .select-recipients {
-    max-width: 100%;
-  }
-}
-
-/* Admin layout structure */
-.admin-dashboard-container {
-  display: flex;
-  min-height: 100vh;
-}
-
-/* Mobile header - visible only on small screens */
-.admin-mobile-header {
-  display: none;
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  background-color: #1a237e;
-  color: white;
-  padding: 15px;
-  z-index: 1000;
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-}
-
-.mobile-menu-button {
-  background: none;
-  border: none;
-  color: white;
-  font-size: 1.5rem;
-  cursor: pointer;
-  margin-right: 15px;
-}
-
-/* Sidebar */
-.admin-sidebar {
-  width: 250px;
-  background-color: #1a237e;
-  color: #fff;
-  padding: 0;
-  transition: all 0.3s ease;
-  height: 100vh;
-  position: sticky;
-  top: 0;
-  overflow-y: auto;
-  z-index: 100;
-}
-
-.admin-sidebar.collapsed {
-  width: 70px;
-}
-
-.sidebar-header {
-  padding: 20px;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-}
-
-.sidebar-header h2 {
-  margin: 0;
-  font-size: 1.5rem;
-  white-space: nowrap;
-}
-
-.sidebar-toggle {
-  background: none;
-  border: none;
-  color: white;
-  cursor: pointer;
-  font-size: 1rem;
-}
-
-.sidebar-nav ul {
-  list-style: none;
-  padding: 0;
-  margin: 20px 0;
-}
-
-.sidebar-nav li {
-  margin: 0;
-}
-
-.sidebar-nav li a {
-  display: flex;
-  align-items: center;
-  padding: 15px 20px;
-  color: rgba(255, 255, 255, 0.8);
-  text-decoration: none;
-  transition: all 0.2s;
-}
-
-.sidebar-nav li a:hover,
-.sidebar-nav li.active a {
-  background-color: rgba(255, 255, 255, 0.1);
-  color: white;
-}
-
-.sidebar-nav li a svg {
-  margin-right: 15px;
-  min-width: 20px;
-}
-
-.sidebar-footer {
-  padding: 20px;
-  border-top: 1px solid rgba(255, 255, 255, 0.1);
-  position: sticky;
-  bottom: 0;
-  background-color: #1a237e;
-}
-
-.logout-btn {
-  display: flex;
-  align-items: center;
-  color: rgba(255, 255, 255, 0.8);
-  text-decoration: none;
-  transition: all 0.2s;
-}
-
-.logout-btn:hover {
-  color: white;
-}
-
-.logout-btn svg {
-  margin-right: 15px;
-}
-
-/* Main Content */
-.admin-main-content {
-  flex-grow: 1;
-  padding: 30px;
-  background-color: #f5f7fa;
-  transition: all 0.3s ease;
-}
-
-.admin-main-content.expanded {
-  margin-left: 0;
-}
-
-/* Mail System Specific Styles */
-.mail-content-area {
-  background-color: var(--card-bg, white);
-  border-radius: 8px;
-  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
-  padding: 25px;
-}
-
-/* Alert messages */
-.alert {
-  padding: 15px;
-  border-radius: 4px;
-  margin-bottom: 20px;
-  font-weight: 500;
-}
-
-.alert-error {
-  background-color: #fdecea;
-  color: #b71c1c;
-  border-left: 4px solid #b71c1c;
-}
-
-.alert-success {
-  background-color: #e8f5e9;
-  color: #1b5e20;
-  border-left: 4px solid #1b5e20;
-}
-
-/* Email Preview */
-.email-preview-container {
-  width: 100%;
-}
-
-.email-preview {
-  border: 1px solid #e0e0e0;
-  border-radius: 8px;
-  overflow: hidden;
-}
-
-.preview-envelope {
-  max-width: 800px;
-  margin: 0 auto;
-  padding: 20px;
-}
-
-/* Spinner for loading states */
-.spinner {
-  animation: spin 1s linear infinite;
-}
-
-@keyframes spin {
   0% { transform: rotate(0deg); }
   100% { transform: rotate(360deg); }
 }
 
-/* Responsive Design */
-@media (max-width: 992px) {
-  .admin-mobile-header {
-    display: flex;
-    align-items: center;
-  }
-  
-  .admin-mobile-header h1 {
-    margin: 0;
-    font-size: 1.2rem;
-  }
-  
-  .admin-dashboard-container {
-    padding-top: 60px;
-  }
-  
-  .admin-sidebar {
-    position: fixed;
-    left: 0;
-    top: 60px;
-    height: calc(100vh - 60px);
-    transition: transform 0.3s ease;
-  }
-  
-  .admin-sidebar.mobile-hide {
-    transform: translateX(-100%);
-  }
-  
-  .admin-sidebar.mobile-show {
-    transform: translateX(0);
-    box-shadow: 2px 0 10px rgba(0, 0, 0, 0.1);
-  }
-  
-  .admin-main-content {
-    padding: 15px;
-  }
-  
-  .button-group {
-    flex-direction: column;
-  }
-  
-  .btn {
-    width: 100%;
-  }
-}
-
-@media (min-width: 993px) {
-  .admin-sidebar.mobile-hide,
-  .admin-sidebar.mobile-show {
-    transform: none;
-  }
-}
-
-.admin-content {
-  padding: 20px;
-  width: 100%;
-}
-
-/* Add these styles to your existing MailSystem.css */
-
-.file-upload-container {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-}
-
-.attachment-button {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 10px 16px;
-  background-color: #f0f0f0;
-  border: 1px solid #ddd;
-  border-radius: 4px;
-  cursor: pointer;
-  font-weight: 500;
-  transition: all 0.2s;
-}
-
-.attachment-button:hover {
-  background-color: #e0e0e0;
-}
-
-.attachment-list {
-  margin-top: 15px;
-  background-color: #f9f9f9;
-  border-radius: 4px;
-  padding: 10px;
-  border: 1px solid #eee;
-}
-
-.attachment-list h4 {
-  margin-top: 0;
-  margin-bottom: 10px;
-  font-size: 1rem;
-  color: #444;
-}
-
-.attachment-list ul {
-  list-style: none;
-  padding: 0;
-  margin: 0;
-}
-
-.attachment-item {
-  display: flex;
-  align-items: center;
-  padding: 8px;
-  background-color: #fff;
-  border-radius: 4px;
-  margin-bottom: 5px;
-  border: 1px solid #eee;
-}
-
-.attachment-name {
-  flex-grow: 1;
-  font-size: 0.9rem;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  margin-right: 10px;
-}
-
-.attachment-size {
-  font-size: 0.8rem;
-  color: #666;
-  margin-right: 15px;
-}
-
-.remove-attachment {
-  background: none;
-  border: none;
-  color: #999;
-  cursor: pointer;
-  padding: 4px;
-  display: flex;
-  align-items: center;
-  border-radius: 50%;
-  transition: all 0.2s;
-}
-
-.remove-attachment:hover {
-  color: #d32f2f;
-  background-color: #f9e7e7;
-}
-
-.preview-attachments {
-  margin-top: 20px;
-  padding-top: 15px;
-  border-top: 1px solid #eee;
-}
-
-.preview-attachments h4 {
-  margin-top: 0;
-  color: #444;
-  font-size: 0.95rem;
-}
-
-.preview-attachments ul {
-  list-style: none;
-  padding: 0;
-  margin: 10px 0 0 0;
-}
-
-.preview-attachments li {
-  font-size: 0.9rem;
-  padding: 8px 12px;
-  background-color: #f5f5f5;
-  border-radius: 4px;
-  margin-bottom: 5px;
-  display: inline-block;
-  margin-right: 8px;
-}
-
-/* Dark mode adjustments */
-.admin-dark-mode .attachment-button {
-  background-color: #333;
-  border-color: #444;
-  color: #eaeaea;
-}
-
-.admin-dark-mode .attachment-list {
-  background-color: #2a2a2a;
-  border-color: #444;
-}
-
-.admin-dark-mode .attachment-item {
-  background-color: #333;
-  border-color: #444;
-}
-
-/* Additional styles for photo attachments */
-
-.photo-button {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 10px 16px;
-  background-color: #e1f5fe;
-  border: 1px solid #b3e5fc;
-  border-radius: 4px;
-  cursor: pointer;
-  font-weight: 500;
-  transition: all 0.2s;
-  color: #0288d1;
-  margin-right: 8px;
-}
-
-.photo-button:hover {
-  background-color: #b3e5fc;
-}
-
-.photo-gallery {
-  margin-top: 15px;
-  background-color: #f9f9f9;
-  border-radius: 4px;
-  padding: 15px;
-  border: 1px solid #eee;
-}
-
-.photo-gallery h4 {
-  margin-top: 0;
-  margin-bottom: 15px;
-  font-size: 1rem;
-  color: #444;
-}
-
-.photo-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
-  gap: 15px;
-}
-
-.photo-item {
-  position: relative;
-  border-radius: 4px;
-  overflow: hidden;
-  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-  background-color: #fff;
-}
-
-.photo-thumbnail {
-  width: 100%;
-  height: 100px;
-  object-fit: cover;
-  display: block;
-}
-
-.remove-photo {
-  position: absolute;
-  top: 5px;
-  right: 5px;
-  background-color: rgba(255,255,255,0.8);
-  border: none;
-  width: 24px;
-  height: 24px;
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-  color: #d32f2f;
-  padding: 0;
-  font-size: 12px;
-}
-
-.remove-photo:hover {
-  background-color: rgba(255,255,255,1);
-  color: #b71c1c;
-}
-
-.photo-size {
-  position: absolute;
-  bottom: 0;
-  left: 0;
-  right: 0;
-  background-color: rgba(0,0,0,0.6);
-  color: white;
-  font-size: 0.75rem;
-  padding: 4px 8px;
-  text-align: center;
-}
-
-/* Preview styles for photos */
-.preview-photos {
-  margin-top: 20px;
-  padding-top: 15px;
-  border-top: 1px solid #eee;
-}
-
-.preview-photos h4 {
-  margin-top: 0;
-  color: #444;
-  font-size: 0.95rem;
-  margin-bottom: 15px;
-}
-
-.photo-preview-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
-  gap: 15px;
-}
-
-.photo-preview-item {
-  border-radius: 4px;
-  overflow: hidden;
-  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-}
-
-.photo-preview {
-  width: 100%;
-  height: 120px;
-  object-fit: cover;
-  display: block;
-}
-
-/* Dark mode adjustments */
-.admin-dark-mode .photo-button {
-  background-color: #01579b;
-  border-color: #0277bd;
-  color: #e1f5fe;
-}
-
-.admin-dark-mode .photo-button:hover {
-  background-color: #0288d1;
-}
-
-.admin-dark-mode .photo-gallery {
-  background-color: #2a2a2a;
-  border-color: #444;
-}
-
-.admin-dark-mode .photo-item {
-  background-color: #333;
-  box-shadow: 0 2px 4px rgba(0,0,0,0.2);
-}
-
-.admin-dark-mode .remove-photo {
-  background-color: rgba(48, 48, 48, 0.8);
-  color: #f44336;
-}
-
-.admin-dark-mode .remove-photo:hover {
-  background-color: rgba(64, 64, 64, 0.9);
-}
-
-/* Add these styles for the emoji picker */
-.textarea-container {
-  position: relative;
-  display: flex;
-  flex-direction: column;
-}
-
-.emoji-button {
-  position: absolute;
-  right: 10px;
-  top: 10px;
-  background: none;
-  border: none;
-  font-size: 20px;
-  cursor: pointer;
-  width: 36px;
-  height: 36px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border-radius: 50%;
-  transition: background-color 0.2s;
-}
-
-.emoji-button:hover {
-  background-color: rgba(0, 0, 0, 0.05);
-}
-
-.emoji-picker-container {
-  position: absolute;
-  right: 0;
-  top: 50px;
-  z-index: 100;
-}
-
-.emoji-picker-backdrop {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  z-index: -1;
-}
-
-/* Enhance email preview */
-.email-preview {
+.mail-system-error, .mail-system-success {
+  padding: 16px;
   border-radius: 8px;
-  border: 1px solid #e0e0e0;
-  padding: 20px;
-  background-color: #ffffff;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  margin-bottom: 24px;
+}
+
+.mail-system-error {
+  background-color: #fee2e2;
+  color: #991b1b;
+  border-left: 4px solid #ef4444;
+}
+
+.mail-system-success {
+  background-color: #dcfce7;
+  color: #166534;
+  border-left: 4px solid #10b981;
+}
+
+.email-preview-container {
+  width: 100%;
 }
 
 .preview-header {
@@ -858,61 +312,48 @@
   justify-content: space-between;
   align-items: center;
   margin-bottom: 20px;
-  padding-bottom: 15px;
-  border-bottom: 1px solid #e5e7eb;
+}
+
+.email-preview {
+  background-color: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  padding: 24px;
 }
 
 .preview-subject {
-  font-size: 16px;
-  margin-bottom: 20px;
-  padding: 10px;
-  background-color: #f8fafc;
-  border-radius: 5px;
+  padding-bottom: 16px;
+  margin-bottom: 16px;
+  border-bottom: 1px solid #e2e8f0;
 }
 
 .preview-body {
-  padding: 15px 10px;
+  line-height: 1.6;
 }
 
-/* Enhance the main mail system UI */
-.mail-system-header {
-  background-color: #f8fafc;
-  border-radius: 8px;
-  padding: 20px;
-  margin-bottom: 25px;
-  text-align: center;
-  border-left: 4px solid #3b82f6;
+.preview-photos, .preview-attachments {
+  margin-top: 24px;
+  padding-top: 16px;
+  border-top: 1px solid #e2e8f0;
 }
 
-.mail-system-header h1 {
-  margin: 0;
-  color: #3b82f6;
+.photo-preview-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+  margin-top: 12px;
 }
 
-.mail-form {
-  background-color: #ffffff;
-  border-radius: 8px;
-  padding: 25px;
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+.photo-preview-item {
+  width: 200px;
+  border: 1px solid #e2e8f0;
+  border-radius: 4px;
+  padding: 4px;
+  background-color: white;
 }
 
-.form-group {
-  margin-bottom: 20px;
-}
-
-.subject-input,
-.email-content-textarea,
-.select-recipients {
-  border: 1px solid #e0e0e0;
-  border-radius: 6px;
-  padding: 12px 15px;
-  transition: border 0.2s, box-shadow 0.2s;
-}
-
-.subject-input:focus,
-.email-content-textarea:focus,
-.select-recipients:focus {
-  border-color: #3b82f6;
-  box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.2);
-  outline: none;
+.photo-preview {
+  width: 100%;
+  height: auto;
+  display: block;
 }

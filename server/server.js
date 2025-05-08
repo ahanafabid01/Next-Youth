@@ -1,18 +1,17 @@
 import express from 'express';
 import cors from 'cors';
-import dotenv from 'dotenv';
-dotenv.config();
+import 'dotenv/config';
 import cookieParser from 'cookie-parser'; // Fixed typo
 import connectDB from './config/mongodb.js';
-import authRoutes from './routes/authRoutes.js';
-import jobRoutes from './routes/jobRoutes.js';
-import contactRoutes from './routes/contactRoutes.js'; // Add this line
+import authRouter from "./routes/authRoutes.js";
+import jobRouter from "./routes/jobRoutes.js";
+import contactRouter from "./routes/contactRoutes.js";
+import adminRouter from "./routes/adminRoutes.js"; // Add this
+import employerPaymentRoutes from "./routes/EmployerPaymentRoutes.js"; // Add this
 import path from "path";
 import bodyParser from "body-parser";
 import { fileURLToPath } from "url";
 import fs from "fs";
-import demoRoutes from './routes/demoRoutes.js'; // Import the demo routes
-import adminRoutes from './routes/adminRoutes.js'; // Import the admin routes
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -50,15 +49,15 @@ if (!fs.existsSync(uploadDir)) {
 app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 
 // API routes
-app.use('/api/auth', authRoutes);
-app.use("/api/jobs", jobRoutes); // Multer will handle multipart/form-data for this route
-app.use("/api/contact", contactRoutes); // Add this line
-app.use('/api/contact', demoRoutes); // Add demo routes
-app.use('/api/admin', adminRoutes); // Add admin routes
+app.use("/api/auth", authRouter);
+app.use("/api/jobs", jobRouter); // Multer will handle multipart/form-data for this route
+app.use("/api/contact", contactRouter);
+app.use("/api/admin", adminRouter); // Add this
+app.use("/api/payment", employerPaymentRoutes); // Add this
 
 // Default route
 app.get('/', (req, res) => {
-    res.status(200).send('API is running...'); 
+    res.status(200).send('API is running...');
 });
 
 // Global error handling middleware

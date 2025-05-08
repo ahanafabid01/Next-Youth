@@ -2,6 +2,12 @@ import React, { useState, useRef, useEffect } from "react";
 import { Link } from "react-router-dom";
 import "./BusinessSolutions.css"; 
 import "./Homepage.css"; // Import Homepage CSS for header and footer styles
+import logoLight from '../assets/images/logo-light.png';
+import logoDark from '../assets/images/logo-dark.png';
+// Import testimonial images
+import sarahJohnsonImg from '../assets/images/sarah-johnson.jpg';
+import michaelChenImg from '../assets/images/michael-chen.jpg';
+import emmaRodriguezImg from '../assets/images/emma-rodriguez.jpg';
 
 const BusinessSolutions = () => {
   // Original BusinessSolutions state
@@ -137,7 +143,7 @@ const BusinessSolutions = () => {
           desc: "Protect your business with our advanced security protocols"
         },
         { 
-          icon: "analytics", 
+          icon: "chart-bar", 
           title: "Data Analytics", 
           desc: "Turn your data into actionable insights with our analytics platform"
         }
@@ -146,7 +152,7 @@ const BusinessSolutions = () => {
         quote: "Next Youth's enterprise solutions have transformed our business operations, saving us thousands of hours in productivity.",
         author: "Sarah Johnson",
         company: "Global Tech Industries",
-        image: "https://source.unsplash.com/random/100x100/?portrait"
+        image: sarahJohnsonImg
       }
     },
     smb: {
@@ -178,7 +184,7 @@ const BusinessSolutions = () => {
         quote: "As a small business owner, I was amazed at how quickly we scaled after implementing Next Youth's business solutions.",
         author: "Michael Chen",
         company: "Innovative Solutions LLC",
-        image: "https://source.unsplash.com/random/100x100/?man"
+        image: michaelChenImg
       }
     },
     freelancers: {
@@ -210,7 +216,7 @@ const BusinessSolutions = () => {
         quote: "The freelancer tools from Next Youth helped me transition from side gigs to a full-time design agency in just one year.",
         author: "Emma Rodriguez",
         company: "Creative Minds Design",
-        image: "https://source.unsplash.com/random/100x100/?woman"
+        image: emmaRodriguezImg
       }
     }
   };
@@ -222,14 +228,22 @@ const BusinessSolutions = () => {
       {/* Header Section */}
       <header>
         <div className="header-container">
-          <div className="logo float">Next Youth</div>
+          <div className="logo">
+            <Link to="/">
+              <img 
+                src={isDarkMode ? logoDark : logoLight} 
+                alt="Next Youth" 
+                className="logo-image" 
+              />
+            </Link>
+          </div>
           
           <nav className="desktop-nav">
             <ul>
               <li><Link to="/business-solutions"><i className="fas fa-briefcase"></i>Business Solutions</Link></li>
               <li><a href="#"><i className="fas fa-compass"></i>Explore</a></li>
               <li><a href="#"><i className="fas fa-globe"></i>English</a></li>
-              <li><a href="#"><i className="fas fa-store"></i>Become a Seller</a></li>
+              <li><Link to="/become-seller"><i className="fas fa-store"></i>Become a Seller</Link></li>
               <li>
                 <button 
                   className="theme-toggle"
@@ -274,7 +288,7 @@ const BusinessSolutions = () => {
             <li className="nav-fade-in"><Link to="/business-solutions" onClick={handleMenuClick}><i className="fas fa-briefcase"></i>Business Solutions</Link></li>
             <li className="nav-fade-in"><a href="#" onClick={handleMenuClick}><i className="fas fa-compass"></i>Explore</a></li>
             <li className="nav-fade-in"><a href="#" onClick={handleMenuClick}><i className="fas fa-globe"></i>English</a></li>
-            <li className="nav-fade-in"><a href="#" onClick={handleMenuClick}><i className="fas fa-store"></i>Become a Seller</a></li>
+            <li className="nav-fade-in"><Link to="/become-seller" onClick={handleMenuClick}><i className="fas fa-store"></i>Become a Seller</Link></li>
             <li className="nav-fade-in"><Link to="/login" className="login" onClick={handleMenuClick}><i className="fas fa-sign-in-alt"></i>Log In</Link></li>
             <li className="nav-fade-in"><Link to="/register" className="signup" onClick={handleMenuClick}><i className="fas fa-user-plus"></i>Sign Up</Link></li>
             <li className="nav-fade-in">
@@ -305,7 +319,6 @@ const BusinessSolutions = () => {
             <p>Discover tailored solutions to help your business thrive in today's competitive marketplace</p>
             <div className="bs-cta-buttons">
               <Link to="/contact?type=general" className="bs-primary-btn">Get Started</Link>
-              <Link to="/request-demo" className="bs-secondary-btn">Request Demo</Link>
             </div>
           </div>
           <div className="bs-hero-image"></div>

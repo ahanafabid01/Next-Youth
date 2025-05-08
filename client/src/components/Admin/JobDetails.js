@@ -3,7 +3,7 @@ import Sidebar from "./Sidebar";
 import "./AdminDashboard.css";
 import "./JobDetails.css";
 import axios from "axios";
-import { FaTrash, FaEdit, FaRegFileAlt } from "react-icons/fa";
+import { FaTrash, FaRegFileAlt } from "react-icons/fa";
 import { notifyDataUpdate } from './Statistics';
 import { dataStore } from '../../utils/eventEmitter';
 
@@ -151,9 +151,6 @@ const JobDetails = () => {
                                                 )}
                                             </td>
                                             <td className="action-buttons-cell">
-                                                <button className="action-btn edit-btn">
-                                                    <FaEdit /> Edit
-                                                </button>
                                                 <button 
                                                     className="action-btn delete-btn"
                                                     onClick={() => handleDeleteJob(job._id)}

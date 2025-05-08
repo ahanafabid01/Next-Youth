@@ -2,14 +2,7 @@ import mongoose from "mongoose";
 
 const userSchema = new mongoose.Schema({
     name: { type: String, required: true },
-    email: {
-        type: String,
-        required: [true, 'Email is required'],
-        unique: true,
-        trim: true,
-        lowercase: true,
-        match: [/^\S+@\S+\.\S+$/, 'Please provide a valid email address']
-    },
+    email: { type: String, required: true, unique: true },
     bio: { type: String },
     education: {
         school: { name: String, enteringYear: String, passingYear: String },
@@ -86,7 +79,34 @@ const userSchema = new mongoose.Schema({
         submittedAt: { type: Date },
         verifiedAt: { type: Date },
         notes: { type: String } // Admin notes about verification
-    }
+    },
+    // Add ratings and reviews array
+    ratings: [{
+        job: {
+            type: mongoose.Schema.Types.ObjectId,
+            ref: 'job',
+            required: true
+        },
+        employer: {
+            type: mongoose.Schema.Types.ObjectId,
+            ref: 'user',
+            required: true
+        },
+        rating: {
+            type: Number,
+            required: true,
+            min: 1,
+            max: 5
+        },
+        review: {
+            type: String,
+            required: true
+        },
+        createdAt: {
+            type: Date,
+            default: Date.now
+        }
+    }]
 }, { timestamps: true });
 
 const userModel = mongoose.models.user || mongoose.model("user", userSchema);
