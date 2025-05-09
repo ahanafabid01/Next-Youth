@@ -17,11 +17,14 @@ import {
   FaBars,
   FaCheckCircle,
   FaClock,
-  FaStar
+  FaStar,
+  FaCog,
+  FaSignOutAlt
 } from 'react-icons/fa';
 import './FindJobs.css';
 import logoLight from '../../assets/images/logo-light.png';
 import logoDark from '../../assets/images/logo-dark.png';
+import RatingModal from '../Connections/RatingModal';
 
 const FindJobs = () => {
   const navigate = useNavigate();
@@ -438,6 +441,8 @@ const FindJobs = () => {
     );
   };
 
+  const [showRatingModal, setShowRatingModal] = useState(false);
+
   return (
     <div className="employee-find-jobs-container">
       <div className={`employee-mobile-nav-overlay ${showMobileNav ? 'active' : ''}`} onClick={() => setShowMobileNav(false)}></div>
@@ -593,21 +598,24 @@ const FindJobs = () => {
                     </button>
                     <button 
                       className="employee-profile-dropdown-link"
-                      onClick={() => navigate('/employee-dashboard')}
+                      onClick={() => {
+                        setShowProfileDropdown(false); // Close dropdown
+                        setShowRatingModal(true); // Show rating modal
+                      }}
                     >
-                      <FaUserCircle /> Dashboard
+                      <FaStar /> My Ratings & Reviews
                     </button>
                     <button 
                       className="employee-profile-dropdown-link"
                       onClick={() => navigate('/settings')}
                     >
-                      <FaStar /> Settings
+                      <FaCog /> Settings
                     </button>
                     <button 
                       className="employee-profile-dropdown-link"
                       onClick={handleLogout}
                     >
-                      <FaStar /> Logout
+                      <FaSignOutAlt /> Logout
                     </button>
                   </div>
                 </div>
@@ -919,6 +927,14 @@ const FindJobs = () => {
           </div>
         </div>
       </footer>
+
+      {showRatingModal && (
+        <RatingModal
+          isOpen={true}
+          onClose={() => setShowRatingModal(false)}
+          viewOnly={true}
+        />
+      )}
     </div>
   );
 };

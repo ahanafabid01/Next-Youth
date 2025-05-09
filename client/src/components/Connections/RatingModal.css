@@ -956,3 +956,36 @@ body.modal-open {
   transform: translateZ(0);
   backface-visibility: hidden;
 }
+
+/* Add these styles at the end of your file */
+
+/* Ensure theme transitions are smooth */
+.rating-modal-overlay,
+.rating-modal {
+  transition: all 0.3s ease;
+}
+
+/* Better sync with employee components' dark mode */
+.rating-modal-overlay.dark-theme,
+.employee-dark-mode .rating-modal-overlay,
+.employee-settings-dark-mode .rating-modal-overlay {
+  background-color: rgba(0, 0, 0, 0.7);
+}
+
+.rating-modal-overlay.dark-theme .rating-modal,
+.employee-dark-mode .rating-modal,
+.employee-settings-dark-mode .rating-modal {
+  background-color: var(--dark-card, #222340);
+  border-color: var(--dark-border, #373a54);
+  color: var(--light-text, #e9ecef);
+}
+
+/* Improve performance with hardware acceleration */
+.rating-modal,
+.ratings-list,
+.rating-stars-display,
+.rating-job-details {
+  will-change: transform;
+  transform: translateZ(0);
+  backface-visibility: hidden;
+}

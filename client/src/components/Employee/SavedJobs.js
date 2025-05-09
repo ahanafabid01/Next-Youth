@@ -20,10 +20,14 @@ import {
   FaExternalLinkAlt,
   FaBars,
   FaBookmark,
+  FaStar,
+  FaCog,
+  FaSignOutAlt,
 } from 'react-icons/fa';
 import './SavedJobs.css';
 import logoLight from '../../assets/images/logo-light.png'; 
 import logoDark from '../../assets/images/logo-dark.png';
+import RatingModal from '../Connections/RatingModal';
 
 const SavedJobs = () => {
   const navigate = useNavigate();
@@ -55,6 +59,8 @@ const SavedJobs = () => {
   const [isDarkMode, setIsDarkMode] = useState(() => {
     return localStorage.getItem("dashboard-theme") === "dark";
   });
+
+  const [showRatingModal, setShowRatingModal] = useState(false);
 
   const API_BASE_URL = 'http://localhost:4000/api';
 
@@ -516,14 +522,20 @@ const SavedJobs = () => {
                     <Link to="/my-profile" className="employee-saved-profile-dropdown-link">
                       <FaUserCircle /> View Profile
                     </Link>
-                    <Link to="/verify-account" className="employee-saved-profile-dropdown-link">
-                      <FaRegFileAlt /> Verify Account
-                    </Link>
+                    <button 
+                      className="employee-saved-profile-dropdown-link"
+                      onClick={() => {
+                        setShowProfileDropdown(false); // Close dropdown
+                        setShowRatingModal(true); // Show rating modal
+                      }}
+                    >
+                      <FaStar /> My Ratings & Reviews
+                    </button>
                     <Link to="/settings" className="employee-saved-profile-dropdown-link">
-                      <FaRegFileAlt /> Settings
+                      <FaCog /> Settings
                     </Link>
                     <button className="employee-saved-profile-dropdown-link" onClick={handleLogout}>
-                      <FaRegFileAlt /> Logout
+                      <FaSignOutAlt /> Logout
                     </button>
                   </div>
                 </div>
@@ -728,6 +740,14 @@ const SavedJobs = () => {
           </div>
         </div>
       </footer>
+
+      {showRatingModal && (
+        <RatingModal
+          isOpen={true}
+          onClose={() => setShowRatingModal(false)}
+          viewOnly={true}
+        />
+      )}
     </div>
   );
 };

@@ -122,13 +122,20 @@ const RatingModal = ({ isOpen, onClose, jobTitle, applicant, jobId, onRatingSubm
 
     useEffect(() => {
         const checkTheme = () => {
-            const isDark = document.body.classList.contains('dark-theme') || 
-                           document.querySelector('.dashboard-wrapper')?.classList.contains('dark-theme');
+            // Check for both dashboard themes and employee-specific themes
+            const isDark = 
+                document.body.classList.contains('dark-theme') || 
+                document.body.classList.contains('employee-settings-dark-mode') ||
+                document.querySelector('.dashboard-wrapper')?.classList.contains('dark-theme') ||
+                document.querySelector('.employee-dark-mode') !== null ||
+                localStorage.getItem('dashboard-theme') === 'dark';
+                
             setIsDarkTheme(isDark);
         };
         
         checkTheme();
         
+        // Set up an observer to watch for class changes
         const observer = new MutationObserver(mutations => {
             for (const mutation of mutations) {
                 if (mutation.type === 'attributes' && mutation.attributeName === 'class') {
@@ -137,14 +144,61 @@ const RatingModal = ({ isOpen, onClose, jobTitle, applicant, jobId, onRatingSubm
             }
         });
         
+        // Observe body for class changes
         observer.observe(document.body, { attributes: true });
         
+        // Also observe other potential theme containers
         const dashboardEl = document.querySelector('.dashboard-wrapper');
         if (dashboardEl) {
             observer.observe(dashboardEl, { attributes: true });
         }
         
-        return () => observer.disconnect();
+        // Check for theme changes on storage events (localStorage changes)
+        const handleStorageChange = (e) => {
+            if (e.key === 'dashboard-theme') {
+                checkTheme();
+            }
+        };
+        
+        window.addEventListener('storage', handleStorageChange);
+        
+        // Initial check based on localStorage
+        if (localStorage.getItem('dashboard-theme') === 'dark') {
+            setIsDarkTheme(true);
+        }
+        
+        return () => {
+            observer.disconnect();
+            window.removeEventListener('storage', handleStorageChange);
+        };
+    }, []);
+
+    useEffect(() => {
+        // Use the same theme detection logic as all employee components
+        const isDark = localStorage.getItem("dashboard-theme") === "dark";
+        setIsDarkTheme(isDark);
+        
+        // Apply appropriate classes to modal for theme consistency
+        if (modalRef.current) {
+          if (isDark) {
+            modalRef.current.classList.add('dark-theme');
+          } else {
+            modalRef.current.classList.remove('dark-theme');
+          }
+        }
+        
+        // Listen for theme changes in localStorage
+        const handleStorageChange = (e) => {
+          if (e.key === "dashboard-theme") {
+            setIsDarkTheme(e.newValue === "dark");
+          }
+        };
+        
+        window.addEventListener('storage', handleStorageChange);
+        
+        return () => {
+          window.removeEventListener('storage', handleStorageChange);
+        };
     }, []);
 
     const fetchUserRatings = async () => {
