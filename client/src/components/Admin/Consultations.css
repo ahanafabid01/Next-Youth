@@ -1,313 +1,987 @@
-.admin-dashboard {
+/* Admin Consultations - Minimalist Professional Theme */
+.admin-consult-container {
   display: flex;
+  min-height: 100vh;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
 }
 
-.sidebar {
-  width: 250px;
-  background-color: #f4f4f4;
-  padding: 20px;
-  height: 100vh;
+.admin-consult-main {
+  flex: 1;
+  margin-left: 280px;
+  padding: 2rem;
+  background-color: #f8fafc;
+  min-height: 100vh;
+  transition: all 0.3s ease;
 }
 
-.sidebar .logo h2 {
+.admin-dash-dark-mode .admin-consult-main {
+  background-color: #0f172a;
+  color: #f8fafc;
+}
+
+.admin-consult-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 2rem;
+}
+
+.admin-consult-header-left {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.admin-consult-logo {
+  height: 40px;
+  width: auto;
+}
+
+.admin-consult-title h1 {
+  font-size: 1.8rem;
+  font-weight: 700;
+  color: #1e293b;
   margin: 0;
-  font-size: 1.5rem;
-  color: #4f46e5;
+  background: linear-gradient(90deg, #3a86ff, #4cc9f0);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
 }
 
-.sidebar .menu ul {
-  list-style: none;
-  padding: 0;
+.admin-dash-dark-mode .admin-consult-title h1 {
+  color: #f8fafc;
 }
 
-.sidebar .menu ul li {
-  margin: 15px 0;
+.admin-consult-title p {
+  margin: 0.5rem 0 0;
+  color: #64748b;
+  font-size: 1.05rem;
 }
 
-.sidebar .menu ul li a {
-  text-decoration: none;
-  color: #333;
-  font-size: 1rem;
+.admin-dash-dark-mode .admin-consult-title p {
+  color: #94a3b8;
+}
+
+.admin-consult-mobile-header {
+  display: none;
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 70px;
+  background-color: #ffffff;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+  z-index: 1000;
+  padding: 0 1.5rem;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.admin-dash-dark-mode .admin-consult-mobile-header {
+  background-color: #1a2234;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+}
+
+.admin-consult-mobile-logo {
+  height: 36px;
+  width: auto;
+}
+
+.admin-consult-mobile-toggle {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
   display: flex;
+  align-items: center;
+  justify-content: center;
+  background: none;
+  border: none;
+  color: #64748b;
+  font-size: 1.5rem;
+  cursor: pointer;
+}
+
+.admin-dash-dark-mode .admin-consult-mobile-toggle {
+  color: #94a3b8;
+}
+
+.admin-consult-stats-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 1.5rem;
+  margin-bottom: 2rem;
+}
+
+.admin-consult-stat-card {
+  background-color: #ffffff;
+  border-radius: 12px;
+  padding: 1.5rem;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+  transition: all 0.3s ease;
+  display: flex;
+  flex-direction: column;
   align-items: center;
 }
 
-.sidebar .menu ul li a:hover {
-  color: #4f46e5;
+.admin-dash-dark-mode .admin-consult-stat-card {
+  background-color: #1e293b;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
 }
 
-.main-content {
-  flex: 1;
-  padding: 20px;
+.admin-consult-stat-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1);
 }
 
-.consultations-table-container {
-    margin-top: 30px;
-    padding: 20px;
-    background-color: #ffffff;
-    border-radius: 8px;
-    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
-    overflow-x: auto;
+.admin-dash-dark-mode .admin-consult-stat-card:hover {
+  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
 }
 
-.consultations-table-container h2 {
-    margin-bottom: 20px;
-    color: #333;
-    font-size: 1.5rem;
+.admin-consult-stat-icon {
+  width: 50px;
+  height: 50px;
+  border-radius: 12px;
+  background: linear-gradient(135deg, rgba(58, 134, 255, 0.1), rgba(76, 201, 240, 0.1));
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 1rem;
+  color: #3a86ff;
+  font-size: 1.4rem;
 }
 
-.consultations-table {
-    width: 100%;
-    border-collapse: collapse;
-    font-size: 0.9rem;
-    color: #444;
+.admin-dash-dark-mode .admin-consult-stat-icon {
+  background: linear-gradient(135deg, rgba(58, 134, 255, 0.15), rgba(76, 201, 240, 0.15));
+  color: #60a5fa;
 }
 
-.consultations-table thead {
-    background-color: #f8f9fa;
+.admin-consult-stat-title {
+  font-size: 0.95rem;
+  font-weight: 500;
+  color: #64748b;
+  margin-bottom: 0.5rem;
+  text-align: center;
 }
 
-.consultations-table th,
-.consultations-table td {
-    padding: 12px 15px;
-    text-align: left;
-    border-bottom: 1px solid #dee2e6;
-    vertical-align: middle;
+.admin-dash-dark-mode .admin-consult-stat-title {
+  color: #94a3b8;
 }
 
-.consultations-table th {
-    font-weight: 600;
-    color: #495057;
-    text-transform: uppercase;
-    font-size: 0.8rem;
-    letter-spacing: 0.5px;
+.admin-consult-stat-value {
+  font-size: 2rem;
+  font-weight: 700;
+  color: #1e293b;
 }
 
-.consultations-table tbody tr:hover {
-    background-color: #f1f3f5;
+.admin-dash-dark-mode .admin-consult-stat-value {
+  color: #f8fafc;
 }
 
-.status-badge {
+.admin-consult-table-container {
+  background-color: #ffffff;
+  border-radius: 12px;
+  padding: 1.5rem;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+  margin-bottom: 2rem;
+  overflow: hidden;
+}
+
+.admin-dash-dark-mode .admin-consult-table-container {
+  background-color: #1e293b;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.admin-consult-table-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1.5rem;
+}
+
+.admin-consult-table-header h2 {
+  font-size: 1.3rem;
+  font-weight: 600;
+  color: #334155;
+  margin: 0;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.admin-dash-dark-mode .admin-consult-table-header h2 {
+  color: #e2e8f0;
+}
+
+.admin-consult-filters {
+  display: flex;
+  gap: 1rem;
+  align-items: center;
+}
+
+.admin-consult-search {
+  position: relative;
+}
+
+.admin-consult-search input {
+  padding: 0.6rem 1rem 0.6rem 2.5rem;
+  border-radius: 8px;
+  border: 1px solid #e2e8f0;
+  background-color: #ffffff;
+  color: #334155;
+  font-size: 0.95rem;
+  width: 220px;
+  transition: all 0.2s ease;
+}
+
+.admin-dash-dark-mode .admin-consult-search input {
+  background-color: #1a2234;
+  border-color: #2d3748;
+  color: #e2e8f0;
+}
+
+.admin-consult-search input:focus {
+  outline: none;
+  border-color: #3a86ff;
+  box-shadow: 0 0 0 2px rgba(58, 134, 255, 0.3);
+}
+
+.admin-dash-dark-mode .admin-consult-search input:focus {
+  border-color: #3a86ff;
+  box-shadow: 0 0 0 2px rgba(58, 134, 255, 0.2);
+}
+
+.admin-consult-search-icon {
+  position: absolute;
+  left: 0.75rem;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #64748b;
+  font-size: 0.95rem;
+}
+
+.admin-dash-dark-mode .admin-consult-search-icon {
+  color: #94a3b8;
+}
+
+.admin-consult-filter-select {
+  padding: 0.6rem;
+  border-radius: 8px;
+  border: 1px solid #e2e8f0;
+  background-color: #ffffff;
+  color: #334155;
+  font-size: 0.95rem;
+  transition: all 0.2s ease;
+  cursor: pointer;
+}
+
+.admin-dash-dark-mode .admin-consult-filter-select {
+  background-color: #1a2234;
+  border-color: #2d3748;
+  color: #e2e8f0;
+}
+
+.admin-consult-filter-select:focus {
+  outline: none;
+  border-color: #3a86ff;
+}
+
+.admin-consult-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-bottom: 1.5rem;
+}
+
+.admin-consult-table th, 
+.admin-consult-table td {
+  padding: 1rem;
+  text-align: left;
+  border-bottom: 1px solid #f1f5f9;
+}
+
+.admin-dash-dark-mode .admin-consult-table th, 
+.admin-dash-dark-mode .admin-consult-table td {
+  border-bottom: 1px solid #2d3748;
+}
+
+.admin-consult-table th {
+  font-weight: 600;
+  color: #64748b;
+  font-size: 0.9rem;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.admin-dash-dark-mode .admin-consult-table th {
+  color: #94a3b8;
+}
+
+.admin-consult-table tbody tr:hover {
+  background-color: rgba(241, 245, 249, 0.7);
+}
+
+.admin-dash-dark-mode .admin-consult-table tbody tr:hover {
+  background-color: rgba(30, 41, 59, 0.7);
+}
+
+.admin-consult-table td {
+  color: #334155;
+  font-size: 0.95rem;
+  white-space: nowrap;
+}
+
+.admin-dash-dark-mode .admin-consult-table td {
+  color: #e2e8f0;
+}
+
+.admin-consult-status-badge {
+  padding: 0.35rem 0.75rem;
+  border-radius: 20px;
+  font-size: 0.85rem;
+  font-weight: 500;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+}
+
+.admin-consult-status-badge.pending {
+  background-color: rgba(245, 158, 11, 0.1);
+  color: #f59e0b;
+}
+
+.admin-consult-status-badge.confirmed {
+  background-color: rgba(16, 185, 129, 0.1);
+  color: #10b981;
+}
+
+.admin-consult-status-badge.completed {
+  background-color: rgba(58, 134, 255, 0.1);
+  color: #3a86ff;
+}
+
+.admin-consult-status-badge.cancelled {
+  background-color: rgba(239, 68, 68, 0.1);
+  color: #ef4444;
+}
+
+.admin-dash-dark-mode .admin-consult-status-badge.pending {
+  background-color: rgba(245, 158, 11, 0.15);
+  color: #fbbf24;
+}
+
+.admin-dash-dark-mode .admin-consult-status-badge.confirmed {
+  background-color: rgba(16, 185, 129, 0.15);
+  color: #34d399;
+}
+
+.admin-dash-dark-mode .admin-consult-status-badge.completed {
+  background-color: rgba(58, 134, 255, 0.15);
+  color: #60a5fa;
+}
+
+.admin-dash-dark-mode .admin-consult-status-badge.cancelled {
+  background-color: rgba(239, 68, 68, 0.15);
+  color: #f87171;
+}
+
+.admin-consult-action-btn {
+  background: none;
+  border: none;
+  font-size: 0.95rem;
+  font-weight: 500;
+  cursor: pointer;
+  padding: 0.35rem 0.75rem;
+  border-radius: 6px;
+  transition: all 0.2s ease;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+}
+
+.admin-consult-action-btn.view-btn {
+  background-color: rgba(58, 134, 255, 0.1);
+  color: #3a86ff;
+}
+
+.admin-consult-action-btn.edit-btn {
+  background-color: rgba(16, 185, 129, 0.1);
+  color: #10b981;
+}
+
+.admin-dash-dark-mode .admin-consult-action-btn.view-btn {
+  background-color: rgba(58, 134, 255, 0.15);
+  color: #60a5fa;
+}
+
+.admin-dash-dark-mode .admin-consult-action-btn.edit-btn {
+  background-color: rgba(16, 185, 129, 0.15);
+  color: #34d399;
+}
+
+.admin-consult-action-btn:hover {
+  transform: translateY(-2px);
+}
+
+.admin-consult-action-btn.view-btn:hover {
+  background-color: rgba(58, 134, 255, 0.2);
+}
+
+.admin-consult-action-btn.edit-btn:hover {
+  background-color: rgba(16, 185, 129, 0.2);
+}
+
+.admin-consult-no-data {
+  text-align: center;
+  padding: 2rem;
+  color: #64748b;
+  font-style: italic;
+}
+
+.admin-dash-dark-mode .admin-consult-no-data {
+  color: #94a3b8;
+}
+
+.admin-consult-pagination {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.admin-consult-pagination-info {
+  color: #64748b;
+  font-size: 0.9rem;
+}
+
+.admin-dash-dark-mode .admin-consult-pagination-info {
+  color: #94a3b8;
+}
+
+.admin-consult-pagination-controls {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.admin-consult-pagination-button {
+  width: 40px;
+  height: 40px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: #ffffff;
+  border: 1px solid #e2e8f0;
+  color: #334155;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.admin-dash-dark-mode .admin-consult-pagination-button {
+  background-color: #1a2234;
+  border-color: #2d3748;
+  color: #e2e8f0;
+}
+
+.admin-consult-pagination-button:hover {
+  background-color: #f1f5f9;
+}
+
+.admin-dash-dark-mode .admin-consult-pagination-button:hover {
+  background-color: #2d3748;
+}
+
+.admin-consult-pagination-button.active {
+  background-color: #3a86ff;
+  border-color: #3a86ff;
+  color: #ffffff;
+}
+
+.admin-consult-pagination-button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Modals */
+.admin-consult-modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(4px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1100;
+}
+
+.admin-consult-detail-modal,
+.admin-consult-update-modal {
+  background-color: #ffffff;
+  border-radius: 12px;
+  width: 90%;
+  max-width: 700px;
+  max-height: 90vh;
+  overflow-y: auto;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+}
+
+.admin-dash-dark-mode .admin-consult-detail-modal,
+.admin-dash-dark-mode .admin-consult-update-modal {
+  background-color: #1a2234;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
+}
+
+.admin-consult-modal-header {
+  padding: 1.5rem;
+  border-bottom: 1px solid #f1f5f9;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  position: sticky;
+  top: 0;
+  background-color: #ffffff;
+  z-index: 10;
+  border-radius: 12px 12px 0 0;
+}
+
+.admin-dash-dark-mode .admin-consult-modal-header {
+  background-color: #1a2234;
+  border-bottom: 1px solid #2d3748;
+}
+
+.admin-consult-modal-header h2 {
+  font-size: 1.3rem;
+  font-weight: 600;
+  color: #334155;
+  margin: 0;
+}
+
+.admin-dash-dark-mode .admin-consult-modal-header h2 {
+  color: #e2e8f0;
+}
+
+.admin-consult-close-modal {
+  background: none;
+  border: none;
+  font-size: 1.5rem;
+  color: #64748b;
+  cursor: pointer;
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  transition: all 0.2s ease;
+}
+
+.admin-dash-dark-mode .admin-consult-close-modal {
+  color: #94a3b8;
+}
+
+.admin-consult-close-modal:hover {
+  background-color: #f1f5f9;
+  color: #ef4444;
+}
+
+.admin-dash-dark-mode .admin-consult-close-modal:hover {
+  background-color: #2d3748;
+  color: #f87171;
+}
+
+.admin-consult-modal-content {
+  padding: 1.5rem;
+}
+
+.admin-consult-detail-section {
+  margin-bottom: 1.5rem;
+}
+
+.admin-consult-detail-section:last-child {
+  margin-bottom: 0;
+}
+
+.admin-consult-detail-section h3 {
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: #334155;
+  margin: 0 0 1rem;
+  padding-bottom: 0.5rem;
+  border-bottom: 1px solid #f1f5f9;
+}
+
+.admin-dash-dark-mode .admin-consult-detail-section h3 {
+  color: #e2e8f0;
+  border-bottom: 1px solid #2d3748;
+}
+
+.admin-consult-detail-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 1rem;
+}
+
+.admin-consult-detail-item {
+  display: flex;
+  flex-direction: column;
+}
+
+.admin-consult-detail-label {
+  font-size: 0.85rem;
+  color: #64748b;
+  font-weight: 500;
+  margin-bottom: 0.3rem;
+}
+
+.admin-dash-dark-mode .admin-consult-detail-label {
+  color: #94a3b8;
+}
+
+.admin-consult-detail-value {
+  font-size: 1rem;
+  color: #334155;
+  font-weight: 500;
+}
+
+.admin-dash-dark-mode .admin-consult-detail-value {
+  color: #e2e8f0;
+}
+
+.admin-consult-message-content,
+.admin-consult-note-content {
+  background-color: #f8fafc;
+  border-radius: 8px;
+  padding: 1rem;
+  color: #334155;
+  font-size: 0.95rem;
+  line-height: 1.6;
+}
+
+.admin-dash-dark-mode .admin-consult-message-content,
+.admin-dash-dark-mode .admin-consult-note-content {
+  background-color: #0f172a;
+  color: #e2e8f0;
+}
+
+.admin-consult-modal-footer {
+  padding: 1.5rem;
+  border-top: 1px solid #f1f5f9;
+  display: flex;
+  justify-content: flex-end;
+  gap: 1rem;
+  position: sticky;
+  bottom: 0;
+  background-color: #ffffff;
+  border-radius: 0 0 12px 12px;
+}
+
+.admin-dash-dark-mode .admin-consult-modal-footer {
+  background-color: #1a2234;
+  border-top: 1px solid #2d3748;
+}
+
+.admin-consult-modal-btn {
+  padding: 0.6rem 1.2rem;
+  border-radius: 8px;
+  font-size: 0.95rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  border: none;
+}
+
+.admin-consult-modal-btn.primary {
+  background-color: #3a86ff;
+  color: #ffffff;
+}
+
+.admin-consult-modal-btn.primary:hover {
+  background-color: #2563eb;
+}
+
+.admin-consult-modal-btn.secondary {
+  background-color: #f1f5f9;
+  color: #334155;
+}
+
+.admin-dash-dark-mode .admin-consult-modal-btn.secondary {
+  background-color: #2d3748;
+  color: #e2e8f0;
+}
+
+.admin-consult-modal-btn.secondary:hover {
+  background-color: #e2e8f0;
+}
+
+.admin-dash-dark-mode .admin-consult-modal-btn.secondary:hover {
+  background-color: #1e293b;
+}
+
+.admin-consult-form-group {
+  margin-bottom: 1.5rem;
+}
+
+.admin-consult-form-group label {
+  display: block;
+  font-size: 0.95rem;
+  font-weight: 500;
+  color: #334155;
+  margin-bottom: 0.5rem;
+}
+
+.admin-dash-dark-mode .admin-consult-form-group label {
+  color: #e2e8f0;
+}
+
+.admin-consult-form-group select,
+.admin-consult-form-group textarea {
+  width: 100%;
+  padding: 0.75rem;
+  border-radius: 8px;
+  border: 1px solid #e2e8f0;
+  background-color: #ffffff;
+  color: #334155;
+  font-size: 0.95rem;
+  font-family: inherit;
+}
+
+.admin-dash-dark-mode .admin-consult-form-group select,
+.admin-dash-dark-mode .admin-consult-form-group textarea {
+  background-color: #0f172a;
+  border-color: #2d3748;
+  color: #e2e8f0;
+}
+
+.admin-consult-form-group select:focus,
+.admin-consult-form-group textarea:focus {
+  outline: none;
+  border-color: #3a86ff;
+  box-shadow: 0 0 0 2px rgba(58, 134, 255, 0.3);
+}
+
+.admin-dash-dark-mode .admin-consult-form-group select:focus,
+.admin-dash-dark-mode .admin-consult-form-group textarea:focus {
+  border-color: #3a86ff;
+  box-shadow: 0 0 0 2px rgba(58, 134, 255, 0.2);
+}
+
+.admin-consult-form-group textarea {
+  resize: vertical;
+  min-height: 120px;
+}
+
+.admin-consult-loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100vh;
+  font-size: 1.2rem;
+  color: #64748b;
+}
+
+.admin-dash-dark-mode .admin-consult-loading {
+  color: #94a3b8;
+}
+
+/* Status dropdown styles */
+.admin-consult-status-dropdown {
+  position: relative;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.admin-consult-status-dropdown-icon {
+  font-size: 0.8rem;
+  transition: transform 0.2s;
+}
+
+.admin-consult-status-dropdown[aria-expanded="true"] .admin-consult-status-dropdown-icon {
+  transform: rotate(180deg);
+}
+
+.admin-consult-status-dropdown-menu {
+  position: absolute;
+  top: calc(100% + 5px);
+  left: 0;
+  width: 160px;
+  background-color: #ffffff;
+  border-radius: 8px;
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+  z-index: 100;
+  overflow: hidden;
+}
+
+.admin-dash-dark-mode .admin-consult-status-dropdown-menu {
+  background-color: #1e293b;
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+}
+
+.admin-consult-status-option {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  width: 100%;
+  padding: 10px 15px;
+  border: none;
+  background: none;
+  text-align: left;
+  font-size: 0.9rem;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.admin-consult-status-option:hover {
+  background-color: rgba(0, 0, 0, 0.05);
+}
+
+.admin-dash-dark-mode .admin-consult-status-option:hover {
+  background-color: rgba(255, 255, 255, 0.05);
+}
+
+.admin-consult-status-option.pending {
+  color: #f59e0b;
+}
+
+.admin-consult-status-option.confirmed {
+  color: #10b981;
+}
+
+.admin-consult-status-option.completed {
+  color: #3a86ff;
+}
+
+.admin-consult-status-option.cancelled {
+  color: #ef4444;
+}
+
+.admin-dash-dark-mode .admin-consult-status-option.pending {
+  color: #fbbf24;
+}
+
+.admin-dash-dark-mode .admin-consult-status-option.confirmed {
+  color: #34d399;
+}
+
+.admin-dash-dark-mode .admin-consult-status-option.completed {
+  color: #60a5fa;
+}
+
+.admin-dash-dark-mode .admin-consult-status-option.cancelled {
+  color: #f87171;
+}
+
+/* Mobile header title */
+.admin-consult-mobile-title {
+  font-size: 1.2rem;
+  font-weight: 600;
+  color: #1e293b;
+}
+
+.admin-dash-dark-mode .admin-consult-mobile-title {
+  color: #f8fafc;
+}
+
+/* Responsive adjustments */
+@media (max-width: 1024px) {
+  .admin-consult-mobile-header {
     display: flex;
-    align-items: center;
-    gap: 5px;
-    padding: 4px 8px;
-    border-radius: 4px;
-    font-size: 12px;
-    font-weight: 500;
-    pointer-events: none;
-}
-
-.status-badge svg {
-    margin-right: 5px;
-}
-
-.status-badge.pending {
-    background-color: #ffc107;
-}
-
-.status-badge.confirmed {
-    background-color: #28a745;
-}
-
-.status-badge.completed {
-    background-color: #0d6efd;
-}
-
-.status-badge.cancelled {
-    background-color: #dc3545;
-}
-
-.action-btn {
-    padding: 6px 12px;
-    margin-right: 8px;
-    border: none;
-    border-radius: 4px;
-    cursor: pointer;
-    font-size: 0.8rem;
-    font-weight: 500;
-    display: inline-flex;
-    align-items: center;
-}
-
-.action-btn.view-btn {
-    background-color: #6c757d;
-    color: white;
-}
-
-.action-btn.edit-btn {
-    background-color: #0d6efd;
-    color: white;
-}
-
-.action-btn svg {
-    margin-right: 5px;
-}
-
-/* Modal styles */
-.modal-overlay {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background-color: rgba(0, 0, 0, 0.5);
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    z-index: 1000;
-}
-
-.consultation-detail-modal,
-.consultation-update-modal {
-    background-color: white;
-    border-radius: 8px;
-    width: 90%;
-    max-width: 800px;
-    max-height: 90vh;
-    overflow-y: auto;
-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
-}
-
-.modal-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 15px 20px;
-    border-bottom: 1px solid #e0e0e0;
-}
-
-.modal-content {
-    padding: 20px;
-}
-
-.detail-section {
-    margin-bottom: 25px;
-}
-
-.detail-section h3 {
-    font-size: 1.1rem;
-    margin-bottom: 12px;
-    color: #0d6efd;
-    border-bottom: 1px solid #e0e0e0;
-    padding-bottom: 8px;
-}
-
-.detail-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
-    gap: 15px;
-}
-
-.detail-item {
-    display: flex;
+  }
+  
+  .admin-consult-main {
+    margin-left: 0;
+    padding-top: 90px;
+  }
+  
+  .admin-consult-stats-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  
+  .admin-consult-table-header {
     flex-direction: column;
-}
-
-.detail-label {
-    font-weight: 600;
-    font-size: 0.9rem;
-    color: #555;
-}
-
-.message-content,
-.note-content {
-    background-color: #f8f9fa;
-    padding: 15px;
-    border-radius: 4px;
-    white-space: pre-wrap;
-}
-
-.modal-footer {
-    padding: 15px 20px;
-    border-top: 1px solid #e0e0e0;
-    display: flex;
-    justify-content: flex-end;
-    gap: 10px;
-}
-
-.form-group {
-    margin-bottom: 20px;
-}
-
-.form-group label {
+    align-items: flex-start;
+    gap: 1rem;
+  }
+  
+  .admin-consult-filters {
+    width: 100%;
+    flex-wrap: wrap;
+  }
+  
+  .admin-consult-search input {
+    width: 100%;
+  }
+  
+  .admin-consult-table {
     display: block;
-    margin-bottom: 8px;
-    font-weight: 500;
+    overflow-x: auto;
+    white-space: nowrap;
+  }
 }
 
-.form-group select,
-.form-group textarea {
-    width: 100%;
-    padding: 10px;
-    border: 1px solid #ced4da;
-    border-radius: 4px;
-    font-size: 1rem;
-}
-
-.form-group textarea {
-    resize: vertical;
-    min-height: 100px;
-}
-
-.action-btn.save-btn {
-    background-color: #28a745;
-    color: white;
-}
-
-.action-btn.cancel-btn {
-    background-color: #6c757d;
-    color: white;
-}
-
-/* Dark mode support */
-.admin-dark-mode .consultations-table-container,
-.admin-dark-mode .consultation-detail-modal,
-.admin-dark-mode .consultation-update-modal {
-    background-color: #2d3748;
-    color: #e2e8f0;
-}
-
-.admin-dark-mode .consultations-table thead {
-    background-color: #1a202c;
-}
-
-.admin-dark-mode .consultations-table td {
-    border-color: #4a5568;
-}
-
-.admin-dark-mode .message-content,
-.admin-dark-mode .note-content {
-    background-color: #1a202c;
-}
-
-/* Responsive design */
 @media (max-width: 768px) {
-    .consultations-table th,
-    .consultations-table td {
-        padding: 10px 8px;
-        font-size: 0.85rem;
-    }
-    
-    .detail-grid {
-        grid-template-columns: 1fr;
-    }
-}
-
-/* Add this to your Consultations.css file */
-.status-cell {
-    position: relative;
-    display: flex;
-    align-items: center;
-}
-
-.status-select {
-    position: absolute;
-    top: 0;
-    left: 0;
+  .admin-consult-main {
+    padding: 90px 1.5rem 1.5rem;
+  }
+  
+  .admin-consult-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 1rem;
+  }
+  
+  .admin-consult-header-left {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+  
+  .admin-consult-filters {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.75rem;
+  }
+  
+  .admin-consult-search {
     width: 100%;
-    height: 100%;
-    opacity: 0;
-    cursor: pointer;
-    z-index: 1;
+  }
+  
+  .admin-consult-detail-grid {
+    grid-template-columns: 1fr;
+    gap: 1rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .admin-consult-stats-grid {
+    grid-template-columns: 1fr;
+    gap: 1rem;
+  }
+  
+  .admin-consult-main {
+    padding: 80px 1rem 1rem;
+  }
+  
+  .admin-consult-pagination {
+    flex-direction: column;
+    gap: 1rem;
+    align-items: center;
+  }
+  
+  .admin-consult-modal-footer {
+    flex-direction: column;
+  }
+  
+  .admin-consult-modal-btn {
+    width: 100%;
+  }
+  
+  .admin-consult-title h1 {
+    font-size: 1.5rem;
+  }
+  
+  .admin-consult-title p {
+    font-size: 0.95rem;
+  }
 }

@@ -1,209 +1,1171 @@
-.admin-dashboard {
-    display: flex;
-  }
-  
-  .sidebar {
-    width: 250px;
-    background-color: #f4f4f4;
-    padding: 20px;
-    height: 100vh;
-  }
-  
-  .sidebar .logo h2 {
-    margin: 0;
-    font-size: 1.5rem;
-    color: #4f46e5;
-  }
-  
-  .sidebar .menu ul {
-    list-style: none;
-    padding: 0;
-  }
-  
-  .sidebar .menu ul li {
-    margin: 15px 0;
-  }
-  
-  .sidebar .menu ul li a {
-    text-decoration: none;
-    color: #333;
-    font-size: 1rem;
-    display: flex;
-    align-items: center;
-  }
-  
-  .sidebar .menu ul li a:hover {
-    color: #4f46e5;
-  }
-  
-  .main-content {
-    flex: 1;
-    padding: 20px;
-  }
-  
-  .main-content h1 {
-    font-size: 2rem;
-    color: #333;
-  }
-  
-  .main-content p {
-    font-size: 1rem;
-    color: #666;
-  }
+/* Applications Management - Minimalistic Professional Theme */
 
-  .applications-table-container {
-    background-color: white;
-    border-radius: 10px;
-    padding: 20px;
-    margin-top: 20px;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+/* Base styling with namespace prefix to avoid conflicts */
+.app-mgmt-dashboard {
+  min-height: 100vh;
+  background-color: #f8fafc;
+  display: flex;
+  color: #334155;
+  font-family: 'Inter', 'Segoe UI', Roboto, sans-serif;
+}
+
+.app-mgmt-dark-mode {
+  background-color: #111827;
+  color: #e2e8f0;
+}
+
+.app-mgmt-main-content {
+  flex: 1;
+  margin-left: 280px;
+  padding: 20px;
+  transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+  overflow-x: hidden;
+}
+
+/* Header styling */
+.app-mgmt-header {
+  display: flex;
+  align-items: center;
+  margin-bottom: 30px;
+  padding-bottom: 15px;
+  border-bottom: 1px solid rgba(203, 213, 225, 0.4);
+}
+
+.app-mgmt-dark-mode .app-mgmt-header {
+  border-bottom-color: rgba(51, 65, 85, 0.6);
+}
+
+.app-mgmt-header-logo {
+  margin-right: 20px;
+}
+
+.app-mgmt-header-logo img {
+  height: 45px;
+  width: auto;
+}
+
+.app-mgmt-header h1 {
+  font-size: 1.75rem;
+  font-weight: 600;
+  margin: 0;
+  flex: 1;
+}
+
+/* Container styling */
+.app-mgmt-container {
+  background-color: #ffffff;
+  border-radius: 12px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+  padding: 24px;
+  margin-bottom: 30px;
+}
+
+.app-mgmt-dark-mode .app-mgmt-container {
+  background-color: #1e293b;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+}
+
+/* Stats cards */
+.app-mgmt-stats-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 20px;
+  margin-bottom: 30px;
+}
+
+.app-mgmt-stat-card {
+  background: linear-gradient(to right, #ffffff, #f8fafc);
+  border-radius: 12px;
+  padding: 20px;
+  display: flex;
+  align-items: center;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.04);
+  border-left: 4px solid #cbd5e1;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.app-mgmt-dark-mode .app-mgmt-stat-card {
+  background: linear-gradient(to right, #1e293b, #1a2234);
+  border-left: 4px solid #334155;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+.app-mgmt-stat-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.08);
+}
+
+.app-mgmt-dark-mode .app-mgmt-stat-card:hover {
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+}
+
+.app-mgmt-stat-icon {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  width: 46px;
+  height: 46px;
+  border-radius: 12px;
+  margin-right: 15px;
+  background-color: rgba(58, 134, 255, 0.1);
+  color: #3a86ff;
+}
+
+.app-mgmt-dark-mode .app-mgmt-stat-icon {
+  background-color: rgba(96, 165, 250, 0.15);
+  color: #60a5fa;
+}
+
+.app-mgmt-total .app-mgmt-stat-icon {
+  background-color: rgba(58, 134, 255, 0.1);
+  color: #3a86ff;
+}
+
+.app-mgmt-pending-card .app-mgmt-stat-icon {
+  background-color: rgba(245, 158, 11, 0.1);
+  color: #f59e0b;
+}
+
+.app-mgmt-accepted-card .app-mgmt-stat-icon {
+  background-color: rgba(16, 185, 129, 0.1);
+  color: #10b981;
+}
+
+.app-mgmt-rejected-card .app-mgmt-stat-icon {
+  background-color: rgba(239, 68, 68, 0.1);
+  color: #ef4444;
+}
+
+.app-mgmt-dark-mode .app-mgmt-total .app-mgmt-stat-icon {
+  background-color: rgba(96, 165, 250, 0.2);
+  color: #60a5fa;
+}
+
+.app-mgmt-dark-mode .app-mgmt-pending-card .app-mgmt-stat-icon {
+  background-color: rgba(251, 191, 36, 0.2);
+  color: #fbbf24;
+}
+
+.app-mgmt-dark-mode .app-mgmt-accepted-card .app-mgmt-stat-icon {
+  background-color: rgba(34, 197, 94, 0.2);
+  color: #22c55e;
+}
+
+.app-mgmt-dark-mode .app-mgmt-rejected-card .app-mgmt-stat-icon {
+  background-color: rgba(248, 113, 113, 0.2);
+  color: #f87171;
+}
+
+.app-mgmt-stat-icon svg {
+  font-size: 1.5rem;
+}
+
+.app-mgmt-stat-content h3 {
+  margin: 0 0 5px;
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: #64748b;
+}
+
+.app-mgmt-dark-mode .app-mgmt-stat-content h3 {
+  color: #94a3b8;
+}
+
+.app-mgmt-stat-number {
+  font-size: 1.5rem;
+  font-weight: 700;
+  margin: 0;
+  line-height: 1;
+}
+
+.app-mgmt-total .app-mgmt-stat-number {
+  color: #3a86ff;
+}
+
+.app-mgmt-pending-card .app-mgmt-stat-number {
+  color: #f59e0b;
+}
+
+.app-mgmt-accepted-card .app-mgmt-stat-number {
+  color: #10b981;
+}
+
+.app-mgmt-rejected-card .app-mgmt-stat-number {
+  color: #ef4444;
+}
+
+.app-mgmt-dark-mode .app-mgmt-total .app-mgmt-stat-number {
+  color: #60a5fa;
+}
+
+.app-mgmt-dark-mode .app-mgmt-pending-card .app-mgmt-stat-number {
+  color: #fbbf24;
+}
+
+.app-mgmt-dark-mode .app-mgmt-accepted-card .app-mgmt-stat-number {
+  color: #22c55e;
+}
+
+.app-mgmt-dark-mode .app-mgmt-rejected-card .app-mgmt-stat-number {
+  color: #f87171;
+}
+
+/* Table container */
+.app-mgmt-table-container {
+  border-radius: 12px;
+  background-color: #ffffff;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+}
+
+.app-mgmt-dark-mode .app-mgmt-table-container {
+  background-color: #1e293b;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+}
+
+.app-mgmt-table-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 20px 24px;
+  border-bottom: 1px solid #f1f5f9;
+  flex-wrap: wrap;
+  gap: 15px;
+}
+
+.app-mgmt-dark-mode .app-mgmt-table-header {
+  border-bottom-color: #2d3748;
+}
+
+.app-mgmt-table-header h2 {
+  font-size: 1.25rem;
+  font-weight: 600;
+  margin: 0;
+}
+
+.app-mgmt-table-actions {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.app-mgmt-search-box {
+  position: relative;
+}
+
+.app-mgmt-search-box input {
+  padding: 8px 12px 8px 36px;
+  border-radius: 6px;
+  border: 1px solid #e2e8f0;
+  font-size: 0.875rem;
+  width: 220px;
+  background-color: #f8fafc;
+  color: #334155;
+  transition: all 0.2s ease;
+}
+
+.app-mgmt-dark-mode .app-mgmt-search-box input {
+  border-color: #2d3748;
+  background-color: #1a2234;
+  color: #e2e8f0;
+}
+
+.app-mgmt-search-box input:focus {
+  outline: none;
+  border-color: #3a86ff;
+  box-shadow: 0 0 0 3px rgba(58, 134, 255, 0.1);
+}
+
+.app-mgmt-dark-mode .app-mgmt-search-box input:focus {
+  border-color: #60a5fa;
+  box-shadow: 0 0 0 3px rgba(96, 165, 250, 0.2);
+}
+
+.app-mgmt-search-icon {
+  position: absolute;
+  left: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #64748b;
+  font-size: 0.875rem;
+}
+
+.app-mgmt-dark-mode .app-mgmt-search-icon {
+  color: #94a3b8;
+}
+
+.app-mgmt-filter-box {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.app-mgmt-filter-icon {
+  position: absolute;
+  left: 12px;
+  color: #64748b;
+  font-size: 0.875rem;
+}
+
+.app-mgmt-dark-mode .app-mgmt-filter-icon {
+  color: #94a3b8;
+}
+
+.app-mgmt-filter-box select {
+  padding: 8px 12px 8px 36px;
+  border-radius: 6px;
+  border: 1px solid #e2e8f0;
+  font-size: 0.875rem;
+  background-color: #f8fafc;
+  color: #334155;
+  appearance: none;
+  cursor: pointer;
+  min-width: 140px;
+}
+
+.app-mgmt-dark-mode .app-mgmt-filter-box select {
+  border-color: #2d3748;
+  background-color: #1a2234;
+  color: #e2e8f0;
+}
+
+.app-mgmt-filter-box select:focus {
+  outline: none;
+  border-color: #3a86ff;
+  box-shadow: 0 0 0 3px rgba(58, 134, 255, 0.1);
+}
+
+.app-mgmt-dark-mode .app-mgmt-filter-box select:focus {
+  border-color: #60a5fa;
+  box-shadow: 0 0 0 3px rgba(96, 165, 250, 0.2);
+}
+
+.app-mgmt-export-btn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 16px;
+  border-radius: 6px;
+  font-size: 0.875rem;
+  font-weight: 500;
+  background-color: #3a86ff;
+  color: white;
+  border: none;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.app-mgmt-export-btn:hover {
+  background-color: #2563eb;
+}
+
+.app-mgmt-dark-mode .app-mgmt-export-btn {
+  background-color: #60a5fa;
+}
+
+.app-mgmt-dark-mode .app-mgmt-export-btn:hover {
+  background-color: #3b82f6;
+}
+
+/* Table styling */
+.app-mgmt-table-responsive {
+  overflow-x: auto;
+}
+
+.app-mgmt-applications-table {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+}
+
+.app-mgmt-applications-table th {
+  padding: 12px 16px;
+  text-align: left;
+  font-weight: 600;
+  font-size: 0.875rem;
+  color: #64748b;
+  border-bottom: 1px solid #e2e8f0;
+  background-color: #f8fafc;
+  position: sticky;
+  top: 0;
+}
+
+.app-mgmt-dark-mode .app-mgmt-applications-table th {
+  color: #94a3b8;
+  border-bottom-color: #2d3748;
+  background-color: #1a2234;
+}
+
+.app-mgmt-applications-table td {
+  padding: 14px 16px;
+  font-size: 0.875rem;
+  border-bottom: 1px solid #f1f5f9;
+  vertical-align: middle;
+}
+
+.app-mgmt-dark-mode .app-mgmt-applications-table td {
+  border-bottom-color: #2d3748;
+}
+
+.app-mgmt-applications-table tr:hover td {
+  background-color: #f8fafc;
+}
+
+.app-mgmt-dark-mode .app-mgmt-applications-table tr:hover td {
+  background-color: #1a2234;
+}
+
+.app-mgmt-applicant-name {
+  font-weight: 500;
+}
+
+.app-mgmt-job-title {
+  max-width: 200px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.app-mgmt-status-badge {
+  padding: 4px 10px;
+  border-radius: 20px;
+  font-size: 0.75rem;
+  font-weight: 500;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.app-mgmt-accepted {
+  background-color: rgba(16, 185, 129, 0.1);
+  color: #10b981;
+}
+
+.app-mgmt-dark-mode .app-mgmt-accepted {
+  background-color: rgba(34, 197, 94, 0.2);
+  color: #22c55e;
+}
+
+.app-mgmt-rejected {
+  background-color: rgba(239, 68, 68, 0.1);
+  color: #ef4444;
+}
+
+.app-mgmt-dark-mode .app-mgmt-rejected {
+  background-color: rgba(248, 113, 113, 0.2);
+  color: #f87171;
+}
+
+.app-mgmt-pending {
+  background-color: rgba(245, 158, 11, 0.1);
+  color: #f59e0b;
+}
+
+.app-mgmt-dark-mode .app-mgmt-pending {
+  background-color: rgba(251, 191, 36, 0.2);
+  color: #fbbf24;
+}
+
+.app-mgmt-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.app-mgmt-action-btn {
+  padding: 6px 12px;
+  border-radius: 6px;
+  font-size: 0.75rem;
+  font-weight: 500;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  border: none;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+}
+
+.app-mgmt-view-btn {
+  background-color: rgba(58, 134, 255, 0.1);
+  color: #3a86ff;
+}
+
+.app-mgmt-view-btn:hover {
+  background-color: rgba(58, 134, 255, 0.2);
+}
+
+.app-mgmt-dark-mode .app-mgmt-view-btn {
+  background-color: rgba(96, 165, 250, 0.15);
+  color: #60a5fa;
+}
+
+.app-mgmt-dark-mode .app-mgmt-view-btn:hover {
+  background-color: rgba(96, 165, 250, 0.25);
+}
+
+.app-mgmt-no-data {
+  text-align: center;
+  padding: 32px;
+  color: #64748b;
+  font-style: italic;
+}
+
+.app-mgmt-dark-mode .app-mgmt-no-data {
+  color: #94a3b8;
+}
+
+/* Pagination */
+.app-mgmt-pagination {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 8px;
+  margin-top: 20px;
+  padding: 12px 0;
+}
+
+.app-mgmt-page-btn {
+  width: 36px;
+  height: 36px;
+  border-radius: 6px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  border: 1px solid #e2e8f0;
+  background-color: #ffffff;
+  color: #64748b;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.app-mgmt-dark-mode .app-mgmt-page-btn {
+  border-color: #2d3748;
+  background-color: #1e293b;
+  color: #94a3b8;
+}
+
+.app-mgmt-page-btn:hover:not(:disabled) {
+  background-color: #f8fafc;
+  color: #3a86ff;
+}
+
+.app-mgmt-dark-mode .app-mgmt-page-btn:hover:not(:disabled) {
+  background-color: #1a2234;
+  color: #60a5fa;
+}
+
+.app-mgmt-page-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.app-mgmt-page-numbers {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.app-mgmt-page-num {
+  min-width: 36px;
+  height: 36px;
+  border-radius: 6px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  border: 1px solid #e2e8f0;
+  background-color: #ffffff;
+  color: #334155;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-size: 0.875rem;
+}
+
+.app-mgmt-dark-mode .app-mgmt-page-num {
+  border-color: #2d3748;
+  background-color: #1e293b;
+  color: #e2e8f0;
+}
+
+.app-mgmt-page-num:hover:not(.app-mgmt-active) {
+  background-color: #f8fafc;
+}
+
+.app-mgmt-dark-mode .app-mgmt-page-num:hover:not(.app-mgmt-active) {
+  background-color: #1a2234;
+}
+
+.app-mgmt-page-num.app-mgmt-active {
+  background-color: #3a86ff;
+  border-color: #3a86ff;
+  color: white;
+  font-weight: 600;
+}
+
+.app-mgmt-dark-mode .app-mgmt-page-num.app-mgmt-active {
+  background-color: #60a5fa;
+  border-color: #60a5fa;
+}
+
+.app-mgmt-page-ellipsis {
+  color: #64748b;
+  padding: 0 4px;
+}
+
+.app-mgmt-dark-mode .app-mgmt-page-ellipsis {
+  color: #94a3b8;
+}
+
+/* Table footer with pagination info */
+.app-mgmt-table-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16px 24px;
+  border-top: 1px solid #f1f5f9;
+  font-size: 0.875rem;
+  color: #64748b;
+  flex-wrap: wrap;
+  gap: 20px;
+}
+
+.app-mgmt-dark-mode .app-mgmt-table-footer {
+  border-top-color: #2d3748;
+  color: #94a3b8;
+}
+
+.app-mgmt-items-per-page {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.app-mgmt-items-per-page select {
+  padding: 5px 8px;
+  border-radius: 6px;
+  border: 1px solid #e2e8f0;
+  font-size: 0.875rem;
+  background-color: #f8fafc;
+  color: #334155;
+  appearance: none;
+  cursor: pointer;
+  min-width: 60px;
+}
+
+.app-mgmt-dark-mode .app-mgmt-items-per-page select {
+  border-color: #2d3748;
+  background-color: #1a2234;
+  color: #e2e8f0;
+}
+
+/* Modal Styling */
+.app-mgmt-modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.5);
+  z-index: 9999;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 20px;
+}
+
+.app-mgmt-dark-mode .app-mgmt-modal-overlay {
+  background-color: rgba(0, 0, 0, 0.7);
+}
+
+.app-mgmt-application-detail-modal {
+  background-color: #ffffff;
+  border-radius: 12px;
+  width: 100%;
+  max-width: 800px;
+  max-height: 90vh;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  animation: app-mgmt-modal-in 0.3s ease-out;
+}
+
+@keyframes app-mgmt-modal-in {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
   }
-  
-  .applications-table {
-    width: 100%;
-    border-collapse: collapse;
-    margin-top: 15px;
+  to {
+    opacity: 1;
+    transform: translateY(0);
   }
-  
-  .applications-table th,
-  .applications-table td {
-    padding: 12px 15px;
-    text-align: left;
-    border-bottom: 1px solid #edf2f7;
-  }
-  
-  .applications-table th {
-    background-color: #f8fafc;
-    color: #4a5568;
-    font-weight: 600;
-    font-size: 0.9rem;
-  }
-  
-  .applications-table tr:hover {
-    background-color: #f9fafb;
-  }
-  
-  .status-badge {
-    display: inline-flex;
-    align-items: center;
-    gap: 5px;
-    padding: 5px 10px;
-    border-radius: 20px;
-    font-size: 0.8rem;
-    font-weight: 500;
-  }
-  
-  .status-badge.pending {
-    background-color: #fef9c3;
-    color: #854d0e;
-  }
-  
-  .status-badge.accepted {
-    background-color: #dcfce7;
-    color: #166534;
-  }
-  
-  .status-badge.rejected {
-    background-color: #fee2e2;
-    color: #991b1b;
-  }
-  
-  .action-btn {
-    padding: 6px 12px;
-    border-radius: 4px;
-    border: none;
-    cursor: pointer;
-    font-size: 0.85rem;
-    font-weight: 500;
-    display: inline-flex;
-    align-items: center;
-    gap: 5px;
-    transition: all 0.2s;
-  }
-  
-  .action-btn.view-btn {
-    background-color: #3b82f6;
-    color: white;
-  }
-  
-  .action-btn.view-btn:hover {
-    background-color: #2563eb;
-  }
-  
-  .application-detail-modal {
-    background: white;
-    border-radius: 12px;
-    width: 90%;
-    max-width: 800px;
-    max-height: 90vh;
-    overflow-y: auto;
-  }
-  
-  .modal-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 20px;
-    border-bottom: 1px solid #e2e8f0;
-  }
-  
-  .modal-content {
-    padding: 20px;
-  }
-  
-  .application-info h3 {
-    color: #4a5568;
-    margin-top: 20px;
-    margin-bottom: 10px;
-    padding-bottom: 5px;
-    border-bottom: 1px solid #e2e8f0;
-  }
-  
-  .cover-letter {
-    background-color: #f8fafc;
+}
+
+.app-mgmt-dark-mode .app-mgmt-application-detail-modal {
+  background-color: #1e293b;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
+}
+
+.app-mgmt-modal-header {
+  padding: 20px 24px;
+  border-bottom: 1px solid #f1f5f9;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.app-mgmt-dark-mode .app-mgmt-modal-header {
+  border-bottom-color: #2d3748;
+}
+
+.app-mgmt-modal-header h2 {
+  font-size: 1.25rem;
+  font-weight: 600;
+  margin: 0;
+}
+
+.app-mgmt-close-modal {
+  background: none;
+  border: none;
+  font-size: 1.5rem;
+  color: #64748b;
+  cursor: pointer;
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 16px;
+  transition: all 0.2s ease;
+}
+
+.app-mgmt-dark-mode .app-mgmt-close-modal {
+  color: #94a3b8;
+}
+
+.app-mgmt-close-modal:hover {
+  background-color: #f1f5f9;
+  color: #334155;
+}
+
+.app-mgmt-dark-mode .app-mgmt-close-modal:hover {
+  background-color: #2d3748;
+  color: #e2e8f0;
+}
+
+.app-mgmt-modal-content {
+  padding: 24px;
+  overflow-y: auto;
+  flex: 1;
+}
+
+.app-mgmt-modal-section {
+  margin-bottom: 24px;
+}
+
+.app-mgmt-modal-section h3 {
+  font-size: 1.1rem;
+  font-weight: 600;
+  margin: 0 0 16px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid #f1f5f9;
+}
+
+.app-mgmt-dark-mode .app-mgmt-modal-section h3 {
+  border-bottom-color: #2d3748;
+}
+
+.app-mgmt-detail-group {
+  margin-bottom: 12px;
+  display: flex;
+  flex-wrap: wrap;
+}
+
+.app-mgmt-detail-group label {
+  font-weight: 500;
+  width: 120px;
+  color: #64748b;
+  flex-shrink: 0;
+}
+
+.app-mgmt-dark-mode .app-mgmt-detail-group label {
+  color: #94a3b8;
+}
+
+.app-mgmt-detail-group p {
+  flex: 1;
+  margin: 0;
+  min-width: 200px;
+}
+
+.app-mgmt-cover-letter {
+  padding: 16px;
+  background-color: #f8fafc;
+  border-radius: 8px;
+  font-size: 0.875rem;
+  line-height: 1.6;
+  white-space: pre-wrap;
+}
+
+.app-mgmt-dark-mode .app-mgmt-cover-letter {
+  background-color: #1a2234;
+}
+
+.app-mgmt-attachments-list {
+  list-style-type: none;
+  padding: 0;
+  margin: 0;
+}
+
+.app-mgmt-attachments-list li {
+  padding: 8px 12px;
+  margin-bottom: 8px;
+  border-radius: 6px;
+  background-color: #f8fafc;
+  display: flex;
+  align-items: center;
+}
+
+.app-mgmt-dark-mode .app-mgmt-attachments-list li {
+  background-color: #1a2234;
+}
+
+.app-mgmt-attachments-list a {
+  color: #3a86ff;
+  text-decoration: none;
+  font-weight: 500;
+}
+
+.app-mgmt-dark-mode .app-mgmt-attachments-list a {
+  color: #60a5fa;
+}
+
+.app-mgmt-attachments-list a:hover {
+  text-decoration: underline;
+}
+
+.app-mgmt-modal-footer {
+  padding: 16px 24px;
+  border-top: 1px solid #f1f5f9;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 16px;
+}
+
+.app-mgmt-dark-mode .app-mgmt-modal-footer {
+  border-top-color: #2d3748;
+}
+
+.app-mgmt-status-buttons {
+  display: flex;
+  gap: 10px;
+}
+
+.app-mgmt-status-btn {
+  padding: 8px 16px;
+  border-radius: 6px;
+  font-size: 0.875rem;
+  font-weight: 500;
+  border: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  transition: all 0.2s ease;
+}
+
+.app-mgmt-status-btn:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+
+.app-mgmt-accept-btn {
+  background-color: rgba(16, 185, 129, 0.1);
+  color: #10b981;
+}
+
+.app-mgmt-accept-btn:hover:not(:disabled) {
+  background-color: rgba(16, 185, 129, 0.2);
+}
+
+.app-mgmt-accept-btn.app-mgmt-active {
+  background-color: #10b981;
+  color: white;
+}
+
+.app-mgmt-dark-mode .app-mgmt-accept-btn {
+  background-color: rgba(34, 197, 94, 0.2);
+  color: #22c55e;
+}
+
+.app-mgmt-dark-mode .app-mgmt-accept-btn:hover:not(:disabled) {
+  background-color: rgba(34, 197, 94, 0.3);
+}
+
+.app-mgmt-dark-mode .app-mgmt-accept-btn.app-mgmt-active {
+  background-color: #22c55e;
+}
+
+.app-mgmt-reject-btn {
+  background-color: rgba(239, 68, 68, 0.1);
+  color: #ef4444;
+}
+
+.app-mgmt-reject-btn:hover:not(:disabled) {
+  background-color: rgba(239, 68, 68, 0.2);
+}
+
+.app-mgmt-reject-btn.app-mgmt-active {
+  background-color: #ef4444;
+  color: white;
+}
+
+.app-mgmt-dark-mode .app-mgmt-reject-btn {
+  background-color: rgba(248, 113, 113, 0.2);
+  color: #f87171;
+}
+
+.app-mgmt-dark-mode .app-mgmt-reject-btn:hover:not(:disabled) {
+  background-color: rgba(248, 113, 113, 0.3);
+}
+
+.app-mgmt-dark-mode .app-mgmt-reject-btn.app-mgmt-active {
+  background-color: #f87171;
+}
+
+.app-mgmt-close-btn {
+  padding: 8px 16px;
+  border-radius: 6px;
+  font-size: 0.875rem;
+  font-weight: 500;
+  background-color: #e2e8f0;
+  color: #334155;
+  border: none;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.app-mgmt-close-btn:hover {
+  background-color: #cbd5e1;
+}
+
+.app-mgmt-dark-mode .app-mgmt-close-btn {
+  background-color: #334155;
+  color: #e2e8f0;
+}
+
+.app-mgmt-dark-mode .app-mgmt-close-btn:hover {
+  background-color: #475569;
+}
+
+/* Loading and error states */
+.app-mgmt-loading {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 100px 20px;
+  text-align: center;
+  color: #64748b;
+}
+
+.app-mgmt-dark-mode .app-mgmt-loading {
+  color: #94a3b8;
+}
+
+.app-mgmt-spinner {
+  border: 3px solid rgba(203, 213, 225, 0.3);
+  border-top: 3px solid #3a86ff;
+  border-radius: 50%;
+  width: 40px;
+  height: 40px;
+  margin-bottom: 16px;
+  animation: app-mgmt-spin 1s linear infinite;
+}
+
+@keyframes app-mgmt-spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+.app-mgmt-dark-mode .app-mgmt-spinner {
+  border-color: rgba(71, 85, 105, 0.3);
+  border-top-color: #60a5fa;
+}
+
+.app-mgmt-error-message {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 60px 20px;
+  text-align: center;
+}
+
+.app-mgmt-error-icon {
+  font-size: 2rem;
+  width: 64px;
+  height: 64px;
+  border-radius: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: rgba(239, 68, 68, 0.1);
+  color: #ef4444;
+  margin-bottom: 16px;
+}
+
+.app-mgmt-dark-mode .app-mgmt-error-icon {
+  background-color: rgba(248, 113, 113, 0.2);
+  color: #f87171;
+}
+
+.app-mgmt-error-message h3 {
+  margin: 0 0 12px;
+  color: #ef4444;
+}
+
+.app-mgmt-dark-mode .app-mgmt-error-message h3 {
+  color: #f87171;
+}
+
+.app-mgmt-error-message p {
+  margin: 0 0 24px;
+  color: #64748b;
+  max-width: 500px;
+}
+
+.app-mgmt-dark-mode .app-mgmt-error-message p {
+  color: #94a3b8;
+}
+
+.app-mgmt-retry-btn {
+  padding: 10px 20px;
+  border-radius: 6px;
+  font-size: 0.875rem;
+  font-weight: 500;
+  background-color: #3a86ff;
+  color: white;
+  border: none;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.app-mgmt-retry-btn:hover {
+  background-color: #2563eb;
+}
+
+.app-mgmt-dark-mode .app-mgmt-retry-btn {
+  background-color: #60a5fa;
+}
+
+.app-mgmt-dark-mode .app-mgmt-retry-btn:hover {
+  background-color: #3b82f6;
+}
+
+/* Responsive adjustments */
+@media (max-width: 1024px) {
+  .app-mgmt-main-content {
+    margin-left: 0;
     padding: 15px;
-    border-radius: 6px;
-    margin-top: 10px;
-    white-space: pre-line;
   }
   
-  .attachments ul {
-    list-style: none;
-    padding-left: 0;
+  .app-mgmt-stats-grid {
+    grid-template-columns: repeat(2, 1fr);
   }
   
-  .attachments li {
-    margin-bottom: 8px;
+  .app-mgmt-action-text {
+    display: none;
   }
   
-  .attachments a {
-    color: #3b82f6;
-    text-decoration: none;
+  .app-mgmt-hide-md {
+    display: none;
+  }
+}
+
+@media (max-width: 768px) {
+  .app-mgmt-table-header {
+    flex-direction: column;
+    align-items: flex-start;
   }
   
-  .attachments a:hover {
-    text-decoration: underline;
+  .app-mgmt-table-actions {
+    width: 100%;
+    justify-content: space-between;
   }
   
-  .modal-footer {
-    padding: 20px;
-    border-top: 1px solid #e2e8f0;
-    display: flex;
-    justify-content: flex-end;
+  .app-mgmt-search-box input {
+    width: 100%;
   }
   
-  .action-btn.close-btn {
-    background-color: #e2e8f0;
-    color: #4a5568;
+  .app-mgmt-table-footer {
+    flex-direction: column-reverse;
+    align-items: flex-start;
   }
   
-  .action-btn.close-btn:hover {
-    background-color: #cbd5e0;
+  .app-mgmt-modal-section {
+    padding: 16px;
   }
   
-  .no-data {
-    text-align: center;
-    padding: 30px;
-    color: #a0aec0;
-    font-style: italic;
+  .app-mgmt-detail-group {
+    flex-direction: column;
   }
+  
+  .app-mgmt-detail-group label {
+    margin-bottom: 4px;
+  }
+}
+
+@media (max-width: 640px) {
+  .app-mgmt-stats-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .app-mgmt-hide-sm {
+    display: none;
+  }
+  
+  .app-mgmt-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 15px;
+  }
+  
+  .app-mgmt-search-box input {
+    width: 100%;
+  }
+  
+  .app-mgmt-filter-box {
+    width: 100%;
+  }
+  
+  .app-mgmt-filter-box select {
+    width: 100%;
+  }
+  
+  .app-mgmt-modal-footer {
+    flex-direction: column;
+  }
+  
+  .app-mgmt-status-buttons {
+    width: 100%;
+    justify-content: space-between;
+  }
+  
+  .app-mgmt-close-btn {
+    width: 100%;
+  }
+}
+
+@media (max-width: 480px) {
+  .app-mgmt-table-actions {
+    flex-direction: column;
+    width: 100%;
+  }
+  
+  .app-mgmt-search-box,
+  .app-mgmt-filter-box,
+  .app-mgmt-export-btn {
+    width: 100%;
+  }
+}
