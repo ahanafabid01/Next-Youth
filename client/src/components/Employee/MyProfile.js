@@ -32,9 +32,18 @@ import {
   FaRegFileAlt,
   FaCheckCircle,
   FaStar,
+  FaAngleRight,
+  FaCog,
+  FaSignOutAlt,
+  FaHistory,
+  FaProjectDiagram,
+  FaBriefcase,
+  FaAward,
+  FaBars
 } from 'react-icons/fa';
-import './MyProfile.css'; // You'll need to create this CSS file
-import './EmployeeDashboard.css'; // Import for header and footer styling
+import './MyProfile.css'; // Make sure to create this CSS file
+import logoLight from '../../assets/images/logo-light.png'; 
+import logoDark from '../../assets/images/logo-dark.png';
 import RatingModal from '../Connections/RatingModal';
 
 const MyProfile = () => {
@@ -62,7 +71,6 @@ const MyProfile = () => {
     resumeUrl: ''
   });
   
-  // UI state
   const [showProfileDropdown, setShowProfileDropdown] = useState(false);
   const [showNotifications, setShowNotifications] = useState(false);
   const [showMobileNav, setShowMobileNav] = useState(false);
@@ -74,19 +82,17 @@ const MyProfile = () => {
     return parseInt(localStorage.getItem("unread-notifications") || "2");
   });
   const [showRatingModal, setShowRatingModal] = useState(false);
+  const [activeTab, setActiveTab] = useState('overview');
 
-  // Refs and navigation
   const navigate = useNavigate();
   const profileDropdownRef = useRef(null);
   const notificationsRef = useRef(null);
   const API_BASE_URL = 'http://localhost:4000/api';
 
-  // Fetch user profile data
   const fetchUserData = useCallback(async () => {
     try {
       setIsLoading(true);
       
-      // Step 1: Get basic user data
       let userData = null;
       try {
         const userResponse = await axios.get(`${API_BASE_URL}/auth/me`, { withCredentials: true });
@@ -102,7 +108,6 @@ const MyProfile = () => {
         return;
       }
 
-      // Step 2: Get verification status
       let verificationData = null;
       let verificationStatus = null;
       try {
@@ -114,10 +119,8 @@ const MyProfile = () => {
       } catch (error) {
         console.error('Error fetching verification status:', error);
         toast.warning('Could not load verification status');
-        // Continue as this is not critical
       }
 
-      // Step 3: Get complete profile data
       try {
         const profileResponse = await axios.get(`${API_BASE_URL}/auth/profile`, { withCredentials: true });
         if (profileResponse.data.success) {
@@ -144,7 +147,7 @@ const MyProfile = () => {
             socialMediaLink: fullProfileData.socialMediaLink || '',
             idVerification: verificationData,
             isVerified: verificationStatus === 'verified',
-            resumeUrl: fullProfileData.resume || '' // Map 'resume' from backend to 'resumeUrl' in frontend
+            resumeUrl: fullProfileData.resume || ''
           });
         } else {
           throw new Error("Profile data fetch failed");
@@ -153,7 +156,6 @@ const MyProfile = () => {
         console.error('Error fetching complete profile data:', error);
         toast.error('Failed to load complete profile data');
         
-        // Fall back to basic user data
         setProfileData(prevState => ({
           ...prevState,
           name: userData.name || '',
@@ -164,7 +166,6 @@ const MyProfile = () => {
         }));
       }
 
-      // Fetch user ratings
       try {
         const ratingsResponse = await axios.get(`${API_BASE_URL}/auth/my-ratings`, { withCredentials: true });
         if (ratingsResponse.data.success) {
@@ -173,7 +174,6 @@ const MyProfile = () => {
             ? ratings.reduce((acc, curr) => acc + curr.rating, 0) / ratings.length 
             : 0;
           
-          // Update the setProfileData call to include ratings data
           setProfileData(prevData => ({
             ...prevData,
             averageRating: averageRating,
@@ -182,7 +182,6 @@ const MyProfile = () => {
         }
       } catch (error) {
         console.error('Error fetching ratings:', error);
-        // Don't show error toast as this is not critical
       }
     } catch (error) {
       console.error('Error in fetch user data flow:', error);
@@ -193,7 +192,6 @@ const MyProfile = () => {
     }
   }, [API_BASE_URL, navigate]);
 
-  // Handle UI interactions
   const handleOutsideClick = useCallback((event) => {
     if (notificationsRef.current && !notificationsRef.current.contains(event.target)) {
       setShowNotifications(false);
@@ -250,17 +248,15 @@ const MyProfile = () => {
     localStorage.setItem("unread-notifications", "0");
   }, []);
 
-  // Effect hooks
   useEffect(() => {
     document.addEventListener('click', handleOutsideClick);
     return () => document.removeEventListener('click', handleOutsideClick);
   }, [handleOutsideClick]);
 
   useEffect(() => {
-    // Change from document.body to the dashboard element
-    const dashboardElement = document.querySelector('.employee-dashboard');
-    if (dashboardElement) {
-      dashboardElement.classList.toggle('dark-mode', isDarkMode);
+    const profileElement = document.querySelector('.employee-profile-page');
+    if (profileElement) {
+      profileElement.classList.toggle('employee-profile-dark-mode', isDarkMode);
     }
     localStorage.setItem("dashboard-theme", isDarkMode ? "dark" : "light");
   }, [isDarkMode]);
@@ -269,17 +265,16 @@ const MyProfile = () => {
     fetchUserData();
   }, [fetchUserData]);
 
-  // Helper function to render education items
   const renderEducation = (level, item) => {
     if (!item.name && !item.enteringYear && !item.passingYear) return null;
     
     return (
-      <div className="profile-education-item">
+      <div className="employee-profile-education-item">
         <h3>{level}</h3>
-        <p className="education-name">{item.name || 'Not specified'}</p>
+        <p className="employee-profile-education-name">{item.name || 'Not specified'}</p>
         {(item.enteringYear || item.passingYear) && (
-          <p className="education-years">
-            <FaCalendarAlt className="icon-small" />
+          <p className="employee-profile-education-years">
+            <FaCalendarAlt className="employee-profile-icon-small" />
             {item.enteringYear || '?'} - {item.passingYear || 'Present'}
           </p>
         )}
@@ -288,7 +283,6 @@ const MyProfile = () => {
   };
 
   const calculateProfileCompleteness = () => {
-    // Define fields that contribute to profile completeness
     const fields = [
       { name: 'Profile Picture', complete: !!profileData.profilePicture, weight: 1 },
       { name: 'Name', complete: !!profileData.name, weight: 1 },
@@ -312,16 +306,13 @@ const MyProfile = () => {
       ), weight: 1 }
     ];
     
-    // Calculate weighted completeness
     const totalWeight = fields.reduce((sum, field) => sum + field.weight, 0);
     const completedWeight = fields
       .filter(field => field.complete)
       .reduce((sum, field) => sum + field.weight, 0);
     
-    // Calculate percentage
     const percentage = Math.round((completedWeight / totalWeight) * 100);
     
-    // Get incomplete fields
     const incompleteFields = fields
       .filter(field => !field.complete)
       .map(field => field.name);
@@ -333,52 +324,58 @@ const MyProfile = () => {
   };
 
   return (
-    <div className="employee-dashboard">
+    <div className="employee-profile-page">
       <ToastContainer position="top-right" autoClose={5000} />
       
-      {/* Header with Navigation */}
-      <header className="dashboard-header">
-        <div className="dashboard-header-container">
-          <div className="dashboard-header-left">
+      <header className="employee-profile-header">
+        <div className="employee-profile-header-container">
+          <div className="employee-profile-header-left">
             <button 
-              className="dashboard-nav-toggle"
+              className={`employee-profile-nav-toggle ${showMobileNav ? 'active' : ''}`}
               onClick={toggleMobileNav}
               aria-label="Toggle navigation"
+              aria-expanded={showMobileNav}
             >
-              ☰
+              <span className="employee-profile-hamburger-icon"></span>
             </button>
-            <Link to="/" className="dashboard-logo">Next Youth</Link>
+            <Link to="/employee-dashboard" className="employee-profile-logo">
+              <img 
+                src={isDarkMode ? logoDark : logoLight} 
+                alt="Next Youth" 
+                className="employee-profile-logo-image" 
+              />
+            </Link>
             
-            <nav className={`dashboard-nav ${showMobileNav ? 'active' : ''}`}>
-              <Link to="/find-jobs" className="nav-link">Find Work</Link>
-              <Link to="/find-jobs/saved" className="nav-link">Saved Jobs</Link>
-              <Link to="/find-jobs/proposals" className="nav-link">Proposals</Link>
-              <Link to="/help" className="nav-link">Help</Link>
+            <nav className={`employee-profile-nav ${showMobileNav ? 'active' : ''}`}>
+              <Link to="/find-jobs" className="employee-profile-nav-link">Find Work</Link>
+              <Link to="/find-jobs/saved" className="employee-profile-nav-link">Saved Jobs</Link>
+              <Link to="/proposals" className="employee-profile-nav-link">Proposals</Link>
+              <Link to="/help" className="employee-profile-nav-link">Help</Link>
             </nav>
           </div>
           
-          <div className="dashboard-header-right">
-            <div className="notification-container" ref={notificationsRef}>
+          <div className="employee-profile-header-right">
+            <div className="employee-profile-notification-container" ref={notificationsRef}>
               <button 
-                className="notification-button"
+                className="employee-profile-notification-button"
                 onClick={toggleNotifications}
                 aria-label="Notifications"
               >
                 <FaBell />
                 {unreadNotifications > 0 && (
-                  <span className="notification-badge">{unreadNotifications}</span>
+                  <span className="employee-profile-notification-badge">{unreadNotifications}</span>
                 )}
               </button>
               
               {showNotifications && (
-                <div className="notifications-dropdown">
-                  <div className="notification-header">
+                <div className="employee-profile-notifications-dropdown">
+                  <div className="employee-profile-notification-header">
                     <h3>Notifications</h3>
-                    <button className="mark-all-read" onClick={handleMarkAllAsRead}>Mark all as read</button>
+                    <button className="employee-profile-mark-all-read" onClick={handleMarkAllAsRead}>Mark all as read</button>
                   </div>
-                  <div className="notification-list">
-                    <div className="notification-item unread">
-                      <div className="notification-icon">
+                  <div className="employee-profile-notification-list">
+                    <div className="employee-profile-notification-item employee-profile-unread">
+                      <div className="employee-profile-notification-icon">
                         {(!profileData.idVerification || 
                           !profileData.idVerification.frontImage || 
                           !profileData.idVerification.backImage || 
@@ -390,7 +387,7 @@ const MyProfile = () => {
                           <FaClock />
                         )}
                       </div>
-                      <div className="notification-content">
+                      <div className="employee-profile-notification-content">
                         <p>
                           {(!profileData.idVerification || 
                             !profileData.idVerification.frontImage || 
@@ -403,20 +400,20 @@ const MyProfile = () => {
                             "Your verification is pending approval"
                           )}
                         </p>
-                        <span className="notification-time">2 hours ago</span>
+                        <span className="employee-profile-notification-time">2 hours ago</span>
                       </div>
                     </div>
-                    <div className="notification-item unread">
-                      <div className="notification-icon">
+                    <div className="employee-profile-notification-item employee-profile-unread">
+                      <div className="employee-profile-notification-icon">
                         <FaRegFileAlt />
                       </div>
-                      <div className="notification-content">
+                      <div className="employee-profile-notification-content">
                         <p>New job matching your skills is available</p>
-                        <span className="notification-time">1 day ago</span>
+                        <span className="employee-profile-notification-time">1 day ago</span>
                       </div>
                     </div>
                   </div>
-                  <div className="notification-footer">
+                  <div className="employee-profile-notification-footer">
                     <Link to="/notifications">View all notifications</Link>
                   </div>
                 </div>
@@ -424,16 +421,16 @@ const MyProfile = () => {
             </div>
             
             <button
-              className="theme-toggle-button"
+              className="employee-profile-theme-toggle-button"
               onClick={toggleDarkMode}
               aria-label={isDarkMode ? "Switch to light mode" : "Switch to dark mode"}
             >
               {isDarkMode ? <FaSun /> : <FaMoon />}
             </button>
 
-            <div className="profile-dropdown-container" ref={profileDropdownRef}>
+            <div className="employee-profile-dropdown-container" ref={profileDropdownRef}>
               <button 
-                className="profile-button" 
+                className="employee-profile-button" 
                 onClick={toggleProfileDropdown}
                 aria-label="User profile"
               >
@@ -441,18 +438,18 @@ const MyProfile = () => {
                   <img 
                     src={profileData.profilePicture}
                     alt="Profile"
-                    className="profile-avatar"
+                    className="employee-profile-avatar"
                   />
                 ) : (
-                  <FaUserCircle className="profile-avatar-icon" />
+                  <FaUserCircle className="employee-profile-avatar-icon" />
                 )}
-                <FaChevronDown className={`dropdown-icon ${showProfileDropdown ? 'rotate' : ''}`} />
+                <FaChevronDown className={`employee-profile-dropdown-icon ${showProfileDropdown ? 'employee-profile-rotate' : ''}`} />
               </button>
               
               {showProfileDropdown && (
-                <div className="profile-dropdown">
-                  <div className="profile-dropdown-header">
-                    <div className="profile-dropdown-avatar">
+                <div className="employee-profile-dropdown">
+                  <div className="employee-profile-dropdown-header">
+                    <div className="employee-profile-dropdown-avatar">
                       {profileData.profilePicture ? (
                         <img 
                           src={profileData.profilePicture}
@@ -462,15 +459,15 @@ const MyProfile = () => {
                         <FaUserCircle />
                       )}
                     </div>
-                    <div className="profile-dropdown-info">
+                    <div className="employee-profile-dropdown-info">
                       <h4>{profileData.name || 'User'}</h4>
-                      <span className="profile-status">
+                      <span className="employee-profile-status">
                         {!profileData.idVerification ? (
                           'Not Verified'
                         ) : profileData.idVerification.status === 'verified' ? (
-                          <><FaCheckCircle className="verified-icon" /> Verified</>
+                          <><FaCheckCircle className="employee-profile-verified-icon" /> Verified</>
                         ) : profileData.idVerification.status === 'pending' && profileData.idVerification.frontImage && profileData.idVerification.backImage ? (
-                          <><FaClock className="pending-icon" /> Verification Pending</>
+                          <><FaClock className="employee-profile-pending-icon" /> Verification Pending</>
                         ) : profileData.idVerification.status === 'rejected' ? (
                           <>Verification Rejected</>
                         ) : (
@@ -479,48 +476,47 @@ const MyProfile = () => {
                       </span>
                     </div>
                   </div>
-                  <div className="profile-dropdown-links">
+                  <div className="employee-profile-dropdown-links">
                     <button 
-                      className="profile-dropdown-link"
+                      className="employee-profile-dropdown-link"
                       onClick={handleNavigateToProfile}
                     >
                       <FaUserCircle /> View Profile
                     </button>
                     
-                    {/* Show verify account option when appropriate */}
                     {(!profileData.idVerification || 
                       !profileData.idVerification.frontImage || 
                       !profileData.idVerification.backImage || 
                       profileData.idVerification.status === 'rejected') && (
                       <button 
-                        className="profile-dropdown-link"
+                        className="employee-profile-dropdown-link"
                         onClick={handleVerifyAccount}
                       >
-                        Verify Account
+                        <FaRegFileAlt /> Verify Account
                       </button>
                     )}
 
                     <button 
-                      className="profile-dropdown-link"
+                      className="employee-profile-dropdown-link"
                       onClick={() => {
-                          setShowRatingModal(true);
-                          setShowProfileDropdown(false);
+                        setShowRatingModal(true);
+                        setShowProfileDropdown(false);
                       }}
                     >
                       <FaStar /> My Ratings & Reviews
                     </button>
                     
                     <button 
-                      className="profile-dropdown-link"
+                      className="employee-profile-dropdown-link"
                       onClick={() => navigate('/settings')}
                     >
-                      Settings
+                      <FaCog /> Settings
                     </button>
                     <button 
-                      className="profile-dropdown-link"
+                      className="employee-profile-dropdown-link"
                       onClick={handleLogout}
                     >
-                      Logout
+                      <FaSignOutAlt /> Logout
                     </button>
                   </div>
                 </div>
@@ -530,29 +526,34 @@ const MyProfile = () => {
         </div>
       </header>
 
-      {/* Main Content */}
-      <main className="dashboard-container">
-        <div className="dashboard-content">
+      <div className={`employee-profile-mobile-overlay ${showMobileNav ? 'active' : ''}`} onClick={() => setShowMobileNav(false)}></div>
+
+      <main className="employee-profile-main">
+        <div className="employee-profile-container">
           {isLoading ? (
-            <div className="loading-spinner">Loading profile...</div>
+            <div className="employee-profile-loading">
+              <div className="employee-profile-loading-spinner"></div>
+              <p>Loading your profile...</p>
+            </div>
           ) : (
-            <div className="profile-view-container">
-              {/* Profile Header */}
-              <div className="profile-header">
-                <div className="profile-header-content">
-                  <div className="profile-picture-container">
-                    {profileData.profilePicture ? (
-                      <img 
-                        src={profileData.profilePicture} 
-                        alt={`${profileData.name}'s profile`} 
-                        className="profile-picture"
-                      />
-                    ) : (
-                      <div className="profile-picture-placeholder">
-                        <FaUserCircle />
-                      </div>
-                    )}
-                    <div className={`verification-badge ${profileData.isVerified ? 'verified' : 'not-verified'}`}>
+            <>
+              <section className="employee-profile-intro">
+                <div className="employee-profile-intro-content">
+                  <div className="employee-profile-picture-wrapper">
+                    <div className="employee-profile-picture-container">
+                      {profileData.profilePicture ? (
+                        <img 
+                          src={profileData.profilePicture} 
+                          alt={`${profileData.name}'s profile`} 
+                          className="employee-profile-picture"
+                        />
+                      ) : (
+                        <div className="employee-profile-picture-placeholder">
+                          <FaUserCircle />
+                        </div>
+                      )}
+                    </div>
+                    <div className={`employee-profile-verification-badge ${profileData.isVerified ? 'employee-profile-verified' : 'employee-profile-not-verified'}`}>
                       {profileData.isVerified ? (
                         <><FaCheck /> Verified</>
                       ) : (
@@ -561,302 +562,399 @@ const MyProfile = () => {
                     </div>
                   </div>
                   
-                  <div className="profile-header-info">
-                    <h1 className="profile-name">{profileData.name || 'User'}</h1>
-                    <p className="profile-bio">{profileData.bio || 'No bio provided'}</p>
+                  <div className="employee-profile-intro-info">
+                    <h1 className="employee-profile-name">{profileData.name || 'User'}</h1>
+                    <p className="employee-profile-bio">{profileData.bio || 'No bio provided'}</p>
                     
-                    <div className="profile-location">
-                      {profileData.country && (
-                        <span className="profile-country">
-                          <FaMapMarkedAlt /> {profileData.country}
-                        </span>
+                    {profileData.country && (
+                      <div className="employee-profile-location">
+                        <FaMapMarkedAlt /> {profileData.country}
+                        {profileData.address && `, ${profileData.address}`}
+                      </div>
+                    )}
+
+                    <div className="employee-profile-stats">
+                      {typeof profileData.averageRating !== 'undefined' && (
+                        <div className="employee-profile-rating-summary">
+                          <div className="employee-profile-stars">
+                            {[...Array(5)].map((_, index) => (
+                              <FaStar
+                                key={index}
+                                className={index < Math.round(profileData.averageRating) ? 'employee-profile-star-filled' : 'employee-profile-star-empty'}
+                              />
+                            ))}
+                          </div>
+                          <span className="employee-profile-rating-text">
+                            {profileData.averageRating.toFixed(1)} ({profileData.totalRatings} {profileData.totalRatings === 1 ? 'review' : 'reviews'})
+                          </span>
+                        </div>
                       )}
                     </div>
 
-                    {/* Profile Completeness Slider */}
-                    <div className="profile-completeness">
-                      <div className="completeness-header">
+                    <div className="employee-profile-completeness">
+                      <div className="employee-profile-completeness-header">
                         <h3>Profile Completeness</h3>
-                        <span className="completeness-percentage">{calculateProfileCompleteness().percentage}%</span>
+                        <span className="employee-profile-completeness-percentage">{calculateProfileCompleteness().percentage}%</span>
                       </div>
-                      <div className="completeness-bar-container">
+                      <div className="employee-profile-completeness-bar-container">
                         <div 
-                          className="completeness-bar" 
+                          className="employee-profile-completeness-bar" 
                           style={{ width: `${calculateProfileCompleteness().percentage}%` }}
                         ></div>
                       </div>
                       {calculateProfileCompleteness().percentage < 100 && (
-                        <div className="completeness-tips">
+                        <div className="employee-profile-completeness-tips">
                           <p>Complete your profile to increase visibility to employers</p>
-                          <div className="missing-fields">
-                            <span>Missing: </span>
-                            {calculateProfileCompleteness().incompleteFields.slice(0, 3).join(', ')}
-                            {calculateProfileCompleteness().incompleteFields.length > 3 && 
-                              ` and ${calculateProfileCompleteness().incompleteFields.length - 3} more...`}
-                          </div>
+                          {calculateProfileCompleteness().incompleteFields.length > 0 && (
+                            <div className="employee-profile-missing-fields">
+                              <span>Missing: </span>
+                              {calculateProfileCompleteness().incompleteFields.slice(0, 3).join(', ')}
+                              {calculateProfileCompleteness().incompleteFields.length > 3 && 
+                                ` and ${calculateProfileCompleteness().incompleteFields.length - 3} more...`}
+                            </div>
+                          )}
                         </div>
                       )}
                     </div>
 
-                    <button className="edit-profile-button" onClick={handleEditProfile}>
+                    <button className="employee-profile-edit-button" onClick={handleEditProfile}>
                       <FaUserEdit /> Edit Profile
                     </button>
                   </div>
                 </div>
+              </section>
+              
+              {/* Tab Navigation */}
+              <div className="employee-profile-tabs">
+                <div 
+                  className={`employee-profile-tab ${activeTab === 'overview' ? 'active' : ''}`}
+                  onClick={() => setActiveTab('overview')}
+                >
+                  <FaUserCircle /> Overview
+                </div>
+                <div 
+                  className={`employee-profile-tab ${activeTab === 'skills' ? 'active' : ''}`}
+                  onClick={() => setActiveTab('skills')}
+                >
+                  <FaCode /> Skills & Education
+                </div>
+                <div 
+                  className={`employee-profile-tab ${activeTab === 'contact' ? 'active' : ''}`}
+                  onClick={() => setActiveTab('contact')}
+                >
+                  <FaEnvelope /> Contact Info
+                </div>
+                <div 
+                  className={`employee-profile-tab ${activeTab === 'work' ? 'active' : ''}`}
+                  onClick={() => setActiveTab('work')}
+                >
+                  <FaBriefcase /> Work History
+                </div>
               </div>
               
-              <div className="profile-content">
-                {/* Education Section */}
-                <div className="profile-section">
-                  <h2 className="profile-section-title">
-                    <FaGraduationCap /> Education
-                  </h2>
-                  <div className="profile-section-content">
-                    {renderEducation('School', profileData.education.school)}
-                    {renderEducation('College', profileData.education.college)}
-                    {renderEducation('University', profileData.education.university)}
+              {/* Tab Content */}
+              <div className="employee-profile-content">
+                {/* Overview Tab */}
+                <div className={`employee-profile-tab-content ${activeTab === 'overview' ? 'active' : ''}`}>
+                  <div className="employee-profile-content-grid">
+                    <div className="employee-profile-card">
+                      <div className="employee-profile-card-header">
+                        <h2><FaBullseye /> Career Goals</h2>
+                      </div>
+                      <div className="employee-profile-card-content">
+                        {profileData.goals ? (
+                          <p className="employee-profile-goals-text">{profileData.goals}</p>
+                        ) : (
+                          <p className="employee-profile-no-data">No career goals specified</p>
+                        )}
+                      </div>
+                    </div>
                     
-                    {!profileData.education.school.name && 
-                     !profileData.education.college.name && 
-                     !profileData.education.university.name && (
-                      <p className="no-data-message">No education information provided</p>
-                    )}
-                  </div>
-                </div>
-                
-                {/* Skills Section */}
-                <div className="profile-section">
-                  <h2 className="profile-section-title">
-                    <FaCode /> Skills
-                  </h2>
-                  <div className="profile-section-content">
-                    {profileData.skills && profileData.skills.length > 0 ? (
-                      <div className="profile-skills">
-                        {profileData.skills.map((skill) => (
-                          <span key={skill} className="skill-badge">{skill}</span>
-                        ))}
+                    <div className="employee-profile-card">
+                      <div className="employee-profile-card-header">
+                        <h2><FaStar /> Ratings & Reviews</h2>
                       </div>
-                    ) : (
-                      <p className="no-data-message">No skills added</p>
-                    )}
-                  </div>
-                </div>
-                
-                {/* Languages Section */}
-                <div className="profile-section">
-                  <h2 className="profile-section-title">
-                    <FaLanguage /> Languages
-                  </h2>
-                  <div className="profile-section-content">
-                    {profileData.languageSkills && profileData.languageSkills.length > 0 ? (
-                      <div className="profile-languages">
-                        {profileData.languageSkills.map((lang) => (
-                          <div key={lang.language} className="language-item">
-                            <span className="language-name">{lang.language}</span>
-                            <span className="language-proficiency">{lang.proficiency}</span>
+                      <div className="employee-profile-card-content">
+                        <div className="employee-profile-ratings-display">
+                          <div className="employee-profile-rating-stars">
+                            {[...Array(5)].map((_, index) => (
+                              <FaStar
+                                key={index}
+                                className={index < Math.round(profileData.averageRating || 0) ? 'employee-profile-star-filled' : 'employee-profile-star-empty'}
+                              />
+                            ))}
                           </div>
-                        ))}
-                      </div>
-                    ) : (
-                      <p className="no-data-message">No languages added</p>
-                    )}
-                  </div>
-                </div>
-                
-                {/* Contact Information */}
-                <div className="profile-section">
-                  <h2 className="profile-section-title">
-                    <FaMapMarkerAlt /> Contact Information
-                  </h2>
-                  <div className="profile-section-content">
-                    <div className="contact-info">
-                      {profileData.email && (
-                        <div className="contact-item">
-                          <FaEnvelope className="contact-icon" />
-                          <span>{profileData.email}</span>
-                        </div>
-                      )}
-                      
-                      {profileData.phoneNumber && (
-                        <div className="contact-item">
-                          <FaPhoneAlt className="contact-icon" />
-                          <span>{profileData.phoneNumber}</span>
-                        </div>
-                      )}
-                      
-                      {profileData.address && (
-                        <div className="contact-item">
-                          <FaMapMarkerAlt className="contact-icon" />
-                          <span>{profileData.address}</span>
-                        </div>
-                      )}
-                      
-                      {profileData.linkedInProfile && (
-                        <div className="contact-item">
-                          <FaLinkedin className="contact-icon" />
-                          <a href={profileData.linkedInProfile} target="_blank" rel="noopener noreferrer">
-                            LinkedIn Profile
-                          </a>
-                        </div>
-                      )}
-                      
-                      {profileData.socialMediaLink && (
-                        <div className="contact-item">
-                          <FaGlobe className="contact-icon" />
-                          <a href={profileData.socialMediaLink} target="_blank" rel="noopener noreferrer">
-                            Social Media
-                          </a>
-                        </div>
-                      )}
-                      
-                      {!profileData.phoneNumber && !profileData.address && 
-                       !profileData.linkedInProfile && !profileData.socialMediaLink && (
-                        <p className="no-data-message">Limited contact information available</p>
-                      )}
-                    </div>
-                  </div>
-                </div>
-                
-                {/* Goals Section */}
-                <div className="profile-section">
-                  <h2 className="profile-section-title">
-                    <FaBullseye /> Career Goals
-                  </h2>
-                  <div className="profile-section-content">
-                    {profileData.goals ? (
-                      <div className="profile-goals">
-                        <p>{profileData.goals}</p>
-                      </div>
-                    ) : (
-                      <p className="no-data-message">No career goals specified</p>
-                    )}
-                  </div>
-                </div>
-
-                {/* Overall Ratings Section */}
-                <div className="profile-section">
-                  <h2 className="profile-section-title">
-                    <FaStar /> Overall Ratings
-                  </h2>
-                  <div className="profile-section-content">
-                    <div className="profile-ratings">
-                      <div className="rating-stars-display">
-                        {[...Array(5)].map((_, index) => (
-                          <FaStar
-                            key={index}
-                            className="star"
-                            color={index < Math.round(profileData.averageRating || 0) ? "#ffc107" : "#e4e5e9"}
-                          />
-                        ))}
-                      </div>
-                      <div className="rating-stats">
-                        <span className="rating-number">
-                          {(profileData.averageRating || 0).toFixed(1)}
-                        </span>
-                        <span className="rating-count">
-                          ({profileData.totalRatings || 0} {(profileData.totalRatings || 0) === 1 ? 'review' : 'reviews'})
-                        </span>
-                      </div>
-                      <button 
-                        className="view-ratings-button"
-                        onClick={() => setShowRatingModal(true)}
-                      >
-                        View All Reviews
-                      </button>
-                    </div>
-                  </div>
-                </div>
-                
-                {/* Resume Section */}
-                {profileData.resumeUrl && (
-                  <div className="profile-section">
-                    <h2 className="profile-section-title">
-                      <FaFileAlt /> Resume
-                    </h2>
-                    <div className="profile-section-content">
-                      <div className="resume-container">
-                        <a href={profileData.resumeUrl} download className="resume-download-button">
-                          <FaDownload /> Download Resume
-                        </a>
-                      </div>
-                    </div>
-                  </div>
-                )}
-                
-                {/* Questions for Employers */}
-                {profileData.questions && profileData.questions.length > 0 && (
-                  <div className="profile-section">
-                    <h2 className="profile-section-title">
-                      <FaQuestionCircle /> Questions for Employers
-                    </h2>
-                    <div className="profile-section-content">
-                      <div className="questions-list">
-                        {profileData.questions.map((question, index) => (
-                          <div key={index} className="question-item">
-                            <p>{question}</p>
+                          <div className="employee-profile-rating-numbers">
+                            <span className="employee-profile-rating-average">{(profileData.averageRating || 0).toFixed(1)}</span>
+                            <span className="employee-profile-rating-count">
+                              ({profileData.totalRatings || 0} {(profileData.totalRatings || 0) === 1 ? 'review' : 'reviews'})
+                            </span>
                           </div>
-                        ))}
+                          <button 
+                            className="employee-profile-view-reviews-button"
+                            onClick={() => setShowRatingModal(true)}
+                          >
+                            View All Reviews <FaAngleRight />
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                    
+                    <div className="employee-profile-card">
+                      <div className="employee-profile-card-header">
+                        <h2><FaQuestionCircle /> Questions for Employers</h2>
+                      </div>
+                      <div className="employee-profile-card-content">
+                        {profileData.questions && profileData.questions.length > 0 ? (
+                          <ul className="employee-profile-questions-list">
+                            {profileData.questions.map((question, index) => (
+                              <li key={index} className="employee-profile-question-item">{question}</li>
+                            ))}
+                          </ul>
+                        ) : (
+                          <p className="employee-profile-no-data">No questions added</p>
+                        )}
+                      </div>
+                    </div>
+                    
+                    {profileData.resumeUrl && (
+                      <div className="employee-profile-card">
+                        <div className="employee-profile-card-header">
+                          <h2><FaFileAlt /> Resume</h2>
+                        </div>
+                        <div className="employee-profile-card-content">
+                          <div className="employee-profile-resume-container">
+                            <a href={profileData.resumeUrl} download className="employee-profile-download-button">
+                              <FaDownload /> Download Resume
+                            </a>
+                          </div>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </div>
+                
+                {/* Skills & Education Tab */}
+                <div className={`employee-profile-tab-content ${activeTab === 'skills' ? 'active' : ''}`}>
+                  <div className="employee-profile-content-grid">
+                    <div className="employee-profile-card">
+                      <div className="employee-profile-card-header">
+                        <h2><FaCode /> Skills</h2>
+                      </div>
+                      <div className="employee-profile-card-content">
+                        {profileData.skills && profileData.skills.length > 0 ? (
+                          <div className="employee-profile-skills-list">
+                            {profileData.skills.map((skill, index) => (
+                              <span key={index} className="employee-profile-skill-tag">{skill}</span>
+                            ))}
+                          </div>
+                        ) : (
+                          <p className="employee-profile-no-data">No skills added yet</p>
+                        )}
+                      </div>
+                    </div>
+                    
+                    <div className="employee-profile-card">
+                      <div className="employee-profile-card-header">
+                        <h2><FaLanguage /> Languages</h2>
+                      </div>
+                      <div className="employee-profile-card-content">
+                        {profileData.languageSkills && profileData.languageSkills.length > 0 ? (
+                          <div className="employee-profile-languages-list">
+                            {profileData.languageSkills.map((lang) => (
+                              <div key={lang.language} className="employee-profile-language-item">
+                                <span className="employee-profile-language-name">{lang.language}</span>
+                                <span className="employee-profile-language-proficiency">{lang.proficiency}</span>
+                              </div>
+                            ))}
+                          </div>
+                        ) : (
+                          <p className="employee-profile-no-data">No languages added</p>
+                        )}
+                      </div>
+                    </div>
+                    
+                    <div className="employee-profile-card">
+                      <div className="employee-profile-card-header">
+                        <h2><FaGraduationCap /> Education</h2>
+                      </div>
+                      <div className="employee-profile-card-content">
+                        {renderEducation('School', profileData.education.school)}
+                        {renderEducation('College', profileData.education.college)}
+                        {renderEducation('University', profileData.education.university)}
+                        
+                        {!profileData.education.school.name && 
+                         !profileData.education.college.name && 
+                         !profileData.education.university.name && (
+                          <p className="employee-profile-no-data">No education information provided</p>
+                        )}
+                      </div>
+                    </div>
+                    
+                    <div className="employee-profile-card">
+                      <div className="employee-profile-card-header">
+                        <h2><FaAward /> Certifications</h2>
+                      </div>
+                      <div className="employee-profile-card-content">
+                        <p className="employee-profile-no-data">No certifications added yet</p>
                       </div>
                     </div>
                   </div>
-                )}
+                </div>
+                
+                {/* Contact Info Tab */}
+                <div className={`employee-profile-tab-content ${activeTab === 'contact' ? 'active' : ''}`}>
+                  <div className="employee-profile-card">
+                    <div className="employee-profile-card-header">
+                      <h2><FaMapMarkerAlt /> Contact Information</h2>
+                    </div>
+                    <div className="employee-profile-card-content">
+                      <div className="employee-profile-contact-list">
+                        {profileData.email && (
+                          <div className="employee-profile-contact-item">
+                            <FaEnvelope className="employee-profile-contact-icon" />
+                            <span>{profileData.email}</span>
+                          </div>
+                        )}
+                        
+                        {profileData.phoneNumber && (
+                          <div className="employee-profile-contact-item">
+                            <FaPhoneAlt className="employee-profile-contact-icon" />
+                            <span>{profileData.phoneNumber}</span>
+                          </div>
+                        )}
+                        
+                        {profileData.address && (
+                          <div className="employee-profile-contact-item">
+                            <FaMapMarkerAlt className="employee-profile-contact-icon" />
+                            <span>{profileData.address}</span>
+                          </div>
+                        )}
+                        
+                        {profileData.linkedInProfile && (
+                          <div className="employee-profile-contact-item">
+                            <FaLinkedin className="employee-profile-contact-icon" />
+                            <a href={profileData.linkedInProfile} target="_blank" rel="noopener noreferrer">
+                              LinkedIn Profile
+                            </a>
+                          </div>
+                        )}
+                        
+                        {profileData.socialMediaLink && (
+                          <div className="employee-profile-contact-item">
+                            <FaGlobe className="employee-profile-contact-icon" />
+                            <a href={profileData.socialMediaLink} target="_blank" rel="noopener noreferrer">
+                              Social Media
+                            </a>
+                          </div>
+                        )}
+                        
+                        {!profileData.phoneNumber && !profileData.address && 
+                         !profileData.linkedInProfile && !profileData.socialMediaLink && (
+                          <p className="employee-profile-no-data">Limited contact information available</p>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                  
+                  <div className="employee-profile-card">
+                    <div className="employee-profile-card-header">
+                      <h2><FaProjectDiagram /> Availability</h2>
+                    </div>
+                    <div className="employee-profile-card-content">
+                      <div className="employee-profile-pricing-card">
+                        <div className="employee-profile-pricing-header">
+                          <h2>Hourly Rate</h2>
+                          <div className="employee-profile-pricing-amount">$25.00/hr</div>
+                        </div>
+                        <p className="employee-profile-pricing-description">
+                          Available for full-time work (40+ hrs/week) and part-time projects.
+                          My schedule is flexible and I can accommodate different time zones.
+                        </p>
+                        <button className="employee-profile-hire-button">
+                          Contact Me
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                
+                {/* Work History Tab */}
+                <div className={`employee-profile-tab-content ${activeTab === 'work' ? 'active' : ''}`}>
+                  <div className="employee-profile-card">
+                    <div className="employee-profile-card-header">
+                      <h2><FaHistory /> Work Experience</h2>
+                    </div>
+                    <div className="employee-profile-card-content">
+                      <p className="employee-profile-no-data">No work history available yet. As you complete jobs, they will appear here.</p>
+                    </div>
+                  </div>
+                  
+                  <div className="employee-profile-card">
+                    <div className="employee-profile-card-header">
+                      <h2><FaBriefcase /> Recent Projects</h2>
+                    </div>
+                    <div className="employee-profile-card-content">
+                      <p className="employee-profile-no-data">No recent projects to display.</p>
+                    </div>
+                  </div>
+                </div>
               </div>
-            </div>
+            </>
           )}
         </div>
       </main>
 
-      {/* Footer Section */}
-      <footer className="dashboard-footer">
-        <div className="footer-grid">
-          <div className="footer-column">
-            <h3>For Freelancers</h3>
-            <ul>
-              <li><Link to="/find-jobs">Find Work</Link></li>
-              <li><Link to="/resources">Resources</Link></li>
-              <li><Link to="/freelancer-tips">Tips & Guides</Link></li>
-              <li><Link to="/freelancer-forum">Community Forum</Link></li>
-              <li><Link to="/freelancer-stories">Success Stories</Link></li>
-            </ul>
-          </div>
-          
-          <div className="footer-column">
-            <h3>Resources</h3>
-            <ul>
-              <li><Link to="/help-center">Help Center</Link></li>
-              <li><Link to="/webinars">Webinars</Link></li>
-              <li><Link to="/blog">Blog</Link></li>
-              <li><Link to="/api-docs">Developer API</Link></li>
-              <li><Link to="/partner-program">Partner Program</Link></li>
-            </ul>
-          </div>
-          
-          <div className="footer-column">
-            <h3>Company</h3>
-            <ul>
-              <li><Link to="/about">About Us</Link></li>
-              <li><Link to="/leadership">Leadership</Link></li>
-              <li><Link to="/careers">Careers</Link></li>
-              <li><Link to="/press">Press</Link></li>
-              <li><Link to="/contact">Contact Us</Link></li>
-            </ul>
-          </div>
-        </div>
-        
-        <div className="footer-bottom">
-          <div className="footer-bottom-container">
-            <div className="footer-logo">
-              <Link to="/">Next Youth</Link>
+      <footer className="employee-profile-footer">
+        <div className="employee-profile-footer-container">
+          <div className="employee-profile-footer-grid">
+            <div className="employee-profile-footer-column">
+              <h3>For Freelancers</h3>
+              <ul>
+                <li><Link to="/find-jobs">Find Work</Link></li>
+                <li><Link to="/resources">Resources</Link></li>
+                <li><Link to="/freelancer-tips">Tips & Guides</Link></li>
+                <li><Link to="/freelancer-forum">Community Forum</Link></li>
+              </ul>
             </div>
             
-            <div className="footer-legal-links">
+            <div className="employee-profile-footer-column">
+              <h3>Resources</h3>
+              <ul>
+                <li><Link to="/help-center">Help Center</Link></li>
+                <li><Link to="/webinars">Webinars</Link></li>
+                <li><Link to="/blog">Blog</Link></li>
+                <li><Link to="/api-docs">Developer API</Link></li>
+              </ul>
+            </div>
+            
+            <div className="employee-profile-footer-column">
+              <h3>Company</h3>
+              <ul>
+                <li><Link to="/about">About Us</Link></li>
+                <li><Link to="/careers">Careers</Link></li>
+                <li><Link to="/press">Press</Link></li>
+                <li><Link to="/contact">Contact Us</Link></li>
+              </ul>
+            </div>
+          </div>
+          
+          <div className="employee-profile-footer-bottom">
+            <div className="employee-profile-footer-logo">
+              <img 
+                src={isDarkMode ? logoDark : logoLight} 
+                alt="Next Youth" 
+                className="employee-profile-footer-logo-image" 
+              />
+            </div>
+            
+            <div className="employee-profile-footer-links">
               <Link to="/terms">Terms of Service</Link>
               <Link to="/privacy">Privacy Policy</Link>
               <Link to="/accessibility">Accessibility</Link>
-              <Link to="/sitemap">Site Map</Link>
             </div>
             
-            <div className="footer-social">
+            <div className="employee-profile-footer-social">
               <a href="https://facebook.com" aria-label="Facebook">
                 <FaFacebook />
               </a>
@@ -872,11 +970,12 @@ const MyProfile = () => {
             </div>
           </div>
           
-          <div className="footer-copyright">
+          <div className="employee-profile-footer-copyright">
             <p>&copy; {new Date().getFullYear()} Next Youth. All rights reserved.</p>
           </div>
         </div>
       </footer>
+      
       {showRatingModal && (
         <RatingModal
           isOpen={true}
