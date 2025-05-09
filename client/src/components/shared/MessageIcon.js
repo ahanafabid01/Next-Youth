@@ -66,6 +66,29 @@ const MessageIcon = () => {
     setShowDropdown(false);
   };
   
+  useEffect(() => {
+    const fetchUnreadCount = async () => {
+      try {
+        const response = await axios.get('http://localhost:4000/api/messages/unread-count', {
+          withCredentials: true
+        });
+        
+        if (response.data.success) {
+          // Use the refreshUnreadCount function from the socket context
+          refreshUnreadCount();
+        }
+      } catch (error) {
+        console.error('Error fetching unread count:', error);
+      }
+    };
+    
+    fetchUnreadCount();
+    
+    // Poll for updates every minute
+    const interval = setInterval(fetchUnreadCount, 60000);
+    return () => clearInterval(interval);
+  }, [refreshUnreadCount]); // Added refreshUnreadCount as a dependency
+  
   return (
     <div className="message-icon-container" ref={dropdownRef}>
       <button 
@@ -106,20 +129,20 @@ const MessageIcon = () => {
               <>
                 {conversations.map(convo => (
                   <div 
-                    key={convo.user._id} 
+                    key={convo.otherUser._id} 
                     className={`conversation-preview ${convo.unreadCount > 0 ? 'unread' : ''}`}
-                    onClick={() => handleMessageClick(convo.user._id)}
+                    onClick={() => handleMessageClick(convo.otherUser._id)}
                   >
                     <div className="conversation-avatar">
-                      {convo.user.profilePicture ? (
-                        <img src={convo.user.profilePicture} alt={`${convo.user.name}'s avatar`} />
+                      {convo.otherUser.profilePicture ? (
+                        <img src={convo.otherUser.profilePicture} alt={`${convo.otherUser.name}'s avatar`} />
                       ) : (
-                        <div className="default-avatar">{convo.user.name.charAt(0)}</div>
+                        <div className="default-avatar">{convo.otherUser.name.charAt(0)}</div>
                       )}
                     </div>
                     <div className="conversation-info">
                       <div className="conversation-header">
-                        <h4>{convo.user.name}</h4>
+                        <h4>{convo.otherUser.name}</h4>
                         <span className="conversation-time">
                           {formatTime(convo.latestMessage.createdAt)}
                         </span>

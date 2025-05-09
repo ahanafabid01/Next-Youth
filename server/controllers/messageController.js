@@ -29,10 +29,15 @@ export const sendMessage = async (req, res) => {
     
     await newMessage.save();
     
+    // Populate sender and receiver info for the socket event
+    const populatedMessage = await Message.findById(newMessage._id)
+      .populate('sender', 'name profilePicture')
+      .populate('receiver', 'name profilePicture');
+    
     // Emit socket event for real-time messaging
     const io = req.app.get('io');
     io.to(recipientId).emit('new-message', {
-      message: newMessage,
+      message: populatedMessage,
       sender: {
         _id: req.user.id,
         name: req.user.name,
@@ -40,7 +45,7 @@ export const sendMessage = async (req, res) => {
       }
     });
     
-    res.status(201).json({ success: true, message: newMessage });
+    res.status(201).json({ success: true, message: populatedMessage });
   } catch (error) {
     console.error('Error sending message:', error);
     res.status(500).json({ success: false, message: "Internal server error" });
@@ -97,7 +102,9 @@ export const getConversations = async (req, res) => {
       // If conversation not in map yet, add it
       if (!conversationMap.has(otherUserId)) {
         // Fetch user info
-        const otherUser = await User.findById(otherUserId).select('name profilePicture userType');
+        const otherUser = await User.findById(otherUserId).select('name profilePicture user_type');
+        
+        if (!otherUser) continue; // Skip if user not found
         
         // Count unread messages
         const unreadCount = await Message.countDocuments({
@@ -106,13 +113,22 @@ export const getConversations = async (req, res) => {
           read: false
         });
         
-        // Get latest message
+        // Get latest message with populated fields
         const latestMessage = await Message.findOne({
           conversationId: message.conversationId
-        }).sort({ createdAt: -1 });
+        })
+        .sort({ createdAt: -1 })
+        .populate('sender', 'name profilePicture')
+        .populate('receiver', 'name profilePicture');
         
         conversationMap.set(otherUserId, {
-          user: otherUser,
+          conversationId: message.conversationId,
+          otherUser: {
+            _id: otherUser._id,
+            name: otherUser.name,
+            profilePicture: otherUser.profilePicture,
+            userType: otherUser.user_type
+          },
           unreadCount,
           latestMessage
         });

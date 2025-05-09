@@ -32,9 +32,7 @@ export const SocketProvider = ({ children }) => {
             console.log('Socket connected!');
             
             // Join user's room for private messages
-            if (res.data.user._id) {
-              socketInstance.emit('join', res.data.user._id);
-            }
+            socketInstance.emit('join', res.data.user._id);
           });
           
           socketInstance.on('disconnect', () => {
@@ -67,7 +65,6 @@ export const SocketProvider = ({ children }) => {
         console.log('New message received:', data);
         // Increase unread count
         setUnreadCount(prev => prev + 1);
-        // You can add more logic here, like notifications
       };
       
       socket.on('new-message', handleNewMessage);
@@ -88,7 +85,7 @@ export const SocketProvider = ({ children }) => {
         setUnreadCount(res.data.count);
       }
     } catch (error) {
-      console.error('Error fetching unread message count:', error);
+      console.error('Error fetching unread count:', error);
     }
   };
   
@@ -109,6 +106,14 @@ export const SocketProvider = ({ children }) => {
     }
   };
   
+  // Add function to join a room
+  const joinRoom = (userId) => {
+    if (socket && userId) {
+      socket.emit('join', userId);
+      console.log(`Joined room: ${userId}`);
+    }
+  };
+  
   // Context value
   const value = {
     socket,
@@ -116,6 +121,7 @@ export const SocketProvider = ({ children }) => {
     user,
     unreadCount,
     sendMessage,
+    joinRoom,
     refreshUnreadCount: fetchUnreadCount
   };
   

@@ -25,7 +25,7 @@ import {
   FaClock,
   FaStar,
   FaSpinner,
-  FaCreditCard // Add this import for the payment icon
+  FaCreditCard
 } from "react-icons/fa";
 import { Bar, Pie } from "react-chartjs-2";
 import { Chart as ChartJS, ArcElement, Tooltip, Legend, CategoryScale, LinearScale, BarElement } from "chart.js";
@@ -36,8 +36,9 @@ import PostJob from "./PostJob";
 import MyJobs from "./MyJobs";
 import Applications from "./Applications";
 import EmployerVerification from './EmployerVerification';
-import EmployerSettings from './EmployerSettings'; // Add this import
-import EmployerPayment from './EmployerPayment'; // Add this import
+import EmployerSettings from './EmployerSettings';
+import EmployerPayment from './EmployerPayment';
+import Messages from '../shared/Messages'; // Add this import for the Messages component
 import logoLight from '../../assets/images/logo-light.png';
 import logoDark from '../../assets/images/logo-dark.png';
 import MessageIcon from '../shared/MessageIcon'; // Add this line near the other imports
@@ -551,6 +552,7 @@ const EmployerDashboard = () => {
             case "payment":
                 return <EmployerPayment />; // Add this case
             case "messages":
+                return <Messages userType="employer" />;
             default:
                 return (
                     <div className="dashboard-main">

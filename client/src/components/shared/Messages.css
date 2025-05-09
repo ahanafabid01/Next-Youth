@@ -1,7 +1,12 @@
 .messages-container {
   display: flex;
-  height: calc(100vh - 70px);
-  background-color: var(--bg-main);
+  height: calc(100vh - 80px);
+  max-width: 1200px;
+  margin: 0 auto;
+  border-radius: 8px;
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+  overflow: hidden;
+  background-color: #fff;
 }
 
 .messages-sidebar {

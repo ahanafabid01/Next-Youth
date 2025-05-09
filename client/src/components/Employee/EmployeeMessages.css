@@ -3,6 +3,14 @@
   flex-direction: column;
   min-height: calc(100vh - 60px);
   background-color: #f5f7fb;
+  padding: 20px;
+  height: calc(100vh - 80px);
+}
+
+@media (max-width: 768px) {
+  .employee-messages {
+    padding: 10px;
+  }
 }
 
 .messages-container {

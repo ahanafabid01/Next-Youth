@@ -1,191 +1,203 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
-import { FaArrowLeft, FaPaperPlane, FaSpinner, FaUser } from 'react-icons/fa';
 import axios from 'axios';
-import { useSocket } from '../../context/SocketContext';
+import { FaUser, FaPaperPlane, FaSpinner, FaComments, FaArrowLeft } from 'react-icons/fa';
 import './Messages.css';
 
-const Messages = () => {
-  const { userId } = useParams();
-  const { socket, user: currentUser, sendMessage: socketSendMessage } = useSocket();
+const Messages = ({ userType }) => {
   const [conversations, setConversations] = useState([]);
-  const [activeConversation, setActiveConversation] = useState(null);
   const [messages, setMessages] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [loadingMessages, setLoadingMessages] = useState(false);
+  const [selectedConversation, setSelectedConversation] = useState(null);
   const [newMessage, setNewMessage] = useState('');
-  const [loading, setLoading] = useState(false);
-  const [sendingMessage, setSendingMessage] = useState(false);
-  const [recipient, setRecipient] = useState(null);
+  const [sending, setSending] = useState(false);
+  const [showConversation, setShowConversation] = useState(false);
   const messagesEndRef = useRef(null);
-  const navigate = useNavigate();
   
-  // Fetch conversations on mount
+  const API_BASE_URL = 'http://localhost:4000/api';
+  
+  // Fetch conversations
   useEffect(() => {
+    const fetchConversations = async () => {
+      try {
+        setLoading(true);
+        const response = await axios.get(`${API_BASE_URL}/messages/conversations`, { 
+          withCredentials: true 
+        });
+        
+        if (response.data.success) {
+          setConversations(response.data.conversations);
+        }
+      } catch (error) {
+        console.error('Error fetching conversations:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+    
     fetchConversations();
   }, []);
   
-  // Set active conversation based on URL parameter
+  // Fetch messages when conversation selected
   useEffect(() => {
-    if (userId) {
-      setActiveConversation(userId);
-      fetchUserDetails(userId);
-      fetchMessages(userId);
-    }
-  }, [userId]);
-  
-  // Socket event listener for new messages
-  useEffect(() => {
-    if (socket) {
-      const handleNewMessage = (data) => {
-        if (activeConversation === data.sender._id) {
-          setMessages(prev => [...prev, data.message]);
+    if (!selectedConversation) return;
+    
+    const fetchMessages = async () => {
+      try {
+        setLoadingMessages(true);
+        const response = await axios.get(`${API_BASE_URL}/messages/${selectedConversation._id}`, { 
+          withCredentials: true 
+        });
+        
+        if (response.data.success) {
+          setMessages(response.data.messages);
         }
-        // Refresh conversations list to update latest message
-        fetchConversations();
-      };
-      
-      socket.on('new-message', handleNewMessage);
-      
-      return () => {
-        socket.off('new-message', handleNewMessage);
-      };
-    }
-  }, [socket, activeConversation]);
+      } catch (error) {
+        console.error('Error fetching messages:', error);
+      } finally {
+        setLoadingMessages(false);
+      }
+    };
+    
+    fetchMessages();
+    
+    // Set up polling for new messages (every 10 seconds)
+    const interval = setInterval(fetchMessages, 10000);
+    return () => clearInterval(interval);
+  }, [selectedConversation]);
   
-  // Scroll to bottom when messages change
+  // Scroll to bottom when new messages arrive
   useEffect(() => {
     if (messagesEndRef.current) {
       messagesEndRef.current.scrollIntoView({ behavior: 'smooth' });
     }
   }, [messages]);
   
-  const fetchConversations = async () => {
-    try {
-      setLoading(true);
-      const res = await axios.get('http://localhost:4000/api/messages/conversations', {
-        withCredentials: true
-      });
-      
-      if (res.data.success) {
-        setConversations(res.data.conversations);
-      }
-    } catch (error) {
-      console.error('Error fetching conversations:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
-  
-  const fetchUserDetails = async (userId) => {
-    try {
-      const res = await axios.get(`http://localhost:4000/api/auth/profile/${userId}`, {
-        withCredentials: true
-      });
-      
-      if (res.data.success) {
-        setRecipient(res.data.user);
-      }
-    } catch (error) {
-      console.error('Error fetching user details:', error);
-    }
-  };
-  
-  const fetchMessages = async (userId) => {
-    try {
-      setLoading(true);
-      const res = await axios.get(`http://localhost:4000/api/messages/${userId}`, {
-        withCredentials: true
-      });
-      
-      if (res.data.success) {
-        setMessages(res.data.messages);
-      }
-    } catch (error) {
-      console.error('Error fetching messages:', error);
-    } finally {
-      setLoading(false);
-    }
+  const handleSelectConversation = (conversation) => {
+    setSelectedConversation(conversation);
+    setShowConversation(true);
   };
   
   const handleSendMessage = async (e) => {
     e.preventDefault();
-    
-    if (!newMessage.trim() || !activeConversation) return;
+    if (!newMessage.trim() || !selectedConversation) return;
     
     try {
-      setSendingMessage(true);
-      const result = await socketSendMessage(activeConversation, newMessage);
+      setSending(true);
       
-      if (result.success) {
-        setMessages(prev => [...prev, result.message]);
+      const response = await axios.post(`${API_BASE_URL}/messages/send`, {
+        recipient: selectedConversation.participantId,
+        content: newMessage,
+        conversationId: selectedConversation._id
+      }, { 
+        withCredentials: true 
+      });
+      
+      if (response.data.success) {
+        // Add new message to the list
+        setMessages([...messages, response.data.message]);
         setNewMessage('');
-        fetchConversations();
       }
     } catch (error) {
       console.error('Error sending message:', error);
+      alert('Failed to send message. Please try again.');
     } finally {
-      setSendingMessage(false);
+      setSending(false);
     }
   };
   
-  const handleConversationClick = (userId) => {
-    navigate(`/messages/${userId}`);
-  };
-  
-  const formatTime = (timestamp) => {
-    const date = new Date(timestamp);
-    return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-  };
-  
-  const formatDate = (timestamp) => {
-    const date = new Date(timestamp);
+  const formatDate = (dateString) => {
+    const date = new Date(dateString);
+    const now = new Date();
+    
+    // Today
+    if (date.toDateString() === now.toDateString()) {
+      return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    }
+    
+    // Yesterday
+    const yesterday = new Date();
+    yesterday.setDate(now.getDate() - 1);
+    if (date.toDateString() === yesterday.toDateString()) {
+      return 'Yesterday';
+    }
+    
+    // Within a week
+    const oneWeek = 7 * 24 * 60 * 60 * 1000;
+    if ((now - date) < oneWeek) {
+      return date.toLocaleDateString([], { weekday: 'short' });
+    }
+    
+    // Otherwise
     return date.toLocaleDateString();
   };
   
+  const getGroupedMessagesByDate = () => {
+    const groupedMessages = {};
+    
+    messages.forEach(message => {
+      const date = new Date(message.createdAt).toDateString();
+      if (!groupedMessages[date]) {
+        groupedMessages[date] = [];
+      }
+      groupedMessages[date].push(message);
+    });
+    
+    return groupedMessages;
+  };
+  
+  const groupedMessages = getGroupedMessagesByDate();
+  
   return (
-    <div className="messages-container">
+    <div className={`messages-container ${showConversation ? 'show-conversation' : ''}`}>
       <div className="messages-sidebar">
         <div className="messages-sidebar-header">
           <h2>Messages</h2>
         </div>
         <div className="conversations-list">
-          {loading && conversations.length === 0 ? (
+          {loading ? (
             <div className="loading-conversations">
               <FaSpinner className="spinning" />
               <p>Loading conversations...</p>
             </div>
           ) : conversations.length === 0 ? (
             <div className="no-conversations">
+              <FaComments style={{ fontSize: '2rem', marginBottom: '10px', opacity: 0.5 }} />
               <p>No conversations yet</p>
+              <p className="no-messages-subtext">
+                {userType === 'employer' 
+                  ? 'Start messaging candidates to discuss job opportunities!' 
+                  : 'Connect with employers about jobs you\'ve applied to!'}
+              </p>
             </div>
           ) : (
-            conversations.map(convo => (
+            conversations.map(conversation => (
               <div 
-                key={convo.user._id}
-                className={`conversation-item ${activeConversation === convo.user._id ? 'active' : ''} ${convo.unreadCount > 0 ? 'unread' : ''}`}
-                onClick={() => handleConversationClick(convo.user._id)}
+                key={conversation._id} 
+                className={`conversation-item ${conversation.unread ? 'unread' : ''} ${selectedConversation?._id === conversation._id ? 'active' : ''}`}
+                onClick={() => handleSelectConversation(conversation)}
               >
                 <div className="conversation-avatar">
-                  {convo.user.profilePicture ? (
-                    <img src={convo.user.profilePicture} alt={`${convo.user.name}'s avatar`} />
+                  {conversation.participant.profilePicture ? (
+                    <img src={conversation.participant.profilePicture} alt={conversation.participant.name} />
                   ) : (
-                    <div className="default-avatar">{convo.user.name.charAt(0)}</div>
+                    <div className="default-avatar">
+                      {conversation.participant.name ? conversation.participant.name.charAt(0).toUpperCase() : '?'}
+                    </div>
                   )}
                 </div>
                 <div className="conversation-details">
                   <div className="conversation-header">
-                    <h4>{convo.user.name}</h4>
+                    <h4>{conversation.participant.name}</h4>
                     <span className="conversation-time">
-                      {formatTime(convo.latestMessage.createdAt)}
+                      {conversation.lastMessage ? formatDate(conversation.lastMessage.createdAt) : ''}
                     </span>
                   </div>
                   <p className="conversation-last-message">
-                    {convo.latestMessage.content.length > 40
-                      ? `${convo.latestMessage.content.substring(0, 40)}...`
-                      : convo.latestMessage.content
-                    }
+                    {conversation.lastMessage ? conversation.lastMessage.content : 'No messages yet'}
                   </p>
-                  {convo.unreadCount > 0 && (
-                    <span className="unread-badge">{convo.unreadCount}</span>
+                  {conversation.unreadCount > 0 && (
+                    <span className="unread-badge">{conversation.unreadCount}</span>
                   )}
                 </div>
               </div>
@@ -193,50 +205,39 @@ const Messages = () => {
           )}
         </div>
       </div>
-      
+
       <div className="messages-content">
-        {!activeConversation ? (
-          <div className="select-conversation">
-            <div className="select-conversation-icon">
-              <FaPaperPlane />
-            </div>
-            <h3>Select a conversation</h3>
-            <p>Choose a conversation from the list or start a new one</p>
-          </div>
-        ) : (
+        {selectedConversation ? (
           <>
             <div className="messages-header">
               <button 
-                className="back-button"
-                onClick={() => navigate('/messages')}
+                className="back-button" 
+                onClick={() => {
+                  setShowConversation(false);
+                  setSelectedConversation(null);
+                }}
               >
                 <FaArrowLeft />
               </button>
-              
-              {recipient ? (
-                <div className="recipient-info">
-                  <div className="recipient-avatar">
-                    {recipient.profilePicture ? (
-                      <img src={recipient.profilePicture} alt={`${recipient.name}'s avatar`} />
-                    ) : (
-                      <FaUser />
-                    )}
-                  </div>
-                  <div className="recipient-details">
-                    <h3>{recipient.name}</h3>
-                    <span className="recipient-type">{recipient.userType}</span>
+              <div className="recipient-info">
+                <div className="recipient-avatar">
+                  {selectedConversation.participant.profilePicture ? (
+                    <img src={selectedConversation.participant.profilePicture} alt={selectedConversation.participant.name} />
+                  ) : (
+                    <FaUser />
+                  )}
+                </div>
+                <div className="recipient-details">
+                  <h3>{selectedConversation.participant.name}</h3>
+                  <div className="recipient-type">
+                    {userType === 'employer' ? 'Candidate' : 'Employer'}
                   </div>
                 </div>
-              ) : (
-                <div className="recipient-loading">
-                  <FaSpinner className="spinning" />
-                  <span>Loading...</span>
-                </div>
-              )}
+              </div>
             </div>
-            
+
             <div className="messages-body">
-              {loading ? (
+              {loadingMessages ? (
                 <div className="messages-loading">
                   <FaSpinner className="spinning" />
                   <p>Loading messages...</p>
@@ -244,61 +245,57 @@ const Messages = () => {
               ) : messages.length === 0 ? (
                 <div className="no-messages-yet">
                   <div className="no-messages-icon">
-                    <FaPaperPlane />
+                    <FaComments />
                   </div>
-                  <p>No messages yet</p>
-                  <p className="no-messages-subtext">Send a message to start the conversation</p>
+                  <h3>No messages yet</h3>
+                  <p className="no-messages-subtext">Send a message to start the conversation!</p>
                 </div>
               ) : (
                 <div className="message-list">
-                  {messages.map((message, index) => {
-                    const isSentByMe = message.sender._id === currentUser?._id;
-                    const showDate = index === 0 || 
-                      formatDate(message.createdAt) !== formatDate(messages[index - 1].createdAt);
-                    
-                    return (
-                      <React.Fragment key={message._id}>
-                        {showDate && (
-                          <div className="message-date-divider">
-                            <span>{formatDate(message.createdAt)}</span>
-                          </div>
-                        )}
-                        <div className={`message-bubble ${isSentByMe ? 'sent' : 'received'}`}>
-                          <div className="message-content">
-                            {message.content}
-                          </div>
+                  {Object.entries(groupedMessages).map(([date, messages]) => (
+                    <React.Fragment key={date}>
+                      <div className="message-date-divider">
+                        <span>{new Date(date).toLocaleDateString([], { weekday: 'long', month: 'short', day: 'numeric' })}</span>
+                      </div>
+                      {messages.map(message => (
+                        <div 
+                          key={message._id} 
+                          className={`message-bubble ${message.sender === selectedConversation.participantId ? 'received' : 'sent'}`}
+                        >
+                          <div className="message-content">{message.content}</div>
                           <div className="message-time">
-                            {formatTime(message.createdAt)}
+                            {new Date(message.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                           </div>
                         </div>
-                      </React.Fragment>
-                    );
-                  })}
+                      ))}
+                    </React.Fragment>
+                  ))}
                   <div ref={messagesEndRef} />
                 </div>
               )}
             </div>
-            
+
             <form className="message-input-form" onSubmit={handleSendMessage}>
               <input
                 type="text"
+                placeholder="Type a message..."
                 value={newMessage}
                 onChange={(e) => setNewMessage(e.target.value)}
-                placeholder="Type a message..."
-                disabled={sendingMessage}
+                disabled={sending}
               />
-              <button 
-                type="submit"
-                disabled={!newMessage.trim() || sendingMessage}
-              >
-                {sendingMessage ? (
-                  <FaSpinner className="spinning" />
-                ) : (
-                  <FaPaperPlane />
-                )}
+              <button type="submit" disabled={!newMessage.trim() || sending}>
+                {sending ? <FaSpinner className="spinning" /> : <FaPaperPlane />}
               </button>
             </form>
           </>
+        ) : (
+          <div className="select-conversation">
+            <div className="select-conversation-icon">
+              <FaComments />
+            </div>
+            <h3>Select a conversation</h3>
+            <p>Choose a conversation from the list to start messaging</p>
+          </div>
         )}
       </div>
     </div>
