@@ -4,11 +4,13 @@ import axios from 'axios';
 import { 
   FaUserShield, FaSave, FaTrash, FaArrowLeft, FaBell, 
   FaUserEdit, FaLock, FaShieldAlt, FaSun, FaMoon, 
-  FaExclamationTriangle, FaCheck, FaSpinner, FaCog
+  FaExclamationTriangle, FaCheck, FaSpinner, FaCog,
+  FaCreditCard // Add this import
 } from 'react-icons/fa';
 import logoLight from '../../assets/images/logo-light.png';
 import logoDark from '../../assets/images/logo-dark.png';
 import './Settings.css';
+import EmployeePayment from './EmployeePayment'; // Add this import
 
 const Settings = () => {
   const navigate = useNavigate();
@@ -76,7 +78,21 @@ const Settings = () => {
       });
       
       if (response.data.success) {
-        setUser(response.data.user);
+        // Extract the user data properly
+        const userData = response.data.user;
+        
+        // Log the full user data to inspect all field names
+        console.log('Full user data from API:', userData);
+        
+        // Set the user state with all fields, checking all possible field names for phone number
+        setUser({
+          name: userData.name || '',
+          email: userData.email || '',
+          profilePicture: userData.profilePicture || userData.profilePic || '',
+          phoneNumber: userData.phoneNumber || userData.phone || userData.phoneNum || '' 
+        });
+        
+        console.log('Phone number being used:', userData.phoneNumber || userData.phone || userData.phoneNum || 'Not found');
       }
     } catch (error) {
       console.error('Error fetching user data:', error);
@@ -128,13 +144,23 @@ const Settings = () => {
     e.preventDefault();
     setLoading(true);
     try {
+      // Log what we're sending to the API for debugging
+      console.log('Sending profile data:', user);
+      
       const response = await axios.put(
-        `${API_BASE_URL}/auth/profile`, 
-        user, 
+        `${API_BASE_URL}/auth/update-profile`,
+        {
+          name: user.name,
+          email: user.email,
+          phoneNumber: user.phoneNumber,  // Make sure this is explicitly included
+          profilePicture: user.profilePicture
+        }, 
         { withCredentials: true }
       );
       
       if (response.data.success) {
+        // Fetch user data again to ensure we have the latest data with correct field names
+        await fetchUserData();
         setMessage({ type: 'success', text: 'Profile updated successfully' });
       }
     } catch (error) {
@@ -242,6 +268,70 @@ const Settings = () => {
     );
   };
 
+  // Handle profile picture upload
+  const handleProfilePictureUpload = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    
+    if (!['image/jpeg', 'image/png', 'image/jpg'].includes(file.type)) {
+      setMessage({ type: 'error', text: 'Please upload a valid image file (JPEG or PNG)' });
+      return;
+    }
+    
+    if (file.size > 5 * 1024 * 1024) { // 5MB limit
+      setMessage({ type: 'error', text: 'Image file size should be less than 5MB' });
+      return;
+    }
+    
+    setLoading(true);
+    
+    try {
+      const formData = new FormData();
+      formData.append('file', file); // Changed from 'profilePicture' to 'file' to match server expectation
+      
+      // Upload the file first
+      const uploadResponse = await axios.post(`${API_BASE_URL}/auth/upload-profile-picture`, formData, {
+        withCredentials: true,
+        headers: {
+          'Content-Type': 'multipart/form-data'
+        }
+      });
+      
+      if (uploadResponse.data.success) {
+        // Update state with new picture URL
+        const profilePictureUrl = uploadResponse.data.url || uploadResponse.data.profilePictureUrl;
+        
+        setUser(prev => ({
+          ...prev,
+          profilePicture: profilePictureUrl
+        }));
+        
+        // Now explicitly update the user profile with the new picture URL
+        await axios.put(
+          `${API_BASE_URL}/auth/update-profile`,
+          {
+            profilePicture: profilePictureUrl,
+            // Include other necessary fields if required by your API
+            name: user.name,
+            email: user.email,
+            phoneNumber: user.phoneNumber
+          }, 
+          { withCredentials: true }
+        );
+        
+        setMessage({ type: 'success', text: 'Profile picture updated successfully' });
+      }
+    } catch (error) {
+      console.error('Error uploading profile picture:', error);
+      setMessage({
+        type: 'error',
+        text: error.response?.data?.message || 'Error updating profile picture'
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
     <div className="employee-settings-container">
       {/* Header */}
@@ -288,6 +378,13 @@ const Settings = () => {
             <span>Account</span>
           </button>
           <button 
+            className={`employee-settings-nav-button ${activeTab === 'payment' ? 'active' : ''}`}
+            onClick={() => setActiveTab('payment')}
+          >
+            <FaCreditCard />
+            <span>Payment & Billing</span>
+          </button>
+          <button 
             className={`employee-settings-nav-button ${activeTab === 'security' ? 'active' : ''}`}
             onClick={() => setActiveTab('security')}
           >
@@ -317,7 +414,7 @@ const Settings = () => {
           {/* Account Settings Tab */}
           {activeTab === 'account' && (
             <div className="employee-settings-panel">
-              <h2>Profile Information</h2>
+              <h2>Contact Info</h2>
               <p className="employee-settings-description">
                 Update your personal information and how it appears on your profile
               </p>
@@ -360,20 +457,30 @@ const Settings = () => {
                 </div>
                 
                 <div className="employee-settings-form-group">
-                  <label htmlFor="profilePicture">Profile Picture URL</label>
-                  <input 
-                    type="url" 
-                    id="profilePicture" 
-                    name="profilePicture" 
-                    value={user.profilePicture || ''}
-                    onChange={handleUserChange}
-                    placeholder="URL to your profile picture"
-                  />
-                  {user.profilePicture && (
-                    <div className="employee-settings-profile-preview">
-                      <img src={user.profilePicture} alt="Profile Preview" />
+                  <label htmlFor="profilePictureUpload">Profile Picture</label>
+                  <div className="employee-settings-profile-upload">
+                    {user.profilePicture && (
+                      <div className="employee-settings-profile-preview">
+                        <img src={user.profilePicture} alt="Profile Preview" />
+                      </div>
+                    )}
+                    <div className="employee-settings-upload-controls">
+                      <input 
+                        type="file" 
+                        id="profilePictureUpload" 
+                        name="profilePictureUpload" 
+                        onChange={handleProfilePictureUpload}
+                        accept="image/jpeg, image/png, image/jpg"
+                        className="employee-settings-file-input"
+                      />
+                      <label htmlFor="profilePictureUpload" className="employee-settings-upload-button">
+                        {user.profilePicture ? "Change Picture" : "Upload Picture"}
+                      </label>
+                      <p className="employee-settings-help-text">
+                        For best results, use an image of at least 400x400 pixels (JPEG or PNG)
+                      </p>
                     </div>
-                  )}
+                  </div>
                 </div>
                 
                 <div className="employee-settings-form-actions">
@@ -387,6 +494,18 @@ const Settings = () => {
                   </button>
                 </div>
               </form>
+            </div>
+          )}
+          
+          {/* Payment & Billing Tab */}
+          {activeTab === 'payment' && (
+            <div className="employee-settings-panel">
+              <h2>Payment & Billing</h2>
+              <p className="employee-settings-description">
+                Manage your payment methods and view your payment history
+              </p>
+              
+              <EmployeePayment />
             </div>
           )}
           

@@ -15,10 +15,13 @@ import {
     FaTwitter,
     FaLinkedin,
     FaInstagram,
-    FaClock // Add this import
+    FaClock,
+    FaStar
 } from 'react-icons/fa';
 import './VerifyAccount.css';
-import './EmployeeDashboard.css'; // Assuming you have a CSS file for the dashboard styles
+import logoLight from '../../assets/images/logo-light.png'; 
+import logoDark from '../../assets/images/logo-dark.png';
+import RatingModal from '../Connections/RatingModal';
 
 const VerifyAccount = () => {
     const navigate = useNavigate();
@@ -29,6 +32,7 @@ const VerifyAccount = () => {
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
     const [success, setSuccess] = useState(false);
+    const [showRatingModal, setShowRatingModal] = useState(false);
 
     // Header state
     const [showProfileDropdown, setShowProfileDropdown] = useState(false);
@@ -43,7 +47,7 @@ const VerifyAccount = () => {
     const [isDarkMode, setIsDarkMode] = useState(() => {
         return localStorage.getItem("dashboard-theme") === "dark";
     });
-
+    
     // Refs for dropdowns
     const profileDropdownRef = useRef(null);
     const notificationsRef = useRef(null);
@@ -166,7 +170,7 @@ const VerifyAccount = () => {
         if (profileDropdownRef.current && !profileDropdownRef.current.contains(event.target)) {
             setShowProfileDropdown(false);
         }
-        if (!event.target.closest('.dashboard-nav')) {
+        if (!event.target.closest('.mobile-menu')) {
             setShowMobileNav(false);
         }
     }, []);
@@ -202,6 +206,11 @@ const VerifyAccount = () => {
         }
     }, [navigate, API_BASE_URL]);
 
+    const handleShowRatings = useCallback(() => {
+        setShowRatingModal(true);
+        setShowProfileDropdown(false); // Close dropdown when opening modal
+    }, []);
+
     useEffect(() => {
         document.addEventListener('click', handleOutsideClick);
         return () => document.removeEventListener('click', handleOutsideClick);
@@ -219,66 +228,72 @@ const VerifyAccount = () => {
     const currentYear = new Date().getFullYear();
 
     return (
-        <div className="employee-dashboard verify-page-container">
+        <div className={`verify-page-wrapper ${isDarkMode ? 'dark-mode' : ''}`}>
             {/* Header */}
-            <header className="dashboard-header">
-                <div className="dashboard-header-container">
-                    <div className="dashboard-header-left">
+            <header className="verify-header-main">
+                <div className="verify-header-container">
+                    <div className="verify-header-left">
                         <button 
-                            className="dashboard-nav-toggle"
+                            className="verify-nav-toggle"
                             onClick={toggleMobileNav}
                             aria-label="Toggle navigation"
                         >
-                            ☰
+                            <span className="hamburger-icon"></span>
                         </button>
-                        <Link to="/" className="dashboard-logo">Next Youth</Link>
+                        <Link to="/employee-dashboard" className="verify-logo-link">
+                            <img 
+                                src={isDarkMode ? logoDark : logoLight} 
+                                alt="Next Youth" 
+                                className="verify-logo" 
+                            />
+                        </Link>
                         
-                        <nav className={`dashboard-nav ${showMobileNav ? 'active' : ''}`}>
-                            <Link to="/find-jobs" className="nav-link">Find Work</Link>
-                            <Link to="/find-jobs/saved" className="nav-link">Saved Jobs</Link>
-                            <Link to="/find-jobs/proposals" className="nav-link">Proposals</Link>
-                            <Link to="/help" className="nav-link">Help</Link>
+                        <nav className={`verify-nav ${showMobileNav ? 'active' : ''}`}>
+                            <Link to="/find-jobs" className="verify-nav-link">Find Work</Link>
+                            <Link to="/find-jobs/saved" className="verify-nav-link">Saved Jobs</Link>
+                            <Link to="/find-jobs/proposals" className="verify-nav-link">Proposals</Link>
+                            <Link to="/help" className="verify-nav-link">Help</Link>
                         </nav>
                     </div>
                     
-                    <div className="dashboard-header-right">
-                        <div className="notification-container" ref={notificationsRef}>
+                    <div className="verify-header-right">
+                        <div className="verify-notification-container" ref={notificationsRef}>
                             <button 
-                                className="notification-button"
+                                className="verify-notification-button"
                                 onClick={toggleNotifications}
                                 aria-label="Notifications"
                             >
                                 <FaBell />
-                                <span className="notification-badge">2</span>
+                                <span className="verify-notification-badge">2</span>
                             </button>
                             
                             {showNotifications && (
-                                <div className="notifications-dropdown">
-                                    <div className="notification-header">
+                                <div className="verify-notifications-dropdown">
+                                    <div className="verify-notification-header">
                                         <h3>Notifications</h3>
-                                        <button className="mark-all-read">Mark all as read</button>
+                                        <button className="verify-mark-all-read">Mark all as read</button>
                                     </div>
-                                    <div className="notification-list">
-                                        <div className="notification-item unread">
-                                            <div className="notification-icon">
+                                    <div className="verify-notification-list">
+                                        <div className="verify-notification-item unread">
+                                            <div className="verify-notification-icon">
                                                 <FaCheck />
                                             </div>
-                                            <div className="notification-content">
+                                            <div className="verify-notification-content">
                                                 <p>Your profile has been verified!</p>
-                                                <span className="notification-time">2 hours ago</span>
+                                                <span className="verify-notification-time">2 hours ago</span>
                                             </div>
                                         </div>
-                                        <div className="notification-item unread">
-                                            <div className="notification-icon">
+                                        <div className="verify-notification-item unread">
+                                            <div className="verify-notification-icon">
                                                 <FaIdCard />
                                             </div>
-                                            <div className="notification-content">
+                                            <div className="verify-notification-content">
                                                 <p>New job matching your skills is available</p>
-                                                <span className="notification-time">1 day ago</span>
+                                                <span className="verify-notification-time">1 day ago</span>
                                             </div>
                                         </div>
                                     </div>
-                                    <div className="notification-footer">
+                                    <div className="verify-notification-footer">
                                         <Link to="/notifications">View all notifications</Link>
                                     </div>
                                 </div>
@@ -286,16 +301,16 @@ const VerifyAccount = () => {
                         </div>
                         
                         <button
-                            className="theme-toggle-button"
+                            className="verify-theme-toggle"
                             onClick={toggleDarkMode}
                             aria-label={isDarkMode ? "Switch to light mode" : "Switch to dark mode"}
                         >
                             {isDarkMode ? <FaSun /> : <FaMoon />}
                         </button>
 
-                        <div className="profile-dropdown-container" ref={profileDropdownRef}>
+                        <div className="verify-profile-container" ref={profileDropdownRef}>
                             <button 
-                                className="profile-button" 
+                                className="verify-profile-button" 
                                 onClick={toggleProfileDropdown}
                                 aria-label="User profile"
                             >
@@ -303,18 +318,18 @@ const VerifyAccount = () => {
                                     <img 
                                         src={user.profilePicture}
                                         alt="Profile"
-                                        className="profile-avatar"
+                                        className="verify-profile-avatar"
                                     />
                                 ) : (
-                                    <FaUserCircle className="profile-avatar-icon" />
+                                    <FaUserCircle className="verify-avatar-icon" />
                                 )}
-                                <FaChevronDown className={`dropdown-icon ${showProfileDropdown ? 'rotate' : ''}`} />
+                                <FaChevronDown className={`verify-dropdown-icon ${showProfileDropdown ? 'rotate' : ''}`} />
                             </button>
                             
                             {showProfileDropdown && (
-                                <div className="profile-dropdown">
-                                    <div className="profile-dropdown-header">
-                                        <div className="profile-dropdown-avatar">
+                                <div className="verify-profile-dropdown">
+                                    <div className="verify-profile-header">
+                                        <div className="verify-profile-avatar-container">
                                             {user.profilePicture ? (
                                                 <img 
                                                     src={user.profilePicture}
@@ -324,15 +339,15 @@ const VerifyAccount = () => {
                                                 <FaUserCircle />
                                             )}
                                         </div>
-                                        <div className="profile-dropdown-info">
+                                        <div className="verify-profile-info">
                                             <h4>{user.name || 'User'}</h4>
-                                            <span className="profile-status">
+                                            <span className="verify-profile-status">
                                                 {!user.idVerification ? (
                                                     'Not Verified'
                                                 ) : user.idVerification.status === 'verified' ? (
-                                                    <><FaCheck className="verified-icon" /> Verified</>
+                                                    <><FaCheck className="verify-verified-icon" /> Verified</>
                                                 ) : user.idVerification.status === 'pending' && user.idVerification.frontImage && user.idVerification.backImage ? (
-                                                    <><FaClock className="pending-icon" /> Verification Pending</>
+                                                    <><FaClock className="verify-pending-icon" /> Verification Pending</>
                                                 ) : user.idVerification.status === 'rejected' ? (
                                                     <>Verification Rejected</>
                                                 ) : (
@@ -341,24 +356,29 @@ const VerifyAccount = () => {
                                             </span>
                                         </div>
                                     </div>
-                                    <div className="profile-dropdown-links">
+                                    <div className="verify-profile-links">
                                         <button 
-                                            className="profile-dropdown-link"
-                                            onClick={() => navigate('/employee-profile')}
+                                            className="verify-profile-link"
+                                            onClick={() => navigate('/my-profile')}
                                         >
                                             <FaUserCircle /> View Profile
                                         </button>
                                         
-                                        {/* Show verify account option when appropriate */}
+                                        <button 
+                                            className="verify-profile-link"
+                                            onClick={handleShowRatings}
+                                        >
+                                            <FaStar /> My Ratings & Reviews
+                                        </button>
                                         
                                         <button 
-                                            className="profile-dropdown-link"
+                                            className="verify-profile-link"
                                             onClick={() => navigate('/settings')}
                                         >
                                             Settings
                                         </button>
                                         <button 
-                                            className="profile-dropdown-link"
+                                            className="verify-profile-link"
                                             onClick={handleLogout}
                                         >
                                             Logout
@@ -371,12 +391,12 @@ const VerifyAccount = () => {
                 </div>
             </header>
 
-            {/* Main Verify Account Content */}
-            <div className="verify-content-wrapper">
+            {/* Main Content */}
+            <main className="verify-main">
                 <div className="verify-container">
-                    <div className="verify-header">
+                    <div className="verify-page-header">
                         <button 
-                            className="back-button" 
+                            className="verify-back-button" 
                             onClick={() => navigate('/employee-dashboard')}
                         >
                             <FaArrowLeft /> <span>Back to Dashboard</span>
@@ -385,8 +405,8 @@ const VerifyAccount = () => {
                     </div>
 
                     {success ? (
-                        <div className="success-message">
-                            <FaCheck className="success-icon" />
+                        <div className="verify-success-message">
+                            <FaCheck className="verify-success-icon" />
                             <h2>Verification Submitted!</h2>
                             <p>Your student ID has been submitted for verification. Our team will review it shortly.</p>
                             <p>You will be redirected to your dashboard in a few seconds...</p>
@@ -394,30 +414,30 @@ const VerifyAccount = () => {
                     ) : (
                         <>
                             <div className="verify-instructions">
-                                <div className="instruction-icon">
+                                <div className="verify-instruction-icon">
                                     <FaIdCard />
                                 </div>
-                                <div className="instruction-text">
+                                <div className="verify-instruction-text">
                                     <h3>Student ID Verification</h3>
                                     <p>Please upload clear images of the front and back of your student ID card.</p>
                                     <p>Your ID must be valid and clearly show your name, photo, and student ID number.</p>
                                 </div>
                             </div>
 
-                            {error && <div className="error-message">{error}</div>}
+                            {error && <div className="verify-error-message">{error}</div>}
 
                             <form onSubmit={handleSubmit} className="verify-form">
-                                <div className="upload-container">
-                                    <div className="upload-section">
+                                <div className="verify-upload-container">
+                                    <div className="verify-upload-section">
                                         <h2>Front of ID</h2>
                                         <div 
-                                            className={`upload-area ${frontPreview ? 'has-preview' : ''}`}
+                                            className={`verify-upload-area ${frontPreview ? 'has-preview' : ''}`}
                                             onClick={() => document.getElementById('front-id-input').click()}
                                         >
                                             {frontPreview ? (
-                                                <img src={frontPreview} alt="Front of ID preview" className="id-preview" />
+                                                <img src={frontPreview} alt="Front of ID preview" className="verify-id-preview" />
                                             ) : (
-                                                <div className="upload-placeholder">
+                                                <div className="verify-upload-placeholder">
                                                     <FaUpload />
                                                     <p>Click to browse or drag image here</p>
                                                 </div>
@@ -427,13 +447,13 @@ const VerifyAccount = () => {
                                                 type="file" 
                                                 accept="image/*" 
                                                 onChange={handleFrontImageChange}
-                                                className="file-input"
+                                                className="verify-file-input"
                                             />
                                         </div>
                                         {frontPreview && (
                                             <button 
                                                 type="button" 
-                                                className="change-image"
+                                                className="verify-change-image"
                                                 onClick={(e) => {
                                                     e.stopPropagation();
                                                     setFrontImage(null);
@@ -445,16 +465,16 @@ const VerifyAccount = () => {
                                         )}
                                     </div>
 
-                                    <div className="upload-section">
+                                    <div className="verify-upload-section">
                                         <h2>Back of ID</h2>
                                         <div 
-                                            className={`upload-area ${backPreview ? 'has-preview' : ''}`}
+                                            className={`verify-upload-area ${backPreview ? 'has-preview' : ''}`}
                                             onClick={() => document.getElementById('back-id-input').click()}
                                         >
                                             {backPreview ? (
-                                                <img src={backPreview} alt="Back of ID preview" className="id-preview" />
+                                                <img src={backPreview} alt="Back of ID preview" className="verify-id-preview" />
                                             ) : (
-                                                <div className="upload-placeholder">
+                                                <div className="verify-upload-placeholder">
                                                     <FaUpload />
                                                     <p>Click to browse or drag image here</p>
                                                 </div>
@@ -464,13 +484,13 @@ const VerifyAccount = () => {
                                                 type="file" 
                                                 accept="image/*" 
                                                 onChange={handleBackImageChange}
-                                                className="file-input"
+                                                className="verify-file-input"
                                             />
                                         </div>
                                         {backPreview && (
                                             <button 
                                                 type="button" 
-                                                className="change-image"
+                                                className="verify-change-image"
                                                 onClick={(e) => {
                                                     e.stopPropagation();
                                                     setBackImage(null);
@@ -483,7 +503,7 @@ const VerifyAccount = () => {
                                     </div>
                                 </div>
 
-                                <div className="verification-notice">
+                                <div className="verify-notice">
                                     <p>
                                         <strong>Note:</strong> Your ID will be securely stored and only used for verification purposes.
                                         Once verified, you'll have full access to all platform features.
@@ -492,7 +512,7 @@ const VerifyAccount = () => {
 
                                 <button 
                                     type="submit" 
-                                    className="submit-button"
+                                    className={`verify-submit-button ${loading ? 'loading' : ''}`}
                                     disabled={loading || !frontImage || !backImage}
                                 >
                                     {loading ? 'Submitting...' : 'Submit for Verification'}
@@ -501,79 +521,79 @@ const VerifyAccount = () => {
                         </>
                     )}
                 </div>
-            </div>
+            </main>
 
             {/* Footer */}
-            <footer className="dashboard-footer">
-                <div className="footer-grid">
-                    <div className="footer-column">
-                        <h3>For Freelancers</h3>
-                        <ul>
-                            <li><Link to="/find-jobs">Find Work</Link></li>
-                            <li><Link to="/resources">Resources</Link></li>
-                            <li><Link to="/freelancer-tips">Tips & Guides</Link></li>
-                            <li><Link to="/freelancer-forum">Community Forum</Link></li>
-                            <li><Link to="/freelancer-stories">Success Stories</Link></li>
-                        </ul>
-                    </div>
-                    
-                    <div className="footer-column">
-                        <h3>Resources</h3>
-                        <ul>
-                            <li><Link to="/help-center">Help Center</Link></li>
-                            <li><Link to="/webinars">Webinars</Link></li>
-                            <li><Link to="/blog">Blog</Link></li>
-                            <li><Link to="/api-docs">Developer API</Link></li>
-                            <li><Link to="/partner-program">Partner Program</Link></li>
-                        </ul>
-                    </div>
-                    
-                    <div className="footer-column">
-                        <h3>Company</h3>
-                        <ul>
-                            <li><Link to="/about">About Us</Link></li>
-                            <li><Link to="/leadership">Leadership</Link></li>
-                            <li><Link to="/careers">Careers</Link></li>
-                            <li><Link to="/press">Press</Link></li>
-                            <li><Link to="/contact">Contact Us</Link></li>
-                        </ul>
-                    </div>
-                </div>
-                
-                <div className="footer-bottom">
-                    <div className="footer-bottom-container">
-                        <div className="footer-logo">
-                            <Link to="/">Next Youth</Link>
+            <footer className="verify-footer">
+                <div className="verify-footer-container">
+                    <div className="verify-footer-grid">
+                        <div className="verify-footer-column">
+                            <h3>For Freelancers</h3>
+                            <ul>
+                                <li><Link to="/find-jobs">Find Work</Link></li>
+                                <li><Link to="/resources">Resources</Link></li>
+                                <li><Link to="/freelancer-tips">Tips & Guides</Link></li>
+                            </ul>
                         </div>
                         
-                        <div className="footer-legal-links">
+                        <div className="verify-footer-column">
+                            <h3>Resources</h3>
+                            <ul>
+                                <li><Link to="/help-center">Help Center</Link></li>
+                                <li><Link to="/webinars">Webinars</Link></li>
+                                <li><Link to="/blog">Blog</Link></li>
+                            </ul>
+                        </div>
+                        
+                        <div className="verify-footer-column">
+                            <h3>Company</h3>
+                            <ul>
+                                <li><Link to="/about">About Us</Link></li>
+                                <li><Link to="/careers">Careers</Link></li>
+                                <li><Link to="/contact">Contact Us</Link></li>
+                            </ul>
+                        </div>
+                    </div>
+                    
+                    <div className="verify-footer-bottom">
+                        <div className="verify-footer-logo">
+                            <Link to="/">
+                                <img 
+                                    src={isDarkMode ? logoDark : logoLight} 
+                                    alt="Next Youth" 
+                                    className="verify-footer-logo-image" 
+                                />
+                            </Link>
+                        </div>
+                        
+                        <div className="verify-legal-links">
                             <Link to="/terms">Terms of Service</Link>
                             <Link to="/privacy">Privacy Policy</Link>
                             <Link to="/accessibility">Accessibility</Link>
-                            <Link to="/sitemap">Site Map</Link>
                         </div>
                         
-                        <div className="footer-social">
-                            <a href="https://facebook.com" aria-label="Facebook">
-                                <FaFacebook />
-                            </a>
-                            <a href="https://twitter.com" aria-label="Twitter">
-                                <FaTwitter />
-                            </a>
-                            <a href="https://linkedin.com" aria-label="LinkedIn">
-                                <FaLinkedin />
-                            </a>
-                            <a href="https://instagram.com" aria-label="Instagram">
-                                <FaInstagram />
-                            </a>
+                        <div className="verify-social-links">
+                            <a href="https://facebook.com" aria-label="Facebook"><FaFacebook /></a>
+                            <a href="https://twitter.com" aria-label="Twitter"><FaTwitter /></a>
+                            <a href="https://linkedin.com" aria-label="LinkedIn"><FaLinkedin /></a>
+                            <a href="https://instagram.com" aria-label="Instagram"><FaInstagram /></a>
                         </div>
                     </div>
                     
-                    <div className="footer-copyright">
+                    <div className="verify-copyright">
                         <p>&copy; {currentYear} Next Youth. All rights reserved.</p>
                     </div>
                 </div>
             </footer>
+
+            {/* Rating Modal */}
+            {showRatingModal && (
+                <RatingModal 
+                    isOpen={showRatingModal}
+                    onClose={() => setShowRatingModal(false)}
+                    viewOnly={true}
+                />
+            )}
         </div>
     );
 };

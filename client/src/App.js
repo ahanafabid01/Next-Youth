@@ -34,6 +34,7 @@ import BecomeSeller from "./Homepages/BecomeSeller";
 import HelpAndSupport from './Homepages/Help&Support';
 import EmployerSettings from "./components/Employer/EmployerSettings";
 import Proposals from "./components/Employee/Proposals";
+import EmployeeHelp from "./components/Employee/EmployeeHelp";
 import "./App.css";
 
 const App = () => {
@@ -62,7 +63,7 @@ const App = () => {
                 <Route path="/settings" element={<Settings />} />
                 <Route path="/find-jobs/saved" element={<SavedJobs />} /> {/* Updated to use SavedJobs component */}
                 <Route path="/find-jobs/proposals" element={<FindJobs />} />
-                <Route path="/find-jobs/details/:jobId" element={<FindJobs />} />
+                <Route path="/find-jobs/details/:jobId" element={<JobApplication />} /> {/* Updated to use JobApplication component */}
                 <Route path="/verify-account" element={<VerifyAccount />} />
                 <Route path="/employer-verification" element={<EmployerVerification />} />
                 <Route path="/my-profile" element={<MyProfile />} />
@@ -77,6 +78,7 @@ const App = () => {
                 <Route path="/help-support" element={<HelpAndSupport />} />
                 <Route path="/employer-settings" element={<EmployerSettings />} />
                 <Route path="/proposals" element={<Proposals />} />
+                <Route path="/help" element={<EmployeeHelp />} />
             </Routes>
         </Router>
     );

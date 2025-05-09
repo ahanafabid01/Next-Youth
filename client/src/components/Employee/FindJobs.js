@@ -17,11 +17,14 @@ import {
   FaBars,
   FaCheckCircle,
   FaClock,
-  FaStar
+  FaStar,
+  FaCog,
+  FaSignOutAlt
 } from 'react-icons/fa';
 import './FindJobs.css';
 import logoLight from '../../assets/images/logo-light.png';
 import logoDark from '../../assets/images/logo-dark.png';
+import RatingModal from '../Connections/RatingModal';
 
 const FindJobs = () => {
   const navigate = useNavigate();
@@ -329,9 +332,22 @@ const FindJobs = () => {
   // Effect to update dark/light theme
   useEffect(() => {
     const dashboardElement = document.querySelector('.employee-find-jobs-container');
+    const headerElement = document.querySelector('.employee-find-jobs-header');
+    
     if (dashboardElement) {
       dashboardElement.classList.toggle('employee-dark-mode', isDarkMode);
     }
+    
+    if (headerElement) {
+      if (isDarkMode) {
+        headerElement.style.backgroundColor = 'var(--dark-card)';
+        headerElement.style.borderBottom = '1px solid var(--dark-border)';
+      } else {
+        headerElement.style.backgroundColor = 'var(--light-card)';
+        headerElement.style.borderBottom = '1px solid var(--light-border)';
+      }
+    }
+    
     localStorage.setItem("dashboard-theme", isDarkMode ? "dark" : "light");
   }, [isDarkMode]);
 
@@ -437,6 +453,8 @@ const FindJobs = () => {
       </div>
     );
   };
+
+  const [showRatingModal, setShowRatingModal] = useState(false);
 
   return (
     <div className="employee-find-jobs-container">
@@ -593,21 +611,24 @@ const FindJobs = () => {
                     </button>
                     <button 
                       className="employee-profile-dropdown-link"
-                      onClick={() => navigate('/employee-dashboard')}
+                      onClick={() => {
+                        setShowProfileDropdown(false); // Close dropdown
+                        setShowRatingModal(true); // Show rating modal
+                      }}
                     >
-                      <FaUserCircle /> Dashboard
+                      <FaStar /> My Ratings & Reviews
                     </button>
                     <button 
                       className="employee-profile-dropdown-link"
                       onClick={() => navigate('/settings')}
                     >
-                      <FaStar /> Settings
+                      <FaCog /> Settings
                     </button>
                     <button 
                       className="employee-profile-dropdown-link"
                       onClick={handleLogout}
                     >
-                      <FaStar /> Logout
+                      <FaSignOutAlt /> Logout
                     </button>
                   </div>
                 </div>
@@ -919,6 +940,14 @@ const FindJobs = () => {
           </div>
         </div>
       </footer>
+
+      {showRatingModal && (
+        <RatingModal
+          isOpen={true}
+          onClose={() => setShowRatingModal(false)}
+          viewOnly={true}
+        />
+      )}
     </div>
   );
 };

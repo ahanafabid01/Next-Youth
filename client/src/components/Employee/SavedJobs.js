@@ -20,10 +20,14 @@ import {
   FaExternalLinkAlt,
   FaBars,
   FaBookmark,
+  FaStar,
+  FaCog,
+  FaSignOutAlt,
 } from 'react-icons/fa';
 import './SavedJobs.css';
 import logoLight from '../../assets/images/logo-light.png'; 
 import logoDark from '../../assets/images/logo-dark.png';
+import RatingModal from '../Connections/RatingModal';
 
 const SavedJobs = () => {
   const navigate = useNavigate();
@@ -55,6 +59,8 @@ const SavedJobs = () => {
   const [isDarkMode, setIsDarkMode] = useState(() => {
     return localStorage.getItem("dashboard-theme") === "dark";
   });
+
+  const [showRatingModal, setShowRatingModal] = useState(false);
 
   const API_BASE_URL = 'http://localhost:4000/api';
 
@@ -194,8 +200,20 @@ const SavedJobs = () => {
   
   const toggleMobileNav = useCallback((e) => {
     e.stopPropagation();
+    
+    // Toggle active class on the nav toggle button for animation
+    const navToggle = document.querySelector('.employee-saved-nav-toggle');
+    navToggle.classList.toggle('active');
+    
     setShowMobileNav(prev => !prev);
-  }, []);
+    
+    // Prevent body scrolling when menu is open
+    if (!showMobileNav) {
+      document.body.classList.add('employee-saved-mobile-nav-active');
+    } else {
+      document.body.classList.remove('employee-saved-mobile-nav-active');
+    }
+  }, [showMobileNav]);
 
   const toggleFilters = useCallback((e) => {
     e.stopPropagation();
@@ -214,8 +232,15 @@ const SavedJobs = () => {
     if (profileDropdownRef.current && !profileDropdownRef.current.contains(event.target)) {
       setShowProfileDropdown(false);
     }
-    if (!event.target.closest('.employee-saved-nav')) {
+    if (!event.target.closest('.employee-saved-nav') && 
+        !event.target.closest('.employee-saved-nav-toggle')) {
       setShowMobileNav(false);
+      
+      // Also remove active class from hamburger when clicked outside
+      const navToggle = document.querySelector('.employee-saved-nav-toggle');
+      if (navToggle) navToggle.classList.remove('active');
+      
+      document.body.classList.remove('employee-saved-mobile-nav-active');
     }
     if (!event.target.closest('.employee-saved-filter-panel') && 
         !event.target.closest('.employee-saved-filter-toggle')) {
@@ -255,6 +280,13 @@ const SavedJobs = () => {
     }
     localStorage.setItem("dashboard-theme", isDarkMode ? "dark" : "light");
   }, [isDarkMode]);
+
+  // Add this useEffect to clean up the body class when component unmounts
+  useEffect(() => {
+    return () => {
+      document.body.classList.remove('employee-saved-mobile-nav-active');
+    };
+  }, []);
 
   // Effect for fetching initial data
   useEffect(() => {
@@ -516,14 +548,20 @@ const SavedJobs = () => {
                     <Link to="/my-profile" className="employee-saved-profile-dropdown-link">
                       <FaUserCircle /> View Profile
                     </Link>
-                    <Link to="/verify-account" className="employee-saved-profile-dropdown-link">
-                      <FaRegFileAlt /> Verify Account
-                    </Link>
+                    <button 
+                      className="employee-saved-profile-dropdown-link"
+                      onClick={() => {
+                        setShowProfileDropdown(false); // Close dropdown
+                        setShowRatingModal(true); // Show rating modal
+                      }}
+                    >
+                      <FaStar /> My Ratings & Reviews
+                    </button>
                     <Link to="/settings" className="employee-saved-profile-dropdown-link">
-                      <FaRegFileAlt /> Settings
+                      <FaCog /> Settings
                     </Link>
                     <button className="employee-saved-profile-dropdown-link" onClick={handleLogout}>
-                      <FaRegFileAlt /> Logout
+                      <FaSignOutAlt /> Logout
                     </button>
                   </div>
                 </div>
@@ -728,6 +766,14 @@ const SavedJobs = () => {
           </div>
         </div>
       </footer>
+
+      {showRatingModal && (
+        <RatingModal
+          isOpen={true}
+          onClose={() => setShowRatingModal(false)}
+          viewOnly={true}
+        />
+      )}
     </div>
   );
 };

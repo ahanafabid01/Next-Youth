@@ -235,7 +235,8 @@ const EmployeeDashboard = () => {
     if (profileDropdownRef.current && !profileDropdownRef.current.contains(event.target)) {
       setShowProfileDropdown(false);
     }
-    if (!event.target.closest('.employee-dashboard-nav')) {
+    if (!event.target.closest('.employee-dashboard-nav') && 
+        !event.target.closest('.employee-dashboard-nav-toggle')) {
       setShowMobileNav(false);
     }
     if (!event.target.closest('.employee-filter-panel') && 
@@ -246,7 +247,17 @@ const EmployeeDashboard = () => {
 
   const toggleMobileNav = useCallback((e) => {
     e.stopPropagation();
-    setShowMobileNav(prev => !prev);
+    
+    // When opening nav, close other dropdowns
+    setShowMobileNav(prev => {
+      if (!prev) {
+        setShowNotifications(false);
+        setShowProfileDropdown(false);
+        setShowJobsDropdown(false);
+        setShowFilters(false);
+      }
+      return !prev;
+    });
   }, []);
 
   const toggleJobsDropdown = useCallback((e) => {
@@ -395,6 +406,18 @@ const EmployeeDashboard = () => {
   useEffect(() => {
     localStorage.setItem("unread-notifications", unreadNotifications.toString());
   }, [unreadNotifications]);
+
+  useEffect(() => {
+    if (showMobileNav) {
+      document.body.classList.add('mobile-nav-active');
+    } else {
+      document.body.classList.remove('mobile-nav-active');
+    }
+    
+    return () => {
+      document.body.classList.remove('mobile-nav-active');
+    };
+  }, [showMobileNav]);
 
   const currentYear = new Date().getFullYear();
   const totalPages = Math.ceil(totalJobs / jobsPerPage);

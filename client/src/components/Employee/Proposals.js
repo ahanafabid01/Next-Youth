@@ -5,10 +5,11 @@ import { FaFileContract, FaDollarSign, FaRegFileAlt, FaSearch, FaFilter, FaChevr
          FaCog, FaUserCircle, FaSpinner, FaExclamationCircle, 
          FaBell, FaEye, FaEdit, FaTrash, FaCheckCircle, 
          FaClipboardList, FaHourglassHalf, FaCheckDouble, FaTimes, 
-         FaSun, FaMoon, FaBars, FaTimesCircle, FaAngleLeft, FaAngleRight, FaClock } from 'react-icons/fa';
+         FaSun, FaMoon, FaBars, FaTimesCircle, FaAngleLeft, FaAngleRight, FaClock, FaStar } from 'react-icons/fa';
 import './Proposals.css';
 import logoLight from '../../assets/images/logo-light.png';
 import logoDark from '../../assets/images/logo-dark.png';
+import RatingModal from '../Connections/RatingModal';
 
 const Proposals = () => {
   const navigate = useNavigate();
@@ -439,6 +440,8 @@ const Proposals = () => {
     );
   };
 
+  const [showRatingModal, setShowRatingModal] = useState(false);
+
   return (
     <div className={`emp-proposals-container ${isDarkMode ? 'emp-dark-mode' : ''}`}>
       <div className={`emp-mobile-nav-overlay ${showMobileNav ? 'active' : ''}`} onClick={toggleMobileNav}></div>
@@ -466,7 +469,7 @@ const Proposals = () => {
             </Link>
             
             <nav className={`emp-proposals-nav ${showMobileNav ? 'active' : ''}`}>
-              <Link to="/find-jobs" className="emp-nav-link" style={{"--item-index": 0}}>Find Jobs</Link>
+              <Link to="/find-jobs" className="emp-nav-link" style={{"--item-index": 0}}>Find Work</Link>
               <Link to="/find-jobs/saved" className="emp-nav-link" style={{"--item-index": 1}}>Saved Jobs</Link>
               <Link to="/proposals" className="emp-nav-link active" style={{"--item-index": 2}}>Proposals</Link>
               <Link to="/help" className="emp-nav-link" style={{"--item-index": 3}}>Help</Link>
@@ -597,6 +600,16 @@ const Proposals = () => {
                       <FaRegUser />
                       My Profile
                     </Link>
+                    <button 
+                      className="emp-profile-dropdown-link"
+                      onClick={() => {
+                        setShowProfileDropdown(false); // Close dropdown
+                        setShowRatingModal(true); // Show rating modal
+                      }}
+                    >
+                      <FaStar />
+                      My Ratings & Reviews
+                    </button>
                     <Link to="/settings" className="emp-profile-dropdown-link">
                       <FaCog />
                       Settings
@@ -940,6 +953,14 @@ const Proposals = () => {
             </div>
           </div>
         </div>
+      )}
+
+      {showRatingModal && (
+        <RatingModal
+          isOpen={true}
+          onClose={() => setShowRatingModal(false)}
+          viewOnly={true}
+        />
       )}
     </div>
   );
