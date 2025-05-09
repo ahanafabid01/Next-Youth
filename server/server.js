@@ -8,7 +8,7 @@ import bodyParser from 'body-parser';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import fs from 'fs';
-import connectDB from './config/db.js';
+import connectDB from './config/mongodb.js';
 
 // Import message router
 import messageRouter from './routes/messageRoutes.js';

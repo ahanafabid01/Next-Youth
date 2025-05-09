@@ -55,6 +55,19 @@
   border-color: #3b82f6;
 }
 
+.clear-search {
+  background: none;
+  border: none;
+  color: #666;
+  font-size: 18px;
+  cursor: pointer;
+  padding: 0 8px;
+}
+
+.clear-search:hover {
+  color: #ff3b30;
+}
+
 .available-users-heading {
   padding: 16px;
   display: flex;
@@ -152,6 +165,19 @@
   text-overflow: ellipsis;
 }
 
+.job-applied-for {
+  display: flex;
+  align-items: center;
+  font-size: 0.85em;
+  color: #555;
+  margin-top: 3px;
+}
+
+.job-icon {
+  margin-right: 5px;
+  font-size: 0.9em;
+}
+
 .loading,
 .error,
 .no-users {
@@ -226,6 +252,32 @@
   color: #333;
 }
 
+.conversation-job-title {
+  font-size: 0.8em;
+  color: #666;
+  display: flex;
+  align-items: center;
+  margin: 1px 0 4px 0;
+}
+
+.job-icon {
+  margin-right: 4px;
+}
+
+.recipient-job {
+  font-size: 0.85em;
+  color: #555;
+  display: flex;
+  align-items: center;
+  margin-top: 2px;
+}
+
+.recipient-company {
+  font-size: 0.85em;
+  color: #555;
+  margin-top: 2px;
+}
+
 .compose-form-wrapper {
   flex: 1;
   display: flex;
@@ -288,4 +340,25 @@
 
 .compose-form button svg {
   margin-right: 8px;
+}
+
+.start-conversation-button {
+  background-color: #3b82f6;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  padding: 8px 16px;
+  font-size: 14px;
+  cursor: pointer;
+  margin-top: 10px;
+  transition: background-color 0.2s;
+}
+
+.start-conversation-button:hover {
+  background-color: #2563eb;
+}
+
+.message-input-form button.disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
 }

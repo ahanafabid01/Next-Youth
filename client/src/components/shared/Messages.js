@@ -1,13 +1,16 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { useParams } from 'react-router-dom';
 import axios from 'axios';
-import { FaUser, FaPaperPlane, FaPlus, FaCommentAlt, FaArrowLeft, FaSpinner } from 'react-icons/fa';
+import { FaUser, FaPaperPlane, FaPlus, FaCommentAlt, FaArrowLeft, FaSpinner, FaBriefcase } from 'react-icons/fa';
 import { useSocket } from '../../context/SocketContext';
 import NewConversation from './NewConversation';
 import './Messages.css';
 
 const Messages = ({ userType }) => {
+  const { userId: urlUserId } = useParams();
   const [conversations, setConversations] = useState([]);
-  const [selectedConversationId, setSelectedConversationId] = useState(null);
+  const [selectedConversationId, setSelectedConversationId] = useState(urlUserId || null);
+  const [selectedUserDetails, setSelectedUserDetails] = useState(null);
   const [messages, setMessages] = useState([]);
   const [newMessage, setNewMessage] = useState('');
   const [loading, setLoading] = useState(true);
@@ -15,7 +18,7 @@ const Messages = ({ userType }) => {
   const [showNewConversation, setShowNewConversation] = useState(false);
   const messagesEndRef = useRef(null);
   const { socket } = useSocket();
-  const [showConversation, setShowConversation] = useState(false);
+  const [showConversation, setShowConversation] = useState(!!urlUserId);
   
   const API_BASE_URL = 'http://localhost:4000/api';
 
@@ -24,7 +27,7 @@ const Messages = ({ userType }) => {
     const fetchConversations = async () => {
       try {
         setLoading(true);
-        // Get conversations based on user type
+        // Get conversations
         const endpoint = `${API_BASE_URL}/messages/conversations`;
         
         const response = await axios.get(endpoint, { withCredentials: true });
@@ -32,12 +35,10 @@ const Messages = ({ userType }) => {
         if (response.data.success && response.data.conversations) {
           setConversations(response.data.conversations);
         } else {
-          // Initialize with empty array if no conversations returned
           setConversations([]);
         }
       } catch (error) {
         console.error('Error fetching conversations:', error);
-        // Initialize with empty array on error
         setConversations([]);
       } finally {
         setLoading(false);
@@ -59,32 +60,101 @@ const Messages = ({ userType }) => {
         socket.off('new-message', handleNewMessage);
       }
     };
-  }, [socket, userType, API_BASE_URL]);
+  }, [socket, API_BASE_URL]);
+
+  // Fetch additional user details when a conversation is selected
+  useEffect(() => {
+    if (!selectedConversationId) return;
+
+    const fetchUserDetails = async () => {
+      try {
+        // Determine which endpoint to use based on user type
+        let endpoint;
+        if (userType === 'employer') {
+          endpoint = `${API_BASE_URL}/messages/applicant-details/${selectedConversationId}`;
+        } else {
+          endpoint = `${API_BASE_URL}/messages/employer-details/${selectedConversationId}`;
+        }
+        
+        const response = await axios.get(endpoint, {
+          withCredentials: true
+        });
+        
+        if (response.data.success) {
+          setSelectedUserDetails(response.data.user);
+        }
+      } catch (error) {
+        console.error('Error fetching user details:', error);
+      }
+    };
+
+    // Find user details in conversations first
+    const conversationUser = conversations.find(c => c.participant._id === selectedConversationId);
+    if (conversationUser) {
+      setSelectedUserDetails({
+        ...conversationUser.participant,
+        jobTitle: conversationUser.jobTitle || null,
+        companyName: conversationUser.companyName || null
+      });
+    } else {
+      fetchUserDetails();
+    }
+  }, [selectedConversationId, userType, conversations, API_BASE_URL]);
 
   // Handle new incoming message
   const handleNewMessage = (message) => {
     if (!message) return;
     
     // Update messages if in current conversation
-    if (selectedConversationId === message.sender || selectedConversationId === message.receiver) {
-      setMessages(prev => [...(prev || []), message]);
+    if (selectedConversationId === message.sender._id || selectedConversationId === message.receiver._id) {
+      setMessages(prev => [...prev, message]);
     }
     
     // Update conversation list to show latest message
     setConversations(prevConversations => {
-      if (!prevConversations) return [];
+      const updatedConversations = [...prevConversations];
+      const conversationIndex = updatedConversations.findIndex(
+        c => c.participant._id === message.sender._id || c.participant._id === message.receiver._id
+      );
       
-      return prevConversations.map(conv => {
-        if (conv && (conv.userId === message.sender || conv.userId === message.receiver)) {
-          return {
-            ...conv,
-            lastMessage: message.content,
-            lastMessageTime: message.createdAt,
-            unreadCount: selectedConversationId === message.sender ? 0 : (conv.unreadCount || 0) + 1
-          };
-        }
-        return conv;
+      if (conversationIndex !== -1) {
+        // Update existing conversation
+        updatedConversations[conversationIndex] = {
+          ...updatedConversations[conversationIndex],
+          lastMessage: {
+            content: message.content,
+            createdAt: message.createdAt,
+            read: message.read
+          },
+          unreadCount: selectedConversationId === message.sender._id ? 0 : 
+            (updatedConversations[conversationIndex].unreadCount || 0) + 1
+        };
+      } else {
+        // Add new conversation
+        const isIncoming = message.sender._id !== selectedConversationId;
+        const otherUser = isIncoming ? message.sender : message.receiver;
+        
+        updatedConversations.push({
+          participant: {
+            _id: otherUser._id,
+            name: otherUser.name,
+            profilePicture: otherUser.profilePicture
+          },
+          lastMessage: {
+            content: message.content,
+            createdAt: message.createdAt,
+            read: !isIncoming
+          },
+          unreadCount: isIncoming ? 1 : 0
+        });
+      }
+      
+      // Sort by most recent message
+      updatedConversations.sort((a, b) => {
+        return new Date(b.lastMessage?.createdAt || 0) - new Date(a.lastMessage?.createdAt || 0);
       });
+      
+      return updatedConversations;
     });
   };
 
@@ -130,18 +200,20 @@ const Messages = ({ userType }) => {
       const response = await axios.post(
         `${API_BASE_URL}/messages/`, 
         { 
-          content: newMessage.trim(), 
-          receiver: selectedConversationId 
+          recipientId: selectedConversationId, 
+          content: newMessage.trim() 
         },
         { withCredentials: true }
       );
       
       if (response.data.success && response.data.message) {
-        setMessages(prev => [...(prev || []), response.data.message]);
+        setMessages(prev => [...prev, response.data.message]);
         setNewMessage('');
       }
     } catch (error) {
       console.error('Error sending message:', error);
+      // Show user-friendly error
+      alert("Failed to send message. Please try again.");
     }
   };
 
@@ -157,7 +229,9 @@ const Messages = ({ userType }) => {
   };
 
   // Get selected conversation details
-  const selectedConversation = conversations?.find(c => c?.userId === selectedConversationId) || null;
+  const selectedConversation = conversations.find(c => 
+    c.participant && c.participant._id === selectedConversationId
+  );
 
   return (
     <div className={`messages-container ${showConversation ? 'show-conversation' : ''}`}>
@@ -191,66 +265,60 @@ const Messages = ({ userType }) => {
                   <FaSpinner className="spinning" />
                   <p>Loading conversations...</p>
                 </div>
-              ) : conversations?.length === 0 ? (
+              ) : conversations.length === 0 ? (
                 <div className="no-conversations">
                   <FaCommentAlt style={{ fontSize: '24px', marginBottom: '12px', opacity: 0.6 }} />
                   <p>No conversations yet</p>
                   <button 
-                    style={{ 
-                      marginTop: '12px', 
-                      padding: '8px 16px',
-                      backgroundColor: '#3b82f6',
-                      color: 'white',
-                      border: 'none',
-                      borderRadius: '4px',
-                      cursor: 'pointer'
-                    }}
+                    className="start-conversation-button"
                     onClick={() => setShowNewConversation(true)}
                   >
                     Start a conversation
                   </button>
                 </div>
               ) : (
-                conversations?.map(conversation => (
+                conversations.map(conversation => (
                   <div 
-                    key={conversation?.userId}
-                    className={`conversation-item ${selectedConversationId === conversation?.userId ? 'active' : ''} ${conversation?.unreadCount > 0 ? 'unread' : ''}`}
-                    onClick={() => handleConversationSelect(conversation?.userId)}
+                    key={conversation.participant._id}
+                    className={`conversation-item ${selectedConversationId === conversation.participant._id ? 'active' : ''} ${conversation.unreadCount > 0 ? 'unread' : ''}`}
+                    onClick={() => handleConversationSelect(conversation.participant._id)}
                   >
                     <div className="conversation-avatar">
-                      {conversation?.profilePicture ? (
-                        <img src={conversation.profilePicture} alt={conversation.name} />
+                      {conversation.participant.profilePicture ? (
+                        <img src={conversation.participant.profilePicture} alt={conversation.participant.name} />
                       ) : (
                         <div className="default-avatar">
-                          {conversation?.name?.charAt(0) || 'U'}
+                          {conversation.participant.name.charAt(0).toUpperCase()}
                         </div>
                       )}
                     </div>
                     <div className="conversation-details">
                       <div className="conversation-header">
-                        <h4>{conversation?.name || 'Unknown User'}</h4>
-                        {conversation?.lastMessageTime && (
+                        <h4>{conversation.participant.name || 'Unknown User'}</h4>
+                        {conversation.lastMessage?.createdAt && (
                           <span className="conversation-time">
-                            {new Date(conversation.lastMessageTime).toLocaleTimeString([], { 
+                            {new Date(conversation.lastMessage.createdAt).toLocaleTimeString([], { 
                               hour: '2-digit', minute: '2-digit' 
                             })}
                           </span>
                         )}
                       </div>
                       
-                      {userType === 'employee' && conversation?.companyName && (
-                        <p style={{ margin: '0 0 4px', fontSize: '12px', color: '#666' }}>
-                          {conversation.companyName}
+                      {conversation.jobTitle && (
+                        <p className="conversation-job-title">
+                          <FaBriefcase className="job-icon" /> {conversation.jobTitle}
                         </p>
                       )}
                       
-                      {conversation?.lastMessage && (
+                      {conversation.lastMessage && (
                         <p className="conversation-last-message">
-                          {conversation.lastMessage}
+                          {conversation.lastMessage.content.length > 25
+                            ? `${conversation.lastMessage.content.substring(0, 25)}...`
+                            : conversation.lastMessage.content}
                         </p>
                       )}
                       
-                      {conversation?.unreadCount > 0 && (
+                      {conversation.unreadCount > 0 && (
                         <span className="unread-badge">
                           {conversation.unreadCount}
                         </span>
@@ -270,24 +338,28 @@ const Messages = ({ userType }) => {
                     <FaArrowLeft />
                   </button>
                   
-                  {selectedConversation ? (
+                  {selectedUserDetails ? (
                     <div className="recipient-info">
                       <div className="recipient-avatar">
-                        {selectedConversation.profilePicture ? (
-                          <img src={selectedConversation.profilePicture} alt={selectedConversation.name} />
+                        {selectedUserDetails.profilePicture ? (
+                          <img src={selectedUserDetails.profilePicture} alt={selectedUserDetails.name} />
                         ) : (
                           <div className="default-avatar">
-                            {selectedConversation?.name?.charAt(0) || 'U'}
+                            {selectedUserDetails.name.charAt(0).toUpperCase()}
                           </div>
                         )}
                       </div>
                       <div className="recipient-details">
-                        <h3>{selectedConversation.name}</h3>
-                        {userType === 'employee' && selectedConversation.companyName && (
-                          <p className="recipient-type">{selectedConversation.companyName}</p>
+                        <h3>{selectedUserDetails.name}</h3>
+                        {userType === 'employee' && selectedUserDetails.companyName && (
+                          <p className="recipient-company">{selectedUserDetails.companyName}</p>
                         )}
-                        {userType === 'employer' && selectedConversation.jobTitle && (
-                          <p className="recipient-type">{selectedConversation.jobTitle}</p>
+                        {selectedUserDetails.jobTitle && (
+                          <p className="recipient-job">
+                            <FaBriefcase className="job-icon" /> 
+                            {userType === 'employer' ? 'Applied for: ' : 'Your application: '}
+                            {selectedUserDetails.jobTitle}
+                          </p>
                         )}
                       </div>
                     </div>
@@ -305,7 +377,7 @@ const Messages = ({ userType }) => {
                       <FaSpinner className="spinning" />
                       <p>Loading messages...</p>
                     </div>
-                  ) : messages?.length === 0 ? (
+                  ) : messages.length === 0 ? (
                     <div className="no-messages-yet">
                       <FaCommentAlt className="no-messages-icon" />
                       <p>No messages yet</p>
@@ -313,19 +385,22 @@ const Messages = ({ userType }) => {
                     </div>
                   ) : (
                     <div className="message-list">
-                      {messages?.map((message, index) => (
-                        <div 
-                          key={message._id || index}
-                          className={`message-bubble ${message.receiver === selectedConversationId ? 'sent' : 'received'}`}
-                        >
-                          <p className="message-content">{message.content}</p>
-                          <span className="message-time">
-                            {new Date(message.createdAt).toLocaleTimeString([], { 
-                              hour: '2-digit', minute: '2-digit' 
-                            })}
-                          </span>
-                        </div>
-                      ))}
+                      {messages.map((message, index) => {
+                        const isSentByMe = message.sender._id !== selectedConversationId;
+                        return (
+                          <div 
+                            key={message._id || index}
+                            className={`message-bubble ${isSentByMe ? 'sent' : 'received'}`}
+                          >
+                            <p className="message-content">{message.content}</p>
+                            <span className="message-time">
+                              {new Date(message.createdAt).toLocaleTimeString([], { 
+                                hour: '2-digit', minute: '2-digit' 
+                              })}
+                            </span>
+                          </div>
+                        );
+                      })}
                       <div ref={messagesEndRef} />
                     </div>
                   )}
@@ -341,6 +416,7 @@ const Messages = ({ userType }) => {
                   <button 
                     type="submit" 
                     disabled={!newMessage.trim()}
+                    className={!newMessage.trim() ? "disabled" : ""}
                   >
                     <FaPaperPlane />
                   </button>
@@ -351,6 +427,12 @@ const Messages = ({ userType }) => {
                 <FaCommentAlt className="select-conversation-icon" />
                 <h3>Select a conversation</h3>
                 <p>Choose a conversation from the sidebar or start a new one</p>
+                <button 
+                  className="start-conversation-button"
+                  onClick={() => setShowNewConversation(true)}
+                >
+                  Start a new conversation
+                </button>
               </div>
             )}
           </div>

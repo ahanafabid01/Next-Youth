@@ -35,7 +35,7 @@ const canInitiateConversation = async (senderId, recipientId) => {
     if (sender.user_type === recipient.user_type) {
       return { 
         allowed: false, 
-        message: `${sender.user_type === 'employer' ? 'Employers' : 'Candidates'} cannot message other ${sender.user_type === 'employer' ? 'employers' : 'candidates'}` 
+        message: `${sender.user_type === 'employer' ? 'Employers' : 'Candidates'} cannot message other ${sender.user_type === 'employers' ? 'employers' : 'candidates'}` 
       };
     }
     
@@ -389,6 +389,120 @@ export const getEmployeeEmployers = async (req, res) => {
     return res.status(500).json({
       success: false,
       message: 'Failed to fetch employers'
+    });
+  }
+};
+
+// Add these two new functions to the messageController.js file
+
+// Get detailed information about an applicant (for employer's messaging)
+export const getApplicantDetails = async (req, res) => {
+  try {
+    const employerId = req.user.id;
+    const applicantId = req.params.applicantId;
+    
+    if (!mongoose.Types.ObjectId.isValid(applicantId)) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid applicant ID format"
+      });
+    }
+    
+    // Get the applicant's basic info
+    const applicant = await User.findById(applicantId).select('name email profilePicture');
+    
+    if (!applicant) {
+      return res.status(404).json({
+        success: false,
+        message: "Applicant not found"
+      });
+    }
+    
+    // Find jobs posted by this employer
+    const jobs = await Job.find({ employer: employerId });
+    const jobIds = jobs.map(job => job._id);
+    
+    // Find applications by this applicant to the employer's jobs
+    const applicationModel = await mongoose.model('application');
+    const applications = await applicationModel.find({
+      applicant: applicantId,
+      job: { $in: jobIds }
+    }).populate('job', 'title');
+    
+    // Add job information to the user details
+    const jobInfo = applications.length > 0 ? {
+      jobTitle: applications[0].job.title,
+      jobId: applications[0].job._id,
+      applicationId: applications[0]._id,
+      applicationStatus: applications[0].status
+    } : {};
+    
+    return res.status(200).json({
+      success: true,
+      user: {
+        ...applicant.toObject(),
+        ...jobInfo
+      }
+    });
+  } catch (error) {
+    console.error('Error fetching applicant details:', error);
+    return res.status(500).json({
+      success: false,
+      message: 'Failed to fetch applicant details'
+    });
+  }
+};
+
+// Get detailed information about an employer (for employee's messaging)
+export const getEmployerDetails = async (req, res) => {
+  try {
+    const employeeId = req.user.id;
+    const employerId = req.params.employerId;
+    
+    if (!mongoose.Types.ObjectId.isValid(employerId)) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid employer ID format"
+      });
+    }
+    
+    // Get the employer's basic info
+    const employer = await User.findById(employerId).select('name email profilePicture companyName');
+    
+    if (!employer) {
+      return res.status(404).json({
+        success: false,
+        message: "Employer not found"
+      });
+    }
+    
+    // Find applications by this employee to the employer's jobs
+    const applicationModel = await mongoose.model('application');
+    const applications = await applicationModel.find({
+      applicant: employeeId,
+      job: { $in: await Job.find({ employer: employerId }).select('_id') }
+    }).populate('job', 'title');
+    
+    // Add job information to the user details
+    const jobInfo = applications.length > 0 ? {
+      jobTitle: applications[0].job.title,
+      jobId: applications[0].job._id,
+      applicationId: applications[0]._id,
+      applicationStatus: applications[0].status
+    } : {};
+    
+    return res.status(200).json({
+      success: true,
+      user: {
+        ...employer.toObject(),
+        ...jobInfo
+      }
+    });
+  } catch (error) {
+    console.error('Error fetching employer details:', error);
+    return res.status(500).json({
+      success: false,
+      message: 'Failed to fetch employer details'
     });
   }
 };
