@@ -736,3 +736,96 @@ export const getAllApplications = async (req, res) => {
         });
     }
 };
+
+// Add these new controller functions
+
+// For employers to see candidates who applied to their jobs
+export const getJobApplicants = async (req, res) => {
+  try {
+    const employerId = req.user.id;
+    
+    // Get all jobs posted by this employer
+    const employerJobs = await Job.find({ employer: employerId }).select('_id');
+    const jobIds = employerJobs.map(job => job._id);
+    
+    // Find all applications for these jobs
+    const applications = await mongoose.model('application').find({
+      jobId: { $in: jobIds }
+    }).populate('applicantId', 'name profilePicture email');
+    
+    // Extract unique applicants
+    const uniqueApplicants = {};
+    applications.forEach(app => {
+      const applicant = app.applicantId;
+      if (applicant && !uniqueApplicants[applicant._id]) {
+        uniqueApplicants[applicant._id] = {
+          _id: applicant._id,
+          name: applicant.name,
+          profilePicture: applicant.profilePicture,
+          email: applicant.email,
+          appliedJobs: [app.jobId]
+        };
+      } else if (applicant) {
+        uniqueApplicants[applicant._id].appliedJobs.push(app.jobId);
+      }
+    });
+    
+    return res.status(200).json({
+      success: true,
+      users: Object.values(uniqueApplicants)
+    });
+  } catch (error) {
+    console.error('Error fetching job applicants:', error);
+    return res.status(500).json({
+      success: false,
+      message: 'Failed to fetch applicants'
+    });
+  }
+};
+
+// For employees to see employers they've applied to
+export const getAppliedEmployers = async (req, res) => {
+  try {
+    const employeeId = req.user.id;
+    
+    // Find all applications by this employee
+    const applications = await mongoose.model('application').find({
+      applicantId: employeeId
+    }).populate({
+      path: 'jobId',
+      populate: {
+        path: 'employer',
+        select: 'name profilePicture companyName email'
+      }
+    });
+    
+    // Extract unique employers
+    const uniqueEmployers = {};
+    applications.forEach(app => {
+      const employer = app.jobId?.employer;
+      if (employer && !uniqueEmployers[employer._id]) {
+        uniqueEmployers[employer._id] = {
+          _id: employer._id,
+          name: employer.name,
+          companyName: employer.companyName,
+          profilePicture: employer.profilePicture,
+          email: employer.email,
+          appliedJobs: [app.jobId._id]
+        };
+      } else if (employer) {
+        uniqueEmployers[employer._id].appliedJobs.push(app.jobId._id);
+      }
+    });
+    
+    return res.status(200).json({
+      success: true,
+      users: Object.values(uniqueEmployers)
+    });
+  } catch (error) {
+    console.error('Error fetching applied employers:', error);
+    return res.status(500).json({
+      success: false,
+      message: 'Failed to fetch employers'
+    });
+  }
+};

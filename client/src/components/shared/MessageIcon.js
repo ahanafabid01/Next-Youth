@@ -33,6 +33,13 @@ const MessageIcon = () => {
       fetchConversations();
     }
   }, [showDropdown]);
+
+  // Add effect to refresh unread count periodically
+  useEffect(() => {
+    refreshUnreadCount();
+    const interval = setInterval(refreshUnreadCount, 30000); // Every 30 seconds
+    return () => clearInterval(interval);
+  }, [refreshUnreadCount]);
   
   const fetchConversations = async () => {
     try {
@@ -42,7 +49,8 @@ const MessageIcon = () => {
       });
       
       if (res.data.success) {
-        setConversations(res.data.conversations.slice(0, 5)); // Show only 5 most recent
+        // Take only 5 most recent conversations
+        setConversations(res.data.conversations.slice(0, 5));
       }
     } catch (error) {
       console.error('Error fetching conversations:', error);
@@ -65,29 +73,6 @@ const MessageIcon = () => {
     navigate(`/messages/${userId}`);
     setShowDropdown(false);
   };
-  
-  useEffect(() => {
-    const fetchUnreadCount = async () => {
-      try {
-        const response = await axios.get('http://localhost:4000/api/messages/unread-count', {
-          withCredentials: true
-        });
-        
-        if (response.data.success) {
-          // Use the refreshUnreadCount function from the socket context
-          refreshUnreadCount();
-        }
-      } catch (error) {
-        console.error('Error fetching unread count:', error);
-      }
-    };
-    
-    fetchUnreadCount();
-    
-    // Poll for updates every minute
-    const interval = setInterval(fetchUnreadCount, 60000);
-    return () => clearInterval(interval);
-  }, [refreshUnreadCount]); // Added refreshUnreadCount as a dependency
   
   return (
     <div className="message-icon-container" ref={dropdownRef}>
@@ -129,28 +114,32 @@ const MessageIcon = () => {
               <>
                 {conversations.map(convo => (
                   <div 
-                    key={convo.otherUser._id} 
+                    key={convo.participant._id} 
                     className={`conversation-preview ${convo.unreadCount > 0 ? 'unread' : ''}`}
-                    onClick={() => handleMessageClick(convo.otherUser._id)}
+                    onClick={() => handleMessageClick(convo.participant._id)}
                   >
                     <div className="conversation-avatar">
-                      {convo.otherUser.profilePicture ? (
-                        <img src={convo.otherUser.profilePicture} alt={`${convo.otherUser.name}'s avatar`} />
+                      {convo.participant.profilePicture ? (
+                        <img src={convo.participant.profilePicture} alt={`${convo.participant.name}'s avatar`} />
                       ) : (
-                        <div className="default-avatar">{convo.otherUser.name.charAt(0)}</div>
+                        <div className="default-avatar">{convo.participant.name.charAt(0)}</div>
                       )}
                     </div>
                     <div className="conversation-info">
                       <div className="conversation-header">
-                        <h4>{convo.otherUser.name}</h4>
-                        <span className="conversation-time">
-                          {formatTime(convo.latestMessage.createdAt)}
-                        </span>
+                        <h4>{convo.participant.name}</h4>
+                        {convo.lastMessage && (
+                          <span className="conversation-time">
+                            {formatTime(convo.lastMessage.createdAt)}
+                          </span>
+                        )}
                       </div>
                       <p className="conversation-preview-text">
-                        {convo.latestMessage.content.length > 30
-                          ? `${convo.latestMessage.content.substring(0, 30)}...`
-                          : convo.latestMessage.content
+                        {convo.lastMessage ? 
+                          (convo.lastMessage.content.length > 30
+                            ? `${convo.lastMessage.content.substring(0, 30)}...`
+                            : convo.lastMessage.content)
+                          : 'No messages yet'
                         }
                       </p>
                       {convo.unreadCount > 0 && (

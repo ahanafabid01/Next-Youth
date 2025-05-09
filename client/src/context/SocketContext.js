@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useEffect, useState } from 'react';
+import React, { createContext, useContext, useState, useEffect } from 'react';
 import io from 'socket.io-client';
 import axios from 'axios';
 
@@ -11,47 +11,58 @@ export const SocketProvider = ({ children }) => {
   const [isConnected, setIsConnected] = useState(false);
   const [user, setUser] = useState(null);
   const [unreadCount, setUnreadCount] = useState(0);
+  const [error, setError] = useState(null);
 
+  // Initialize socket connection and set up user data
   useEffect(() => {
     const fetchUserData = async () => {
       try {
-        const res = await axios.get('http://localhost:4000/api/auth/me', { 
-          withCredentials: true 
+        // Get user data first
+        const response = await axios.get('http://localhost:4000/api/auth/me', {
+          withCredentials: true
         });
         
-        if (res.data.success) {
-          setUser(res.data.user);
+        if (response.data.success) {
+          const userData = response.data.user;
+          setUser(userData);
           
-          // Create socket connection
-          const socketInstance = io('http://localhost:4000');
-          setSocket(socketInstance);
+          // Now initialize socket with user data
+          const newSocket = io('http://localhost:4000', {
+            withCredentials: true
+          });
           
-          // Setup event listeners
-          socketInstance.on('connect', () => {
+          newSocket.on('connect', () => {
+            console.log('Socket connected:', newSocket.id);
             setIsConnected(true);
-            console.log('Socket connected!');
             
-            // Join user's room for private messages
-            socketInstance.emit('join', res.data.user._id);
+            // Join personal room for receiving messages
+            newSocket.emit('join-user-room', userData._id);
+            console.log('Joined room:', userData._id);
           });
           
-          socketInstance.on('disconnect', () => {
+          newSocket.on('disconnect', () => {
+            console.log('Socket disconnected');
             setIsConnected(false);
-            console.log('Socket disconnected!');
           });
           
-          // Get initial unread count
+          newSocket.on('connect_error', (err) => {
+            console.error('Socket connection error:', err);
+            setError('Failed to connect to messaging service');
+            setIsConnected(false);
+          });
+          
+          setSocket(newSocket);
+          
+          // Fetch initial unread count
           fetchUnreadCount();
           
           return () => {
-            socketInstance.off('connect');
-            socketInstance.off('disconnect');
-            socketInstance.off('new-message');
-            socketInstance.disconnect();
+            newSocket.disconnect();
           };
         }
       } catch (error) {
-        console.error('Error fetching user data for socket:', error);
+        console.error('Error setting up socket:', error);
+        setError('Failed to initialize messaging service');
       }
     };
     
@@ -62,9 +73,12 @@ export const SocketProvider = ({ children }) => {
   useEffect(() => {
     if (socket && user) {
       const handleNewMessage = (data) => {
-        console.log('New message received:', data);
-        // Increase unread count
-        setUnreadCount(prev => prev + 1);
+        console.log('New message received via socket:', data);
+        
+        // If message is from someone else, increment unread count
+        if (data.sender._id !== user._id) {
+          setUnreadCount(prev => prev + 1);
+        }
       };
       
       socket.on('new-message', handleNewMessage);
@@ -75,14 +89,18 @@ export const SocketProvider = ({ children }) => {
     }
   }, [socket, user]);
   
+  // Function to fetch unread message count
   const fetchUnreadCount = async () => {
     try {
-      const res = await axios.get('http://localhost:4000/api/messages/unread/count', {
+      console.log('Fetching unread count...');
+      const response = await axios.get('http://localhost:4000/api/messages/unread/count', {
         withCredentials: true
       });
       
-      if (res.data.success) {
-        setUnreadCount(res.data.count);
+      console.log('Unread count response:', response.data);
+      
+      if (response.data.success) {
+        setUnreadCount(response.data.count);
       }
     } catch (error) {
       console.error('Error fetching unread count:', error);
@@ -92,25 +110,20 @@ export const SocketProvider = ({ children }) => {
   // Function to send a message
   const sendMessage = async (recipientId, content) => {
     try {
-      const res = await axios.post('http://localhost:4000/api/messages', {
+      console.log('Sending message to API:', { recipientId, content });
+      const response = await axios.post('http://localhost:4000/api/messages', {
         recipientId,
         content
       }, {
         withCredentials: true
       });
       
-      return res.data;
+      console.log('Message send response:', response.data);
+      
+      return response.data;
     } catch (error) {
       console.error('Error sending message:', error);
       throw error;
-    }
-  };
-  
-  // Add function to join a room
-  const joinRoom = (userId) => {
-    if (socket && userId) {
-      socket.emit('join', userId);
-      console.log(`Joined room: ${userId}`);
     }
   };
   
@@ -120,8 +133,8 @@ export const SocketProvider = ({ children }) => {
     isConnected,
     user,
     unreadCount,
+    error,
     sendMessage,
-    joinRoom,
     refreshUnreadCount: fetchUnreadCount
   };
   

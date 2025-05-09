@@ -2,11 +2,90 @@ import express from "express";
 import Message from "../models/messageModel.js";
 import User from "../models/userModel.js";
 import userAuth from "../middleware/userAuth.js";
+import mongoose from 'mongoose';
+import Job from '../models/jobModel.js';
 
 // Helper function to create a unique conversation ID between two users
 const router = express.Router();
 const getConversationId = (user1Id, user2Id) => {
-  return [user1Id, user2Id].sort().join('_');
+  return [user1Id.toString(), user2Id.toString()].sort().join('_');
+};
+
+// Check if users can message each other
+const canInitiateConversation = async (senderId, recipientId) => {
+  try {
+    // Get user types
+    const [sender, recipient] = await Promise.all([
+      User.findById(senderId),
+      User.findById(recipientId)
+    ]);
+    
+    if (!sender || !recipient) {
+      return { allowed: false, message: "User not found" };
+    }
+    
+    // If conversation already exists, allow messaging
+    const conversationId = getConversationId(senderId, recipientId);
+    const existingMessages = await Message.findOne({ conversationId });
+    if (existingMessages) {
+      return { allowed: true };
+    }
+    
+    // Check if users are of different types
+    if (sender.user_type === recipient.user_type) {
+      return { 
+        allowed: false, 
+        message: `${sender.user_type === 'employer' ? 'Employers' : 'Candidates'} cannot message other ${sender.user_type === 'employer' ? 'employers' : 'candidates'}` 
+      };
+    }
+    
+    // Check if employee has applied to employer's job
+    if (sender.user_type === 'employee' && recipient.user_type === 'employer') {
+      // Check if employee has applied to any of employer's jobs
+      const applications = await mongoose.model('application').findOne({
+        applicantId: senderId,
+        // Find jobs where the employer is the recipient
+        jobId: { $in: await Job.find({ employer: recipientId }).select('_id') }
+      });
+      
+      if (applications) {
+        return { allowed: true };
+      }
+      
+      return { 
+        allowed: false, 
+        message: "You can only message employers after applying to their jobs" 
+      };
+    }
+    
+    // Employer messaging an employee
+    if (sender.user_type === 'employer' && recipient.user_type === 'employee') {
+      // Check if employee has applied to any of employer's jobs
+      const applications = await mongoose.model('application').findOne({
+        applicantId: recipientId,
+        // Find jobs where the employer is the sender
+        jobId: { $in: await Job.find({ employer: senderId }).select('_id') }
+      });
+      
+      if (applications) {
+        return { allowed: true };
+      }
+      
+      return { 
+        allowed: false, 
+        message: "You can only message candidates who have applied to your jobs" 
+      };
+    }
+    
+    // Default: block messaging
+    return { 
+      allowed: false, 
+      message: "Messaging not allowed between these users" 
+    };
+  } catch (error) {
+    console.error("Error checking messaging permission:", error);
+    return { allowed: false, message: "Error checking messaging permission" };
+  }
 };
 
 export const sendMessage = async (req, res) => {
@@ -15,7 +94,19 @@ export const sendMessage = async (req, res) => {
     const senderId = req.user.id;
     
     if (!recipientId || !content) {
-      return res.status(400).json({ success: false, message: "Recipient ID and message content are required" });
+      return res.status(400).json({ 
+        success: false, 
+        message: "Recipient ID and message content are required" 
+      });
+    }
+
+    // Check if messaging is allowed
+    const permission = await canInitiateConversation(senderId, recipientId);
+    if (!permission.allowed) {
+      return res.status(403).json({
+        success: false,
+        message: permission.message
+      });
     }
     
     const conversationId = getConversationId(senderId, recipientId);
@@ -29,135 +120,276 @@ export const sendMessage = async (req, res) => {
     
     await newMessage.save();
     
-    // Populate sender and receiver info for the socket event
+    // Populate sender and receiver info for the response
     const populatedMessage = await Message.findById(newMessage._id)
-      .populate('sender', 'name profilePicture')
-      .populate('receiver', 'name profilePicture');
+      .populate('sender', 'name profilePicture user_type')
+      .populate('receiver', 'name profilePicture user_type');
     
     // Emit socket event for real-time messaging
     const io = req.app.get('io');
-    io.to(recipientId).emit('new-message', {
-      message: populatedMessage,
-      sender: {
-        _id: req.user.id,
-        name: req.user.name,
-        profilePicture: req.user.profilePicture
-      }
+    if (io) {
+      io.to(recipientId).emit('new-message', populatedMessage);
+    }
+
+    return res.status(201).json({ 
+      success: true, 
+      message: "Message sent successfully", 
+      message: populatedMessage 
     });
-    
-    res.status(201).json({ success: true, message: populatedMessage });
   } catch (error) {
-    console.error('Error sending message:', error);
-    res.status(500).json({ success: false, message: "Internal server error" });
+    console.error("Error sending message:", error);
+    return res.status(500).json({ 
+      success: false, 
+      message: "Failed to send message" 
+    });
   }
 };
 
 export const getMessages = async (req, res) => {
   try {
-    const { userId } = req.params;
     const currentUserId = req.user.id;
+    const otherUserId = req.params.userId;
     
-    if (!userId) {
-      return res.status(400).json({ success: false, message: "User ID is required" });
+    if (!mongoose.Types.ObjectId.isValid(otherUserId)) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid user ID format"
+      });
     }
     
-    const conversationId = getConversationId(currentUserId, userId);
+    const conversationId = getConversationId(currentUserId, otherUserId);
     
+    // Mark all messages from the other user as read
+    await Message.updateMany({
+      conversationId,
+      sender: otherUserId,
+      read: false
+    }, { read: true });
+    
+    // Get all messages between the two users
     const messages = await Message.find({ conversationId })
       .sort({ createdAt: 1 })
       .populate('sender', 'name profilePicture')
       .populate('receiver', 'name profilePicture');
     
-    // Mark messages as read
-    await Message.updateMany(
-      { conversationId, receiver: currentUserId, read: false },
-      { $set: { read: true } }
-    );
-    
-    res.status(200).json({ success: true, messages });
+    return res.status(200).json({
+      success: true,
+      messages
+    });
   } catch (error) {
-    console.error('Error fetching messages:', error);
-    res.status(500).json({ success: false, message: "Internal server error" });
+    console.error("Error fetching messages:", error);
+    return res.status(500).json({
+      success: false,
+      message: "Failed to fetch messages"
+    });
   }
 };
 
 export const getConversations = async (req, res) => {
   try {
-    const userId = req.user.id;
+    const currentUserId = req.user.id;
     
-    // Find all messages where user is either sender or receiver
+    // Find all messages where the current user is either sender or receiver
     const messages = await Message.find({
-      $or: [{ sender: userId }, { receiver: userId }]
-    }).sort({ createdAt: -1 });
+      $or: [
+        { sender: currentUserId },
+        { receiver: currentUserId }
+      ]
+    })
+    .sort({ createdAt: -1 })
+    .populate('sender', 'name profilePicture')
+    .populate('receiver', 'name profilePicture');
     
-    // Create a map of conversations
-    const conversationMap = new Map();
+    // Group messages by conversation and extract the most recent one for each conversation
+    const conversationsMap = new Map();
     
     for (const message of messages) {
-      // Determine the other user in conversation
-      const otherUserId = message.sender.equals(userId) 
-        ? message.receiver.toString() 
-        : message.sender.toString();
+      const isCurrentUserSender = message.sender._id.toString() === currentUserId;
+      const otherUserId = isCurrentUserSender ? message.receiver._id.toString() : message.sender._id.toString();
+      const otherUser = isCurrentUserSender ? message.receiver : message.sender;
       
-      // If conversation not in map yet, add it
-      if (!conversationMap.has(otherUserId)) {
-        // Fetch user info
-        const otherUser = await User.findById(otherUserId).select('name profilePicture user_type');
-        
-        if (!otherUser) continue; // Skip if user not found
-        
-        // Count unread messages
+      if (!conversationsMap.has(otherUserId)) {
+        // Count unread messages for this conversation
         const unreadCount = await Message.countDocuments({
+          conversationId: message.conversationId,
           sender: otherUserId,
-          receiver: userId,
+          receiver: currentUserId,
           read: false
         });
         
-        // Get latest message with populated fields
-        const latestMessage = await Message.findOne({
-          conversationId: message.conversationId
-        })
-        .sort({ createdAt: -1 })
-        .populate('sender', 'name profilePicture')
-        .populate('receiver', 'name profilePicture');
-        
-        conversationMap.set(otherUserId, {
-          conversationId: message.conversationId,
-          otherUser: {
-            _id: otherUser._id,
+        conversationsMap.set(otherUserId, {
+          _id: message._id,
+          participant: {
+            _id: otherUserId,
             name: otherUser.name,
-            profilePicture: otherUser.profilePicture,
-            userType: otherUser.user_type
+            profilePicture: otherUser.profilePicture
           },
-          unreadCount,
-          latestMessage
+          lastMessage: {
+            content: message.content,
+            createdAt: message.createdAt,
+            read: message.read
+          },
+          unreadCount
         });
       }
     }
     
-    // Convert map to array
-    const conversations = Array.from(conversationMap.values());
+    // Convert map values to array
+    const conversations = Array.from(conversationsMap.values());
     
-    res.status(200).json({ success: true, conversations });
+    return res.status(200).json({
+      success: true,
+      conversations
+    });
   } catch (error) {
-    console.error('Error fetching conversations:', error);
-    res.status(500).json({ success: false, message: "Internal server error" });
+    console.error("Error fetching conversations:", error);
+    return res.status(500).json({
+      success: false,
+      message: "Failed to fetch conversations"
+    });
   }
 };
 
 export const getUnreadCount = async (req, res) => {
   try {
-    const userId = req.user.id;
+    const currentUserId = req.user.id;
     
+    // Count total unread messages for the current user
     const count = await Message.countDocuments({
-      receiver: userId,
+      receiver: currentUserId,
       read: false
     });
     
-    res.status(200).json({ success: true, count });
+    return res.status(200).json({
+      success: true,
+      count
+    });
   } catch (error) {
-    console.error('Error fetching unread count:', error);
-    res.status(500).json({ success: false, message: "Internal server error" });
+    console.error("Error fetching unread count:", error);
+    return res.status(500).json({
+      success: false,
+      message: "Failed to fetch unread message count"
+    });
+  }
+};
+
+// Add this new function to messageController.js
+export const checkMessagePermission = async (req, res) => {
+  try {
+    const senderId = req.user.id;
+    const { recipientId } = req.params;
+    
+    if (!recipientId) {
+      return res.status(400).json({
+        success: false,
+        message: "Recipient ID is required"
+      });
+    }
+    
+    const permission = await canInitiateConversation(senderId, recipientId);
+    
+    return res.status(200).json({
+      success: true,
+      canMessage: permission.allowed,
+      message: permission.message || null
+    });
+  } catch (error) {
+    console.error("Error checking message permission:", error);
+    return res.status(500).json({
+      success: false,
+      message: "Failed to check messaging permission"
+    });
+  }
+};
+
+// Add these new functions to the existing file
+
+export const getEmployerApplicants = async (req, res) => {
+  try {
+    const employerId = req.user.id;
+    
+    // First, get all jobs posted by this employer
+    const jobs = await Job.find({ employer: employerId }).select('_id title');
+    
+    if (jobs.length === 0) {
+      return res.status(200).json({ success: true, applicants: [] });
+    }
+    
+    // Get job IDs
+    const jobIds = jobs.map(job => job._id);
+    
+    // Get all applications for these jobs
+    const applicationModel = await mongoose.model('application');
+    const applications = await applicationModel.find({ job: { $in: jobIds } })
+      .populate('applicant', 'name email profilePicture')
+      .populate('job', 'title');
+    
+    // Format the data for the frontend
+    const applicants = applications.map(app => ({
+      _id: app.applicant._id,
+      name: app.applicant.name,
+      profilePicture: app.applicant.profilePicture,
+      email: app.applicant.email,
+      jobTitle: app.job ? app.job.title : 'Unknown Job',
+      jobId: app.job ? app.job._id : null,
+      applicationId: app._id,
+      status: app.status,
+      appliedAt: app.createdAt
+    }));
+    
+    return res.status(200).json({
+      success: true,
+      applicants: applicants
+    });
+  } catch (error) {
+    console.error('Error fetching applicants:', error);
+    return res.status(500).json({
+      success: false,
+      message: 'Failed to fetch applicants'
+    });
+  }
+};
+
+export const getEmployeeEmployers = async (req, res) => {
+  try {
+    const employeeId = req.user.id;
+    
+    // Get all applications by this employee
+    const applicationModel = await mongoose.model('application');
+    const applications = await applicationModel.find({ applicant: employeeId })
+      .populate({
+        path: 'job',
+        populate: {
+          path: 'employer',
+          select: 'name email profilePicture companyName'
+        },
+        select: 'title'
+      });
+    
+    // Format the data for the frontend
+    const employers = applications.map(app => ({
+      _id: app.job?.employer?._id,
+      name: app.job?.employer?.name || 'Unknown Employer',
+      profilePicture: app.job?.employer?.profilePicture,
+      email: app.job?.employer?.email,
+      companyName: app.job?.employer?.companyName,
+      jobTitle: app.job?.title || 'Unknown Job',
+      jobId: app.job?._id,
+      applicationId: app._id,
+      status: app.status,
+      appliedAt: app.createdAt
+    })).filter(employer => employer._id); // Filter out any null employers
+    
+    return res.status(200).json({
+      success: true,
+      employers: employers
+    });
+  } catch (error) {
+    console.error('Error fetching employers:', error);
+    return res.status(500).json({
+      success: false,
+      message: 'Failed to fetch employers'
+    });
   }
 };
 

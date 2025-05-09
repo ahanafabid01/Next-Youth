@@ -1,20 +1,23 @@
 import express from 'express';
+import { createServer } from 'http';
+import { Server } from 'socket.io';
+import dotenv from 'dotenv';
 import cors from 'cors';
-import 'dotenv/config';
 import cookieParser from 'cookie-parser';
-import connectDB from './config/mongodb.js';
+import bodyParser from 'body-parser';
+import path from 'path';
+import { fileURLToPath } from 'url';
+import fs from 'fs';
+import connectDB from './config/db.js';
+
+// Import message router
+import messageRouter from './routes/messageRoutes.js';
+
 import authRouter from "./routes/authRoutes.js";
 import jobRouter from "./routes/jobRoutes.js";
 import contactRouter from "./routes/contactRoutes.js";
 import adminRouter from "./routes/adminRoutes.js";
 import employerPaymentRoutes from "./routes/EmployerPaymentRoutes.js";
-import messageRouter from "./routes/messageRoutes.js"; // Add this
-import path from "path";
-import bodyParser from "body-parser";
-import { fileURLToPath } from "url";
-import fs from "fs";
-import { createServer } from 'http'; // Add this
-import { Server } from 'socket.io'; // Add this
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -72,7 +75,7 @@ app.use("/api/jobs", jobRouter);
 app.use("/api/contact", contactRouter);
 app.use("/api/admin", adminRouter);
 app.use("/api/payment", employerPaymentRoutes);
-app.use("/api/messages", messageRouter); // Add this
+app.use("/api/messages", messageRouter);
 
 // Default route
 app.get('/', (req, res) => {
@@ -87,17 +90,20 @@ app.use((err, req, res, next) => {
 
 // Socket.IO connection handling
 io.on('connection', (socket) => {
-    console.log('A user connected:', socket.id);
-    
-    // Allow user to join a room with their userId for private messages
-    socket.on('join', (userId) => {
-        socket.join(userId);
-        console.log(`User ${userId} joined their room`);
-    });
-    
-    socket.on('disconnect', () => {
-        console.log('User disconnected:', socket.id);
-    });
+  console.log('New socket connection:', socket.id);
+  
+  // Join user to their personal room for receiving messages
+  socket.on('join-user-room', (userId) => {
+    if (userId) {
+      console.log(`User ${userId} joined personal room`);
+      socket.join(userId);
+    }
+  });
+  
+  // Handle disconnect
+  socket.on('disconnect', () => {
+    console.log('Socket disconnected:', socket.id);
+  });
 });
 
 // Start the server with http server instead of express app
