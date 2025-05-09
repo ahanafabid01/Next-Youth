@@ -4,8 +4,12 @@ import axios from 'axios';
 import { FaArrowLeft, FaPlus, FaMinus, FaFileUpload, FaRegFileAlt, 
          FaSpinner, FaExclamationCircle, FaTimes, FaCheckCircle, 
          FaUserCircle, FaBell, FaSun, FaMoon, FaChevronDown, FaDownload,
-         FaBriefcase, FaFileContract, FaCommentDots, FaDollarSign, FaClock, FaStar, FaEdit } from 'react-icons/fa';
+         FaBriefcase, FaFileContract, FaCommentDots, FaDollarSign, FaClock, 
+         FaStar, FaEdit, FaBars, FaSearch, FaFilter, FaAngleRight, FaAngleLeft,
+         FaBookmark, FaCog, FaSignOutAlt } from 'react-icons/fa';
 import './JobApplication.css';
+import logoLight from '../../assets/images/logo-light.png';
+import logoDark from '../../assets/images/logo-dark.png';
 import RatingModal from '../Connections/RatingModal';
 
 const JobApplication = () => {
@@ -78,7 +82,10 @@ const JobApplication = () => {
 
     // Apply dark mode
     useEffect(() => {
-        document.body.classList.toggle('dark-mode', isDarkMode);
+        const container = document.querySelector('.job-application-container');
+        if (container) {
+            container.classList.toggle('dark-mode', isDarkMode);
+        }
         localStorage.setItem("dashboard-theme", isDarkMode ? "dark" : "light");
     }, [isDarkMode]);
 
@@ -375,128 +382,141 @@ const JobApplication = () => {
 
     if (loading) {
         return (
-            <div className="application-loading">
-                <FaSpinner className="spinning" />
-                <p>Loading job details...</p>
+            <div className="job-application-container">
+                <div className="application-loading">
+                    <FaSpinner className="spinning" />
+                    <p>Loading job details...</p>
+                </div>
             </div>
         );
     }
 
     if (error && !job) {
         return (
-            <div className="application-error">
-                <FaExclamationCircle />
-                <h3>Error</h3>
-                <p>{error}</p>
-                <button onClick={() => navigate('/find-jobs')}>Back to Jobs</button>
+            <div className="job-application-container">
+                <div className="application-error">
+                    <FaExclamationCircle />
+                    <h3>Error</h3>
+                    <p>{error}</p>
+                    <button onClick={() => navigate('/find-jobs')}>Back to Jobs</button>
+                </div>
             </div>
         );
     }
 
     if (!job) {
         return (
-            <div className="application-error">
-                <FaExclamationCircle />
-                <h3>Job Not Found</h3>
-                <p>The job you're looking for doesn't exist or has been removed.</p>
-                <button onClick={() => navigate('/find-jobs')}>Back to Jobs</button>
+            <div className="job-application-container">
+                <div className="application-error">
+                    <FaExclamationCircle />
+                    <h3>Job Not Found</h3>
+                    <p>The job you're looking for doesn't exist or has been removed.</p>
+                    <button onClick={() => navigate('/find-jobs')}>Back to Jobs</button>
+                </div>
             </div>
         );
     }
 
     if (success) {
         return (
-            <div className="application-success">
-                <FaCheckCircle />
-                <h3>Application Submitted!</h3>
-                <p>Your application has been successfully submitted.</p>
-                <p>Redirecting to your proposals...</p>
+            <div className="job-application-container">
+                <div className="application-success">
+                    <FaCheckCircle />
+                    <h3>Application Submitted!</h3>
+                    <p>Your application has been successfully submitted.</p>
+                    <p>Redirecting to your proposals...</p>
+                </div>
             </div>
         );
     }
 
     return (
-        <div className={`employee-dashboard ${isDarkMode ? 'dark-mode' : ''}`}>
-            {/* Header with Navigation */}
-            <header className="dashboard-header">
-                <div className="dashboard-header-container">
-                    <div className="dashboard-header-left">
+        <div className="job-application-container">
+            {/* Mobile Nav Overlay */}
+            <div className={`employee-mobile-nav-overlay ${showMobileNav ? 'active' : ''}`} onClick={() => setShowMobileNav(false)}></div>
+            
+            {/* Header - Styled like FindJobs.js */}
+            <header className="employee-find-jobs-header">
+                <div className="employee-find-jobs-header-container">
+                    <div className="employee-find-jobs-header-left">
                         <button 
-                            className="dashboard-nav-toggle"
+                            className={`employee-find-jobs-nav-toggle ${showMobileNav ? 'active' : ''}`}
                             onClick={toggleMobileNav}
                             aria-label="Toggle navigation"
+                            aria-expanded={showMobileNav}
                         >
-                            ☰
+                            <span className="employee-hamburger-icon"></span>
                         </button>
-                        <Link to="/" className="dashboard-logo">Next Youth</Link>
+                        <Link to="/employee-dashboard" className="employee-find-jobs-logo">
+                            <img 
+                                src={isDarkMode ? logoDark : logoLight} 
+                                alt="Next Youth" 
+                                className="employee-logo-image" 
+                            />
+                        </Link>
                         
-                        <nav className={`dashboard-nav ${showMobileNav ? 'active' : ''}`}>
-                            <Link to="/find-jobs" className="nav-link">Find Work</Link>
-                            <Link to="/find-jobs/saved" className="nav-link">Saved Jobs</Link>
-                            <Link to="/find-jobs/proposals" className="nav-link">Proposals</Link>
+                        <nav className={`employee-find-jobs-nav ${showMobileNav ? 'active' : ''}`}>
+                            <Link to="/find-jobs" className="employee-nav-link active" style={{"--item-index": 0}}>Find Work</Link>
+                            <Link to="/find-jobs/saved" className="employee-nav-link" style={{"--item-index": 1}}>Saved Jobs</Link>
+                            <Link to="/proposals" className="employee-nav-link" style={{"--item-index": 2}}>Proposals</Link>
+                            <Link to="/help" className="employee-nav-link" style={{"--item-index": 3}}>Help</Link>
                         </nav>
                     </div>
                     
-                    <div className="dashboard-header-right">
-                        <div className="notification-container" ref={notificationsRef}>
+                    <div className="employee-find-jobs-header-right">
+                        <div className="employee-notification-container" ref={notificationsRef}>
                             <button 
-                                className="notification-button"
+                                className="employee-notification-button"
                                 onClick={toggleNotifications}
                                 aria-label="Notifications"
                             >
                                 <FaBell />
                                 {unreadNotifications > 0 && (
-                                    <span className="notification-badge">{unreadNotifications}</span>
+                                    <span className="employee-notification-badge">{unreadNotifications}</span>
                                 )}
                             </button>
                             
                             {showNotifications && (
-                                <div className="notifications-dropdown">
-                                    <div className="notification-header">
+                                <div className="employee-notifications-dropdown">
+                                    <div className="employee-notification-header">
                                         <h3>Notifications</h3>
-                                        <button className="mark-all-read" onClick={handleMarkAllAsRead}>Mark all as read</button>
+                                        <button className="employee-mark-all-read" onClick={handleMarkAllAsRead}>Mark all as read</button>
                                     </div>
-                                    <div className="notification-list">
-                                        <div className="notification-item unread">
-                                            <div className="notification-icon">
-                                                {(!userData.idVerification || 
-                                                !userData.idVerification.frontImage || 
-                                                !userData.idVerification.backImage || 
-                                                userData.idVerification.status === 'rejected') ? (
-                                                <FaRegFileAlt />
-                                                ) : userData.idVerification.status === 'verified' ? (
-                                                <FaCheckCircle />
+                                    <div className="employee-notification-list">
+                                        <div className="employee-notification-item employee-unread">
+                                            <div className="employee-notification-icon">
+                                                {(!userData.idVerification || userData.idVerification?.status === 'rejected') ? (
+                                                    <FaRegFileAlt />
+                                                ) : userData.idVerification?.status === 'verified' ? (
+                                                    <FaCheckCircle />
                                                 ) : (
-                                                <FaClock />
+                                                    <FaClock />
                                                 )}
                                             </div>
-                                            <div className="notification-content">
+                                            <div className="employee-notification-content">
                                                 <p>
-                                                {(!userData.idVerification || 
-                                                    !userData.idVerification.frontImage || 
-                                                    !userData.idVerification.backImage || 
-                                                    userData.idVerification.status === 'rejected') ? (
-                                                    "Please verify your account"
-                                                ) : userData.idVerification.status === 'verified' ? (
-                                                    "Your profile has been verified!"
-                                                ) : (
-                                                    "Your verification is pending approval"
-                                                )}
+                                                    {(!userData.idVerification || userData.idVerification?.status === 'rejected') ? (
+                                                        "Please verify your account"
+                                                    ) : userData.idVerification?.status === 'verified' ? (
+                                                        "Your profile has been verified!"
+                                                    ) : (
+                                                        "Your verification is pending approval"
+                                                    )}
                                                 </p>
-                                                <span className="notification-time">2 hours ago</span>
+                                                <span className="employee-notification-time">2 hours ago</span>
                                             </div>
                                         </div>
-                                        <div className="notification-item unread">
-                                            <div className="notification-icon">
+                                        <div className="employee-notification-item employee-unread">
+                                            <div className="employee-notification-icon">
                                                 <FaRegFileAlt />
                                             </div>
-                                            <div className="notification-content">
+                                            <div className="employee-notification-content">
                                                 <p>New job matching your skills is available</p>
-                                                <span className="notification-time">1 day ago</span>
+                                                <span className="employee-notification-time">1 day ago</span>
                                             </div>
                                         </div>
                                     </div>
-                                    <div className="notification-footer">
+                                    <div className="employee-notification-footer">
                                         <Link to="/notifications">View all notifications</Link>
                                     </div>
                                 </div>
@@ -504,16 +524,16 @@ const JobApplication = () => {
                         </div>
                         
                         <button
-                            className="theme-toggle-button"
+                            className="employee-theme-toggle-button"
                             onClick={toggleDarkMode}
                             aria-label={isDarkMode ? "Switch to light mode" : "Switch to dark mode"}
                         >
                             {isDarkMode ? <FaSun /> : <FaMoon />}
                         </button>
 
-                        <div className="profile-dropdown-container" ref={profileDropdownRef}>
+                        <div className="employee-profile-dropdown-container" ref={profileDropdownRef}>
                             <button 
-                                className="profile-button" 
+                                className="employee-profile-button" 
                                 onClick={toggleProfileDropdown}
                                 aria-label="User profile"
                             >
@@ -521,18 +541,18 @@ const JobApplication = () => {
                                     <img 
                                         src={userData.profilePicture}
                                         alt="Profile"
-                                        className="profile-avatar"
+                                        className="employee-profile-avatar"
                                     />
                                 ) : (
-                                    <FaUserCircle className="profile-avatar-icon" />
+                                    <FaUserCircle className="employee-profile-avatar-icon" />
                                 )}
-                                <FaChevronDown className={`dropdown-icon ${showProfileDropdown ? 'rotate' : ''}`} />
+                                <FaChevronDown className={`employee-dropdown-icon ${showProfileDropdown ? 'rotate' : ''}`} />
                             </button>
                             
                             {showProfileDropdown && (
-                                <div className="profile-dropdown">
-                                    <div className="profile-dropdown-header">
-                                        <div className="profile-dropdown-avatar">
+                                <div className="employee-profile-dropdown">
+                                    <div className="employee-profile-dropdown-header">
+                                        <div className="employee-profile-dropdown-avatar">
                                             {userData.profilePicture ? (
                                                 <img 
                                                     src={userData.profilePicture}
@@ -542,50 +562,48 @@ const JobApplication = () => {
                                                 <FaUserCircle />
                                             )}
                                         </div>
-                                        <div className="profile-dropdown-info">
+                                        <div className="employee-profile-dropdown-info">
                                             <h4>{userData.name || 'User'}</h4>
-                                            <span className="profile-status">
+                                            <span className="employee-profile-status">
                                                 {!userData.idVerification ? (
                                                     'Not Verified'
                                                 ) : userData.idVerification.status === 'verified' ? (
-                                                    <><FaCheckCircle className="verified-icon" /> Verified</>
+                                                    <><FaCheckCircle className="employee-verified-icon" /> Verified</>
                                                 ) : userData.idVerification.status === 'pending' ? (
-                                                    <><FaSpinner className="pending-icon" /> Verification Pending</>
+                                                    <><FaClock className="employee-pending-icon" /> Verification Pending</>
                                                 ) : (
                                                     'Not Verified'
                                                 )}
                                             </span>
                                         </div>
                                     </div>
-                                    <div className="profile-dropdown-links">
+                                    <div className="employee-profile-dropdown-links">
                                         <button 
-                                            className="profile-dropdown-link"
+                                            className="employee-profile-dropdown-link"
                                             onClick={() => navigate('/my-profile')}
                                         >
                                             <FaUserCircle /> View Profile
                                         </button>
-                                        
                                         <button 
-                                            className="profile-dropdown-link"
+                                            className="employee-profile-dropdown-link"
                                             onClick={() => {
-                                                setShowRatingModal(true);
-                                                setShowProfileDropdown(false);
+                                                setShowProfileDropdown(false); // Close dropdown
+                                                setShowRatingModal(true); // Show rating modal
                                             }}
                                         >
                                             <FaStar /> My Ratings & Reviews
                                         </button>
-                                        
                                         <button 
-                                            className="profile-dropdown-link"
+                                            className="employee-profile-dropdown-link"
                                             onClick={() => navigate('/settings')}
                                         >
-                                            Settings
+                                            <FaCog /> Settings
                                         </button>
                                         <button 
-                                            className="profile-dropdown-link"
+                                            className="employee-profile-dropdown-link"
                                             onClick={handleLogout}
                                         >
-                                            Logout
+                                            <FaSignOutAlt /> Logout
                                         </button>
                                     </div>
                                 </div>
@@ -595,417 +613,352 @@ const JobApplication = () => {
                 </div>
             </header>
 
-            <div className="job-application-container">
-                {/* Back to dashboard button */}
-                <button 
-                    className="back-to-dashboard-button"
-                    onClick={() => navigate('/employee-dashboard')}
-                >
-                    <FaArrowLeft /> Go back to dashboard
-                </button>
+            <main className="job-application-main">
+                <div className="job-application-content">
+                    {/* Back to dashboard button */}
+                    <button 
+                        className="back-to-dashboard-button"
+                        onClick={() => navigate('/find-jobs')}
+                    >
+                        <FaArrowLeft /> Back to Jobs
+                    </button>
 
-                {/* Enhanced page header with visual appeal */}
-                <div className="application-page-header">
-                    <div className="header-content">
-                        <h1>Apply for Job Opportunity</h1>
-                        <p className="header-subtitle">Complete your application for this exciting opportunity</p>
-                    </div>
-                    <div className="header-icon">
-                        <FaBriefcase />
-                    </div>
-                </div>
-
-                {/* Job Details Section with enhanced visuals */}
-                <div className="application-section job-details-section">
-                    <div className="section-header">
-                        <div className="section-icon">
-                            <FaFileContract />
+                    {/* Enhanced page header with visual appeal */}
+                    <div className="application-page-header">
+                        <div className="header-content">
+                            <h1>Apply for Job Opportunity</h1>
+                            <p className="header-subtitle">Complete your application for this exciting opportunity</p>
                         </div>
-                        <h2>Job Details</h2>
+                        <div className="header-icon">
+                            <FaBriefcase />
+                        </div>
                     </div>
-                    
-                    <div className="section-content">
-                        <h3 className="job-title">{job?.title}</h3>
+
+                    {/* Job Details Section with enhanced visuals */}
+                    <div className="job-details-section">
+                        <div className="job-highlight-text">
+                            <FaClock /> Available Now
+                        </div>
                         
-                        <div className="job-info-grid">
-                            <div className="job-info-item">
-                                <div className="info-icon">
-                                    <FaDollarSign />
-                                </div>
-                                <div className="info-content">
-                                    <span className="info-label">Budget:</span>
-                                    <span className="info-value">
-                                        {job?.budgetType === "hourly"
-                                            ? `$${job?.hourlyFrom} - $${job?.hourlyTo}/hr`
-                                            : `$${job?.fixedAmount} Fixed`}
-                                    </span>
-                                </div>
-                            </div>
-                            <div className="job-info-item">
-                                <div className="info-icon">
-                                    <FaClock />
-                                </div>
-                                <div className="info-content">
-                                    <span className="info-label">Scope:</span>
-                                    <span className="info-value">{job?.scope}</span>
-                                </div>
+                        <div className="job-title-container">
+                            <h2 className="job-title">{job?.title}</h2>
+                            <div className="job-badges">
+                                <span className={`job-badge ${job?.budgetType === "hourly" ? "hourly" : "fixed-price"}`}>
+                                    {job?.budgetType === "hourly" ? "Hourly" : "Fixed Price"}
+                                </span>
+                                <span className={`job-badge ${job?.experienceLevel?.toLowerCase() || "entry"}`}>
+                                    {job?.experienceLevel || "Entry Level"}
+                                </span>
                             </div>
                         </div>
                         
-                        <div className="job-description-container">
-                            <h4>Description</h4>
-                            <div className="job-description-content">
-                                <p>{job?.description}</p>
+                        <div className="job-meta-info">
+                            <div className="job-meta-item">
+                                <FaDollarSign className="job-meta-icon" />
+                                <span className="job-meta-label">Budget</span>
+                                <span className="job-meta-value">
+                                    {job?.budgetType === "hourly"
+                                        ? `$${job?.hourlyFrom} - $${job?.hourlyTo}/hr`
+                                        : `$${job?.fixedAmount}`}
+                                </span>
                             </div>
+                            <div className="job-meta-item">
+                                <FaRegFileAlt className="job-meta-icon" />
+                                <span className="job-meta-label">Posted</span>
+                                <span className="job-meta-value">
+                                    {new Date(job?.createdAt).toLocaleDateString()}
+                                </span>
+                            </div>
+                            <div className="job-meta-item">
+                                <FaClock className="job-meta-icon" />
+                                <span className="job-meta-label">Scope</span>
+                                <span className="job-meta-value">{job?.scope}</span>
+                            </div>
+                        </div>
+                        
+                        <div className="job-description">
+                            <h3 className="job-section-title">Job Description</h3>
+                            <p>{job?.description}</p>
                         </div>
                         
                         <div className="job-skills-container">
-                            <h4>Required Skills</h4>
-                            <div className="skills-list">
+                            <h3 className="job-section-title">Skills Required</h3>
+                            <div className="job-skills-list">
                                 {job?.skills?.map((skill, index) => (
-                                    <span key={index} className="skill-tag">
+                                    <span key={index} className="job-skill-tag">
                                         {skill}
                                     </span>
                                 ))}
                             </div>
                         </div>
                         
-                        <div className="job-attachments-container">
-                            <h4>Client Attachments</h4>
-                            {job?.files?.length > 0 ? (
-                                <div className="attachments-list">
+                        {job?.files?.length > 0 && (
+                            <div className="job-attachments-container">
+                                <h3 className="job-section-title">Attachments</h3>
+                                <div className="job-attachments-list">
                                     {job.files.map((file, index) => (
-                                        <a 
-                                            key={index}
-                                            href={file.path} 
-                                            target="_blank" 
-                                            rel="noopener noreferrer"
-                                            className="attachment-link"
-                                            download
-                                        >
-                                            <FaRegFileAlt />
-                                            <span className="attachment-name">{file.filename}</span>
-                                            <FaDownload className="download-icon" />
-                                        </a>
+                                        <div key={index} className="job-attachment-item">
+                                            <FaRegFileAlt className="attachment-icon" />
+                                            <div className="attachment-info">
+                                                <span className="attachment-name">{file.filename}</span>
+                                                <span className="attachment-size">
+                                                    {Math.round(file.size / 1024)} KB
+                                                </span>
+                                            </div>
+                                            <a 
+                                                href={file.path}
+                                                download
+                                                target="_blank" 
+                                                rel="noopener noreferrer"
+                                                className="attachment-download"
+                                            >
+                                                <FaDownload />
+                                            </a>
+                                        </div>
                                     ))}
                                 </div>
-                            ) : (
-                                <div className="no-attachments">
-                                    <p>No attachments provided by the client.</p>
-                                </div>
-                            )}
-                        </div>
-                    </div>
-                </div>
-
-                {/* Application Form with enhanced visuals */}
-                <form onSubmit={handleSubmit} className="application-form">
-                    <div className="application-section terms-section">
-                        <div className="section-header">
-                            <div className="section-icon">
-                                <FaDollarSign />
                             </div>
-                            <h2>Terms & Payment</h2>
+                        )}
+                    </div>
+
+                    {/* Application Form with enhanced visuals */}
+                    <form onSubmit={handleSubmit} className="application-form-section">
+                        <h2 className="application-form-title">Your Application</h2>
+                        
+                        <div className="form-info-banner">
+                            <p>
+                                <strong>Important:</strong> Your application details will be shared with the client. 
+                                Provide a competitive bid and highlight your relevant skills and experience.
+                            </p>
                         </div>
                         
-                        <div className="section-content">
-                            <div className="bid-container">
-                                <div className="bid-input-group">
-                                    <label htmlFor="bid">Your Bid (Total) <span className="required">*</span></label>
-                                    <div className={`amount-control ${bidError ? 'highlight-required' : ''}`}>
-                                        <button 
-                                            type="button" 
-                                            onClick={() => adjustBid(false)}
-                                            className="amount-button"
-                                        >
-                                            <FaMinus />
-                                        </button>
-                                        <div className="amount-display">
-                                            <span className="currency">$</span>
-                                            <input
-                                                id="bid"
-                                                type="number"
-                                                value={bid}
-                                                min="1"
-                                                step="0.01"
-                                                onChange={(e) => {
-                                                    handleBidChange(Number(e.target.value) || '');
-                                                    if (bidError) setBidError('');
-                                                }}
-                                                required
-                                                placeholder="Enter your bid"
-                                                className={bidError ? 'input-error' : ''}
-                                            />
-                                        </div>
-                                        <button 
-                                            type="button" 
-                                            onClick={() => adjustBid(true)}
-                                            className="amount-button"
-                                        >
-                                            <FaPlus />
-                                        </button>
-                                    </div>
-                                    {bidError && (
-                                        <div className="field-error-message">
-                                            <FaExclamationCircle />
-                                            <span>{bidError}</span>
-                                        </div>
-                                    )}
+                        <div className="form-group budget-form-group">
+                            <label htmlFor="bid" className="form-label">Your Bid Amount <span className="required">*</span></label>
+                            <div className={`budget-input-container ${bidError ? 'error' : ''}`}>
+                                <span className="currency-symbol">$</span>
+                                <input
+                                    id="bid"
+                                    type="number"
+                                    className="form-input budget-input"
+                                    value={bid}
+                                    min="1"
+                                    step="0.01"
+                                    onChange={(e) => {
+                                        handleBidChange(Number(e.target.value) || '');
+                                        if (bidError) setBidError('');
+                                    }}
+                                    required
+                                    placeholder="Enter your bid"
+                                />
+                                <div className="bid-buttons">
+                                    <button 
+                                        type="button" 
+                                        onClick={() => adjustBid(false)}
+                                        className="bid-adjust-button"
+                                    >
+                                        <FaMinus />
+                                    </button>
+                                    <button 
+                                        type="button" 
+                                        onClick={() => adjustBid(true)}
+                                        className="bid-adjust-button"
+                                    >
+                                        <FaPlus />
+                                    </button>
                                 </div>
-                                
-                                <div className="service-fee">
+                            </div>
+                            {bidError && <div className="form-error">{bidError}</div>}
+                            
+                            <div className="service-fee-info">
+                                <div className="fee-item">
                                     <span>Service Fee ({serviceFeePercentage}%)</span>
                                     <span>-${((bid * serviceFeePercentage) / 100).toFixed(2)}</span>
                                 </div>
-                                
-                                <div className="received-amount-group">
-                                    <label htmlFor="receivedAmount">You'll Receive</label>
-                                    <div className="amount-display received-amount">
-                                        <span className="currency">$</span>
-                                        <input
-                                            id="receivedAmount"
-                                            type="number"
-                                            value={receivedAmount.toFixed(2)}
-                                            disabled
-                                        />
-                                    </div>
+                                <div className="fee-item total">
+                                    <span>You'll Receive</span>
+                                    <span>${receivedAmount.toFixed(2)}</span>
                                 </div>
-                                {bidError && <div className="error-message">{bidError}</div>}
                             </div>
+                        </div>
                             
-                            <div className="duration-selection">
-                                <label>How long will this project take? <span className="required">*</span></label>
-                                <div className={`duration-options ${durationError ? 'highlight-required' : ''}`}>
-                                    {['less than 1 month', '1-3 months', '3-6 months', 'more than 6 months'].map((option) => (
-                                        <div
-                                            key={option}
-                                            className={`duration-option ${duration === option ? 'selected' : ''}`}
-                                            onClick={() => {
-                                                setDuration(option);
+                        <div className="form-group">
+                            <label className="form-label">Project Duration <span className="required">*</span></label>
+                            <div className={`duration-selection ${durationError ? 'error' : ''}`}>
+                                {['less than 1 month', '1-3 months', '3-6 months', 'more than 6 months'].map((option) => (
+                                    <div
+                                        key={option}
+                                        className={`duration-option ${duration === option ? 'selected' : ''}`}
+                                        onClick={() => {
+                                            setDuration(option);
+                                            if (durationError) setDurationError('');
+                                        }}
+                                    >
+                                        <input
+                                            type="radio"
+                                            name="duration"
+                                            value={option}
+                                            checked={duration === option}
+                                            onChange={(e) => {
+                                                setDuration(e.target.value);
                                                 if (durationError) setDurationError('');
                                             }}
-                                        >
-                                            <input
-                                                type="radio"
-                                                name="duration"
-                                                value={option}
-                                                checked={duration === option}
-                                                onChange={(e) => {
-                                                    setDuration(e.target.value);
-                                                    if (durationError) setDurationError('');
-                                                }}
-                                                required
-                                            />
-                                            <span>{option}</span>
-                                        </div>
-                                    ))}
-                                </div>
-                                {durationError && (
-                                    <div className="field-error-message">
-                                        <FaExclamationCircle />
-                                        <span>{durationError}</span>
+                                            required
+                                        />
+                                        <span>{option}</span>
                                     </div>
-                                )}
+                                ))}
                             </div>
-                        </div>
-                    </div>
-
-                    <div className="application-section additional-details-section">
-                        <div className="section-header">
-                            <div className="section-icon">
-                                <FaCommentDots />
-                            </div>
-                            <h2>Additional Details</h2>
+                            {durationError && <div className="form-error">{durationError}</div>}
                         </div>
                         
-                        <div className="section-content">
-                            <div className="cover-letter-container">
-                                <label htmlFor="coverLetter">
-                                    Cover Letter
-                                    <span className="character-count">
-                                        {coverLetter.length}/5000 characters
-                                    </span>
-                                </label>
-                                <textarea
-                                    id="coverLetter"
-                                    value={coverLetter}
-                                    onChange={(e) => setCoverLetter(e.target.value)}
-                                    placeholder="Introduce yourself and explain why you're a good fit for this job..."
-                                    maxLength={5000}
-                                    className={coverLetter.length >= 5000 ? 'limit-reached' : ''}
-                                ></textarea>
+                        <div className="form-group cover-letter-section">
+                            <div className="cover-letter-header">
+                                <label htmlFor="coverLetter" className="form-label">Cover Letter</label>
+                                <span className={`letter-counter ${coverLetter.length > 4500 ? 'limit-warning' : ''}`}>
+                                    {coverLetter.length}/5000
+                                </span>
                             </div>
-                            
-                            <div className="file-upload-container">
-                                <label>Your Attachments</label>
-                                <p className="upload-instructions">
-                                    Add work samples or other documents to support your application.
-                                    Accepted formats: .jpg, .png, .pdf (Max 5MB per file)
+                            <textarea
+                                id="coverLetter"
+                                className="form-textarea"
+                                value={coverLetter}
+                                onChange={(e) => setCoverLetter(e.target.value)}
+                                placeholder="Introduce yourself and explain why you're a good fit for this job..."
+                                maxLength={5000}
+                            ></textarea>
+                            <p className="form-hint">
+                                A good cover letter highlights your relevant skills and experience. 
+                                Be specific about how your qualifications match the job requirements.
+                            </p>
+                        </div>
+                        
+                        <div className="form-group">
+                            <label className="form-label">Attachments</label>
+                            <div 
+                                className="file-upload-container"
+                                onClick={() => fileInputRef.current.click()}
+                            >
+                                <FaFileUpload className="file-upload-icon" />
+                                <p className="file-upload-text">Upload files to support your application</p>
+                                <p className="file-upload-hint">
+                                    Click or drag files here. PNG, JPG, PDF (Max 5MB each)
                                 </p>
-                                
                                 <input
                                     type="file"
                                     ref={fileInputRef}
                                     onChange={handleFileSelect}
                                     accept=".jpg,.jpeg,.png,.pdf"
                                     multiple
-                                    style={{ display: 'none' }}
+                                    className="file-upload-input"
                                 />
-                                
-                                <button
-                                    type="button"
-                                    onClick={() => fileInputRef.current.click()}
-                                    className="file-upload-button"
-                                >
-                                    <FaFileUpload /> Select Files
-                                </button>
-                                
-                                {fileErrors.length > 0 && (
-                                    <div className="file-errors">
-                                        {fileErrors.map((errorMsg, index) => (
-                                            <p key={index} className="error-message">{errorMsg}</p>
-                                        ))}
-                                    </div>
+                            </div>
+                            
+                            {fileErrors.length > 0 && (
+                                <div className="file-errors">
+                                    {fileErrors.map((errorMsg, index) => (
+                                        <div key={index} className="form-error">{errorMsg}</div>
+                                    ))}
+                                </div>
+                            )}
+                            
+                            {files.length > 0 && (
+                                <div className="uploaded-files-container">
+                                    {files.map((file, index) => (
+                                        <div key={index} className="uploaded-file">
+                                            <FaRegFileAlt className="file-icon" />
+                                            <div className="file-info">
+                                                <div className="file-name">{file.name}</div>
+                                                <div className="file-size">
+                                                    {Math.round(file.size / 1024)} KB
+                                                </div>
+                                            </div>
+                                            <button
+                                                type="button"
+                                                onClick={() => removeFile(index)}
+                                                className="file-remove"
+                                            >
+                                                <FaTimes />
+                                            </button>
+                                        </div>
+                                    ))}
+                                </div>
+                            )}
+                        </div>
+
+                        {error && (
+                            <div className="form-error-container">
+                                <FaExclamationCircle />
+                                <span>{error}</span>
+                            </div>
+                        )}
+
+                        <div className="form-actions">
+                            <button
+                                type="button"
+                                onClick={() => navigate(`/find-jobs/details/${jobId}`)}
+                                className="form-button secondary"
+                            >
+                                Cancel
+                            </button>
+                            
+                            <button
+                                type="submit"
+                                className="form-button primary"
+                                disabled={submitting}
+                            >
+                                {submitting ? (
+                                    <>
+                                        <FaSpinner className="spinning" />
+                                        Submitting...
+                                    </>
+                                ) : (
+                                    'Submit Application'
                                 )}
-                                
-                                {files.length > 0 && (
-                                    <div className="selected-files">
-                                        <h4>Selected Files</h4>
-                                        <ul className="file-list">
-                                            {files.map((file, index) => (
-                                                <li key={index} className="file-item">
-                                                    <FaRegFileAlt />
-                                                    <span className="file-name">{file.name}</span>
-                                                    <button
-                                                        type="button"
-                                                        onClick={() => removeFile(index)}
-                                                        className="remove-file-button"
-                                                    >
-                                                        <FaTimes />
-                                                    </button>
-                                                </li>
-                                            ))}
-                                        </ul>
-                                    </div>
-                                )}
+                            </button>
+                        </div>
+                    </form>
+                    
+                    {/* Tips Section - Minimalistic Professional Style */}
+                    <div className="application-tips-section">
+                        <h2 className="tips-title">Applying With Success</h2>
+                        <div className="application-tips-grid">
+                            <div className="application-tip-card">
+                                <div className="application-tip-number">1</div>
+                                <div className="application-tip-content">
+                                    <h3>Set a Competitive Bid</h3>
+                                    <p>Research market rates for similar projects to make your bid attractive while ensuring fair compensation for your skills.</p>
+                                </div>
+                            </div>
+                            <div className="application-tip-card">
+                                <div className="application-tip-number">2</div>
+                                <div className="application-tip-content">
+                                    <h3>Personalize Your Approach</h3>
+                                    <p>Customize your cover letter to address the client's specific needs and demonstrate your understanding of the project.</p>
+                                </div>
+                            </div>
+                            <div className="application-tip-card">
+                                <div className="application-tip-number">3</div>
+                                <div className="application-tip-content">
+                                    <h3>Showcase Relevant Experience</h3>
+                                    <p>Include work samples that directly relate to the skills and requirements mentioned in the job description.</p>
+                                </div>
+                            </div>
+                            <div className="application-tip-card">
+                                <div className="application-tip-number">4</div>
+                                <div className="application-tip-content">
+                                    <h3>Be Clear and Concise</h3>
+                                    <p>Present your qualifications clearly and avoid unnecessary details that might dilute your core strengths.</p>
+                                </div>
                             </div>
                         </div>
                     </div>
-
-                    {error && (
-                        <div className="error-container">
-                            <FaExclamationCircle />
-                            <span>{error}</span>
-                        </div>
-                    )}
-
-                    <div className="form-actions">
-                        <button
-                            type="button"
-                            onClick={() => navigate(`/find-jobs/details/${jobId}`)}
-                            className="cancel-button"
-                        >
-                            Cancel
-                        </button>
-                        
-                        <button
-                            type="submit"
-                            className="submit-button"
-                            disabled={submitting}
-                        >
-                            {submitting ? (
-                                <>
-                                    <FaSpinner className="spinning" />
-                                    Submitting...
-                                </>
-                            ) : (
-                                'Submit Application'
-                            )}
-                        </button>
-                    </div>
-                </form>
-            </div>
-
-
-
-            {/* Footer Section */}
-            <footer className="dashboard-footer">
-                <div className="footer-grid">
-                    <div className="footer-column">
-                        <h3>For Freelancers</h3>
-                        <ul>
-                            <li><Link to="/find-jobs">Find Work</Link></li>
-                            <li><Link to="/resources">Resources</Link></li>
-                            <li><Link to="/freelancer-tips">Tips & Guides</Link></li>
-                            <li><Link to="/freelancer-forum">Community Forum</Link></li>
-                            <li><Link to="/freelancer-stories">Success Stories</Link></li>
-                        </ul>
-                    </div>
-                    
-                    <div className="footer-column">
-                        <h3>For Employers</h3>
-                        <ul>
-                            <li><Link to="/hire">Post a Job</Link></li>
-                            <li><Link to="/hire/how-it-works">How to Hire</Link></li>
-                            <li><Link to="/hire/talent-scouts">Talent Scouts</Link></li>
-                            <li><Link to="/hire/enterprise">Enterprise Solutions</Link></li>
-                            <li><Link to="/hire/success-stories">Success Stories</Link></li>
-                        </ul>
-                    </div>
-                    
-                    <div className="footer-column">
-                        <h3>Resources</h3>
-                        <ul>
-                            <li><Link to="/help-center">Help Center</Link></li>
-                            <li><Link to="/webinars">Webinars</Link></li>
-                            <li><Link to="/blog">Blog</Link></li>
-                            <li><Link to="/api-docs">Developer API</Link></li>
-                            <li><Link to="/partner-program">Partner Program</Link></li>
-                        </ul>
-                    </div>
-                    
-                    <div className="footer-column">
-                        <h3>Company</h3>
-                        <ul>
-                            <li><Link to="/about">About Us</Link></li>
-                            <li><Link to="/leadership">Leadership</Link></li>
-                            <li><Link to="/careers">Careers</Link></li>
-                            <li><Link to="/press">Press</Link></li>
-                            <li><Link to="/contact">Contact Us</Link></li>
-                        </ul>
-                    </div>
                 </div>
-                
-                <div className="footer-bottom">
-                    <div className="footer-bottom-container">
-                        <div className="footer-logo">
-                            <Link to="/">Next Youth</Link>
-                        </div>
-                        
-                        <div className="footer-legal-links">
-                            <Link to="/terms">Terms of Service</Link>
-                            <Link to="/privacy">Privacy Policy</Link>
-                            <Link to="/accessibility">Accessibility</Link>
-                            <Link to="/sitemap">Site Map</Link>
-                        </div>
-                        
-                        <div className="footer-social">
-                            <a href="https://facebook.com" aria-label="Facebook">
-                                <i className="fab fa-facebook-f"></i>
-                            </a>
-                            <a href="https://twitter.com" aria-label="Twitter">
-                                <i className="fab fa-twitter"></i>
-                            </a>
-                            <a href="https://linkedin.com" aria-label="LinkedIn">
-                                <i className="fab fa-linkedin-in"></i>
-                            </a>
-                            <a href="https://instagram.com" aria-label="Instagram">
-                                <i className="fab fa-instagram"></i>
-                            </a>
-                        </div>
-                    </div>
-                    
-                    <div className="footer-copyright">
+            </main>
+
+            {/* Footer - Styled like FindJobs.js */}
+            <footer className="employee-find-jobs-footer">
+                <div className="employee-find-jobs-footer-container">
+                    <div className="employee-footer-copyright">
                         <p>&copy; {new Date().getFullYear()} Next Youth. All rights reserved.</p>
                     </div>
                 </div>

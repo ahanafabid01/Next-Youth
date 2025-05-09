@@ -62,7 +62,7 @@ const App = () => {
                 <Route path="/settings" element={<Settings />} />
                 <Route path="/find-jobs/saved" element={<SavedJobs />} /> {/* Updated to use SavedJobs component */}
                 <Route path="/find-jobs/proposals" element={<FindJobs />} />
-                <Route path="/find-jobs/details/:jobId" element={<FindJobs />} />
+                <Route path="/find-jobs/details/:jobId" element={<JobApplication />} /> {/* Updated to use JobApplication component */}
                 <Route path="/verify-account" element={<VerifyAccount />} />
                 <Route path="/employer-verification" element={<EmployerVerification />} />
                 <Route path="/my-profile" element={<MyProfile />} />

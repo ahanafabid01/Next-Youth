@@ -84,8 +84,11 @@ const Settings = () => {
           name: userData.name || '',
           email: userData.email || '',
           profilePicture: userData.profilePicture || userData.profilePic || '',
-          phoneNumber: userData.phoneNumber || ''
+          phoneNumber: userData.phoneNumber || '' // This line is correct, but let's add some debugging
         });
+        
+        console.log('User data from API:', userData); // Add this line to debug
+        console.log('Phone number from API:', userData.phoneNumber);
       }
     } catch (error) {
       console.error('Error fetching user data:', error);
@@ -137,9 +140,17 @@ const Settings = () => {
     e.preventDefault();
     setLoading(true);
     try {
+      // Log what we're sending to the API
+      console.log('Sending profile data:', user);
+      
       const response = await axios.put(
-        `${API_BASE_URL}/auth/update-profile`, // Changed from /auth/profile to /auth/update-profile
-        user, 
+        `${API_BASE_URL}/auth/update-profile`,
+        {
+          name: user.name,
+          email: user.email,
+          phoneNumber: user.phoneNumber,  // Make sure this is explicitly included
+          profilePicture: user.profilePicture
+        }, 
         { withCredentials: true }
       );
       

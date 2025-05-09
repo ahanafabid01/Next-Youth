@@ -1,0 +1,2396 @@
+/* Add these styles at the top of your existing EditApplication.css file */
+
+/* Header Styles - Updated to match EmployeeDashboard exactly */
+.employee-dashboard-header {
+  position: sticky;
+  top: 0;
+  width: 100%;
+  background-color: var(--light-card, #ffffff);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+  z-index: 1000;
+  transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  padding: 0;
+  border-bottom: 1px solid var(--light-border, #e2e8f0);
+}
+
+.dark-mode .employee-dashboard-header {
+  background-color: var(--dark-card, #1e293b);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+  border-bottom: 1px solid var(--dark-border, #334155);
+}
+
+.employee-dashboard-header-container {
+  max-width: 1440px;
+  margin: 0 auto;
+  padding: 0.8rem 2rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.employee-dashboard-header-left {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.employee-dashboard-header-right {
+  display: flex;
+  align-items: center;
+  gap: 1.5rem;
+}
+
+/* Logo and Navigation Spacing - Updated to match exactly */
+.employee-dashboard-logo {
+  display: flex;
+  align-items: center;
+  margin-right: 1.5rem;
+  padding-left: 0.5rem;
+}
+
+.employee-logo-image {
+  height: 48px;
+  transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+}
+
+/* Theme Toggle Button - Fixed colors for dark mode */
+.employee-theme-toggle-button {
+  background: none;
+  border: none;
+  font-size: 1.2rem;
+  color: var(--dark-text, #1e293b);
+  padding: 0.5rem;
+  border-radius: 50%;
+  transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+}
+
+.dark-mode .employee-theme-toggle-button {
+  color: var(--light-text, #f8fafc);
+}
+
+.employee-theme-toggle-button:hover {
+  background-color: rgba(0, 0, 0, 0.05);
+  transform: rotate(15deg);
+}
+
+.dark-mode .employee-theme-toggle-button:hover {
+  background-color: rgba(255, 255, 255, 0.1);
+}
+
+/* Profile dropdown alignment and spacing */
+.employee-profile-dropdown-container {
+  position: relative;
+}
+
+.employee-profile-button {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  background: none;
+  border: none;
+  padding: 0.3rem;
+  border-radius: 12px;
+  transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+}
+
+.employee-profile-button:hover {
+  background-color: rgba(0, 0, 0, 0.05);
+}
+
+.dark-mode .employee-profile-button:hover {
+  background-color: rgba(255, 255, 255, 0.05);
+}
+
+.employee-profile-avatar-icon {
+  font-size: 1.8rem;
+  color: var(--dark-text, #1e293b);
+}
+
+.dark-mode .employee-profile-avatar-icon {
+  color: var(--light-text, #f8fafc);
+}
+
+.employee-profile-avatar {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  object-fit: cover;
+}
+
+/* Mobile adaptations for the header */
+@media (max-width: 768px) {
+  .employee-dashboard-header-container {
+    padding-left: 1.5rem;
+    padding-right: 1.5rem;
+  }
+}
+
+@media (max-width: 576px) {
+  .employee-dashboard-header-container {
+    padding-left: 1rem;
+    padding-right: 1rem;
+  }
+  
+  .employee-logo-image {
+    height: 40px;
+  }
+}
+
+@media (max-width: 360px) {
+  .employee-dashboard-header-container {
+    padding-left: 0.8rem;
+    padding-right: 0.8rem;
+  }
+  
+  .employee-logo-image {
+    height: 36px;
+  }
+}
+
+/* Navigation Styling - Updated to match EmployeeDashboard exactly */
+.employee-dashboard-nav {
+  display: flex;
+  gap: 1.8rem;
+  margin-left: 0.8rem;
+}
+
+.employee-nav-link {
+  position: relative;
+  padding: 0.5rem 0;
+  font-weight: 500;
+  color: var(--dark-text, #1e293b);
+  transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+}
+
+.dark-mode .employee-nav-link {
+  color: var(--light-text, #f8fafc);
+}
+
+.employee-nav-link:hover {
+  color: var(--primary-color, #3a86ff);
+}
+
+.employee-nav-link::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 0;
+  height: 2px;
+  background: linear-gradient(90deg, var(--primary-color, #3a86ff), var(--accent-color, #4cc9f0));
+  transition: width 0.3s ease;
+}
+
+.employee-nav-link:hover::after {
+  width: 100%;
+}
+
+/* Mobile navigation layout */
+@media (max-width: 1024px) {
+  .employee-dashboard-header-left {
+    gap: 0.5rem;
+  }
+  
+  .employee-dashboard-logo {
+    margin-right: 0;
+  }
+  
+  .employee-dashboard-nav-toggle {
+    margin-right: 0.5rem;
+  }
+}
+
+/* EditApplication.css - Dedicated styling for the application editing interface */
+
+.edit-application-container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 2rem;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+  color: #334155;
+  background-color: #f8fafc;
+  border-radius: 12px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.edit-application-container.dark-mode {
+  background-color: #1e293b;
+  color: #e2e8f0;
+}
+
+/* Navigation */
+.back-button {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  background-color: transparent;
+  color: #4f46e5;
+  border: none;
+  padding: 0.5rem 0;
+  font-size: 0.9rem;
+  font-weight: 500;
+  cursor: pointer;
+  margin-bottom: 1.5rem;
+  transition: transform 0.2s;
+}
+
+.back-button:hover {
+  transform: translateX(-3px);
+}
+
+.edit-application-container.dark-mode .back-button {
+  color: #818cf8;
+}
+
+/* Header styling */
+.edit-application-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 2rem;
+  padding-bottom: 1rem;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.edit-application-container.dark-mode .edit-application-header {
+  border-bottom-color: #334155;
+}
+
+.edit-header-content h1 {
+  font-size: 1.75rem;
+  font-weight: 700;
+  margin: 0;
+  color: #1e293b;
+}
+
+.edit-application-container.dark-mode .edit-header-content h1 {
+  color: #f1f5f9;
+}
+
+.edit-header-subtitle {
+  color: #64748b;
+  font-size: 1rem;
+  margin-top: 0.25rem;
+}
+
+.edit-application-container.dark-mode .edit-header-subtitle {
+  color: #94a3b8;
+}
+
+.edit-header-icon {
+  background-color: #eef2ff;
+  color: #4f46e5;
+  width: 3rem;
+  height: 3rem;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.25rem;
+}
+
+.edit-application-container.dark-mode .edit-header-icon {
+  background-color: #312e81;
+  color: #a5b4fc;
+}
+
+/* Section styling */
+.edit-section {
+  background-color: white;
+  border-radius: 10px;
+  padding: 1.5rem;
+  margin-bottom: 1.5rem;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+}
+
+.edit-application-container.dark-mode .edit-section {
+  background-color: #1e293b;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+}
+
+.edit-section-header {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-bottom: 1.5rem;
+}
+
+.edit-section-icon {
+  background-color: #eef2ff;
+  color: #4f46e5;
+  width: 2.5rem;
+  height: 2.5rem;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1rem;
+}
+
+.edit-application-container.dark-mode .edit-section-icon {
+  background-color: #312e81;
+  color: #a5b4fc;
+}
+
+.edit-section-header h2 {
+  font-size: 1.25rem;
+  font-weight: 600;
+  margin: 0;
+  color: #1e293b;
+}
+
+.edit-application-container.dark-mode .edit-section-header h2 {
+  color: #f1f5f9;
+}
+
+/* Job details styling */
+.job-title {
+  font-size: 1.7rem;
+  font-weight: 700;
+  margin-top: 0;
+  margin-bottom: 2rem;
+  color: var(--primary-color, #3a86ff);
+  border-bottom: 2px solid var(--light-border, #e2e8f0);
+  padding-bottom: 1.2rem;
+  letter-spacing: -0.01em;
+}
+
+.edit-application-container.dark-mode .job-title {
+  border-bottom-color: var(--dark-border, #334155);
+}
+
+.job-info-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 1.8rem;
+  margin-bottom: 2.5rem;
+}
+
+.job-info-item {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 1.5rem;
+  background: linear-gradient(to right, var(--light-bg, #f8fafc), rgba(255,255,255,0.8));
+  border-radius: 12px;
+  border-left: 3px solid #4f46e5;
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.03);
+  position: relative;
+  overflow: hidden;
+}
+
+.edit-application-container.dark-mode .job-info-item {
+  background: linear-gradient(to right, rgba(255, 255, 255, 0.08), rgba(255, 255, 255, 0.03));
+  border-left-color: #818cf8;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08);
+}
+
+.job-info-item:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.06);
+}
+
+.edit-application-container.dark-mode .job-info-item:hover {
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.12);
+}
+
+.job-info-item::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 4px;
+  height: 100%;
+  background: linear-gradient(to bottom, var(--primary-color, #3a86ff), var(--accent-color, #4cc9f0));
+}
+
+.info-icon {
+  color: #4f46e5;
+}
+
+.edit-application-container.dark-mode .info-icon {
+  color: #818cf8;
+}
+
+.info-content {
+  display: flex;
+  flex-direction: column;
+}
+
+.info-label {
+  font-size: 0.8rem;
+  color: #64748b;
+  margin-bottom: 0.25rem;
+}
+
+.edit-application-container.dark-mode .info-label {
+  color: #94a3b8;
+}
+
+.info-value {
+  font-weight: 500;
+}
+
+/* Job description */
+.job-description-container,
+.job-skills-container {
+  margin-top: 1.5rem;
+}
+
+.job-description-container h4,
+.job-skills-container h4 {
+  font-size: 1.3rem;
+  font-weight: 600;
+  margin-bottom: 1.2rem;
+  color: #334155;
+}
+
+.edit-application-container.dark-mode .job-description-container h4,
+.edit-application-container.dark-mode .job-skills-container h4 {
+  color: #cbd5e1;
+}
+
+.job-description-content {
+  background-color: #f8fafc;
+  padding: 1rem;
+  border-radius: 8px;
+  line-height: 1.8;
+}
+
+.edit-application-container.dark-mode .job-description-content {
+  background-color: #334155;
+}
+
+.skills-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.skill-tag {
+  background-color: #eef2ff;
+  color: #4f46e5;
+  padding: 0.35rem 0.75rem;
+  border-radius: 9999px;
+  font-size: 0.85rem;
+  font-weight: 500;
+}
+
+.edit-application-container.dark-mode .skill-tag {
+  background-color: #312e81;
+  color: #a5b4fc;
+}
+
+/* Form inputs styling */
+.form-group {
+  margin-bottom: 2.4rem;
+  position: relative;
+}
+
+.form-group h4 {
+  font-size: 1.25rem;
+  margin-bottom: 1.2rem;
+  color: var(--light-text);
+  position: relative;
+  display: block; /* Changed from flex to block to remove icon space */
+  font-weight: 600;
+}
+
+.dark-mode .form-group h4 {
+  color: var(--dark-text);
+}
+
+.form-group input[type="number"],
+.form-group input[type="text"],
+.form-group select,
+.form-group textarea {
+  width: 100%;
+  padding: 1.2rem;
+  border-radius: 8px;
+  border: 1px solid #e2e8f0;
+  background-color: white;
+  color: #334155;
+  font-size: 0.95rem;
+  transition: all 0.2s;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+}
+
+.edit-application-container.dark-mode .form-group input[type="number"],
+.edit-application-container.dark-mode .form-group input[type="text"],
+.edit-application-container.dark-mode .form-group select,
+.edit-application-container.dark-mode .form-group textarea {
+  background-color: #334155;
+  color: #e2e8f0;
+  border-color: #475569;
+}
+
+.form-group input:focus,
+.form-group select:focus,
+.form-group textarea:focus {
+  outline: none;
+  border-color: #4f46e5;
+  box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.2);
+}
+
+.form-group textarea {
+  min-height: 150px;
+  resize: vertical;
+}
+
+.form-group input:disabled {
+  background-color: #f1f5f9;
+  cursor: not-allowed;
+}
+
+.edit-application-container.dark-mode .form-group input:disabled {
+  background-color: #1e293b;
+}
+
+.form-group small {
+  display: block;
+  margin-top: 0.5rem;
+  color: #64748b;
+  font-size: 0.85rem;
+}
+
+.edit-application-container.dark-mode .form-group small {
+  color: #94a3b8;
+}
+
+/* File upload styling */
+.file-upload-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  background-color: #4f46e5;
+  color: white;
+  border: none;
+  padding: 0.75rem 1.25rem;
+  border-radius: 8px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.file-upload-button:hover {
+  background-color: #4338ca;
+}
+
+.file-upload-button:focus {
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.4);
+}
+
+/* File lists */
+.files-container {
+  margin-top: 1rem;
+}
+
+.files-container h4 {
+  font-size: 0.95rem;
+  color: #334155;
+  margin-bottom: 0.75rem;
+}
+
+.edit-application-container.dark-mode .files-container h4 {
+  color: #cbd5e1;
+}
+
+.files-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.file-item {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.75rem 1rem;
+  background-color: #f8fafc;
+  border-radius: 8px;
+  margin-bottom: 0.5rem;
+}
+
+.edit-application-container.dark-mode .file-item {
+  background-color: #334155;
+}
+
+.file-item-name {
+  flex: 1;
+  font-size: 0.9rem;
+}
+
+.file-remove-button {
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: #ef4444;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.25rem;
+}
+
+.file-remove-button:hover {
+  color: #dc2626;
+}
+
+/* Attachment links */
+.attachment-link {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.75rem 1rem;
+  background-color: #f8fafc;
+  border-radius: 8px;
+  margin-bottom: 0.5rem;
+  text-decoration: none;
+  color: #334155;
+  transition: background-color 0.2s;
+}
+
+.edit-application-container.dark-mode .attachment-link {
+  background-color: #334155;
+  color: #e2e8f0;
+}
+
+.attachment-link:hover {
+  background-color: #f1f5f9;
+}
+
+.edit-application-container.dark-mode .attachment-link:hover {
+  background-color: #475569;
+}
+
+.attachment-name {
+  flex: 1;
+  font-size: 0.9rem;
+}
+
+.download-icon {
+  color: #4f46e5;
+}
+
+.edit-application-container.dark-mode .download-icon {
+  color: #818cf8;
+}
+
+/* Action buttons */
+.edit-application-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 1.2rem;
+  margin-top: 2.5rem;
+}
+
+.cancel-button,
+.update-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 1rem 2rem;
+  border-radius: 8px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.cancel-button {
+  background-color: #f1f5f9;
+  color: #64748b;
+  border: 1px solid #e2e8f0;
+}
+
+.edit-application-container.dark-mode .cancel-button {
+  background-color: #334155;
+  color: #cbd5e1;
+  border-color: #475569;
+}
+
+.cancel-button:hover {
+  background-color: #e2e8f0;
+  transform: translateY(-2px);
+}
+
+.edit-application-container.dark-mode .cancel-button:hover {
+  background-color: #475569;
+}
+
+.update-button {
+  background-color: #4f46e5;
+  color: white;
+  border: none;
+  min-width: 200px;
+  justify-content: center;
+  background: linear-gradient(135deg, var(--primary-color, #3a86ff), #2667ca);
+}
+
+.update-button:hover {
+  background-color: #4338ca;
+}
+
+.update-button:hover:not(:disabled) {
+  transform: translateY(-3px);
+  box-shadow: 0 8px 20px rgba(58, 134, 255, 0.3);
+}
+
+.update-button:disabled {
+  background-color: #818cf8;
+  cursor: not-allowed;
+}
+
+/* Loading and error states */
+.application-loading,
+.application-error {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 3rem;
+  text-align: center;
+}
+
+.application-loading .spinning {
+  animation: spin 1s linear infinite;
+  font-size: 1.5rem;
+  margin-bottom: 1rem;
+  color: #4f46e5;
+}
+
+.application-error {
+  color: #ef4444;
+}
+
+.application-error h3 {
+  margin-top: 1rem;
+  margin-bottom: 0.5rem;
+}
+
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* Responsive design */
+@media (max-width: 768px) {
+  .edit-application-container {
+    padding: 1.5rem;
+  }
+  
+  .edit-application-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 1rem;
+  }
+  
+  .edit-header-icon {
+    margin-bottom: 0.5rem;
+  }
+  
+  .job-info-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .edit-application-actions {
+    flex-direction: column-reverse;
+    gap: 0.75rem;
+  }
+  
+  .cancel-button,
+  .update-button {
+    width: 100%;
+    justify-content: center;
+  }
+}
+
+/* For very small screens */
+@media (max-width: 480px) {
+  .edit-application-container {
+    padding: 1rem;
+  }
+  
+  .edit-section {
+    padding: 1rem;
+  }
+}
+
+/* EditApplication.css - Dedicated styling that won't affect other components */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+
+/* ============== Base Styles =============== */
+.edit-app-container {
+  --primary-color: #3a86ff;
+  --primary-dark: #2667ca;
+  --primary-light: rgba(58, 134, 255, 0.1);
+  --success-color: #10b981;
+  --warning-color: #f59e0b;
+  --danger-color: #ef4444;
+  --neutral-color: #6b7280;
+  
+  --light-bg: #f8fafc;
+  --light-card: #ffffff;
+  --light-border: #e2e8f0;
+  --light-text: #1e293b;
+  --light-text-secondary: #64748b;
+  
+  --dark-bg: #121826;
+  --dark-card: #1e293b;
+  --dark-border: #334155;
+  --dark-text: #f8fafc;
+  --dark-text-secondary: #94a3b8;
+  
+  --shadow-light: 0 2px 10px rgba(0, 0, 0, 0.05);
+  --shadow-dark: 0 2px 10px rgba(0, 0, 0, 0.2);
+  
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 16px;
+  
+  --transition: all 0.3s ease;
+  
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  color: var(--light-text);
+  background-color: var(--light-bg);
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  margin: 0;
+  padding: 0;
+}
+
+.edit-app-container.dark-mode {
+  color: var(--dark-text);
+  background-color: var(--dark-bg);
+}
+
+/* ============== Layout Containers =============== */
+.edit-app-main {
+  flex: 1;
+  max-width: 1200px;
+  width: 100%;
+  margin: 0 auto;
+  padding: 2rem;
+}
+
+/* ============== Header Styling =============== */
+.edit-app-header {
+  background-color: var(--light-card);
+  border-bottom: 1px solid var(--light-border);
+  padding: 0.8rem 0;
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  box-shadow: var(--shadow-light);
+}
+
+.dark-mode .edit-app-header {
+  background-color: var(--dark-card);
+  border-bottom: 1px solid var(--dark-border);
+  box-shadow: var(--shadow-dark);
+}
+
+.edit-app-header-container {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  max-width: 1440px;
+  margin: 0 auto;
+  padding: 0 2rem;
+}
+
+.edit-app-header-left,
+.edit-app-header-right {
+  display: flex;
+  align-items: center;
+}
+
+.edit-app-logo {
+  display: flex;
+  text-decoration: none;
+}
+
+.edit-app-logo-image {
+  height: 42px;
+}
+
+.edit-app-header-right {
+  display: flex;
+  gap: 1.5rem;
+  align-items: center;
+}
+
+.edit-app-theme-toggle {
+  background: none;
+  border: none;
+  color: var(--light-text);
+  font-size: 1.25rem;
+  cursor: pointer;
+  padding: 0.5rem;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: var(--transition);
+}
+
+.dark-mode .edit-app-theme-toggle {
+  color: var(--dark-text);
+}
+
+.edit-app-theme-toggle:hover {
+  background-color: rgba(0, 0, 0, 0.05);
+  transform: rotate(15deg);
+}
+
+.dark-mode .edit-app-theme-toggle:hover {
+  background-color: rgba(255, 255, 255, 0.1);
+}
+
+.edit-app-avatar {
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  object-fit: cover;
+}
+
+.edit-app-avatar-icon {
+  width: 38px;
+  height: 38px;
+  color: var(--light-text);
+}
+
+.dark-mode .edit-app-avatar-icon {
+  color: var(--dark-text);
+}
+
+/* ============== Back Button =============== */
+.edit-app-back-container {
+  margin-bottom: 1.5rem;
+}
+
+.edit-app-back {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.75rem 1rem;
+  background: none;
+  border: none;
+  color: var(--primary-color);
+  font-weight: 500;
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  transition: var(--transition);
+}
+
+.edit-app-back:hover {
+  background-color: var(--primary-light);
+  transform: translateX(-4px);
+}
+
+/* ============== Page Header =============== */
+.edit-app-page-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 2rem;
+  padding-bottom: 1.5rem;
+  border-bottom: 1px solid var(--light-border);
+}
+
+.dark-mode .edit-app-page-header {
+  border-bottom-color: var (--dark-border);
+}
+
+.edit-app-page-header h1 {
+  font-size: 2.2rem;
+  font-weight: 700;
+  margin: 0 0 0.5rem;
+  color: var(--light-text);
+}
+
+.dark-mode .edit-app-page-header h1 {
+  color: var(--dark-text);
+}
+
+.edit-app-subtitle {
+  font-size: 1.1rem;
+  color: var(--light-text-secondary);
+  margin: 0;
+}
+
+.dark-mode .edit-app-subtitle {
+  color: var(--dark-text-secondary);
+}
+
+.edit-app-header-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 70px;
+  height: 70px;
+  background-color: var(--primary-light);
+  color: var(--primary-color);
+  border-radius: 50%;
+  font-size: 2rem;
+}
+
+.dark-mode .edit-app-header-icon {
+  background-color: rgba(58, 134, 255, 0.2);
+}
+
+/* ============== Card Styling =============== */
+.edit-app-card {
+  background-color: var(--light-card);
+  border-radius: 16px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.06);
+  overflow: hidden;
+  margin-bottom: 2.5rem;
+  border: 1px solid var(--light-border);
+  transition: var(--transition);
+}
+
+.dark-mode .edit-app-card {
+  background-color: var(--dark-card);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+  border-color: var (--dark-border);
+}
+
+.edit-app-card:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.1);
+}
+
+.dark-mode .edit-app-card:hover {
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.25);
+}
+
+.edit-app-card-header {
+  padding: 1.5rem 2rem;
+  border-bottom: 1px solid var(--light-border);
+  background: linear-gradient(135deg, var(--primary-light, rgba(58, 134, 255, 0.1)), transparent 80%);
+}
+
+.dark-mode .edit-app-card-header {
+  border-bottom-color: var(--dark-border);
+  background: linear-gradient(135deg, rgba(58, 134, 255, 0.2), rgba(30, 41, 59, 0.5) 80%);
+}
+
+.edit-app-card-icon {
+  display: none; /* Hide the icon containers */
+}
+
+.edit-app-card-header h2 {
+  margin: 0;
+  font-size: 1.6rem;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  color: var(--light-text);
+}
+
+.dark-mode .edit-app-card-header h2 {
+  color: var(--dark-text);
+}
+
+.edit-app-card-body {
+  padding: 1.5rem;
+}
+
+/* ============== Job Details Card =============== */
+.job-details-card .job-title {
+  color: var(--light-text); /* Match text color to theme */
+  font-size: 1.5rem;
+  margin-top: 0;
+  margin-bottom: 1.5rem;
+  font-weight: 600;
+  padding-bottom: 0.75rem;
+  border-bottom: 1px dashed var(--light-border);
+}
+
+.dark-mode .job-details-card .job-title {
+  color: var (--dark-text); /* Match text color to dark theme */
+  border-bottom-color: var(--dark-border);
+}
+
+.job-info-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 1.5rem;
+  margin-bottom: 1.5rem;
+}
+
+.job-info-item {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 1.25rem;
+  background-color: var(--light-bg);
+  border-radius: var(--radius-sm);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+  transition: var(--transition);
+}
+
+.dark-mode .job-info-item {
+  background-color: rgba(255, 255, 255, 0.05);
+}
+
+.job-info-item:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.08);
+}
+
+.dark-mode .job-info-item:hover {
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+}
+
+.job-info-icon {
+  display: none; /* Hide icon containers */
+}
+
+.job-info-content {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+  padding-left: 0; /* Remove padding that was accommodating the icon */
+}
+
+.job-info-label {
+  color: var(--light-text-secondary);
+  font-size: 0.9rem;
+}
+
+.dark-mode .job-info-label {
+  color: var(--dark-text-secondary);
+}
+
+.job-info-value {
+  color: var(--light-text);
+  font-weight: 600;
+  font-size: 1.1rem;
+}
+
+.dark-mode .job-info-value {
+  color: var (--dark-text);
+}
+
+.job-description,
+.job-skills {
+  margin-top: 1.5rem;
+  padding: 1.8rem;
+  background-color: var(--light-bg);
+  border-radius: var(--radius-sm);
+  border-left: 3px solid var(--primary-color);
+  background: linear-gradient(to right bottom, rgba(58, 134, 255, 0.03), rgba(255,255,255,0));
+  position: relative;
+  border: 1px solid var(--light-border, #e2e8f0);
+  margin-bottom: 1.8rem;
+}
+
+.dark-mode .job-description,
+.dark-mode .job-skills {
+  background-color: rgba(255, 255, 255, 0.05);
+  background: linear-gradient(to right bottom, rgba(58, 134, 255, 0.07), rgba(30, 41, 59, 0.3));
+  border-color: var(--dark-border, #334155);
+}
+
+.job-skills {
+  border-left-color: #8b5cf6;
+}
+
+.job-description h4,
+.job-skills h4 {
+  display: block; /* Changed from flex to block */
+  margin-top: 0;
+  margin-bottom: 1rem;
+  font-size: 1.3rem;
+  font-weight: 600;
+  color: var(--light-text);
+}
+
+.dark-mode .job-description h4,
+.dark-mode .job-skills h4 {
+  color: var(--dark-text);
+}
+
+.job-description-content {
+  line-height: 1.6;
+  color: var(--light-text-secondary);
+}
+
+.dark-mode .job-description-content {
+  color: var(--dark-text-secondary);
+}
+
+.skills-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+}
+
+.skill-tag {
+  padding: 0.5rem 1rem;
+  background-color: rgba(139, 92, 246, 0.1);
+  color: #8b5cf6;
+  border-radius: 50px;
+  font-size: 0.9rem;
+  font-weight: 500;
+  transition: var(--transition);
+  background: linear-gradient(135deg, rgba(139, 92, 246, 0.1) 0%, rgba(76, 201, 240, 0.1) 100%);
+  border: 1px solid rgba(139, 92, 246, 0.15);
+}
+
+.skill-tag:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 3px 6px rgba(139, 92, 246, 0.2);
+}
+
+.dark-mode .skill-tag {
+  background-color: rgba(139, 92, 246, 0.15);
+  background: linear-gradient(135deg, rgba(139, 92, 246, 0.15) 0%, rgba(76, 201, 240, 0.15) 100%);
+  border-color: rgba(139, 92, 246, 0.2);
+}
+
+.skill-tag:hover {
+  transform: translateY(-4px) scale(1.05);
+  box-shadow: 0 6px 15px rgba(139, 92, 246, 0.2);
+}
+
+/* ============== Form Elements =============== */
+.form-group {
+  margin-bottom: 2rem;
+}
+
+.form-group:last-child {
+  margin-bottom: 0;
+}
+
+.form-group h4 {
+  display: block; /* Changed from flex to block to remove icon space */
+  margin-top: 0;
+  margin-bottom: 1rem;
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: var(--light-text);
+}
+
+.dark-mode .form-group h4 {
+  color: var(--dark-text);
+}
+
+.input-wrapper,
+.select-wrapper,
+.textarea-wrapper {
+  position: relative;
+}
+
+.input-wrapper.highlighted {
+  background-color: rgba(58, 134, 255, 0.05);
+  border-radius: var(--radius-sm);
+  padding: 0.5rem;
+}
+
+.dark-mode .input-wrapper.highlighted {
+  background-color: rgba(58, 134, 255, 0.1);
+}
+
+.input-wrapper input,
+.select-wrapper select,
+.textarea-wrapper textarea {
+  width: 100%;
+  padding: 1rem;
+  background-color: var(--light-card);
+  border: 1px solid var(--light-border);
+  border-radius: var(--radius-sm);
+  color: var(--light-text);
+  font-family: inherit;
+  font-size: 1rem;
+  transition: var(--transition);
+}
+
+.dark-mode .input-wrapper input,
+.dark-mode .select-wrapper select,
+.dark-mode .textarea-wrapper textarea {
+  background-color: rgba(255, 255, 255, 0.05);
+  border-color: var(--dark-border);
+  color: var(--dark-text);
+}
+
+.input-wrapper input:focus,
+.select-wrapper select:focus,
+.textarea-wrapper textarea:focus {
+  outline: none;
+  border-color: var(--primary-color);
+  box-shadow: 0 0 0 3px rgba(58, 134, 255, 0.15);
+}
+
+.input-hint,
+.character-counter,
+.files-note {
+  margin-top: 0.5rem;
+  font-size: 0.85rem;
+  color: var(--light-text-secondary);
+}
+
+.dark-mode .input-hint,
+.dark-mode .character-counter,
+.dark-mode .files-note {
+  color: var(--dark-text-secondary);
+}
+
+textarea {
+  min-height: 180px;
+  resize: vertical;
+}
+
+/* ============== File Upload =============== */
+.file-upload-button {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.85rem 1.5rem;
+  background-color: var(--primary-light);
+  color: var(--primary-color);
+  border: 1px dashed var(--primary-color);
+  border-radius: var(--radius-sm);
+  font-weight: 600;
+  cursor: pointer;
+  transition: var(--transition);
+}
+
+.file-upload-button:hover {
+  background-color: rgba(58, 134, 255, 0.15);
+  transform: translateY(-2px);
+}
+
+.files-container {
+  margin-top: 1.5rem;
+  padding: 1.25rem;
+  background-color: var(--light-bg);
+  border-radius: var(--radius-sm);
+  border-left: 3px solid var(--primary-color);
+}
+
+.files-container.existing-files {
+  border-left-color: #10b981;
+}
+
+.dark-mode .files-container {
+  background-color: rgba(255, 255, 255, 0.05);
+}
+
+.files-container h4 {
+  margin-top: 0;
+  margin-bottom: 1rem;
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: var(--light-text);
+}
+
+.dark-mode .files-container h4 {
+  color: var(--dark-text);
+}
+
+.files-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.file-item {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 0.85rem 1rem;
+  background-color: var(--light-card);
+  border-radius: var (--radius-sm);
+  transition: var(--transition);
+}
+
+.dark-mode .file-item {
+  background-color: rgba(255, 255, 255, 0.05);
+}
+
+.file-item-icon {
+  color: var(--primary-color);
+  font-size: 1.25rem;
+}
+
+.file-item-name {
+  flex: 1;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  font-weight: 500;
+}
+
+.file-remove-button {
+  background: none;
+  border: none;
+  color: var(--danger-color);
+  cursor: pointer;
+  padding: 0.5rem;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: var(--transition);
+}
+
+.file-remove-button:hover {
+  background-color: rgba(239, 68, 68, 0.1);
+  transform: rotate(90deg);
+}
+
+.attachment-link {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 0.85rem 1rem;
+  background-color: var(--light-card);
+  border-radius: var(--radius-sm);
+  color: var(--light-text);
+  text-decoration: none;
+  transition: var(--transition);
+}
+
+.dark-mode .attachment-link {
+  background-color: rgba(255, 255, 255, 0.05);
+  color: var(--dark-text);
+}
+
+.attachment-link:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-light);
+}
+
+.dark-mode .attachment-link:hover {
+  box-shadow: var(--shadow-dark);
+}
+
+.attachment-icon {
+  color: var(--primary-color);
+  font-size: 1.25rem;
+}
+
+.attachment-name {
+  flex: 1;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  font-weight: 500;
+}
+
+.download-icon {
+  color: var(--primary-color);
+  transition: var(--transition);
+}
+
+.attachment-link:hover .download-icon {
+  transform: translateY(-2px);
+}
+
+/* ============== Action Buttons =============== */
+.edit-app-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 1rem;
+  margin-top: 2rem;
+}
+
+.cancel-button,
+.update-button {
+  padding: 0.85rem 1.5rem;
+  border-radius: var(--radius-sm);
+  font-weight: 600;
+  font-size: 0.95rem;
+  cursor: pointer;
+  transition: var(--transition);
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.cancel-button {
+  background-color: transparent;
+  border: 1px solid var(--light-border);
+  color: var(--light-text-secondary);
+}
+
+.dark-mode .cancel-button {
+  border-color: var(--dark-border);
+  color: var(--dark-text-secondary);
+}
+
+.cancel-button:hover {
+  background-color: var(--light-bg);
+  border-color: var(--light-text);
+  color: var(--light-text);
+}
+
+.dark-mode .cancel-button:hover {
+  background-color: rgba(255, 255, 255, 0.05);
+  border-color: var(--dark-text);
+  color: var(--dark-text);
+}
+
+.update-button {
+  background-color: var(--primary-color);
+  color: white;
+  border: none;
+  min-width: 180px;
+  justify-content: center;
+}
+
+.update-button:hover:not(:disabled) {
+  background-color: var(--primary-dark);
+  box-shadow: 0 4px 8px rgba(58, 134, 255, 0.3);
+  transform: translateY(-2px);
+}
+
+.update-button:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+
+/* ============== Footer =============== */
+.edit-app-footer {
+  margin-top: auto;
+  padding: 1.5rem 0;
+  background-color: var(--light-card);
+  border-top: 1px solid var(--light-border);
+}
+
+.dark-mode .edit-app-footer {
+  background-color: var(--dark-card);
+  border-top-color: var(--dark-border);
+}
+
+.edit-app-footer-content {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 2rem;
+  text-align: center;
+  color: var(--light-text-secondary);
+  font-size: 0.9rem;
+}
+
+.dark-mode .edit-app-footer-content {
+  color: var(--dark-text-secondary);
+}
+
+/* ============== Loading & Error States =============== */
+.edit-app-loading,
+.edit-app-error {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 100vh;
+  padding: 2rem;
+}
+
+.edit-app-loader,
+.edit-app-error-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 3rem;
+  background-color: var(--light-card);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-light);
+  text-align: center;
+  max-width: 500px;
+}
+
+.dark-mode .edit-app-loader,
+.dark-mode .edit-app-error-content {
+  background-color: var(--dark-card);
+  box-shadow: var(--shadow-dark);
+}
+
+.edit-app-loader svg,
+.edit-app-error-icon {
+  font-size: 3rem;
+  margin-bottom: 1.5rem;
+}
+
+.edit-app-loader svg {
+  color: var(--primary-color);
+}
+
+.edit-app-error-icon {
+  color: var(--danger-color);
+}
+
+.edit-app-loader p,
+.edit-app-error-content p {
+  color: var(--light-text-secondary);
+  margin-bottom: 1.5rem;
+}
+
+.dark-mode .edit-app-loader p,
+.dark-mode .edit-app-error-content p {
+  color: var(--dark-text-secondary);
+}
+
+.edit-app-error-content h3 {
+  font-size: 1.5rem;
+  font-weight: 600;
+  margin-top: 0;
+  margin-bottom: 1rem;
+  color: var(--light-text);
+}
+
+.dark-mode .edit-app-error-content h3 {
+  color: var(--dark-text);
+}
+
+.edit-app-button {
+  padding: 0.85rem 1.5rem;
+  background-color: var(--primary-color);
+  color: white;
+  border: none;
+  border-radius: var(--radius-sm);
+  font-weight: 600;
+  cursor: pointer;
+  transition: var(--transition);
+}
+
+.edit-app-button:hover {
+  background-color: var(--primary-dark);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(58, 134, 255, 0.3);
+}
+
+/* Animation for loading spinner */
+.spinning {
+  animation: spin 1.5s linear infinite;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+/* ============== Responsive Styles =============== */
+@media (max-width: 1024px) {
+  .edit-app-main {
+    padding: 1.5rem;
+  }
+  
+  .edit-app-page-header h1 {
+    font-size: 2rem;
+  }
+}
+
+@media (max-width: 768px) {
+  .edit-app-header-container {
+    padding: 0 1.5rem;
+  }
+  
+  .edit-app-main {
+    padding: 1.25rem;
+  }
+  
+  .edit-app-page-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 1.5rem;
+  }
+  
+  .edit-app-header-icon {
+    width: 60px;
+    height: 60px;
+    font-size: 1.75rem;
+  }
+  
+  .edit-app-page-header h1 {
+    font-size: 1.8rem;
+  }
+  
+  .job-info-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .edit-app-actions {
+    flex-direction: column-reverse;
+  }
+  
+  .cancel-button,
+  .update-button {
+    width: 100%;
+    justify-content: center;
+  }
+}
+
+@media (max-width: 576px) {
+  .edit-app-header-container {
+    padding: 0 1rem;
+  }
+  
+  .edit-app-logo-image {
+    height: 36px;
+  }
+  
+  .edit-app-main {
+    padding: 1rem;
+  }
+  
+  .edit-app-page-header h1 {
+    font-size: 1.6rem;
+  }
+  
+  .edit-app-subtitle {
+    font-size: 1rem;
+  }
+  
+  .edit-app-card-header {
+    padding: 1.25rem 1rem;
+  }
+  
+  .edit-app-card-body {
+    padding: 1.25rem 1rem;
+  }
+  
+  .job-description,
+  .job-skills {
+    padding: 1rem;
+  }
+  
+  .file-item-name {
+    max-width: 180px;
+  }
+  
+  .edit-app-footer-content {
+    padding: 0 1rem;
+  }
+}
+
+@media (max-width: 375px) {
+  .job-info-item {
+    padding: 1rem;
+  }
+  
+  .file-item {
+    flex-wrap: wrap;
+  }
+  
+  .file-item-name {
+    max-width: 100%;
+    width: 100%;
+    margin-top: 0.5rem;
+  }
+}
+
+/* Header and theme styling fixes to match EmployeeDashboard */
+.edit-app-container .employee-dashboard-header {
+  position: sticky;
+  top: 0;
+  width: 100%;
+  background-color: var(--light-card, #ffffff);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+  z-index: 1000;
+  transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  padding: 0;
+  border-bottom: 1px solid var(--light-border, #e2e8f0);
+}
+
+.edit-app-container.dark-mode .employee-dashboard-header {
+  background-color: var(--dark-card, #1e293b);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+  border-bottom: 1px solid var(--dark-border, #334155);
+}
+
+/* Fix notification dropdown theme */
+.edit-app-container .employee-notifications-dropdown {
+  background-color: var(--light-card, #ffffff);
+  box-shadow: var(--shadow-light, 0 10px 25px rgba(0, 0, 0, 0.1));
+}
+
+.edit-app-container.dark-mode .employee-notifications-dropdown {
+  background-color: var(--dark-card, #1e293b);
+  box-shadow: var(--shadow-dark, 0 10px 25px rgba(0, 0, 0, 0.25));
+}
+
+.edit-app-container .employee-notification-header {
+  border-bottom: 1px solid var(--light-border, #e2e8f0);
+}
+
+.edit-app-container.dark-mode .employee-notification-header {
+  border-bottom: 1px solid var(--dark-border, #334155);
+}
+
+.edit-app-container .employee-notification-item {
+  border-bottom: 1px solid var(--light-border, #e2e8f0);
+}
+
+.edit-app-container.dark-mode .employee-notification-item {
+  border-bottom: 1px solid var(--dark-border, #334155);
+}
+
+.edit-app-container .employee-notification-item:hover {
+  background-color: rgba(0, 0, 0, 0.02);
+}
+
+.edit-app-container.dark-mode .employee-notification-item:hover {
+  background-color: rgba(255, 255, 255, 0.05);
+}
+
+.edit-app-container .employee-notification-time {
+  color: var(--light-text-secondary, #64748b);
+}
+
+.edit-app-container.dark-mode .employee-notification-time {
+  color: var(--dark-text-secondary, #94a3b8);
+}
+
+.edit-app-container .employee-notification-footer {
+  border-top: 1px solid var(--light-border, #e2e8f0);
+}
+
+.edit-app-container.dark-mode .employee-notification-footer {
+  border-top: 1px solid var(--dark-border, #334155);
+}
+
+/* Fix profile dropdown theme */
+.edit-app-container .employee-profile-dropdown {
+  background-color: var(--light-card, #ffffff);
+  box-shadow: var(--shadow-light, 0 10px 25px rgba(0, 0, 0, 0.1));
+}
+
+.edit-app-container.dark-mode .employee-profile-dropdown {
+  background-color: var(--dark-card, #1e293b);
+  box-shadow: var(--shadow-dark, 0 10px 25px rgba(0, 0, 0, 0.25));
+}
+
+.edit-app-container .employee-profile-dropdown-header {
+  border-bottom: 1px solid var(--light-border, #e2e8f0);
+}
+
+.edit-app-container.dark-mode .employee-profile-dropdown-header {
+  border-bottom: 1px solid var(--dark-border, #334155);
+}
+
+.edit-app-container .employee-profile-dropdown-link {
+  color: var(--dark-text, #1e293b);
+}
+
+.edit-app-container.dark-mode .employee-profile-dropdown-link {
+  color: var(--light-text, #f8fafc);
+}
+
+.edit-app-container .employee-profile-dropdown-link:hover {
+  background-color: rgba(0, 0, 0, 0.05);
+  color: var(--primary-color, #3a86ff);
+}
+
+.edit-app-container.dark-mode .employee-profile-dropdown-link:hover {
+  background-color: rgba(255, 255, 255, 0.05);
+}
+
+/* Fix navigation links styles */
+.edit-app-container .employee-nav-link {
+  color: var(--dark-text, #1e293b);
+}
+
+.edit-app-container.dark-mode .employee-nav-link {
+  color: var(--light-text, #f8fafc);
+}
+
+.edit-app-container .employee-nav-link:hover {
+  color: var(--primary-color, #3a86ff);
+}
+
+/* Fix theme toggle button */
+.edit-app-container .employee-theme-toggle-button {
+  color: var(--dark-text, #1e293b);
+}
+
+.edit-app-container.dark-mode .employee-theme-toggle-button {
+  color: var(--light-text, #f8fafc);
+}
+
+.edit-app-container .employee-theme-toggle-button:hover {
+  background-color: rgba(0, 0, 0, 0.05);
+}
+
+.edit-app-container.dark-mode .employee-theme-toggle-button:hover {
+  background-color: rgba(255, 255, 255, 0.1);
+}
+
+/* Fix header spacing */
+.edit-app-container .employee-dashboard-header-container {
+  padding: 0.8rem 2rem;
+}
+
+.edit-app-container .employee-dashboard-logo {
+  margin-right: 1.5rem;
+}
+
+.edit-app-container .employee-dashboard-nav {
+  gap: 1.5rem;
+}
+
+/* Fix profile status color */
+.edit-app-container .employee-profile-status {
+  color: var(--light-text-secondary, #64748b);
+}
+
+.edit-app-container.dark-mode .employee-profile-status {
+  color: var(--dark-text-secondary, #94a3b8);
+}
+
+.edit-app-container .employee-verified-icon {
+  color: #10b981;
+}
+
+/* Fix notification icon colors */
+.edit-app-container .employee-notification-button {
+  color: var(--dark-text, #1e293b);
+}
+
+.edit-app-container.dark-mode .employee-notification-button {
+  color: var(--light-text, #f8fafc);
+}
+
+.edit-app-container .employee-mark-all-read {
+  color: var(--primary-color, #3a86ff);
+}
+
+/* Fix header visibility issues */
+
+/* Navigation link color fixes */
+.edit-app-container .employee-nav-link {
+  color: var(--dark-text, #1e293b) !important;
+  font-weight: 500;
+}
+
+.edit-app-container.dark-mode .employee-nav-link {
+  color: var(--light-text, #f8fafc) !important;
+}
+
+.edit-app-container .employee-nav-link:hover {
+  color: var(--primary-color, #3a86ff) !important;
+}
+
+/* Notification button fixes */
+.edit-app-container .employee-notification-button {
+  color: var(--dark-text, #1e293b) !important;
+}
+
+.edit-app-container.dark-mode .employee-notification-button {
+  color: var(--light-text, #f8fafc) !important;
+}
+
+/* Theme toggle button fixes */
+.edit-app-container .employee-theme-toggle-button {
+  color: var(--dark-text, #1e293b) !important;
+}
+
+.edit-app-container.dark-mode .employee-theme-toggle-button {
+  color: var(--light-text, #f8fafc) !important;
+}
+
+/* Profile dropdown icon fixes */
+.edit-app-container .employee-profile-avatar-icon {
+  color: var(--dark-text, #1e293b) !important;
+}
+
+.edit-app-container.dark-mode .employee-profile-avatar-icon {
+  color: var(--light-text, #f8fafc) !important;
+}
+
+.edit-app-container .employee-dropdown-icon {
+  color: var(--dark-text, #1e293b) !important;
+}
+
+.edit-app-container.dark-mode .employee-dropdown-icon {
+  color: var(--light-text, #f8fafc) !important;
+}
+
+/* Fix mobile hamburger icon */
+.edit-app-container .employee-hamburger-icon,
+.edit-app-container .employee-hamburger-icon::before,
+.edit-app-container .employee-hamburger-icon::after {
+  background-color: var(--dark-text, #1e293b) !important;
+}
+
+.edit-app-container.dark-mode .employee-hamburger-icon,
+.dark-mode .employee-hamburger-icon::before,
+.dark-mode .employee-hamburger-icon::after {
+  background-color: var(--light-text, #f8fafc) !important;
+}
+
+/* Special case for active hamburger button */
+.edit-app-container .employee-dashboard-nav-toggle.active .employee-hamburger-icon {
+  background-color: transparent !important;
+}
+
+/* Add sufficient contrast to notification badge */
+.edit-app-container .employee-notification-badge {
+  background-color: var(--secondary-color, #ff6b6b) !important;
+  color: white !important;
+}
+
+/* Add these CSS rules at the end of your EditApplication.css file */
+
+/* Navigation Link Fixes */
+.employee-nav-link {
+  position: relative;
+  padding: 0.5rem 0;
+  font-weight: 500;
+  color: #1e293b !important;
+  transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+}
+
+.dark-mode .employee-nav-link {
+  color: #f8fafc !important;
+}
+
+.employee-nav-link:hover {
+  color: #3a86ff !important;
+}
+
+/* Header Icons Color Fixes */
+.employee-notification-button {
+  background: none;
+  border: none;
+  font-size: 1.2rem;
+  color: #1e293b !important;
+  padding: 0.5rem;
+  position: relative;
+  border-radius: 50%;
+  transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+}
+
+.dark-mode .employee-notification-button {
+  color: #f8fafc !important;
+}
+
+.employee-theme-toggle-button {
+  background: none;
+  border: none;
+  font-size: 1.2rem;
+  color: #1e293b !important;
+  padding: 0.5rem;
+  border-radius: 50%;
+  transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+}
+
+.dark-mode .employee-theme-toggle-button {
+  color: #f8fafc !important;
+}
+
+/* Profile Section Fixes */
+.employee-profile-avatar-icon {
+  font-size: 1.8rem;
+  color: #1e293b !important;
+}
+
+.dark-mode .employee-profile-avatar-icon {
+  color: #f8fafc !important;
+}
+
+.employee-dropdown-icon {
+  font-size: 0.8rem;
+  color: #1e293b !important;
+  transition: transform 0.2s ease;
+}
+
+.dark-mode .employee-dropdown-icon {
+  color: #f8fafc !important;
+}
+
+/* Profile Dropdown Menu Text Color Fix */
+.employee-profile-dropdown-info h4 {
+  color: #1e293b !important;
+}
+
+.dark-mode .employee-profile-dropdown-info h4 {
+  color: #f8fafc !important;
+}
+
+/* Fix notification badge contrast */
+.employee-notification-badge {
+  background-color: #ff6b6b !important;
+  color: white !important;
+}
+
+/* Mobile Menu Icon Fix */
+.employee-hamburger-icon,
+.employee-hamburger-icon::before,
+.employee-hamburger-icon::after {
+  background-color: #1e293b !important;
+}
+
+.dark-mode .employee-hamburger-icon,
+.dark-mode .employee-hamburger-icon::before,
+.dark-mode .employee-hamburger-icon::after {
+  background-color: #f8fafc !important;
+}
+
+/* Active hamburger state */
+.employee-dashboard-nav-toggle.active .employee-hamburger-icon {
+  background-color: transparent !important;
+}
+
+/* Add these styles at the end of your existing EditApplication.css file */
+
+/* Header and theme styling fixes to match EmployeeDashboard */
+.edit-app-container .employee-dashboard-header {
+  position: sticky;
+  top: 0;
+  width: 100%;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+  z-index: 1000;
+  transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  padding: 0;
+  border-bottom: 1px solid var(--light-border, #e2e8f0);
+}
+
+.edit-app-container.dark-mode .employee-dashboard-header {
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+  border-bottom: 1px solid var(--dark-border, #334155);
+}
+
+/* Fix notification dropdown theme */
+.edit-app-container .employee-notifications-dropdown {
+  background-color: var(--light-card, #ffffff);
+  box-shadow: var(--shadow-light, 0 10px 25px rgba(0, 0, 0, 0.1));
+}
+
+.edit-app-container.employee-dark-mode .employee-notifications-dropdown {
+  background-color: var(--dark-card, #1e293b);
+  box-shadow: var(--shadow-dark, 0 10px 25px rgba(0, 0, 0, 0.25));
+}
+
+.edit-app-container .employee-notification-header {
+  border-bottom: 1px solid var(--light-border, #e2e8f0);
+}
+
+.edit-app-container.employee-dark-mode .employee-notification-header {
+  border-bottom: 1px solid var(--dark-border, #334155);
+}
+
+.edit-app-container .employee-notification-item {
+  border-bottom: 1px solid var(--light-border, #e2e8f0);
+}
+
+.edit-app-container.employee-dark-mode .employee-notification-item {
+  border-bottom: 1px solid var(--dark-border, #334155);
+}
+
+.edit-app-container .employee-notification-item:hover {
+  background-color: rgba(0, 0, 0, 0.02);
+}
+
+.edit-app-container.employee-dark-mode .employee-notification-item:hover {
+  background-color: rgba(255, 255, 255, 0.05);
+}
+
+.edit-app-container .employee-notification-time {
+  color: var(--light-text-secondary, #64748b);
+}
+
+.edit-app-container.employee-dark-mode .employee-notification-time {
+  color: var(--dark-text-secondary, #94a3b8);
+}
+
+.edit-app-container .employee-notification-footer {
+  border-top: 1px solid var(--light-border, #e2e8f0);
+}
+
+.edit-app-container.employee-dark-mode .employee-notification-footer {
+  border-top: 1px solid var(--dark-border, #334155);
+}
+
+/* Fix profile dropdown theme */
+.edit-app-container .employee-profile-dropdown {
+  background-color: var(--light-card, #ffffff);
+  box-shadow: var(--shadow-light, 0 10px 25px rgba(0, 0, 0, 0.1));
+}
+
+.edit-app-container.employee-dark-mode .employee-profile-dropdown {
+  background-color: var(--dark-card, #1e293b);
+  box-shadow: var(--shadow-dark, 0 10px 25px rgba(0, 0, 0, 0.25));
+}
+
+.edit-app-container .employee-profile-dropdown-header {
+  border-bottom: 1px solid var(--light-border, #e2e8f0);
+}
+
+.edit-app-container.employee-dark-mode .employee-profile-dropdown-header {
+  border-bottom: 1px solid var(--dark-border, #334155);
+}
+
+.edit-app-container .employee-profile-dropdown-link {
+  color: var(--dark-text, #1e293b);
+}
+
+.edit-app-container.employee-dark-mode .employee-profile-dropdown-link {
+  color: var(--light-text, #f8fafc);
+}
+
+.edit-app-container .employee-profile-dropdown-link:hover {
+  background-color: rgba(0, 0, 0, 0.05);
+  color: var(--primary-color, #3a86ff);
+}
+
+.edit-app-container.employee-dark-mode .employee-profile-dropdown-link:hover {
+  background-color: rgba(255, 255, 255, 0.05);
+}
+
+/* Fix navigation links styles */
+.edit-app-container .employee-nav-link {
+  color: var(--dark-text, #1e293b);
+}
+
+.edit-app-container.employee-dark-mode .employee-nav-link {
+  color: var(--light-text, #f8fafc);
+}
+
+.edit-app-container .employee-nav-link:hover {
+  color: var(--primary-color, #3a86ff);
+}
+
+/* Fix theme toggle button */
+.edit-app-container .employee-theme-toggle-button {
+  color: var(--dark-text, #1e293b);
+}
+
+.edit-app-container.employee-dark-mode .employee-theme-toggle-button {
+  color: var(--light-text, #f8fafc);
+}
+
+.edit-app-container .employee-theme-toggle-button:hover {
+  background-color: rgba(0, 0, 0, 0.05);
+}
+
+.edit-app-container.employee-dark-mode .employee-theme-toggle-button:hover {
+  background-color: rgba(255, 255, 255, 0.1);
+}
+
+/* Fix header spacing */
+.edit-app-container .employee-dashboard-header-container {
+  padding: 0.8rem 2rem;
+}
+
+.edit-app-container .employee-dashboard-logo {
+  margin-right: 1.5rem;
+}
+
+.edit-app-container .employee-dashboard-nav {
+  gap: 1.5rem;
+}
+
+/* Fix profile status color */
+.edit-app-container .employee-profile-status {
+  color: var(--light-text-secondary, #64748b);
+}
+
+.edit-app-container.employee-dark-mode .employee-profile-status {
+  color: var(--dark-text-secondary, #94a3b8);
+}
+
+.edit-app-container .employee-verified-icon {
+  color: #10b981;
+}
+
+/* Fix notification icon colors */
+.edit-app-container .employee-notification-button {
+  color: var(--dark-text, #1e293b);
+}
+
+.edit-app-container.employee-dark-mode .employee-notification-button {
+  color: var(--light-text, #f8fafc);
+}
+
+.edit-app-container .employee-mark-all-read {
+  color: var(--primary-color, #3a86ff);
+}
+
+/* Fix header visibility issues */
+
+/* Navigation link color fixes */
+.edit-app-container .employee-nav-link {
+  color: var(--dark-text, #1e293b) !important;
+  font-weight: 500;
+}
+
+.edit-app-container.employee-dark-mode .employee-nav-link {
+  color: var(--light-text, #f8fafc) !important;
+}
+
+.edit-app-container .employee-nav-link:hover {
+  color: var(--primary-color, #3a86ff) !important;
+}
+
+/* Notification button fixes */
+.edit-app-container .employee-notification-button {
+  color: var(--dark-text, #1e293b) !important;
+}
+
+.edit-app-container.employee-dark-mode .employee-notification-button {
+  color: var(--light-text, #f8fafc) !important;
+}
+
+/* Theme toggle button fixes */
+.edit-app-container .employee-theme-toggle-button {
+  color: var(--dark-text, #1e293b) !important;
+}
+
+.edit-app-container.employee-dark-mode .employee-theme-toggle-button {
+  color: var(--light-text, #f8fafc) !important;
+}
+
+/* Profile dropdown icon fixes */
+.edit-app-container .employee-profile-avatar-icon {
+  color: var(--dark-text, #1e293b) !important;
+}
+
+.edit-app-container.employee-dark-mode .employee-profile-avatar-icon {
+  color: var(--light-text, #f8fafc) !important;
+}
+
+.edit-app-container .employee-dropdown-icon {
+  color: var(--dark-text, #1e293b) !important;
+}
+
+.edit-app-container.employee-dark-mode .employee-dropdown-icon {
+  color: var(--light-text, #f8fafc) !important;
+}
+
+/* Fix mobile hamburger icon */
+.edit-app-container .employee-hamburger-icon,
+.edit-app-container .employee-hamburger-icon::before,
+.edit-app-container .employee-hamburger-icon::after {
+  background-color: var(--dark-text, #1e293b) !important;
+}
+
+.edit-app-container.employee-dark-mode .employee-hamburger-icon,
+.dark-mode .employee-hamburger-icon::before,
+.dark-mode .employee-hamburger-icon::after {
+  background-color: var(--light-text, #f8fafc) !important;
+}
+
+/* Special case for active hamburger button */
+.edit-app-container .employee-dashboard-nav-toggle.active .employee-hamburger-icon {
+  background-color: transparent !important;
+}
+
+/* Add sufficient contrast to notification badge */
+.edit-app-container .employee-notification-badge {
+  background-color: var(--secondary-color, #ff6b6b) !important;
+  color: white !important;
+}
