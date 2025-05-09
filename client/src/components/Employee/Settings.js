@@ -76,7 +76,16 @@ const Settings = () => {
       });
       
       if (response.data.success) {
-        setUser(response.data.user);
+        // Extract the user data properly
+        const userData = response.data.user;
+        
+        // Set the user state with all fields, handling undefined values
+        setUser({
+          name: userData.name || '',
+          email: userData.email || '',
+          profilePicture: userData.profilePicture || userData.profilePic || '',
+          phoneNumber: userData.phoneNumber || ''
+        });
       }
     } catch (error) {
       console.error('Error fetching user data:', error);
@@ -129,7 +138,7 @@ const Settings = () => {
     setLoading(true);
     try {
       const response = await axios.put(
-        `${API_BASE_URL}/auth/profile`, 
+        `${API_BASE_URL}/auth/update-profile`, // Changed from /auth/profile to /auth/update-profile
         user, 
         { withCredentials: true }
       );
@@ -240,6 +249,70 @@ const Settings = () => {
         <p>{message.text}</p>
       </div>
     );
+  };
+
+  // Handle profile picture upload
+  const handleProfilePictureUpload = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    
+    if (!['image/jpeg', 'image/png', 'image/jpg'].includes(file.type)) {
+      setMessage({ type: 'error', text: 'Please upload a valid image file (JPEG or PNG)' });
+      return;
+    }
+    
+    if (file.size > 5 * 1024 * 1024) { // 5MB limit
+      setMessage({ type: 'error', text: 'Image file size should be less than 5MB' });
+      return;
+    }
+    
+    setLoading(true);
+    
+    try {
+      const formData = new FormData();
+      formData.append('file', file); // Changed from 'profilePicture' to 'file' to match server expectation
+      
+      // Upload the file first
+      const uploadResponse = await axios.post(`${API_BASE_URL}/auth/upload-profile-picture`, formData, {
+        withCredentials: true,
+        headers: {
+          'Content-Type': 'multipart/form-data'
+        }
+      });
+      
+      if (uploadResponse.data.success) {
+        // Update state with new picture URL
+        const profilePictureUrl = uploadResponse.data.url || uploadResponse.data.profilePictureUrl;
+        
+        setUser(prev => ({
+          ...prev,
+          profilePicture: profilePictureUrl
+        }));
+        
+        // Now explicitly update the user profile with the new picture URL
+        await axios.put(
+          `${API_BASE_URL}/auth/update-profile`,
+          {
+            profilePicture: profilePictureUrl,
+            // Include other necessary fields if required by your API
+            name: user.name,
+            email: user.email,
+            phoneNumber: user.phoneNumber
+          }, 
+          { withCredentials: true }
+        );
+        
+        setMessage({ type: 'success', text: 'Profile picture updated successfully' });
+      }
+    } catch (error) {
+      console.error('Error uploading profile picture:', error);
+      setMessage({
+        type: 'error',
+        text: error.response?.data?.message || 'Error updating profile picture'
+      });
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -360,20 +433,30 @@ const Settings = () => {
                 </div>
                 
                 <div className="employee-settings-form-group">
-                  <label htmlFor="profilePicture">Profile Picture URL</label>
-                  <input 
-                    type="url" 
-                    id="profilePicture" 
-                    name="profilePicture" 
-                    value={user.profilePicture || ''}
-                    onChange={handleUserChange}
-                    placeholder="URL to your profile picture"
-                  />
-                  {user.profilePicture && (
-                    <div className="employee-settings-profile-preview">
-                      <img src={user.profilePicture} alt="Profile Preview" />
+                  <label htmlFor="profilePictureUpload">Profile Picture</label>
+                  <div className="employee-settings-profile-upload">
+                    {user.profilePicture && (
+                      <div className="employee-settings-profile-preview">
+                        <img src={user.profilePicture} alt="Profile Preview" />
+                      </div>
+                    )}
+                    <div className="employee-settings-upload-controls">
+                      <input 
+                        type="file" 
+                        id="profilePictureUpload" 
+                        name="profilePictureUpload" 
+                        onChange={handleProfilePictureUpload}
+                        accept="image/jpeg, image/png, image/jpg"
+                        className="employee-settings-file-input"
+                      />
+                      <label htmlFor="profilePictureUpload" className="employee-settings-upload-button">
+                        {user.profilePicture ? "Change Picture" : "Upload Picture"}
+                      </label>
+                      <p className="employee-settings-help-text">
+                        For best results, use an image of at least 400x400 pixels (JPEG or PNG)
+                      </p>
                     </div>
-                  )}
+                  </div>
                 </div>
                 
                 <div className="employee-settings-form-actions">
