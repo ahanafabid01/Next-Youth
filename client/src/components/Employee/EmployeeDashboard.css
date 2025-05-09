@@ -89,7 +89,7 @@
   background-color: var(--light-card);
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
   z-index: 1000;
-  transition: var(--transition);
+  transition: all 0.3s ease;
   backdrop-filter: blur(10px);
   -webkit-backdrop-filter: blur(10px);
   padding: 0;
@@ -267,11 +267,11 @@
 }
 
 .employee-notification-button:hover {
-  background-color: rgba(0, 0, 0, 0.05);
+  background-color: rgba(255, 255, 255, 0.15);
 }
 
 .employee-dark-mode .employee-notification-button:hover {
-  background-color: rgba(255, 255, 255, 0.1);
+  background-color: rgba(0, 0, 0, 0.1);
 }
 
 .employee-notification-badge {
@@ -355,7 +355,7 @@
 }
 
 .employee-dark-mode .employee-notification-item {
-  border-bottom: 1px solid var(--dark-border);
+  border-bottom: 1px solid var (--dark-border);
 }
 
 .employee-notification-item:last-child {
@@ -437,12 +437,12 @@
 }
 
 .employee-theme-toggle-button:hover {
-  background-color: rgba(0, 0, 0, 0.05);
+  background-color: rgba(255, 255, 255, 0.15);
   transform: rotate(15deg);
 }
 
 .employee-dark-mode .employee-theme-toggle-button:hover {
-  background-color: rgba(255, 255, 255, 0.1);
+  background-color: rgba(0, 0, 0, 0.1);
 }
 
 /* Profile Dropdown */
@@ -462,11 +462,11 @@
 }
 
 .employee-profile-button:hover {
-  background-color: rgba(0, 0, 0, 0.05);
+  background-color: rgba(255, 255, 255, 0.15);
 }
 
 .employee-dark-mode .employee-profile-button:hover {
-  background-color: rgba(255, 255, 255, 0.05);
+  background-color: rgba(0, 0, 0, 0.1);
 }
 
 .employee-profile-avatar {
@@ -488,6 +488,11 @@
 .employee-dropdown-icon {
   font-size: 0.8rem;
   transition: transform 0.2s ease;
+  color: var(--dark-text);
+}
+
+.employee-dark-mode .employee-dropdown-icon {
+  color: var(--light-text);
 }
 
 .employee-dropdown-icon.rotate {
@@ -802,7 +807,7 @@
 
 .employee-dark-mode .employee-job-card {
   background-color: var(--dark-card);
-  box-shadow: var(--shadow-dark);
+  box-shadow: var (--shadow-dark);
   border: 1px solid var(--dark-border);
 }
 
@@ -849,7 +854,7 @@
 }
 
 .employee-dark-mode .employee-job-budget {
-  color: var(--dark-text-secondary);
+  color: var (--dark-text-secondary);
 }
 
 .employee-job-description {
@@ -1187,7 +1192,7 @@
 
 .employee-pagination-info {
   font-size: 0.95rem;
-  color: var(--light-text-secondary);
+  color: var (--light-text-secondary);
 }
 
 .employee-dark-mode .employee-pagination-info {

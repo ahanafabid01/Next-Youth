@@ -89,7 +89,7 @@
   background-color: var(--light-card);
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
   z-index: 1000;
-  transition: var(--transition);
+  transition: all 0.3s ease;
   backdrop-filter: blur(10px);
   -webkit-backdrop-filter: blur(10px);
   padding: 0;

@@ -386,9 +386,22 @@ const EmployeeDashboard = () => {
 
   useEffect(() => {
     const dashboardElement = document.querySelector('.employee-dashboard-container');
+    const headerElement = document.querySelector('.employee-dashboard-header');
+    
     if (dashboardElement) {
       dashboardElement.classList.toggle('employee-dark-mode', isDarkMode);
     }
+    
+    if (headerElement) {
+      if (isDarkMode) {
+        headerElement.style.backgroundColor = 'var(--dark-card)';
+        headerElement.style.borderBottom = '1px solid var(--dark-border)';
+      } else {
+        headerElement.style.backgroundColor = 'var(--light-card)';
+        headerElement.style.borderBottom = '1px solid var(--light-border)';
+      }
+    }
+    
     localStorage.setItem("dashboard-theme", isDarkMode ? "dark" : "light");
   }, [isDarkMode]);
 
