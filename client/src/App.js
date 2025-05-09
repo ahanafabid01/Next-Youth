@@ -6,7 +6,7 @@ import Register from "./components/Auth/Register";
 import AdminDashboard from "./components/Admin/AdminDashboard";
 import Dashboard from "./components/Admin/Dashboard";
 import Users from "./components/Admin/Users";
-import Messages from "./components/Admin/Messages";
+import Messages from "./components/shared/Messages"; // Add this import
 import Applications from "./components/Admin/Applications";
 import Statistics from "./components/Admin/Statistics";
 import JobDetails from "./components/Admin/JobDetails";
@@ -49,7 +49,6 @@ const App = () => {
                 <Route path="/admin-dashboard/statistics" element={<Statistics />} />
                 <Route path="/admin-dashboard/job-details" element={<JobDetails />} />
                 <Route path="/admin-dashboard/consultations" element={<Consultations />} />
-                
                 <Route path="/admin-dashboard/mail-system" element={<MailSystem />} />
                 <Route path="/employee-dashboard" element={<EmployeeDashboard />} />
                 <Route path="/employer-dashboard" element={<EmployerDashboard />} />
@@ -74,6 +73,10 @@ const App = () => {
                 <Route path="/become-seller" element={<BecomeSeller />} />
                 <Route path="/help-support" element={<HelpAndSupport />} />
                 <Route path="/employer-settings" element={<EmployerSettings />} />
+                
+                {/* Add new routes for messages */}
+                <Route path="/messages" element={<Messages />} />
+                <Route path="/messages/:userId" element={<Messages />} />
             </Routes>
         </Router>
     );

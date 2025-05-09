@@ -40,6 +40,7 @@ import EmployerSettings from './EmployerSettings'; // Add this import
 import EmployerPayment from './EmployerPayment'; // Add this import
 import logoLight from '../../assets/images/logo-light.png';
 import logoDark from '../../assets/images/logo-dark.png';
+import MessageIcon from '../shared/MessageIcon'; // Add this line near the other imports
 
 ChartJS.register(ArcElement, Tooltip, Legend, CategoryScale, LinearScale, BarElement);
 
@@ -638,7 +639,9 @@ const EmployerDashboard = () => {
                             className={`nav-item ${activeTab === "messages" ? "active" : ""}`} 
                             onClick={() => handleTabChange("messages")}
                         >
-                            <FaEnvelope className="nav-icon" />
+                            <div className="nav-icon-container">
+                                <MessageIcon style={{border: '2px solid red'}} /> {/* Add a temporary style to the MessageIcon component to make it visually distinct */}
+                            </div>
                             <span className="nav-text">Messages</span>
                         </li>
 

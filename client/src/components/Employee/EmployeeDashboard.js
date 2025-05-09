@@ -23,6 +23,7 @@ import {
 } from 'react-icons/fa';
 import './EmployeeDashboard.css';
 import RatingModal from '../Connections/RatingModal';
+import MessageIcon from '../shared/MessageIcon';
 
 const EmployeeDashboard = () => {
   const navigate = useNavigate();
@@ -533,6 +534,8 @@ const EmployeeDashboard = () => {
                 </div>
               )}
             </div>
+            
+            <MessageIcon />
             
             <button
               className="theme-toggle-button"

@@ -1,17 +1,20 @@
 import express from 'express';
 import cors from 'cors';
 import 'dotenv/config';
-import cookieParser from 'cookie-parser'; // Fixed typo
+import cookieParser from 'cookie-parser';
 import connectDB from './config/mongodb.js';
 import authRouter from "./routes/authRoutes.js";
 import jobRouter from "./routes/jobRoutes.js";
 import contactRouter from "./routes/contactRoutes.js";
-import adminRouter from "./routes/adminRoutes.js"; // Add this
-import employerPaymentRoutes from "./routes/EmployerPaymentRoutes.js"; // Add this
+import adminRouter from "./routes/adminRoutes.js";
+import employerPaymentRoutes from "./routes/EmployerPaymentRoutes.js";
+import messageRouter from "./routes/messageRoutes.js"; // Add this
 import path from "path";
 import bodyParser from "body-parser";
 import { fileURLToPath } from "url";
 import fs from "fs";
+import { createServer } from 'http'; // Add this
+import { Server } from 'socket.io'; // Add this
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -19,10 +22,25 @@ const __dirname = path.dirname(__filename);
 const app = express();
 const PORT = process.env.PORT || 4000;
 
+// Create HTTP server
+const server = createServer(app);
+
+// Setup Socket.IO
+const io = new Server(server, {
+    cors: {
+        origin: process.env.CLIENT_URL || "http://localhost:3000",
+        methods: ["GET", "POST"],
+        credentials: true
+    }
+});
+
+// Make io accessible within request object
+app.set('io', io);
+
 // Validate environment variables
 if (!process.env.MONGODB_URI) {
     console.error("Error: MONGODB_URI is not defined in the environment variables.");
-    process.exit(1); // Exit process with failure
+    process.exit(1);
 }
 
 // MongoDB connection
@@ -34,7 +52,7 @@ app.use(cookieParser());
 app.use(cors({
     credentials: true,
     origin: process.env.CLIENT_URL || "http://localhost:3000",
-})); // Allow credentials and specify origin
+}));
 
 // Use body-parser for JSON requests only
 app.use(bodyParser.json());
@@ -50,10 +68,11 @@ app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 
 // API routes
 app.use("/api/auth", authRouter);
-app.use("/api/jobs", jobRouter); // Multer will handle multipart/form-data for this route
+app.use("/api/jobs", jobRouter);
 app.use("/api/contact", contactRouter);
-app.use("/api/admin", adminRouter); // Add this
-app.use("/api/payment", employerPaymentRoutes); // Add this
+app.use("/api/admin", adminRouter);
+app.use("/api/payment", employerPaymentRoutes);
+app.use("/api/messages", messageRouter); // Add this
 
 // Default route
 app.get('/', (req, res) => {
@@ -66,8 +85,23 @@ app.use((err, req, res, next) => {
     res.status(500).json({ success: false, message: 'Internal server error' });
 });
 
-// Start the server
-app.listen(PORT, () => {
+// Socket.IO connection handling
+io.on('connection', (socket) => {
+    console.log('A user connected:', socket.id);
+    
+    // Allow user to join a room with their userId for private messages
+    socket.on('join', (userId) => {
+        socket.join(userId);
+        console.log(`User ${userId} joined their room`);
+    });
+    
+    socket.on('disconnect', () => {
+        console.log('User disconnected:', socket.id);
+    });
+});
+
+// Start the server with http server instead of express app
+server.listen(PORT, () => {
     console.log(`Server is running on port ${PORT}`);
 });
 
