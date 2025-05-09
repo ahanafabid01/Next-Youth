@@ -18,6 +18,7 @@ import ForgotPassword from "./components/Auth/ForgotPassword";
 import Profile from "./components/Employer/Profile";
 import EmployeeProfile from "./components/Employee/EmployeeProfile";
 import FindJobs from "./components/Employee/FindJobs";
+import SavedJobs from "./components/Employee/SavedJobs"; // Import the SavedJobs component
 import VerifyAccount from './components/Employee/VerifyAccount';
 import MyProfile from './components/Employee/MyProfile';
 import Notifications from './components/Employee/Notifications';
@@ -32,6 +33,7 @@ import EditApplication from './components/Employee/EditApplication';
 import BecomeSeller from "./Homepages/BecomeSeller";
 import HelpAndSupport from './Homepages/Help&Support';
 import EmployerSettings from "./components/Employer/EmployerSettings";
+import Proposals from "./components/Employee/Proposals";
 import "./App.css";
 
 const App = () => {
@@ -58,7 +60,7 @@ const App = () => {
                 <Route path="/employee-profile" element={<EmployeeProfile />} />
                 <Route path="/find-jobs" element={<FindJobs />} />
                 <Route path="/settings" element={<Settings />} />
-                <Route path="/find-jobs/saved" element={<FindJobs />} />
+                <Route path="/find-jobs/saved" element={<SavedJobs />} /> {/* Updated to use SavedJobs component */}
                 <Route path="/find-jobs/proposals" element={<FindJobs />} />
                 <Route path="/find-jobs/details/:jobId" element={<FindJobs />} />
                 <Route path="/verify-account" element={<VerifyAccount />} />
@@ -74,6 +76,7 @@ const App = () => {
                 <Route path="/become-seller" element={<BecomeSeller />} />
                 <Route path="/help-support" element={<HelpAndSupport />} />
                 <Route path="/employer-settings" element={<EmployerSettings />} />
+                <Route path="/proposals" element={<Proposals />} />
             </Routes>
         </Router>
     );

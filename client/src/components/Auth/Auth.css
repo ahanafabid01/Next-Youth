@@ -171,7 +171,7 @@
   padding: 1rem 2rem;
   background-color: var(--auth-card-bg);
   box-shadow: var(--auth-shadow-sm);
-  position: fixed; /* Changed to fixed for consistent positioning */
+  position: absolute; /* Changed to fixed for consistent positioning */
   top: 0;
   left: 0;
   right: 0;
@@ -724,4 +724,10 @@ body.auth-body-reset {
   color: var(--auth-text-color);
   border: 1px solid var(--auth-border-color);
   box-shadow: var(--auth-shadow-sm);
+}
+
+@media (max-width: 768px) {
+    body {
+        padding-top: 0px !important;
+    }
 }

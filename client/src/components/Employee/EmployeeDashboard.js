@@ -20,9 +20,20 @@ import {
   FaInstagram,
   FaClock,
   FaStar,
+  FaSearch,
+  FaChartBar,
+  FaLightbulb,
+  FaAngleRight,
+  FaFilter,
+  FaSort,
+  FaAngleLeft,
+  FaExclamationTriangle,
+  FaBars
 } from 'react-icons/fa';
 import './EmployeeDashboard.css';
 import RatingModal from '../Connections/RatingModal';
+import logoLight from '../../assets/images/logo-light.png'; 
+import logoDark from '../../assets/images/logo-dark.png';
 
 const EmployeeDashboard = () => {
   const navigate = useNavigate();
@@ -62,6 +73,7 @@ const EmployeeDashboard = () => {
   const [categoryFilter, setCategoryFilter] = useState('All Categories');
   const [sortOption, setSortOption] = useState('Latest First');
   const [showRatingModal, setShowRatingModal] = useState(false);
+  const [showFilters, setShowFilters] = useState(false);
 
   const fetchUserData = useCallback(async () => {
     try {
@@ -73,12 +85,10 @@ const EmployeeDashboard = () => {
       if (userResponse.data.success) {
         const userData = userResponse.data.user;
         
-        // Check if verification endpoint returned success AND has verification data
         let verificationData = null;
         let verificationStatus = null;
         
         if (verificationResponse.data.success) {
-          // If verification record exists in database
           if (verificationResponse.data.verification) {
             verificationData = verificationResponse.data.verification;
             verificationStatus = verificationData.status;
@@ -127,7 +137,7 @@ const EmployeeDashboard = () => {
     } finally {
       setLoading(false);
     }
-  }, [navigate]);
+  }, [API_BASE_URL, navigate]);
 
   const fetchAllAvailableJobs = useCallback(async (page = 1) => {
     setLoading(true);
@@ -225,8 +235,12 @@ const EmployeeDashboard = () => {
     if (profileDropdownRef.current && !profileDropdownRef.current.contains(event.target)) {
       setShowProfileDropdown(false);
     }
-    if (!event.target.closest('.dashboard-nav')) {
+    if (!event.target.closest('.employee-dashboard-nav')) {
       setShowMobileNav(false);
+    }
+    if (!event.target.closest('.employee-filter-panel') && 
+        !event.target.closest('.employee-filter-toggle')) {
+      setShowFilters(false);
     }
   }, []);
 
@@ -248,6 +262,11 @@ const EmployeeDashboard = () => {
   const toggleNotifications = useCallback((e) => {
     e.stopPropagation();
     setShowNotifications(prev => !prev);
+  }, []);
+
+  const toggleFilters = useCallback((e) => {
+    e.stopPropagation();
+    setShowFilters(prev => !prev);
   }, []);
 
   const viewJobDetails = useCallback((jobId) => {
@@ -281,7 +300,7 @@ const EmployeeDashboard = () => {
       console.error('Error logging out:', error);
       setError("Logout failed. Please try again.");
     }
-  }, [navigate]);
+  }, [API_BASE_URL, navigate]);
 
   const handleVerifyAccount = useCallback(() => {
     navigate('/verify-account');
@@ -366,10 +385,9 @@ const EmployeeDashboard = () => {
   }, [fetchAllAvailableJobs, currentPage]);
 
   useEffect(() => {
-    // Change from document.body to the dashboard element
-    const dashboardElement = document.querySelector('.employee-dashboard');
+    const dashboardElement = document.querySelector('.employee-dashboard-container');
     if (dashboardElement) {
-      dashboardElement.classList.toggle('dark-mode', isDarkMode);
+      dashboardElement.classList.toggle('employee-dark-mode', isDarkMode);
     }
     localStorage.setItem("dashboard-theme", isDarkMode ? "dark" : "light");
   }, [isDarkMode]);
@@ -379,7 +397,6 @@ const EmployeeDashboard = () => {
   }, [unreadNotifications]);
 
   const currentYear = new Date().getFullYear();
-
   const totalPages = Math.ceil(totalJobs / jobsPerPage);
 
   const Pagination = () => {
@@ -398,98 +415,137 @@ const EmployeeDashboard = () => {
     }
     
     return (
-      <div className="pagination">
-        <button 
-          className="pagination-button"
-          disabled={currentPage === 1}
-          onClick={() => handlePageChange(1)}
-        >
-          First
-        </button>
-        <button 
-          className="pagination-button"
-          disabled={currentPage === 1}
-          onClick={() => handlePageChange(currentPage - 1)}
-        >
-          &lt;
-        </button>
-        
-        {startPage > 1 && <span className="pagination-ellipsis">...</span>}
-        
-        {pageNumbers.map(number => (
-          <button
-            key={number}
-            className={`pagination-button ${currentPage === number ? 'active' : ''}`}
-            onClick={() => handlePageChange(number)}
+      <div className="employee-pagination">
+        <div className="employee-pagination-info">
+          Showing {allAvailableJobs.length} of {totalJobs} jobs
+        </div>
+        <div className="employee-pagination-controls">
+          <button 
+            className="employee-pagination-button"
+            disabled={currentPage === 1}
+            onClick={() => handlePageChange(1)}
+            aria-label="Go to first page"
           >
-            {number}
+            <FaAngleLeft /> <FaAngleLeft />
           </button>
-        ))}
-        
-        {endPage < totalPages && <span className="pagination-ellipsis">...</span>}
-        
-        <button 
-          className="pagination-button"
-          disabled={currentPage === totalPages}
-          onClick={() => handlePageChange(currentPage + 1)}
-        >
-          &gt;
-        </button>
-        <button 
-          className="pagination-button"
-          disabled={currentPage === totalPages}
-          onClick={() => handlePageChange(totalPages)}
-        >
-          Last
-        </button>
+          <button 
+            className="employee-pagination-button"
+            disabled={currentPage === 1}
+            onClick={() => handlePageChange(currentPage - 1)}
+            aria-label="Go to previous page"
+          >
+            <FaAngleLeft />
+          </button>
+          
+          {startPage > 1 && (
+            <>
+              <button 
+                className="employee-pagination-button"
+                onClick={() => handlePageChange(1)}
+              >
+                1
+              </button>
+              {startPage > 2 && <span className="employee-pagination-ellipsis">...</span>}
+            </>
+          )}
+          
+          {pageNumbers.map(number => (
+            <button
+              key={number}
+              className={`employee-pagination-button ${currentPage === number ? 'active' : ''}`}
+              onClick={() => handlePageChange(number)}
+              aria-label={`Page ${number}`}
+              aria-current={currentPage === number ? "page" : undefined}
+            >
+              {number}
+            </button>
+          ))}
+          
+          {endPage < totalPages && (
+            <>
+              {endPage < totalPages - 1 && <span className="employee-pagination-ellipsis">...</span>}
+              <button 
+                className="employee-pagination-button"
+                onClick={() => handlePageChange(totalPages)}
+              >
+                {totalPages}
+              </button>
+            </>
+          )}
+          
+          <button 
+            className="employee-pagination-button"
+            disabled={currentPage === totalPages}
+            onClick={() => handlePageChange(currentPage + 1)}
+            aria-label="Go to next page"
+          >
+            <FaAngleRight />
+          </button>
+          <button 
+            className="employee-pagination-button"
+            disabled={currentPage === totalPages}
+            onClick={() => handlePageChange(totalPages)}
+            aria-label="Go to last page"
+          >
+            <FaAngleRight /> <FaAngleRight />
+          </button>
+        </div>
       </div>
     );
   };
 
   return (
-    <div className="employee-dashboard">
-      <header className="dashboard-header">
-        <div className="dashboard-header-container">
-          <div className="dashboard-header-left">
+    <div className="employee-dashboard-container">
+      <div className={`employee-mobile-nav-overlay ${showMobileNav ? 'active' : ''}`} onClick={() => setShowMobileNav(false)}></div>
+      <header className="employee-dashboard-header">
+        <div className="employee-dashboard-header-container">
+          <div className="employee-dashboard-header-left">
             <button 
-              className="dashboard-nav-toggle"
+              className={`employee-dashboard-nav-toggle ${showMobileNav ? 'active' : ''}`}
               onClick={toggleMobileNav}
               aria-label="Toggle navigation"
+              aria-expanded={showMobileNav}
             >
-              ☰
+              <span className="employee-hamburger-icon"></span>
             </button>
-            <Link to="/employee-dashboard" className="dashboard-logo">Next Youth</Link>
+            <Link to="/employee-dashboard" className="employee-dashboard-logo">
+              <img 
+                src={isDarkMode ? logoDark : logoLight} 
+                alt="Next Youth" 
+                className="employee-logo-image" 
+              />
+            </Link>
             
-            <nav className={`dashboard-nav ${showMobileNav ? 'active' : ''}`}>
-              <Link to="/find-jobs" className="nav-link">Find Work</Link>
-              <Link to="/find-jobs/saved" className="nav-link">Saved Jobs</Link>
-              <Link to="/find-jobs/proposals" className="nav-link">Proposals</Link>
-              <Link to="/help" className="nav-link">Help</Link>
+            <nav className={`employee-dashboard-nav ${showMobileNav ? 'active' : ''}`}>
+              <Link to="/find-jobs" className="employee-nav-link" style={{"--item-index": 0}}>Find Work</Link>
+              <Link to="/find-jobs/saved" className="employee-nav-link" style={{"--item-index": 1}}>Saved Jobs</Link>
+              <Link to="/proposals" className="employee-nav-link" style={{"--item-index": 2}}>Proposals</Link>
+              <Link to="/help" className="employee-nav-link" style={{"--item-index": 3}}>Help</Link>
             </nav>
           </div>
           
-          <div className="dashboard-header-right">
-            <div className="notification-container" ref={notificationsRef}>
+          <div className="employee-dashboard-header-right">
+            <div className="employee-notification-container" ref={notificationsRef}>
               <button 
-                className="notification-button"
+                className="employee-notification-button"
                 onClick={toggleNotifications}
                 aria-label="Notifications"
               >
                 <FaBell />
                 {unreadNotifications > 0 && (
-                  <span className="notification-badge">{unreadNotifications}</span>
+                  <span className="employee-notification-badge">{unreadNotifications}</span>
                 )}
               </button>
               
               {showNotifications && (
-                <div className="notifications-dropdown">
-                  <div className="notification-header">
+                <div className="employee-notifications-dropdown">
+                  <div className="employee-notification-header">
                     <h3>Notifications</h3>
-                    <button className="mark-all-read" onClick={handleMarkAllAsRead}>Mark all as read</button>
+                    <button className="employee-mark-all-read" onClick={handleMarkAllAsRead}>Mark all as read</button>
                   </div>
-                  <div className="notification-list">
-                    <div className="notification-item unread">
-                      <div className="notification-icon">
+                  <div className="employee-notification-list">
+                    <div className="employee-notification-item employee-unread">
+                      <div className="employee-notification-icon">
                         {(!user.idVerification || 
                           !user.idVerification.frontImage || 
                           !user.idVerification.backImage || 
@@ -501,7 +557,7 @@ const EmployeeDashboard = () => {
                           <FaClock />
                         )}
                       </div>
-                      <div className="notification-content">
+                      <div className="employee-notification-content">
                         <p>
                           {(!user.idVerification || 
                             !user.idVerification.frontImage || 
@@ -514,20 +570,20 @@ const EmployeeDashboard = () => {
                             "Your verification is pending approval"
                           )}
                         </p>
-                        <span className="notification-time">2 hours ago</span>
+                        <span className="employee-notification-time">2 hours ago</span>
                       </div>
                     </div>
-                    <div className="notification-item unread">
-                      <div className="notification-icon">
+                    <div className="employee-notification-item employee-unread">
+                      <div className="employee-notification-icon">
                         <FaRegFileAlt />
                       </div>
-                      <div className="notification-content">
+                      <div className="employee-notification-content">
                         <p>New job matching your skills is available</p>
-                        <span className="notification-time">1 day ago</span>
+                        <span className="employee-notification-time">1 day ago</span>
                       </div>
                     </div>
                   </div>
-                  <div className="notification-footer">
+                  <div className="employee-notification-footer">
                     <Link to="/notifications">View all notifications</Link>
                   </div>
                 </div>
@@ -535,16 +591,16 @@ const EmployeeDashboard = () => {
             </div>
             
             <button
-              className="theme-toggle-button"
+              className="employee-theme-toggle-button"
               onClick={toggleDarkMode}
               aria-label={isDarkMode ? "Switch to light mode" : "Switch to dark mode"}
             >
               {isDarkMode ? <FaSun /> : <FaMoon />}
             </button>
 
-            <div className="profile-dropdown-container" ref={profileDropdownRef}>
+            <div className="employee-profile-dropdown-container" ref={profileDropdownRef}>
               <button 
-                className="profile-button" 
+                className="employee-profile-button" 
                 onClick={toggleProfileDropdown}
                 aria-label="User profile"
               >
@@ -552,18 +608,18 @@ const EmployeeDashboard = () => {
                   <img 
                     src={user.profilePicture}
                     alt="Profile"
-                    className="profile-avatar"
+                    className="employee-profile-avatar"
                   />
                 ) : (
-                  <FaUserCircle className="profile-avatar-icon" />
+                  <FaUserCircle className="employee-profile-avatar-icon" />
                 )}
-                <FaChevronDown className={`dropdown-icon ${showProfileDropdown ? 'rotate' : ''}`} />
+                <FaChevronDown className={`employee-dropdown-icon ${showProfileDropdown ? 'rotate' : ''}`} />
               </button>
               
               {showProfileDropdown && (
-                <div className="profile-dropdown">
-                  <div className="profile-dropdown-header">
-                    <div className="profile-dropdown-avatar">
+                <div className="employee-profile-dropdown">
+                  <div className="employee-profile-dropdown-header">
+                    <div className="employee-profile-dropdown-avatar">
                       {user.profilePicture ? (
                         <img 
                           src={user.profilePicture}
@@ -573,15 +629,15 @@ const EmployeeDashboard = () => {
                         <FaUserCircle />
                       )}
                     </div>
-                    <div className="profile-dropdown-info">
+                    <div className="employee-profile-dropdown-info">
                       <h4>{user.name || 'User'}</h4>
-                      <span className="profile-status">
+                      <span className="employee-profile-status">
                         {!user.idVerification ? (
                           'Not Verified'
                         ) : user.idVerification.status === 'verified' ? (
-                          <><FaCheckCircle className="verified-icon" /> Verified</>
+                          <><FaCheckCircle className="employee-verified-icon" /> Verified</>
                         ) : user.idVerification.status === 'pending' && user.idVerification.frontImage && user.idVerification.backImage ? (
-                          <><FaClock className="pending-icon" /> Verification Pending</>
+                          <><FaClock className="employee-pending-icon" /> Verification Pending</>
                         ) : user.idVerification.status === 'rejected' ? (
                           <>Verification Rejected</>
                         ) : (
@@ -590,29 +646,28 @@ const EmployeeDashboard = () => {
                       </span>
                     </div>
                   </div>
-                  <div className="profile-dropdown-links">
+                  <div className="employee-profile-dropdown-links">
                     <button 
-                      className="profile-dropdown-link"
+                      className="employee-profile-dropdown-link"
                       onClick={handleNavigateToProfile}
                     >
                       <FaUserCircle /> View Profile
                     </button>
                     
-                    {/* Show verify account option when appropriate */}
                     {(!user.idVerification || 
                       !user.idVerification.frontImage || 
                       !user.idVerification.backImage || 
                       user.idVerification.status === 'rejected') && (
                       <button 
-                        className="profile-dropdown-link"
+                        className="employee-profile-dropdown-link"
                         onClick={handleVerifyAccount}
                       >
-                        Verify Account
+                        <FaRegFileAlt /> Verify Account
                       </button>
                     )}
                     
                     <button 
-                      className="profile-dropdown-link"
+                      className="employee-profile-dropdown-link"
                       onClick={() => {
                         setShowRatingModal(true);
                         setShowProfileDropdown(false);
@@ -622,16 +677,16 @@ const EmployeeDashboard = () => {
                     </button>
                     
                     <button 
-                      className="profile-dropdown-link"
+                      className="employee-profile-dropdown-link"
                       onClick={() => navigate('/settings')}
                     >
-                      Settings
+                      <FaLightbulb /> Settings
                     </button>
                     <button 
-                      className="profile-dropdown-link"
+                      className="employee-profile-dropdown-link"
                       onClick={handleLogout}
                     >
-                      Logout
+                      <FaChartBar /> Logout
                     </button>
                   </div>
                 </div>
@@ -641,118 +696,116 @@ const EmployeeDashboard = () => {
         </div>
       </header>
 
-      <main className="dashboard-main">
-        <div className="dashboard-welcome-section">
-          <div className="dashboard-welcome-container">
-            <div className="welcome-content">
+      <main className="employee-dashboard-main">
+        <div className="employee-dashboard-welcome-section">
+          <div className="employee-dashboard-welcome-container">
+            <div className="employee-welcome-content">
               <h1>Welcome back, {user.name || 'User'}!</h1>
               <p>Here's what's happening with your job search today</p>
             </div>
 
-            {/* Show verification button if user hasn't submitted verification or was rejected */}
             {(!user.idVerification || 
               !user.idVerification.frontImage || 
               !user.idVerification.backImage || 
               user.idVerification.status === 'rejected') && (
               <button 
-                className="verify-account-button"
+                className="employee-verify-account-button"
                 onClick={handleVerifyAccount}
               >
                 Verify Your Account
               </button>
             )}
 
-            {/* Show pending badge only if verification exists with images and status is pending */}
             {user.idVerification && 
               user.idVerification.frontImage && 
               user.idVerification.backImage && 
               user.idVerification.status === 'pending' && (
-              <div className="verification-pending-badge">
+              <div className="employee-verification-pending-badge">
                 <FaClock /> Verification Pending
               </div>
             )}
           </div>
         </div>
 
-        <div className="dashboard-content">
-          <div className="dashboard-stats">
-            <div className="stat-card">
-              <div className="stat-icon">
+        <div className="employee-dashboard-content">
+          <div className="employee-dashboard-stats">
+            <div className="employee-stat-card">
+              <div className="employee-stat-icon">
                 <FaBriefcase />
               </div>
-              <div className="stat-content">
+              <div className="employee-stat-content">
                 <h3>Jobs Matching Your Skills</h3>
-                <p className="stat-number">{availableJobs.length}</p>
+                <p className="employee-stat-number">{availableJobs.length}</p>
               </div>
             </div>
-            <div className="stat-card">
-              <div className="stat-icon">
+            <div className="employee-stat-card">
+              <div className="employee-stat-icon">
                 <FaFileAlt />
               </div>
-              <div className="stat-content">
+              <div className="employee-stat-content">
                 <h3>Active Proposals</h3>
-                <p className="stat-number">{appliedJobsCount}</p>
+                <p className="employee-stat-number">{appliedJobsCount}</p>
               </div>
             </div>
-            <div className="stat-card">
-              <div className="stat-icon">
+            <div className="employee-stat-card">
+              <div className="employee-stat-icon">
                 <FaBookmark />
               </div>
-              <div className="stat-content">
+              <div className="employee-stat-content">
                 <h3>Saved Jobs</h3>
-                <p className="stat-number">{savedJobsCount}</p>
+                <p className="employee-stat-number">{savedJobsCount}</p>
               </div>
             </div>
           </div>
 
-          <div className="dashboard-jobs-section">
-            <div className="section-header">
+          <div className="employee-dashboard-jobs-section">
+            <div className="employee-section-header">
               <h2>Jobs You Might Like</h2>
-              <Link to="/find-jobs" className="see-all-link">See All Jobs</Link>
+              <Link to="/find-jobs" className="employee-see-all-link">See All Jobs</Link>
             </div>
             
             {loading ? (
-              <div className="jobs-loading">Loading available jobs...</div>
+              <div className="employee-jobs-loading">Loading available jobs...</div>
             ) : error ? (
-              <div className="error-message">{error}</div>
+              <div className="employee-error-message">{error}</div>
             ) : availableJobs.length === 0 ? (
-              <div className="no-jobs-message">
+              <div className="employee-no-jobs-message">
                 <p>No available jobs at the moment. Check back later for new opportunities.</p>
               </div>
             ) : (
-              <div className="jobs-grid">
+              <div className="employee-jobs-grid">
                 {availableJobs.map((job) => (
-                  <div key={job._id} className="job-card">
-                    <div className="job-card-header">
-                      <h3 className="job-title">{job.title}</h3>
-                      <p className="job-budget">{formatBudget(job)}</p>
+                  <div key={job._id} className="employee-job-card">
+                    <div className="employee-job-card-header">
+                      <h3 className="employee-job-title">{job.title}</h3>
+                      <p className="employee-job-budget">{formatBudget(job)}</p>
                     </div>
-                    <p className="job-description">
+                    <p className="employee-job-description">
                       {job.description.length > 100 
                         ? `${job.description.substring(0, 100)}...` 
                         : job.description}
                     </p>
-                    <div className="job-skills">
+                    <div className="employee-job-skills">
                       {job.skills && job.skills.slice(0, 3).map((skill, index) => (
-                        <span key={index} className="skill-tag">
+                        <span key={index} className="employee-skill-tag">
                           {skill}
                         </span>
                       ))}
                       {job.skills && job.skills.length > 3 && (
-                        <span className="more-skills">
+                        <span className="employee-more-skills">
                           +{job.skills.length - 3}
                         </span>
                       )}
                     </div>
-                    <div className="job-card-footer">
+                    <div className="employee-job-card-footer">
                       <button 
-                        className="view-job-button" 
+                        className="employee-view-job-button" 
                         onClick={() => viewJobDetails(job._id)}
                       >
                         View Details
                       </button>
                       {job.files && job.files.length > 0 && (
-                        <div className="job-attachments">
+                        <div className="employee-job-attachments">
                           <FaRegFileAlt /> {job.files.length} attachment{job.files.length > 1 ? 's' : ''}
                         </div>
                       )}
@@ -763,89 +816,117 @@ const EmployeeDashboard = () => {
             )}
           </div>
 
-          <div className="all-jobs-section">
-            <div className="section-header">
+          <div className="employee-all-jobs-section">
+            <div className="employee-section-header">
               <h2>Available Jobs</h2>
-              <div className="jobs-filter">
-                <select 
-                  className="filter-select"
-                  value={categoryFilter}
-                  onChange={(e) => {
-                    setCategoryFilter(e.target.value);
-                    setCurrentPage(1);
-                    fetchAllAvailableJobs(1);
-                  }}
+              <div className="employee-jobs-filter-container">
+                <button 
+                  className="employee-filter-toggle"
+                  onClick={toggleFilters}
+                  aria-expanded={showFilters}
+                  aria-label="Toggle filters"
                 >
-                  <option>All Categories</option>
-                  <option>Web Development</option>
-                  <option>Design</option>
-                  <option>Marketing</option>
-                  <option>Writing</option>
-                </select>
-                <select 
-                  className="filter-select"
-                  value={sortOption}
-                  onChange={(e) => {
-                    setSortOption(e.target.value);
-                    fetchAllAvailableJobs(currentPage);
-                  }}
-                >
-                  <option>Latest First</option>
-                  <option>Oldest First</option>
-                  <option>Highest Budget</option>
-                  <option>Lowest Budget</option>
-                </select>
+                  <FaFilter /> <span className="filter-text">Filters</span>
+                </button>
+                
+                <div className={`employee-filter-panel ${showFilters ? 'active' : ''}`}>
+                  <div className="employee-filter-group">
+                    <label htmlFor="categoryFilter">Category:</label>
+                    <select 
+                      id="categoryFilter"
+                      className="employee-filter-select"
+                      value={categoryFilter}
+                      onChange={(e) => {
+                        setCategoryFilter(e.target.value);
+                        setCurrentPage(1);
+                        fetchAllAvailableJobs(1);
+                      }}
+                    >
+                      <option>All Categories</option>
+                      <option>Web Development</option>
+                      <option>Design</option>
+                      <option>Marketing</option>
+                      <option>Writing</option>
+                    </select>
+                  </div>
+                  
+                  <div className="employee-filter-group">
+                    <label htmlFor="sortOption">Sort By:</label>
+                    <select 
+                      id="sortOption"
+                      className="employee-filter-select"
+                      value={sortOption}
+                      onChange={(e) => {
+                        setSortOption(e.target.value);
+                        fetchAllAvailableJobs(currentPage);
+                      }}
+                    >
+                      <option>Latest First</option>
+                      <option>Oldest First</option>
+                      <option>Highest Budget</option>
+                      <option>Lowest Budget</option>
+                    </select>
+                  </div>
+                </div>
               </div>
             </div>
             
             {loading ? (
-              <div className="jobs-loading">Loading available jobs...</div>
+              <div className="employee-jobs-loading">Loading available jobs...</div>
             ) : error ? (
-              <div className="error-message">{error}</div>
+              <div className="employee-error-message">{error}</div>
             ) : allAvailableJobs.length === 0 ? (
-              <div className="no-jobs-message">
+              <div className="employee-no-jobs-message">
                 <p>No available jobs at the moment. Check back later for new opportunities.</p>
               </div>
             ) : (
               <>
-                <div className="jobs-list">
+                <div className="employee-jobs-list">
                   {allAvailableJobs.map((job) => (
-                    <div key={job._id} className="job-list-item">
-                      <h3 className="job-list-title">{job.title}</h3>
-                      <div className="job-list-info">
-                        <span className="job-budget">{formatBudget(job)}</span>
-                        <span className="job-posted">Posted: {new Date(job.createdAt).toLocaleDateString()}</span>
+                    <div key={job._id} className="employee-job-list-item">
+                      <h3 className="employee-job-list-title">{job.title}</h3>
+                      <div className="employee-job-list-info">
+                        <span className="employee-job-budget">
+                          <span className="budget-label">Budget:</span> {formatBudget(job)}
+                        </span>
+                        <span className="employee-job-posted">
+                          <span className="posted-label">Posted:</span> {new Date(job.createdAt).toLocaleDateString()}
+                        </span>
                       </div>
-                      <p className="job-list-description">
-                        {job.description.length > 150 
-                          ? `${job.description.substring(0, 150)}...` 
+                      <p className="employee-job-list-description">
+                        {job.description?.length > 180
+                          ? `${job.description.substring(0, 180)}...` 
                           : job.description}
                       </p>
-                      <div className="job-list-skills">
-                        {job.skills && job.skills.slice(0, 5).map((skill, index) => (
-                          <span key={index} className="skill-tag">
+                      <div className="employee-job-list-skills">
+                        {job.skills?.slice(0, 5).map((skill, index) => (
+                          <span key={index} className="employee-skill-tag">
                             {skill}
                           </span>
                         ))}
-                        {job.skills && job.skills.length > 5 && (
-                          <span className="more-skills">
+                        {job.skills?.length > 5 && (
+                          <span className="employee-more-skills">
                             +{job.skills.length - 5}
                           </span>
                         )}
                       </div>
-                      <div className="job-list-footer">
+                      <div className="employee-job-list-footer">
                         <button 
-                          className="view-job-button" 
+                          className="employee-view-job-button" 
                           onClick={() => viewJobDetails(job._id)}
                         >
-                          View Details
+                          View Details <FaAngleRight />
                         </button>
                         <button 
-                          className={`save-job-button ${job.isSaved ? 'saved' : ''} ${job.isUpdating ? 'updating' : ''}`}
+                          className={`employee-save-job-button ${job.isSaved ? 'saved' : ''} ${job.isUpdating ? 'updating' : ''}`}
                           onClick={() => handleSaveJob(job._id, job.isSaved)}
                           disabled={job.isUpdating}
+                          aria-label={job.isSaved ? "Unsave job" : "Save job"}
                         >
-                          <FaBookmark /> {job.isUpdating ? 'Updating...' : job.isSaved ? 'Saved' : 'Save Job'}
+                          <FaBookmark /> 
+                          <span>
+                            {job.isUpdating ? 'Updating...' : job.isSaved ? 'Saved' : 'Save Job'}
+                          </span>
                         </button>
                       </div>
                     </div>
@@ -856,83 +937,124 @@ const EmployeeDashboard = () => {
               </>
             )}
           </div>
+
+          <div className="employee-job-tips-section">
+            <div className="employee-section-header">
+              <h2>Career Tips & Insights</h2>
+            </div>
+            <div className="employee-tips-grid">
+              <div className="employee-tip-card">
+                <div className="employee-tip-icon">
+                  <FaLightbulb />
+                </div>
+                <h3>Optimize Your Profile</h3>
+                <p>Complete your profile with relevant skills and experience to appear in more job searches and increase your visibility to potential clients.</p>
+                <Link to="/profile-optimization" className="employee-tip-link">Learn more <FaAngleRight /></Link>
+              </div>
+              <div className="employee-tip-card">
+                <div className="employee-tip-icon">
+                  <FaSearch />
+                </div>
+                <h3>Search Strategies</h3>
+                <p>Use specific keywords related to your skills when searching for jobs to find better matches. Filter by project type, budget, and client history.</p>
+                <Link to="/search-strategies" className="employee-tip-link">Learn more <FaAngleRight /></Link>
+              </div>
+              <div className="employee-tip-card">
+                <div className="employee-tip-icon">
+                  <FaFileAlt />
+                </div>
+                <h3>Proposal Tips</h3>
+                <p>Customize each proposal to highlight how your specific experience matches the job requirements. Address client needs and demonstrate your expertise.</p>
+                <Link to="/proposal-tips" className="employee-tip-link">Learn more <FaAngleRight /></Link>
+              </div>
+            </div>
+          </div>
         </div>
+        
         {showRatingModal && (
           <RatingModal
-              isOpen={true}
-              onClose={() => setShowRatingModal(false)}
-              viewOnly={true}
+            isOpen={true}
+            onClose={() => setShowRatingModal(false)}
+            viewOnly={true}
           />
         )}
       </main>
 
-      <footer className="dashboard-footer">
-        <div className="footer-grid">
-          <div className="footer-column">
-            <h3>For Freelancers</h3>
-            <ul>
-              <li><Link to="/find-jobs">Find Work</Link></li>
-              <li><Link to="/resources">Resources</Link></li>
-              <li><Link to="/freelancer-tips">Tips & Guides</Link></li>
-              <li><Link to="/freelancer-forum">Community Forum</Link></li>
-              <li><Link to="/freelancer-stories">Success Stories</Link></li>
-            </ul>
-          </div>
-          
-          <div className="footer-column">
-            <h3>Resources</h3>
-            <ul>
-              <li><Link to="/help-center">Help Center</Link></li>
-              <li><Link to="/webinars">Webinars</Link></li>
-              <li><Link to="/blog">Blog</Link></li>
-              <li><Link to="/api-docs">Developer API</Link></li>
-              <li><Link to="/partner-program">Partner Program</Link></li>
-            </ul>
-          </div>
-          
-          <div className="footer-column">
-            <h3>Company</h3>
-            <ul>
-              <li><Link to="/about">About Us</Link></li>
-              <li><Link to="/leadership">Leadership</Link></li>
-              <li><Link to="/careers">Careers</Link></li>
-              <li><Link to="/press">Press</Link></li>
-              <li><Link to="/contact">Contact Us</Link></li>
-            </ul>
-          </div>
-        </div>
-        
-        <div className="footer-bottom">
-          <div className="footer-bottom-container">
-            <div className="footer-logo">
-              <Link to="/">Next Youth</Link>
+      <footer className="employee-dashboard-footer">
+        <div className="employee-footer-content">
+          <div className="employee-footer-grid">
+            <div className="employee-footer-column">
+              <h3>For Freelancers</h3>
+              <ul>
+                <li><Link to="/find-jobs">Find Work</Link></li>
+                <li><Link to="/resources">Resources</Link></li>
+                <li><Link to="/freelancer-tips">Tips & Guides</Link></li>
+                <li><Link to="/freelancer-forum">Community Forum</Link></li>
+                <li><Link to="/freelancer-stories">Success Stories</Link></li>
+              </ul>
             </div>
             
-            <div className="footer-legal-links">
-              <Link to="/terms">Terms of Service</Link>
-              <Link to="/privacy">Privacy Policy</Link>
-              <Link to="/accessibility">Accessibility</Link>
-              <Link to="/sitemap">Site Map</Link>
+            <div className="employee-footer-column">
+              <h3>Resources</h3>
+              <ul>
+                <li><Link to="/help-center">Help Center</Link></li>
+                <li><Link to="/webinars">Webinars</Link></li>
+                <li><Link to="/blog">Blog</Link></li>
+                <li><Link to="/api-docs">Developer API</Link></li>
+                <li><Link to="/partner-program">Partner Program</Link></li>
+              </ul>
             </div>
             
-            <div className="footer-social">
-              <a href="https://facebook.com" aria-label="Facebook">
-                <FaFacebook />
-              </a>
-              <a href="https://twitter.com" aria-label="Twitter">
-                <FaTwitter />
-              </a>
-              <a href="https://linkedin.com" aria-label="LinkedIn">
-                <FaLinkedin />
-              </a>
-              <a href="https://instagram.com" aria-label="Instagram">
-                <FaInstagram />
-              </a>
+            <div className="employee-footer-column">
+              <h3>Company</h3>
+              <ul>
+                <li><Link to="/about">About Us</Link></li>
+                <li><Link to="/leadership">Leadership</Link></li>
+                <li><Link to="/careers">Careers</Link></li>
+                <li><Link to="/press">Press</Link></li>
+                <li><Link to="/contact">Contact Us</Link></li>
+              </ul>
             </div>
           </div>
           
-          <div className="footer-copyright">
-            <p>&copy; {currentYear} Next Youth. All rights reserved.</p>
+          <div className="employee-footer-bottom">
+            <div className="employee-footer-bottom-container">
+              <div className="employee-footer-logo">
+                <Link to="/">
+                  <img 
+                    src={isDarkMode ? logoDark : logoLight} 
+                    alt="Next Youth" 
+                    className="employee-footer-logo-image" 
+                  />
+                </Link>
+              </div>
+              
+              <div className="employee-footer-legal-links">
+                <Link to="/terms">Terms of Service</Link>
+                <Link to="/privacy">Privacy Policy</Link>
+                <Link to="/accessibility">Accessibility</Link>
+                <Link to="/sitemap">Site Map</Link>
+              </div>
+              
+              <div className="employee-footer-social">
+                <a href="https://facebook.com" target="_blank" rel="noopener noreferrer" aria-label="Facebook">
+                  <FaFacebook />
+                </a>
+                <a href="https://twitter.com" target="_blank" rel="noopener noreferrer" aria-label="Twitter">
+                  <FaTwitter />
+                </a>
+                <a href="https://linkedin.com" target="_blank" rel="noopener noreferrer" aria-label="LinkedIn">
+                  <FaLinkedin />
+                </a>
+                <a href="https://instagram.com" target="_blank" rel="noopener noreferrer" aria-label="Instagram">
+                  <FaInstagram />
+                </a>
+              </div>
+            </div>
+            
+            <div className="employee-footer-copyright">
+              <p>&copy; {currentYear} Next Youth. All rights reserved.</p>
+            </div>
           </div>
         </div>
       </footer>
