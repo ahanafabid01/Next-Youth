@@ -4,11 +4,13 @@ import axios from 'axios';
 import { 
   FaUserShield, FaSave, FaTrash, FaArrowLeft, FaBell, 
   FaUserEdit, FaLock, FaShieldAlt, FaSun, FaMoon, 
-  FaExclamationTriangle, FaCheck, FaSpinner, FaCog
+  FaExclamationTriangle, FaCheck, FaSpinner, FaCog,
+  FaCreditCard // Add this import
 } from 'react-icons/fa';
 import logoLight from '../../assets/images/logo-light.png';
 import logoDark from '../../assets/images/logo-dark.png';
 import './Settings.css';
+import EmployeePayment from './EmployeePayment'; // Add this import
 
 const Settings = () => {
   const navigate = useNavigate();
@@ -79,16 +81,18 @@ const Settings = () => {
         // Extract the user data properly
         const userData = response.data.user;
         
-        // Set the user state with all fields, handling undefined values
+        // Log the full user data to inspect all field names
+        console.log('Full user data from API:', userData);
+        
+        // Set the user state with all fields, checking all possible field names for phone number
         setUser({
           name: userData.name || '',
           email: userData.email || '',
           profilePicture: userData.profilePicture || userData.profilePic || '',
-          phoneNumber: userData.phoneNumber || '' // This line is correct, but let's add some debugging
+          phoneNumber: userData.phoneNumber || userData.phone || userData.phoneNum || '' 
         });
         
-        console.log('User data from API:', userData); // Add this line to debug
-        console.log('Phone number from API:', userData.phoneNumber);
+        console.log('Phone number being used:', userData.phoneNumber || userData.phone || userData.phoneNum || 'Not found');
       }
     } catch (error) {
       console.error('Error fetching user data:', error);
@@ -140,7 +144,7 @@ const Settings = () => {
     e.preventDefault();
     setLoading(true);
     try {
-      // Log what we're sending to the API
+      // Log what we're sending to the API for debugging
       console.log('Sending profile data:', user);
       
       const response = await axios.put(
@@ -155,6 +159,8 @@ const Settings = () => {
       );
       
       if (response.data.success) {
+        // Fetch user data again to ensure we have the latest data with correct field names
+        await fetchUserData();
         setMessage({ type: 'success', text: 'Profile updated successfully' });
       }
     } catch (error) {
@@ -372,6 +378,13 @@ const Settings = () => {
             <span>Account</span>
           </button>
           <button 
+            className={`employee-settings-nav-button ${activeTab === 'payment' ? 'active' : ''}`}
+            onClick={() => setActiveTab('payment')}
+          >
+            <FaCreditCard />
+            <span>Payment & Billing</span>
+          </button>
+          <button 
             className={`employee-settings-nav-button ${activeTab === 'security' ? 'active' : ''}`}
             onClick={() => setActiveTab('security')}
           >
@@ -401,7 +414,7 @@ const Settings = () => {
           {/* Account Settings Tab */}
           {activeTab === 'account' && (
             <div className="employee-settings-panel">
-              <h2>Profile Information</h2>
+              <h2>Contact Info</h2>
               <p className="employee-settings-description">
                 Update your personal information and how it appears on your profile
               </p>
@@ -481,6 +494,18 @@ const Settings = () => {
                   </button>
                 </div>
               </form>
+            </div>
+          )}
+          
+          {/* Payment & Billing Tab */}
+          {activeTab === 'payment' && (
+            <div className="employee-settings-panel">
+              <h2>Payment & Billing</h2>
+              <p className="employee-settings-description">
+                Manage your payment methods and view your payment history
+              </p>
+              
+              <EmployeePayment />
             </div>
           )}
           
