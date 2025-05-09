@@ -35,11 +35,18 @@ import {
   FaTimes,
   FaInfoCircle,
   FaArrowLeft,
-  FaStar  // Add this line
+  FaStar,
+  FaAngleRight,
+  
+  FaTools,
+  FaClipboardCheck,
+  FaShieldAlt
 } from 'react-icons/fa';
 import './EmployeeProfile.css';
 import './EmployeeDashboard.css';
 import RatingModal from '../Connections/RatingModal';
+import logoLight from '../../assets/images/logo-light.png'; 
+import logoDark from '../../assets/images/logo-dark.png';
 
 const skillsList = [
   'JavaScript', 'React', 'Node.js', 'Python', 'Java', 'C++', 'HTML', 'CSS',
@@ -102,6 +109,9 @@ const EmployeeProfile = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [isInitialLoading, setIsInitialLoading] = useState(true);
   const [showRatingModal, setShowRatingModal] = useState(false);
+  const [unreadNotifications, setUnreadNotifications] = useState(() => {
+    return parseInt(localStorage.getItem("unread-notifications") || "2");
+  });
   const navigate = useNavigate();
   const profileDropdownRef = useRef(null);
   const notificationsRef = useRef(null);
@@ -219,6 +229,12 @@ const EmployeeProfile = () => {
     navigate('/verify-account');
   }, [navigate]);
 
+  const handleMarkAllAsRead = useCallback((e) => {
+    e.stopPropagation();
+    setUnreadNotifications(0);
+    localStorage.setItem("unread-notifications", "0");
+  }, []);
+
   const handleLogout = useCallback(async () => {
     try {
       const response = await axios.post(`${API_BASE_URL}/auth/logout`, {}, { withCredentials: true });
@@ -234,15 +250,17 @@ const EmployeeProfile = () => {
   }, [handleOutsideClick]);
 
   useEffect(() => {
-    // Keep this for global dark mode
-    document.body.classList.toggle('dark-mode', isDarkMode);
-    // The class on the container will now be handled in the JSX
+    document.documentElement.setAttribute('data-theme', isDarkMode ? 'dark' : 'light');
     localStorage.setItem("dashboard-theme", isDarkMode ? "dark" : "light");
   }, [isDarkMode]);
 
   useEffect(() => {
     fetchUserData();
   }, [fetchUserData]);
+
+  useEffect(() => {
+    localStorage.setItem("unread-notifications", unreadNotifications.toString());
+  }, [unreadNotifications]);
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -544,68 +562,98 @@ const EmployeeProfile = () => {
   const currentYear = new Date().getFullYear();
 
   return (
-    <div className={`employee-dashboard ${isDarkMode ? 'dark-mode' : ''}`}>
+    <div className={`employee-edit-profile ${isDarkMode ? 'dark-theme' : 'light-theme'}`}>
       <ToastContainer position="top-right" autoClose={5000} theme={isDarkMode ? 'dark' : 'light'} />
       
       {/* Header with Navigation */}
-      <header className="dashboard-header">
-        <div className="dashboard-header-container">
-          <div className="dashboard-header-left">
+      <header className="employee-edit-profile-header">
+        <div className="employee-edit-profile-header-container">
+          <div className="employee-edit-profile-header-left">
             <button 
-              className="dashboard-nav-toggle"
+              className="employee-edit-profile-nav-toggle"
               onClick={toggleMobileNav}
               aria-label="Toggle navigation"
             >
-              ☰
+              <span className="employee-edit-profile-hamburger-icon"></span>
             </button>
-            <Link to="/" className="dashboard-logo">Next Youth</Link>
+            <Link to="/employee-dashboard" className="employee-edit-profile-logo">
+              <img 
+                src={isDarkMode ? logoDark : logoLight} 
+                alt="Next Youth" 
+                className="employee-edit-profile-logo-image" 
+              />
+            </Link>
             
-            <nav className={`dashboard-nav ${showMobileNav ? 'active' : ''}`}>
-              <Link to="/find-jobs" className="nav-link">Find Work</Link>
-              <Link to="/find-jobs/saved" className="nav-link">Saved Jobs</Link>
-              <Link to="/find-jobs/proposals" className="nav-link">Proposals</Link>
-              <Link to="/help" className="nav-link">Help</Link>
+            <nav className={`employee-edit-profile-nav ${showMobileNav ? 'active' : ''}`}>
+              <Link to="/find-jobs" className="employee-edit-profile-nav-link" style={{"--item-index": 0}}>Find Work</Link>
+              <Link to="/find-jobs/saved" className="employee-edit-profile-nav-link" style={{"--item-index": 1}}>Saved Jobs</Link>
+              <Link to="/find-jobs/proposals" className="employee-edit-profile-nav-link" style={{"--item-index": 2}}>Proposals</Link>
+              <Link to="/help" className="employee-edit-profile-nav-link" style={{"--item-index": 3}}>Help</Link>
             </nav>
           </div>
           
-          <div className="dashboard-header-right">
-            <div className="notification-container" ref={notificationsRef}>
+          <div className="employee-edit-profile-header-right">
+            <div className="employee-edit-profile-notification-container" ref={notificationsRef}>
               <button 
-                className="notification-button"
+                className="employee-edit-profile-notification-button"
                 onClick={toggleNotifications}
                 aria-label="Notifications"
               >
                 <FaBell />
-                <span className="notification-badge">2</span>
+                {unreadNotifications > 0 && (
+                  <span className="employee-edit-profile-notification-badge">{unreadNotifications}</span>
+                )}
               </button>
               
               {showNotifications && (
-                <div className="notifications-dropdown">
-                  <div className="notification-header">
+                <div className="employee-edit-profile-notifications-dropdown">
+                  <div className="employee-edit-profile-notification-header">
                     <h3>Notifications</h3>
-                    <button className="mark-all-read">Mark all as read</button>
+                    <button className="employee-edit-profile-mark-all-read" onClick={handleMarkAllAsRead}>
+                      Mark all as read
+                    </button>
                   </div>
-                  <div className="notification-list">
-                    <div className="notification-item unread">
-                      <div className="notification-icon">
-                        <FaCheckCircle />
+                  <div className="employee-edit-profile-notification-list">
+                    <div className="employee-edit-profile-notification-item employee-edit-profile-unread">
+                      <div className="employee-edit-profile-notification-icon">
+                        {(!formData.idVerification || 
+                          !formData.idVerification.frontImage || 
+                          !formData.idVerification.backImage || 
+                          formData.idVerification.status === 'rejected') ? (
+                          <FaRegFileAlt />
+                        ) : formData.idVerification.status === 'verified' ? (
+                          <FaCheckCircle />
+                        ) : (
+                          <FaClock />
+                        )}
                       </div>
-                      <div className="notification-content">
-                        <p>Your profile has been verified!</p>
-                        <span className="notification-time">2 hours ago</span>
+                      <div className="employee-edit-profile-notification-content">
+                        <p>
+                          {(!formData.idVerification || 
+                            !formData.idVerification.frontImage || 
+                            !formData.idVerification.backImage || 
+                            formData.idVerification.status === 'rejected') ? (
+                            "Please verify your account"
+                          ) : formData.idVerification.status === 'verified' ? (
+                            "Your profile has been verified!"
+                          ) : (
+                            "Your verification is pending approval"
+                          )}
+                        </p>
+                        <span className="employee-edit-profile-notification-time">2 hours ago</span>
                       </div>
                     </div>
-                    <div className="notification-item unread">
-                      <div className="notification-icon">
+                    <div className="employee-edit-profile-notification-item employee-edit-profile-unread">
+                      <div className="employee-edit-profile-notification-icon">
                         <FaRegFileAlt />
                       </div>
-                      <div className="notification-content">
+                      <div className="employee-edit-profile-notification-content">
                         <p>New job matching your skills is available</p>
-                        <span className="notification-time">1 day ago</span>
+                        <span className="employee-edit-profile-notification-time">1 day ago</span>
                       </div>
                     </div>
                   </div>
-                  <div className="notification-footer">
+                  <div className="employee-edit-profile-notification-footer">
                     <Link to="/notifications">View all notifications</Link>
                   </div>
                 </div>
@@ -613,16 +661,16 @@ const EmployeeProfile = () => {
             </div>
             
             <button
-              className="theme-toggle-button"
+              className="employee-edit-profile-theme-toggle"
               onClick={toggleDarkMode}
               aria-label={isDarkMode ? "Switch to light mode" : "Switch to dark mode"}
             >
               {isDarkMode ? <FaSun /> : <FaMoon />}
             </button>
 
-            <div className="profile-dropdown-container" ref={profileDropdownRef}>
+            <div className="employee-edit-profile-profile-dropdown" ref={profileDropdownRef}>
               <button 
-                className="profile-button" 
+                className="employee-edit-profile-profile-button" 
                 onClick={toggleProfileDropdown}
                 aria-label="User profile"
               >
@@ -630,18 +678,18 @@ const EmployeeProfile = () => {
                   <img 
                     src={formData.profilePicture}
                     alt="Profile"
-                    className="profile-avatar"
+                    className="employee-edit-profile-profile-avatar"
                   />
                 ) : (
-                  <FaUserCircle className="profile-avatar-icon" />
+                  <FaUserCircle className="employee-edit-profile-profile-avatar-icon" />
                 )}
-                <FaChevronDown className={`dropdown-icon ${showProfileDropdown ? 'rotate' : ''}`} />
+                <FaChevronDown className={`employee-edit-profile-dropdown-icon ${showProfileDropdown ? 'rotate' : ''}`} />
               </button>
               
               {showProfileDropdown && (
-                <div className="profile-dropdown">
-                  <div className="profile-dropdown-header">
-                    <div className="profile-dropdown-avatar">
+                <div className="employee-edit-profile-profile-menu">
+                  <div className="employee-edit-profile-profile-menu-header">
+                    <div className="employee-edit-profile-profile-menu-avatar">
                       {formData.profilePicture ? (
                         <img 
                           src={formData.profilePicture}
@@ -651,15 +699,15 @@ const EmployeeProfile = () => {
                         <FaUserCircle />
                       )}
                     </div>
-                    <div className="profile-dropdown-info">
+                    <div className="employee-edit-profile-profile-menu-info">
                       <h4>{formData.name || 'User'}</h4>
-                      <span className="profile-status">
+                      <span className="employee-edit-profile-profile-status">
                         {!formData.idVerification ? (
                           'Not Verified'
                         ) : formData.idVerification.status === 'verified' ? (
-                          <><FaCheckCircle className="verified-icon" /> Verified</>
+                          <><FaCheckCircle className="employee-edit-profile-verified-icon" /> Verified</>
                         ) : formData.idVerification.status === 'pending' && formData.idVerification.frontImage && formData.idVerification.backImage ? (
-                          <><FaClock className="pending-icon" /> Verification Pending</>
+                          <><FaClock className="employee-edit-profile-pending-icon" /> Verification Pending</>
                         ) : formData.idVerification.status === 'rejected' ? (
                           <>Verification Rejected</>
                         ) : (
@@ -668,48 +716,47 @@ const EmployeeProfile = () => {
                       </span>
                     </div>
                   </div>
-                  <div className="profile-dropdown-links">
+                  <div className="employee-edit-profile-profile-menu-links">
                     <button 
-                      className="profile-dropdown-link"
+                      className="employee-edit-profile-profile-link"
                       onClick={handleNavigateToProfile}
                     >
                       <FaUserCircle /> View Profile
                     </button>
                     
-                    {/* Show verify account option when appropriate */}
                     {(!formData.idVerification || 
                       !formData.idVerification.frontImage || 
                       !formData.idVerification.backImage || 
                       formData.idVerification.status === 'rejected') && (
                       <button 
-                        className="profile-dropdown-link"
+                        className="employee-edit-profile-profile-link"
                         onClick={handleVerifyAccount}
                       >
-                        Verify Account
+                        <FaShieldAlt /> Verify Account
                       </button>
                     )}
-
+                    
                     <button 
-                      className="profile-dropdown-link"
+                      className="employee-edit-profile-profile-link"
                       onClick={() => {
-                          setShowRatingModal(true);
-                          setShowProfileDropdown(false);
+                        setShowRatingModal(true);
+                        setShowProfileDropdown(false);
                       }}
                     >
                       <FaStar /> My Ratings & Reviews
                     </button>
                     
                     <button 
-                      className="profile-dropdown-link"
+                      className="employee-edit-profile-profile-link"
                       onClick={() => navigate('/settings')}
                     >
-                      Settings
+                      <FaTools /> Settings
                     </button>
                     <button 
-                      className="profile-dropdown-link"
+                      className="employee-edit-profile-profile-link"
                       onClick={handleLogout}
                     >
-                      Logout
+                      <FaArrowLeft /> Logout
                     </button>
                   </div>
                 </div>
@@ -719,878 +766,1148 @@ const EmployeeProfile = () => {
         </div>
       </header>
       
-      <main className="profile-dashboard-container">
-        <div className="employee-profile">
-          <div className="profile-edit-container">
-            <h1 className="profile-edit-title">Edit Your Profile</h1>
-            <div className="profile-form-steps">
-              <div className={`step-indicator ${step === 1 ? 'active' : step > 1 ? 'completed' : ''}`}>
-                1. Basic Info
+      <main className="employee-edit-profile-main">
+        <div className="employee-edit-profile-container">
+          <div className="employee-edit-profile-sidebar">
+            <h2 className="employee-edit-profile-sidebar-title">Profile Completion</h2>
+            
+            <div className="employee-edit-profile-completion">
+              <div className="employee-edit-profile-completion-bar">
+                <div 
+                  className="employee-edit-profile-completion-progress" 
+                  style={{ width: `${Math.min(step / 6 * 100, 100)}%` }}
+                ></div>
               </div>
-              <div className={`step-indicator ${step === 2 ? 'active' : step > 2 ? 'completed' : ''}`}>
-                2. Education
-              </div>
-              <div className={`step-indicator ${step === 3 ? 'active' : step > 3 ? 'completed' : ''}`}>
-                3. Skills
-              </div>
-              <div className={`step-indicator ${step === 4 ? 'active' : step > 4 ? 'completed' : ''}`}>
-                4. Contact
-              </div>
-              <div className={`step-indicator ${step === 5 ? 'active' : step > 5 ? 'completed' : ''}`}>
-                5. Goals
-              </div>
-              <div className={`step-indicator ${step === 6 ? 'active' : ''}`}>
-                6. Price Preference
-              </div>
+              <p className="employee-edit-profile-completion-text">
+                Step {step} of 6 • {Math.round(step / 6 * 100)}% Complete
+              </p>
             </div>
             
-            {step === 1 && (
-              <div className="profile-form-section">
-                <h2 className="section-title"><FaUserCircle /> Basic Information</h2>
-                
-                <div className="form-group">
-                  <label>Profile Picture</label>
-                  <div className="profile-upload-container">
-                    {formData.profilePicture || formData.profilePicPreview ? (
-                      <img
-                        src={formData.profilePicture || formData.profilePicPreview}
-                        alt="Profile"
-                        className="profile-pic-preview"
-                      />
-                    ) : (
-                      <div className="profile-pic-placeholder">
-                        <FaUserCircle />
-                      </div>
-                    )}
-                    <label className="file-upload-button">
-                      {formData.profilePicture || formData.profilePicPreview ? 'Change Photo' : 'Upload Photo'}
-                      <input
-                        type="file"
-                        onChange={(e) => handleFileChange(e, 'profilePic')}
-                        accept="image/*"
-                        style={{ display: 'none' }}
-                      />
-                    </label>
-                  </div>
-                </div>
-                
-                <div className="form-group">
-                  <label htmlFor="name">Full Name</label>
-                  <input
-                    type="text"
-                    id="name"
-                    name="name"
-                    value={formData.name}
-                    onChange={handleInputChange}
-                    placeholder="Enter your full name"
-                    className="form-input"
-                  />
-                </div>
-                
-                <div className="form-group">
-                  <label htmlFor="bio">Bio</label>
-                  <textarea
-                    id="bio"
-                    name="bio"
-                    value={formData.bio}
-                    onChange={handleInputChange}
-                    placeholder="Write a short bio about yourself"
-                    rows="4"
-                    className="form-textarea"
-                  />
-                </div>
-                
-                <div className="profile-form-actions">
-                  <button className="secondary-button" onClick={handleCancel}>
-                    Cancel
-                  </button>
-                  <button className="action-button" onClick={handleNext}>
-                    Next: Education
-                  </button>
-                </div>
-              </div>
-            )}
+            <nav className="employee-edit-profile-steps-nav">
+              <button 
+                className={`employee-edit-profile-step-link ${step === 1 ? 'active' : step > 1 ? 'completed' : ''}`}
+                onClick={() => step > 1 && setStep(1)}
+                disabled={step < 1}
+              >
+                <span className="employee-edit-profile-step-number">1</span>
+                <span className="employee-edit-profile-step-text">Basic Info</span>
+                {step > 1 && <FaCheck className="employee-edit-profile-step-check" />}
+              </button>
+              
+              <button 
+                className={`employee-edit-profile-step-link ${step === 2 ? 'active' : step > 2 ? 'completed' : ''}`}
+                onClick={() => step > 2 && setStep(2)}
+                disabled={step < 2}
+              >
+                <span className="employee-edit-profile-step-number">2</span>
+                <span className="employee-edit-profile-step-text">Education</span>
+                {step > 2 && <FaCheck className="employee-edit-profile-step-check" />}
+              </button>
+              
+              <button 
+                className={`employee-edit-profile-step-link ${step === 3 ? 'active' : step > 3 ? 'completed' : ''}`}
+                onClick={() => step > 3 && setStep(3)}
+                disabled={step < 3}
+              >
+                <span className="employee-edit-profile-step-number">3</span>
+                <span className="employee-edit-profile-step-text">Skills</span>
+                {step > 3 && <FaCheck className="employee-edit-profile-step-check" />}
+              </button>
+              
+              <button 
+                className={`employee-edit-profile-step-link ${step === 4 ? 'active' : step > 4 ? 'completed' : ''}`}
+                onClick={() => step > 4 && setStep(4)}
+                disabled={step < 4}
+              >
+                <span className="employee-edit-profile-step-number">4</span>
+                <span className="employee-edit-profile-step-text">Contact</span>
+                {step > 4 && <FaCheck className="employee-edit-profile-step-check" />}
+              </button>
+              
+              <button 
+                className={`employee-edit-profile-step-link ${step === 5 ? 'active' : step > 5 ? 'completed' : ''}`}
+                onClick={() => step > 5 && setStep(5)}
+                disabled={step < 5}
+              >
+                <span className="employee-edit-profile-step-number">5</span>
+                <span className="employee-edit-profile-step-text">Goals</span>
+                {step > 5 && <FaCheck className="employee-edit-profile-step-check" />}
+              </button>
+              
+              <button 
+                className={`employee-edit-profile-step-link ${step === 6 ? 'active' : ''}`}
+                onClick={() => step > 6 && setStep(6)}
+                disabled={step < 6}
+              >
+                <span className="employee-edit-profile-step-number">6</span>
+                <span className="employee-edit-profile-step-text">Price</span>
+                {step > 6 && <FaCheck className="employee-edit-profile-step-check" />}
+              </button>
+            </nav>
+            
+            <div className="employee-edit-profile-tips">
+              <h3 className="employee-edit-profile-tips-title">Profile Tips</h3>
+              <ul className="employee-edit-profile-tips-list">
+                <li>
+                  <FaClipboardCheck /> A complete profile increases your chances of getting hired
+                </li>
+                <li>
+                  <FaStar /> Include relevant skills to match with the right jobs
+                </li>
+                <li>
+                  <FaFileAlt /> Upload a professional profile photo to build trust
+                </li>
+                <li>
+                  <FaBriefcase /> Share your experience and expertise clearly
+                </li>
+              </ul>
+            </div>
+          </div>
+          
+          <div className="employee-edit-profile-content">
+            <h1 className="employee-edit-profile-title">
+              Complete Your Professional Profile
+            </h1>
 
-            {/* Step 2: Education */}
-            {step === 2 && (
-              <div className="profile-form-section">
-                <h2 className="section-title"><FaGraduationCap /> Education</h2>
-                
-                <div className="education-form-group">
-                  <h3>School</h3>
-                  <div className="form-group">
-                    <label>School Name</label>
-                    <input
-                      type="text"
-                      value={formData.education.school.name}
-                      onChange={(e) => handleEducationChange(e, 'school', 'name')}
-                      placeholder="Enter school name"
-                      className="form-input"
-                    />
+            <div className="employee-edit-profile-form-container">
+              {/* Step 1: Basic Information */}
+              {step === 1 && (
+                <div className="employee-edit-profile-form-section">
+                  <div className="employee-edit-profile-section-header">
+                    <FaUserCircle className="employee-edit-profile-section-icon" />
+                    <div className="employee-edit-profile-section-title-container">
+                      <h2 className="employee-edit-profile-section-title">Basic Information</h2>
+                      <p className="employee-edit-profile-section-subtitle">
+                        Let potential clients know who you are
+                      </p>
+                    </div>
                   </div>
                   
-                  <div className="year-inputs-container">
-                    <div className="form-group year-input">
-                      <label>Entering Year</label>
-                      <input
-                        type="number"
-                        min="1900"
-                        max={currentYear}
-                        value={formData.education.school.enteringYear}
-                        onChange={(e) => handleEducationChange(e, 'school', 'enteringYear')}
-                        placeholder="Year"
-                        className="form-input"
-                      />
-                    </div>
-                    
-                    <div className="form-group year-input">
-                      <label>Passing Year</label>
-                      <input
-                        type="number"
-                        min="1900"
-                        max={currentYear + 10}
-                        value={formData.education.school.passingYear}
-                        onChange={(e) => handleEducationChange(e, 'school', 'passingYear')}
-                        placeholder="Year"
-                        className="form-input"
-                      />
-                    </div>
-                  </div>
-                </div>
-                
-                <div className="education-form-group">
-                  <h3>College</h3>
-                  <div className="form-group">
-                    <label>College Name</label>
-                    <input
-                      type="text"
-                      value={formData.education.college.name}
-                      onChange={(e) => handleEducationChange(e, 'college', 'name')}
-                      placeholder="Enter college name"
-                      className="form-input"
-                    />
-                  </div>
-                  
-                  <div className="year-inputs-container">
-                    <div className="form-group year-input">
-                      <label>Entering Year</label>
-                      <input
-                        type="number"
-                        min="1900"
-                        max={currentYear}
-                        value={formData.education.college.enteringYear}
-                        onChange={(e) => handleEducationChange(e, 'college', 'enteringYear')}
-                        placeholder="Year"
-                        className="form-input"
-                      />
-                    </div>
-                    
-                    <div className="form-group year-input">
-                      <label>Passing Year</label>
-                      <input
-                        type="number"
-                        min="1900"
-                        max={currentYear + 10}
-                        value={formData.education.college.passingYear}
-                        onChange={(e) => handleEducationChange(e, 'college', 'passingYear')}
-                        placeholder="Year"
-                        className="form-input"
-                      />
-                    </div>
-                  </div>
-                </div>
-                
-                <div className="education-form-group">
-                  <h3>University</h3>
-                  <div className="form-group">
-                    <label>University Name</label>
-                    <input
-                      type="text"
-                      value={formData.education.university.name}
-                      onChange={(e) => handleEducationChange(e, 'university', 'name')}
-                      placeholder="Enter university name"
-                      className="form-input"
-                    />
-                  </div>
-                  
-                  <div className="year-inputs-container">
-                    <div className="form-group year-input">
-                      <label>Entering Year</label>
-                      <input
-                        type="number"
-                        min="1900"
-                        max={currentYear}
-                        value={formData.education.university.enteringYear}
-                        onChange={(e) => handleEducationChange(e, 'university', 'enteringYear')}
-                        placeholder="Year"
-                        className="form-input"
-                      />
-                    </div>
-                    
-                    <div className="form-group year-input">
-                      <label>Passing Year</label>
-                      <input
-                        type="number"
-                        min="1900"
-                        max={currentYear + 10}
-                        value={formData.education.university.passingYear}
-                        onChange={(e) => handleEducationChange(e, 'university', 'passingYear')}
-                        placeholder="Year"
-                        className="form-input"
-                      />
-                    </div>
-                  </div>
-                </div>
-                
-                <div className="profile-form-actions">
-                  <button className="secondary-button" onClick={handlePrevious}>
-                    Back: Basic Info
-                  </button>
-                  <button className="action-button" onClick={handleNext}>
-                    Next: Skills
-                  </button>
-                </div>
-              </div>
-            )}
-
-            {/* Step 3: Skills */}
-            {step === 3 && (
-              <div className="profile-form-section">
-                <h2 className="section-title"><FaCode /> Skills & Languages</h2>
-                
-                {/* Skills */}
-                <div className="form-group">
-                  <label>Add Skills</label>
-                  <div className="skill-selection-container">
-                    <select 
-                      value={selectedSkill}
-                      onChange={(e) => setSelectedSkill(e.target.value)}
-                      className="form-select"
-                    >
-                      <option value="">Select a skill</option>
-                      {skillsList.map((skill) => (
-                        <option key={skill} value={skill}>{skill}</option>
-                      ))}
-                    </select>
-                    <button type="button" className="add-button" onClick={handleAddSkill}>
-                      Add
-                    </button>
-                  </div>
-                  
-                  <div className="skills-list">
-                    {formData.skills.map((skill) => (
-                      <div key={skill} className="skill-badge">
-                        {skill}
-                        <button onClick={() => handleRemoveSkill(skill)}>×</button>
+                  <div className="employee-edit-profile-form-grid">
+                    <div className="employee-edit-profile-form-group photo-upload">
+                      <label>Profile Picture</label>
+                      <div className="employee-edit-profile-photo-upload">
+                        <div className="employee-edit-profile-photo-container">
+                          {formData.profilePicture || formData.profilePicPreview ? (
+                            <img
+                              src={formData.profilePicture || formData.profilePicPreview}
+                              alt="Profile"
+                              className="employee-edit-profile-photo-preview"
+                            />
+                          ) : (
+                            <div className="employee-edit-profile-photo-placeholder">
+                              <FaUserCircle />
+                            </div>
+                          )}
+                        </div>
+                        <div className="employee-edit-profile-photo-actions">
+                          <label className="employee-edit-profile-upload-button">
+                            <span className="button-text">{formData.profilePicture ? 'Change Photo' : 'Upload Photo'}</span>
+                            <input
+                              type="file"
+                              onChange={(e) => handleFileChange(e, 'profilePic')}
+                              accept="image/*"
+                            />
+                          </label>
+                          <p className="employee-edit-profile-photo-tip">
+                            Professional photo recommended. Max size: 5MB.
+                          </p>
+                        </div>
                       </div>
-                    ))}
+                    </div>
+                    
+                    <div className="employee-edit-profile-form-group">
+                      <label htmlFor="name">Full Name</label>
+                      <input
+                        type="text"
+                        id="name"
+                        name="name"
+                        value={formData.name}
+                        onChange={handleInputChange}
+                        placeholder="Enter your full name"
+                        className="employee-edit-profile-input"
+                      />
+                    </div>
+                    
+                    <div className="employee-edit-profile-form-group full-width">
+                      <label htmlFor="bio">Professional Bio</label>
+                      <textarea
+                        id="bio"
+                        name="bio"
+                        value={formData.bio}
+                        onChange={handleInputChange}
+                        placeholder="Write a short introduction about yourself, your expertise, and what you can offer clients"
+                        rows="4"
+                        className="employee-edit-profile-textarea"
+                      />
+                      <p className="employee-edit-profile-form-hint">
+                        A compelling bio helps you stand out to potential clients.
+                      </p>
+                    </div>
                   </div>
-                </div>
-                
-                {/* Other Skills */}
-                <div className="form-group">
-                  <label>Other Skills</label>
-                  <div className="skill-selection-container">
-                    <input 
-                      type="text" 
-                      id="otherSkill"
-                      name="otherSkill"
-                      className="form-select"
-                      placeholder="Enter a custom skill"
-                      onKeyPress={(e) => {
-                        if (e.key === 'Enter') {
-                          e.preventDefault();
-                          const customSkill = e.target.value.trim();
-                          if (customSkill && !formData.skills.includes(customSkill)) {
-                            setFormData({ 
-                              ...formData, 
-                              skills: [...formData.skills, customSkill] 
-                            });
-                            e.target.value = '';
-                          }
-                        }
-                      }}
-                    />
+                  
+                  <div className="employee-edit-profile-form-actions">
                     <button 
                       type="button" 
-                      className="add-button" 
-                      onClick={(e) => {
-                        const input = document.getElementById('otherSkill');
-                        const customSkill = input.value.trim();
-                        if (customSkill && !formData.skills.includes(customSkill)) {
-                          setFormData({ 
-                            ...formData, 
-                            skills: [...formData.skills, customSkill] 
-                          });
-                          input.value = '';
-                        }
-                      }}
+                      className="employee-edit-profile-button secondary" 
+                      onClick={handleCancel}
                     >
-                      Add
+                      Cancel
+                    </button>
+                    <button 
+                      type="button" 
+                      className="employee-edit-profile-button primary" 
+                      onClick={handleNext}
+                    >
+                      Next: Education <FaAngleRight />
                     </button>
                   </div>
-                  <p className="form-hint">Type a skill and press Enter or click Add</p>
                 </div>
-                
-                {/* Languages */}
-                <div className="form-group">
-                  <label>Add Languages</label>
-                  <div className="skill-selection-container">
-                    <select 
-                      value={selectedLanguage}
-                      onChange={(e) => setSelectedLanguage(e.target.value)}
-                      className="form-select"
-                      style={{flex: 2}}
+              )}
+              
+              {/* Step 2: Education */}
+              {step === 2 && (
+                <div className="employee-edit-profile-form-section">
+                  <div className="employee-edit-profile-section-header">
+                    <FaGraduationCap className="employee-edit-profile-section-icon" />
+                    <div className="employee-edit-profile-section-title-container">
+                      <h2 className="employee-edit-profile-section-title">Education Background</h2>
+                      <p className="employee-edit-profile-section-subtitle">
+                        Share your educational history and credentials
+                      </p>
+                    </div>
+                  </div>
+                  
+                  <div className="employee-edit-profile-education-container">
+                    <div className="employee-edit-profile-education-card">
+                      <h3 className="employee-edit-profile-education-level">School</h3>
+                      <div className="employee-edit-profile-education-form">
+                        <div className="employee-edit-profile-form-group">
+                          <label>School Name</label>
+                          <input
+                            type="text"
+                            value={formData.education.school.name}
+                            onChange={(e) => handleEducationChange(e, 'school', 'name')}
+                            placeholder="Enter school name"
+                            className="employee-edit-profile-input"
+                          />
+                        </div>
+                        
+                        <div className="employee-edit-profile-year-group">
+                          <div className="employee-edit-profile-form-group">
+                            <label>Start Year</label>
+                            <input
+                              type="number"
+                              min="1900"
+                              max={currentYear}
+                              value={formData.education.school.enteringYear}
+                              onChange={(e) => handleEducationChange(e, 'school', 'enteringYear')}
+                              placeholder="Year"
+                              className="employee-edit-profile-input"
+                            />
+                          </div>
+                          
+                          <div className="employee-edit-profile-form-group">
+                            <label>End Year</label>
+                            <input
+                              type="number"
+                              min="1900"
+                              max={currentYear + 10}
+                              value={formData.education.school.passingYear}
+                              onChange={(e) => handleEducationChange(e, 'school', 'passingYear')}
+                              placeholder="Year"
+                              className="employee-edit-profile-input"
+                            />
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                    
+                    <div className="employee-edit-profile-education-card">
+                      <h3 className="employee-edit-profile-education-level">College</h3>
+                      <div className="employee-edit-profile-education-form">
+                        <div className="employee-edit-profile-form-group">
+                          <label>College Name</label>
+                          <input
+                            type="text"
+                            value={formData.education.college.name}
+                            onChange={(e) => handleEducationChange(e, 'college', 'name')}
+                            placeholder="Enter college name"
+                            className="employee-edit-profile-input"
+                          />
+                        </div>
+                        
+                        <div className="employee-edit-profile-year-group">
+                          <div className="employee-edit-profile-form-group">
+                            <label>Start Year</label>
+                            <input
+                              type="number"
+                              min="1900"
+                              max={currentYear}
+                              value={formData.education.college.enteringYear}
+                              onChange={(e) => handleEducationChange(e, 'college', 'enteringYear')}
+                              placeholder="Year"
+                              className="employee-edit-profile-input"
+                            />
+                          </div>
+                          
+                          <div className="employee-edit-profile-form-group">
+                            <label>End Year</label>
+                            <input
+                              type="number"
+                              min="1900"
+                              max={currentYear + 10}
+                              value={formData.education.college.passingYear}
+                              onChange={(e) => handleEducationChange(e, 'college', 'passingYear')}
+                              placeholder="Year"
+                              className="employee-edit-profile-input"
+                            />
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                    
+                    <div className="employee-edit-profile-education-card">
+                      <h3 className="employee-edit-profile-education-level">University</h3>
+                      <div className="employee-edit-profile-education-form">
+                        <div className="employee-edit-profile-form-group">
+                          <label>University Name</label>
+                          <input
+                            type="text"
+                            value={formData.education.university.name}
+                            onChange={(e) => handleEducationChange(e, 'university', 'name')}
+                            placeholder="Enter university name"
+                            className="employee-edit-profile-input"
+                          />
+                        </div>
+                        
+                        <div className="employee-edit-profile-year-group">
+                          <div className="employee-edit-profile-form-group">
+                            <label>Start Year</label>
+                            <input
+                              type="number"
+                              min="1900"
+                              max={currentYear}
+                              value={formData.education.university.enteringYear}
+                              onChange={(e) => handleEducationChange(e, 'university', 'enteringYear')}
+                              placeholder="Year"
+                              className="employee-edit-profile-input"
+                            />
+                          </div>
+                          
+                          <div className="employee-edit-profile-form-group">
+                            <label>End Year</label>
+                            <input
+                              type="number"
+                              min="1900"
+                              max={currentYear + 10}
+                              value={formData.education.university.passingYear}
+                              onChange={(e) => handleEducationChange(e, 'university', 'passingYear')}
+                              placeholder="Year"
+                              className="employee-edit-profile-input"
+                            />
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                  
+                  <div className="employee-edit-profile-form-actions">
+                    <button 
+                      type="button" 
+                      className="employee-edit-profile-button secondary" 
+                      onClick={handlePrevious}
                     >
-                      <option value="">Select a language</option>
-                      {languagesList.map((lang) => (
-                        <option key={lang} value={lang}>{lang}</option>
-                      ))}
-                    </select>
-                    <select 
-                      value={selectedProficiency}
-                      onChange={(e) => setSelectedProficiency(e.target.value)}
-                      className="form-select"
-                      style={{flex: 1}}
+                      <FaArrowLeft /> Back: Basic Info
+                    </button>
+                    <button 
+                      type="button" 
+                      className="employee-edit-profile-button primary" 
+                      onClick={handleNext}
                     >
-                      <option value="">Proficiency</option>
-                      {proficiencyLevels.map((level) => (
-                        <option key={level} value={level}>{level}</option>
-                      ))}
-                    </select>
-                    <button type="button" className="add-button" onClick={handleAddLanguage}>
-                      Add
+                      Next: Skills <FaAngleRight />
                     </button>
                   </div>
-                  
-                  <div className="skills-list">
-                    {formData.languageSkills.map((lang) => (
-                      <div key={lang.language} className="skill-badge">
-                        {lang.language} - {lang.proficiency}
-                        <button onClick={() => handleRemoveLanguage(lang.language)}>×</button>
-                      </div>
-                    ))}
-                  </div>
                 </div>
-                
-                <div className="profile-form-actions">
-                  <button className="secondary-button" onClick={handlePrevious}>
-                    Back: Education
-                  </button>
-                  <button className="action-button" onClick={handleNext}>
-                    Next: Contact
-                  </button>
-                </div>
-              </div>
-            )}
-
-            {/* Step 4: Contact Info */}
-            {step === 4 && (
-              <div className="profile-form-section">
-                <h2 className="section-title"><FaMapMarkerAlt /> Contact Information</h2>
-                
-                <div className="contact-form-grid">
-                  <div className="form-group">
-                    <label htmlFor="phoneNumber"><FaPhoneAlt /> Phone Number</label>
-                    <input
-                      type="tel"
-                      id="phoneNumber"
-                      name="phoneNumber"
-                      value={formData.phoneNumber}
-                      onChange={handleInputChange}
-                      placeholder="Enter your phone number"
-                      className="form-input"
-                    />
-                  </div>
-                  
-                  <div className="form-group">
-                    <label htmlFor="email"><FaEnvelope /> Email</label>
-                    <input
-                      type="email"
-                      id="email"
-                      name="email"
-                      value={formData.email}
-                      onChange={handleInputChange}
-                      placeholder="Enter your email"
-                      className="form-input"
-                    />
-                  </div>
-                  
-                  <div className="form-group">
-                    <label htmlFor="address"><FaMapMarkerAlt /> Address</label>
-                    <input
-                      type="text"
-                      id="address"
-                      name="address"
-                      value={formData.address}
-                      onChange={handleInputChange}
-                      placeholder="Enter your address"
-                      className="form-input"
-                    />
-                  </div>
-                  
-                  <div className="form-group">
-                    <label htmlFor="country">Country</label>
-                    <input
-                      type="text"
-                      id="country"
-                      name="country"
-                      value={formData.country}
-                      onChange={handleInputChange}
-                      placeholder="Enter your country"
-                      className="form-input"
-                    />
-                  </div>
-                  
-                  <div className="form-group">
-                    <label htmlFor="linkedInProfile"><FaLinkedinIn /> LinkedIn Profile</label>
-                    <input
-                      type="url"
-                      id="linkedInProfile"
-                      name="linkedInProfile"
-                      value={formData.linkedInProfile}
-                      onChange={handleInputChange}
-                      placeholder="Enter your LinkedIn profile URL"
-                      className="form-input"
-                    />
-                  </div>
-                  
-                  <div className="form-group">
-                    <label htmlFor="socialMediaLink"><FaGlobe /> Other Social Media</label>
-                    <input
-                      type="url"
-                      id="socialMediaLink"
-                      name="socialMediaLink"
-                      value={formData.socialMediaLink}
-                      onChange={handleInputChange}
-                      placeholder="Enter any other social media URL"
-                      className="form-input"
-                    />
-                  </div>
-                </div>
-                
-                <div className="profile-form-actions">
-                  <button className="secondary-button" onClick={handlePrevious}>
-                    Back: Skills
-                  </button>
-                  <button className="action-button" onClick={handleNext}>
-                    Next: Goals
-                  </button>
-                </div>
-              </div>
-            )}
-
-            {/* Step 5: Goals */}
-            {step === 5 && (
-              <div className="profile-form-section">
-                <h2 className="section-title"><FaBullseye /> Career Goals & Questions</h2>
-                
-                <div className="form-group">
-                  <label>Have you freelanced before?</label>
-                  <div className="freelance-experience-options">
-                    <label className="option-card">
-                      <input
-                        type="radio"
-                        name="freelanceExperience"
-                        value="Yes, I have some experiences"
-                        checked={formData.freelanceExperience === "Yes, I have some experiences"}
-                        onChange={handleInputChange}
-                      />
-                      <div className="option-content">
-                        <div className="option-icon"><FaBriefcase /></div>
-                        <span className="option-title">Yes, I have some experiences</span>
-                        <span className="option-description">I've completed a few freelance projects before</span>
-                      </div>
-                    </label>
-                    
-                    <label className="option-card">
-                      <input
-                        type="radio"
-                        name="freelanceExperience"
-                        value="No, I have never"
-                        checked={formData.freelanceExperience === "No, I have never"}
-                        onChange={handleInputChange}
-                      />
-                      <div className="option-content">
-                        <div className="option-icon"><FaRegFileAlt /></div>
-                        <span className="option-title">No, I have never</span>
-                        <span className="option-description">This will be my first time freelancing</span>
-                      </div>
-                    </label>
-                    
-                    <label className="option-card">
-                      <input
-                        type="radio"
-                        name="freelanceExperience"
-                        value="I'm an expert"
-                        checked={formData.freelanceExperience === "I'm an expert"}
-                        onChange={handleInputChange}
-                      />
-                      <div className="option-content">
-                        <div className="option-icon"><FaCheckCircle /></div>
-                        <span className="option-title">I'm an expert</span>
-                        <span className="option-description">I have extensive freelancing experience</span>
-                      </div>
-                    </label>
-                  </div>
-                </div>
-                
-                <div className="form-group">
-                  <label htmlFor="goals">Your Career Goals</label>
-                  <textarea
-                    id="goals"
-                    name="goals"
-                    value={formData.goals}
-                    onChange={handleInputChange}
-                    placeholder="Describe your career goals and aspirations"
-                    rows="4"
-                    className="form-textarea"
-                  />
-                </div>
-                
-                <div className="form-group">
-                  <label>Questions for Employers</label>
-                  <p className="form-hint">Add questions you'd like employers to answer before you apply to their jobs</p>
-                  
-                  <div className="questions-container">
-                    {formData.questions.map((question, index) => (
-                      <div key={index} className="question-item">
-                        <input
-                          type="text"
-                          value={question}
-                          onChange={(e) => handleQuestionChange(index, e.target.value)}
-                          placeholder="Enter your question"
-                          className="form-input question-input"
-                        />
-                        <button 
-                          type="button" 
-                          onClick={() => handleRemoveQuestion(index)}
-                          className="remove-button"
-                        >
-                          Remove
-                        </button>
-                      </div>
-                    ))}
-                  </div>
-                  
-                  <button 
-                    type="button" 
-                    onClick={handleAddQuestion}
-                    className="add-button"
-                    style={{marginTop: '1rem'}}
-                  >
-                    Add Question
-                  </button>
-                </div>
-                
-                <div className="form-group">
-                  <label>Resume Upload (Optional)</label>
-                  <label className="file-upload-button">
-                    {formData.resume ? formData.resume.name : 'Upload Resume'}
-                    <input
-                      type="file"
-                      onChange={handleResumeUpload}
-                      accept=".pdf,.jpg,.png"
-                      style={{display: 'none'}}
-                    />
-                  </label>
-                  <p className="form-hint">Accepted file types: PDF, JPG, PNG</p>
-                </div>
-                
-                <div className="profile-form-actions">
-                  <button className="secondary-button" onClick={handlePrevious}>
-                    Back: Contact
-                  </button>
-                  <button className="action-button" onClick={handleNext}>
-                    Next: Price Preference
-                  </button>
-                </div>
-              </div>
-            )}
-
-            {/* Step 6: Price Preference */}
-            {step === 6 && (
-              <div className="profile-form-section">
-                <h2 className="section-title"><FaDollarSign /> Price Preference</h2>
-                
-                <div className="pricing-intro">
-                  <div className="pricing-icon">
-                    <FaDollarSign />
-                  </div>
-                  <p className="pricing-description">
-                    Set your rates and availability to help clients find you for projects that match your expectations.
-                  </p>
-                </div>
-                
-                <div className="form-group pricing-options">
-                  <label>How would you like to be paid?</label>
-                  <div className="payment-type-cards">
-                    <label className={`payment-type-card ${formData.paymentType === "fixed" ? "selected" : ""}`}>
-                      <input
-                        type="radio"
-                        name="paymentType"
-                        value="fixed"
-                        checked={formData.paymentType === "fixed"}
-                        onChange={handleInputChange}
-                      />
-                      <div className="payment-card-content">
-                        <div className="payment-card-icon"><FaRegFileAlt /></div>
-                        <div className="payment-card-info">
-                          <h4>Fixed Rate</h4>
-                          <p>Get paid a set price for the entire project</p>
-                        </div>
-                      </div>
-                    </label>
-                    
-                    <label className={`payment-type-card ${formData.paymentType === "hourly" ? "selected" : ""}`}>
-                      <input
-                        type="radio"
-                        name="paymentType"
-                        value="hourly"
-                        checked={formData.paymentType === "hourly"}
-                        onChange={handleInputChange}
-                      />
-                      <div className="payment-card-content">
-                        <div className="payment-card-icon"><FaClock /></div>
-                        <div className="payment-card-info">
-                          <h4>Hourly Rate</h4>
-                          <p>Get paid for the time you put into the project</p>
-                        </div>
-                      </div>
-                    </label>
-                  </div>
-                </div>
-                
-                {formData.paymentType === "fixed" && (
-                  <div className="form-group rate-setting">
-                    <label htmlFor="fixedRate">Your Fixed Rate (USD)</label>
-                    <div className="rate-input-container">
-                      <span className="currency-symbol">$</span>
-                      <input
-                        type="number"
-                        id="fixedRate"
-                        name="fixedRate"
-                        value={formData.fixedRate}
-                        onChange={handleInputChange}
-                        className="form-input rate-input"
-                        min="0"
-                        step="1"
-                        placeholder="Enter your fixed rate"
-                      />
-                      <div className="increment-buttons">
-                        <button 
-                          type="button" 
-                          onClick={() => setFormData({...formData, fixedRate: (parseInt(formData.fixedRate) || 0) + 1})}
-                          className="increment-button"
-                        >
-                          ▲
-                        </button>
-                        <button 
-                          type="button" 
-                          onClick={() => setFormData({...formData, fixedRate: Math.max((parseInt(formData.fixedRate) || 0) - 1, 0)})}
-                          className="increment-button"
-                        >
-                          ▼
-                        </button>
-                      </div>
+              )}
+              
+              {/* Step 3: Skills and Languages */}
+              {step === 3 && (
+                <div className="employee-edit-profile-form-section">
+                  <div className="employee-edit-profile-section-header">
+                    <FaCode className="employee-edit-profile-section-icon" />
+                    <div className="employee-edit-profile-section-title-container">
+                      <h2 className="employee-edit-profile-section-title">Skills & Languages</h2>
+                      <p className="employee-edit-profile-section-subtitle">
+                        Add your professional skills and language proficiencies
+                      </p>
                     </div>
-                    <p className="rate-hint">Set your average price for a typical project</p>
                   </div>
-                )}
-                
-                {formData.paymentType === "hourly" && (
-                  <div className="form-group rate-setting">
-                    <label htmlFor="hourlyRate">Your Hourly Rate (USD)</label>
-                    <div className="rate-input-container">
-                      <span className="currency-symbol">$</span>
-                      <input
-                        type="number"
-                        id="hourlyRate"
-                        name="hourlyRate"
-                        value={formData.hourlyRate}
-                        onChange={handleInputChange}
-                        className="form-input rate-input"
-                        min="0"
-                        step="0.5"
-                        placeholder="Enter your hourly rate"
-                      />
-                      <div className="increment-buttons">
+                  
+                  <div className="employee-edit-profile-skills-container">
+                    <div className="employee-edit-profile-card">
+                      <h3 className="employee-edit-profile-card-title">Professional Skills</h3>
+                      
+                      <div className="employee-edit-profile-skill-input-group">
+                        <select 
+                          value={selectedSkill}
+                          onChange={(e) => setSelectedSkill(e.target.value)}
+                          className="employee-edit-profile-select"
+                        >
+                          <option value="">Select a skill</option>
+                          {skillsList.map((skill) => (
+                            <option key={skill} value={skill}>{skill}</option>
+                          ))}
+                        </select>
                         <button 
                           type="button" 
-                          onClick={() => setFormData({...formData, hourlyRate: ((parseFloat(formData.hourlyRate) || 0) + 0.5).toFixed(1)})}
-                          className="increment-button"
+                          className="employee-edit-profile-add-button"
+                          onClick={handleAddSkill}
+                          disabled={!selectedSkill}
                         >
-                          ▲
-                        </button>
-                        <button 
-                          type="button" 
-                          onClick={() => setFormData({...formData, hourlyRate: Math.max((parseFloat(formData.hourlyRate) || 0) - 0.5, 0).toFixed(1)})}
-                          className="increment-button"
-                        >
-                          ▼
+                          Add Skill
                         </button>
                       </div>
-                    </div>
-                    <p className="rate-hint">Clients will see this rate on your profile</p>
-                  </div>
-                )}
-                
-                <div className="form-group">
-                  <label className="availability-label">How many hours will you be available per week?</label>
-                  <div className="availability-options">
-                    <label className="option-card">
-                      <input
-                        type="radio"
-                        name="weeklyAvailability"
-                        value="more than 30 hours/week"
-                        checked={formData.weeklyAvailability === "more than 30 hours/week"}
-                        onChange={handleInputChange}
-                      />
-                      <div className="option-content">
-                        <div className="option-icon"><FaClock /></div>
-                        <span className="option-title">More than 30 hours/week</span>
-                        <span className="option-description">I can work full-time hours</span>
-                      </div>
-                    </label>
-                    
-                    <label className="option-card">
-                      <input
-                        type="radio"
-                        name="weeklyAvailability"
-                        value="less than 30 hours/week"
-                        checked={formData.weeklyAvailability === "less than 30 hours/week"}
-                        onChange={handleInputChange}
-                      />
-                      <div className="option-content">
-                        <div className="option-icon"><FaClock /></div>
-                        <span className="option-title">Less than 30 hours/week</span>
-                        <span className="option-description">I can work part-time hours</span>
-                      </div>
-                    </label>
-                    
-                    <label className="option-card">
-                      <input
-                        type="radio"
-                        name="weeklyAvailability"
-                        value="I'm open to offers"
-                        checked={formData.weeklyAvailability === "I'm open to offers"}
-                        onChange={handleInputChange}
-                      />
-                      <div className="option-content">
-                        <div className="option-icon"><FaCommentDots /></div>
-                        <span className="option-title">I'm open to offers</span>
-                        <span className="option-description">Let's discuss what works for both of us</span>
-                      </div>
-                    </label>
-                    
-                    <label className="option-card">
-                      <input
-                        type="radio"
-                        name="weeklyAvailability"
-                        value="none"
-                        checked={formData.weeklyAvailability === "none"}
-                        onChange={handleInputChange}
-                      />
-                      <div className="option-content">
-                        <div className="option-icon"><FaTimes /></div>
-                        <span className="option-title">None</span>
-                        <span className="option-description">I'm not currently available</span>
-                      </div>
-                    </label>
-                  </div>
-                </div>
-                
-                <div className="form-group contract-hire-section">
-                  <div className="contract-hire-header">
-                    <label>Contract-to-hire Opportunities</label>
-                    <FaInfoCircle className="info-icon" title="Contract-to-hire means you'll start with a contract and may later explore a full-time option" />
-                  </div>
-                  <div className="contract-to-hire-option">
-                    <label className="checkbox-option">
-                      <input
-                        type="checkbox"
-                        name="openToContractToHire"
-                        checked={formData.openToContractToHire}
-                        onChange={(e) => setFormData({...formData, openToContractToHire: e.target.checked})}
-                        className="checkbox-input"
-                      />
-                      <div className="checkbox-content">
-                        <span className="checkbox-label">
-                          I'm open to contract-to-hire opportunities
-                        </span>
-                        <p className="option-description">
-                          This means you'll start with a contract and may later explore a full-time option.
+                      
+                      {formData.skills.length > 0 ? (
+                        <div className="employee-edit-profile-skills-list">
+                          {formData.skills.map((skill) => (
+                            <div key={skill} className="employee-edit-profile-skill-tag">
+                              {skill}
+                              <button 
+                                type="button" 
+                                onClick={() => handleRemoveSkill(skill)}
+                                className="employee-edit-profile-remove-tag"
+                                aria-label={`Remove ${skill}`}
+                              >
+                                ×
+                              </button>
+                            </div>
+                          ))}
+                        </div>
+                      ) : (
+                        <p className="employee-edit-profile-empty-state">
+                          No skills added yet. Add skills to help clients find you.
                         </p>
+                      )}
+                      
+                      <div className="employee-edit-profile-custom-skill">
+                        <h4>Add Custom Skill</h4>
+                        <div className="employee-edit-profile-skill-input-group">
+                          <input 
+                            type="text" 
+                            id="otherSkill"
+                            placeholder="Enter a custom skill"
+                            className="employee-edit-profile-input"
+                            onKeyPress={(e) => {
+                              if (e.key === 'Enter') {
+                                e.preventDefault();
+                                const customSkill = e.target.value.trim();
+                                if (customSkill && !formData.skills.includes(customSkill)) {
+                                  setFormData({ 
+                                    ...formData, 
+                                    skills: [...formData.skills, customSkill] 
+                                  });
+                                  e.target.value = '';
+                                }
+                              }
+                            }}
+                          />
+                          <button 
+                            type="button" 
+                            className="employee-edit-profile-add-button" 
+                            onClick={() => {
+                              const input = document.getElementById('otherSkill');
+                              const customSkill = input.value.trim();
+                              if (customSkill && !formData.skills.includes(customSkill)) {
+                                setFormData({ 
+                                  ...formData, 
+                                  skills: [...formData.skills, customSkill] 
+                                });
+                                input.value = '';
+                              }
+                            }}
+                          >
+                            Add
+                          </button>
+                        </div>
                       </div>
-                    </label>
+                    </div>
+                    
+                    <div className="employee-edit-profile-card">
+                      <h3 className="employee-edit-profile-card-title">Language Proficiencies</h3>
+                      
+                      <div className="employee-edit-profile-language-input-group">
+                        <select 
+                          value={selectedLanguage}
+                          onChange={(e) => setSelectedLanguage(e.target.value)}
+                          className="employee-edit-profile-select"
+                        >
+                          <option value="">Select language</option>
+                          {languagesList.map((lang) => (
+                            <option key={lang} value={lang}>{lang}</option>
+                          ))}
+                        </select>
+                        
+                        <select 
+                          value={selectedProficiency}
+                          onChange={(e) => setSelectedProficiency(e.target.value)}
+                          className="employee-edit-profile-select"
+                        >
+                          <option value="">Select proficiency</option>
+                          {proficiencyLevels.map((level) => (
+                            <option key={level} value={level}>{level}</option>
+                          ))}
+                        </select>
+                        
+                        <button 
+                          type="button" 
+                          className="employee-edit-profile-add-button"
+                          onClick={handleAddLanguage}
+                          disabled={!selectedLanguage || !selectedProficiency}
+                        >
+                          Add
+                        </button>
+                      </div>
+                      
+                      {formData.languageSkills.length > 0 ? (
+                        <div className="employee-edit-profile-languages-list">
+                          {formData.languageSkills.map((lang) => (
+                            <div key={lang.language} className="employee-edit-profile-language-tag">
+                              <span className="language-name">{lang.language}</span>
+                              <span className="language-level">{lang.proficiency}</span>
+                              <button 
+                                type="button" 
+                                onClick={() => handleRemoveLanguage(lang.language)}
+                                className="employee-edit-profile-remove-tag"
+                                aria-label={`Remove ${lang.language}`}
+                              >
+                                ×
+                              </button>
+                            </div>
+                          ))}
+                        </div>
+                      ) : (
+                        <p className="employee-edit-profile-empty-state">
+                          No languages added yet. Add languages to show your communication abilities.
+                        </p>
+                      )}
+                    </div>
+                  </div>
+                  
+                  <div className="employee-edit-profile-form-actions">
+                    <button 
+                      type="button" 
+                      className="employee-edit-profile-button secondary" 
+                      onClick={handlePrevious}
+                    >
+                      <FaArrowLeft /> Back: Education
+                    </button>
+                    <button 
+                      type="button" 
+                      className="employee-edit-profile-button primary" 
+                      onClick={handleNext}
+                    >
+                      Next: Contact <FaAngleRight />
+                    </button>
                   </div>
                 </div>
-                
-                <div className="profile-form-actions">
-                  <button className="secondary-button" onClick={handlePrevious}>
-                    <FaArrowLeft className="button-icon" /> Back: Goals
-                  </button>
-                  <button className="action-button" onClick={handleSubmit}>
-                    <FaCheck className="button-icon" /> Complete Profile
-                  </button>
+              )}
+              
+              {/* Step 4: Contact Info */}
+              {step === 4 && (
+                <div className="employee-edit-profile-form-section">
+                  <div className="employee-edit-profile-section-header">
+                    <FaMapMarkerAlt className="employee-edit-profile-section-icon" />
+                    <div className="employee-edit-profile-section-title-container">
+                      <h2 className="employee-edit-profile-section-title">Contact Information</h2>
+                      <p className="employee-edit-profile-section-subtitle">
+                        How clients can reach you and connect with your professional networks
+                      </p>
+                    </div>
+                  </div>
+                  
+                  <div className="employee-edit-profile-contact-grid">
+                    <div className="employee-edit-profile-form-group">
+                      <label htmlFor="email">
+                        <FaEnvelope className="employee-edit-profile-field-icon" /> Email Address
+                      </label>
+                      <input
+                        type="email"
+                        id="email"
+                        name="email"
+                        value={formData.email}
+                        onChange={handleInputChange}
+                        placeholder="Your email address"
+                        className="employee-edit-profile-input"
+                      />
+                    </div>
+                    
+                    <div className="employee-edit-profile-form-group">
+                      <label htmlFor="phoneNumber">
+                        <FaPhoneAlt className="employee-edit-profile-field-icon" /> Phone Number
+                      </label>
+                      <input
+                        type="tel"
+                        id="phoneNumber"
+                        name="phoneNumber"
+                        value={formData.phoneNumber}
+                        onChange={handleInputChange}
+                        placeholder="Your phone number"
+                        className="employee-edit-profile-input"
+                      />
+                    </div>
+                    
+                    <div className="employee-edit-profile-form-group">
+                      <label htmlFor="address">
+                        <FaMapMarkerAlt className="employee-edit-profile-field-icon" /> Address
+                      </label>
+                      <input
+                        type="text"
+                        id="address"
+                        name="address"
+                        value={formData.address}
+                        onChange={handleInputChange}
+                        placeholder="Your address"
+                        className="employee-edit-profile-input"
+                      />
+                    </div>
+                    
+                    <div className="employee-edit-profile-form-group">
+                      <label htmlFor="country">Country</label>
+                      <input
+                        type="text"
+                        id="country"
+                        name="country"
+                        value={formData.country}
+                        onChange={handleInputChange}
+                        placeholder="Your country"
+                        className="employee-edit-profile-input"
+                      />
+                    </div>
+                    
+                    <div className="employee-edit-profile-form-group">
+                      <label htmlFor="linkedInProfile">
+                        <FaLinkedinIn className="employee-edit-profile-field-icon" /> LinkedIn Profile
+                      </label>
+                      <input
+                        type="url"
+                        id="linkedInProfile"
+                        name="linkedInProfile"
+                        value={formData.linkedInProfile}
+                        onChange={handleInputChange}
+                        placeholder="https://linkedin.com/in/your-profile"
+                        className="employee-edit-profile-input"
+                      />
+                    </div>
+                    
+                    <div className="employee-edit-profile-form-group">
+                      <label htmlFor="socialMediaLink">
+                        <FaGlobe className="employee-edit-profile-field-icon" /> Other Social Media
+                      </label>
+                      <input
+                        type="url"
+                        id="socialMediaLink"
+                        name="socialMediaLink"
+                        value={formData.socialMediaLink}
+                        onChange={handleInputChange}
+                        placeholder="https://yourportfolio.com"
+                        className="employee-edit-profile-input"
+                      />
+                    </div>
+                    
+                    <div className="employee-edit-profile-contact-note">
+                      <FaInfoCircle />
+                      <p>
+                        Your contact information is only shared with clients you're actively working with.
+                        We prioritize your privacy and security.
+                      </p>
+                    </div>
+                  </div>
+                  
+                  <div className="employee-edit-profile-form-actions">
+                    <button 
+                      type="button" 
+                      className="employee-edit-profile-button secondary" 
+                      onClick={handlePrevious}
+                    >
+                      <FaArrowLeft /> Back: Skills
+                    </button>
+                    <button 
+                      type="button" 
+                      className="employee-edit-profile-button primary" 
+                      onClick={handleNext}
+                    >
+                      Next: Goals <FaAngleRight />
+                    </button>
+                  </div>
                 </div>
-              </div>
-            )}
+              )}
+              
+              {/* Step 5: Goals */}
+              {step === 5 && (
+                <div className="employee-edit-profile-form-section">
+                  <div className="employee-edit-profile-section-header">
+                    <FaBullseye className="employee-edit-profile-section-icon" />
+                    <div className="employee-edit-profile-section-title-container">
+                      <h2 className="employee-edit-profile-section-title">Career Goals & Experience</h2>
+                      <p className="employee-edit-profile-section-subtitle">
+                        Share your career aspirations and relevant experience
+                      </p>
+                    </div>
+                  </div>
+                  
+                  <div className="employee-edit-profile-goals-container">
+                    <div className="employee-edit-profile-experience-section">
+                      <h3 className="employee-edit-profile-subsection-title">Freelance Experience</h3>
+                      <div className="employee-edit-profile-experience-options">
+                        <label className={`employee-edit-profile-experience-option ${formData.freelanceExperience === "Yes, I have some experiences" ? 'selected' : ''}`}>
+                          <input
+                            type="radio"
+                            name="freelanceExperience"
+                            value="Yes, I have some experiences"
+                            checked={formData.freelanceExperience === "Yes, I have some experiences"}
+                            onChange={handleInputChange}
+                          />
+                          <div className="employee-edit-profile-experience-content">
+                            <FaBriefcase className="employee-edit-profile-experience-icon" />
+                            <div className="employee-edit-profile-experience-text">
+                              <h4>Yes, I have some experiences</h4>
+                              <p>I've completed a few freelance projects before</p>
+                            </div>
+                          </div>
+                        </label>
+                        
+                        <label className={`employee-edit-profile-experience-option ${formData.freelanceExperience === "No, I have never" ? 'selected' : ''}`}>
+                          <input
+                            type="radio"
+                            name="freelanceExperience"
+                            value="No, I have never"
+                            checked={formData.freelanceExperience === "No, I have never"}
+                            onChange={handleInputChange}
+                          />
+                          <div className="employee-edit-profile-experience-content">
+                            <FaRegFileAlt className="employee-edit-profile-experience-icon" />
+                            <div className="employee-edit-profile-experience-text">
+                              <h4>No, I have never</h4>
+                              <p>This will be my first time freelancing</p>
+                            </div>
+                          </div>
+                        </label>
+                        
+                        <label className={`employee-edit-profile-experience-option ${formData.freelanceExperience === "I'm an expert" ? 'selected' : ''}`}>
+                          <input
+                            type="radio"
+                            name="freelanceExperience"
+                            value="I'm an expert"
+                            checked={formData.freelanceExperience === "I'm an expert"}
+                            onChange={handleInputChange}
+                          />
+                          <div className="employee-edit-profile-experience-content">
+                            <FaCheckCircle className="employee-edit-profile-experience-icon" />
+                            <div className="employee-edit-profile-experience-text">
+                              <h4>I'm an expert</h4>
+                              <p>I have extensive freelancing experience</p>
+                            </div>
+                          </div>
+                        </label>
+                      </div>
+                    </div>
+                    
+                    <div className="employee-edit-profile-form-group">
+                      <label htmlFor="goals">Your Career Goals</label>
+                      <textarea
+                        id="goals"
+                        name="goals"
+                        value={formData.goals}
+                        onChange={handleInputChange}
+                        placeholder="Describe your career goals and aspirations"
+                        rows="4"
+                        className="employee-edit-profile-textarea"
+                      />
+                    </div>
+                    
+                    <div className="employee-edit-profile-form-group">
+                      <label>Questions for Employers</label>
+                      <p className="employee-edit-profile-form-hint">
+                        Add questions you'd like employers to answer before you apply to their jobs
+                      </p>
+                      
+                      <div className="employee-edit-profile-questions-container">
+                        {formData.questions.map((question, index) => (
+                          <div key={index} className="employee-edit-profile-question-item">
+                            <input
+                              type="text"
+                              value={question}
+                              onChange={(e) => handleQuestionChange(index, e.target.value)}
+                              placeholder="Enter your question"
+                              className="employee-edit-profile-input employee-edit-profile-question-input"
+                            />
+                            <button 
+                              type="button" 
+                              onClick={() => handleRemoveQuestion(index)}
+                              className="employee-edit-profile-remove-button"
+                            >
+                              Remove
+                            </button>
+                          </div>
+                        ))}
+                      </div>
+                      
+                      <button 
+                        type="button" 
+                        onClick={handleAddQuestion}
+                        className="employee-edit-profile-add-button"
+                        style={{marginTop: '1rem'}}
+                      >
+                        Add Question
+                      </button>
+                    </div>
+                    
+                    <div className="employee-edit-profile-form-group">
+                      <label>Resume Upload (Optional)</label>
+                      <label className="employee-edit-profile-upload-button">
+                        {formData.resume ? formData.resume.name : 'Upload Resume'}
+                        <input
+                          type="file"
+                          onChange={handleResumeUpload}
+                          accept=".pdf,.jpg,.png"
+                          style={{display: 'none'}}
+                        />
+                      </label>
+                      <p className="employee-edit-profile-form-hint">Accepted file types: PDF, JPG, PNG</p>
+                    </div>
+                  </div>
+                  
+                  <div className="employee-edit-profile-form-actions">
+                    <button 
+                      type="button" 
+                      className="employee-edit-profile-button secondary" 
+                      onClick={handlePrevious}
+                    >
+                      <FaArrowLeft /> Back: Contact
+                    </button>
+                    <button 
+                      type="button" 
+                      className="employee-edit-profile-button primary" 
+                      onClick={handleNext}
+                    >
+                      Next: Price <FaAngleRight />
+                    </button>
+                  </div>
+                </div>
+              )}
+              
+              {/* Step 6: Price Preference */}
+              {step === 6 && (
+                <div className="employee-edit-profile-form-section">
+                  <div className="employee-edit-profile-section-header">
+                    <FaDollarSign className="employee-edit-profile-section-icon" />
+                    <div className="employee-edit-profile-section-title-container">
+                      <h2 className="employee-edit-profile-section-title">Price Preference</h2>
+                      <p className="employee-edit-profile-section-subtitle">
+                        Set your rates and availability to help clients find you for projects that match your expectations
+                      </p>
+                    </div>
+                  </div>
+                  
+                  <div className="employee-edit-profile-pricing-container">
+                    <div className="employee-edit-profile-form-group">
+                      <label>How would you like to be paid?</label>
+                      <div className="employee-edit-profile-payment-options">
+                        <label className={`employee-edit-profile-payment-option ${formData.paymentType === "fixed" ? 'selected' : ''}`}>
+                          <input
+                            type="radio"
+                            name="paymentType"
+                            value="fixed"
+                            checked={formData.paymentType === "fixed"}
+                            onChange={handleInputChange}
+                          />
+                          <div className="employee-edit-profile-payment-content">
+                            <FaRegFileAlt className="employee-edit-profile-payment-icon" />
+                            <div className="employee-edit-profile-payment-text">
+                              <h4>Fixed Rate</h4>
+                              <p>Get paid a set price for the entire project</p>
+                            </div>
+                          </div>
+                        </label>
+                        
+                        <label className={`employee-edit-profile-payment-option ${formData.paymentType === "hourly" ? 'selected' : ''}`}>
+                          <input
+                            type="radio"
+                            name="paymentType"
+                            value="hourly"
+                            checked={formData.paymentType === "hourly"}
+                            onChange={handleInputChange}
+                          />
+                          <div className="employee-edit-profile-payment-content">
+                            <FaClock className="employee-edit-profile-payment-icon" />
+                            <div className="employee-edit-profile-payment-text">
+                              <h4>Hourly Rate</h4>
+                              <p>Get paid for the time you put into the project</p>
+                            </div>
+                          </div>
+                        </label>
+                      </div>
+                    </div>
+                    
+                    {formData.paymentType === "fixed" && (
+                      <div className="employee-edit-profile-form-group">
+                        <label htmlFor="fixedRate">Your Fixed Rate (USD)</label>
+                        <div className="employee-edit-profile-rate-input-group">
+                          <span className="employee-edit-profile-currency-symbol">$</span>
+                          <input
+                            type="number"
+                            id="fixedRate"
+                            name="fixedRate"
+                            value={formData.fixedRate}
+                            onChange={handleInputChange}
+                            className="employee-edit-profile-input employee-edit-profile-rate-input"
+                            min="0"
+                            step="1"
+                            placeholder="Enter your fixed rate"
+                          />
+                          <div className="employee-edit-profile-increment-buttons">
+                            <button 
+                              type="button" 
+                              onClick={() => setFormData({...formData, fixedRate: (parseInt(formData.fixedRate) || 0) + 1})}
+                              className="employee-edit-profile-increment-button"
+                            >
+                              ▲
+                            </button>
+                            <button 
+                              type="button" 
+                              onClick={() => setFormData({...formData, fixedRate: Math.max((parseInt(formData.fixedRate) || 0) - 1, 0)})}
+                              className="employee-edit-profile-increment-button"
+                            >
+                              ▼
+                            </button>
+                          </div>
+                        </div>
+                        <p className="employee-edit-profile-rate-hint">Set your average price for a typical project</p>
+                      </div>
+                    )}
+                    
+                    {formData.paymentType === "hourly" && (
+                      <div className="employee-edit-profile-form-group">
+                        <label htmlFor="hourlyRate">Your Hourly Rate (USD)</label>
+                        <div className="employee-edit-profile-rate-input-group">
+                          <span className="employee-edit-profile-currency-symbol">$</span>
+                          <input
+                            type="number"
+                            id="hourlyRate"
+                            name="hourlyRate"
+                            value={formData.hourlyRate}
+                            onChange={handleInputChange}
+                            className="employee-edit-profile-input employee-edit-profile-rate-input"
+                            min="0"
+                            step="0.5"
+                            placeholder="Enter your hourly rate"
+                          />
+                          <div className="employee-edit-profile-increment-buttons">
+                            <button 
+                              type="button" 
+                              onClick={() => setFormData({...formData, hourlyRate: ((parseFloat(formData.hourlyRate) || 0) + 0.5).toFixed(1)})}
+                              className="employee-edit-profile-increment-button"
+                            >
+                              ▲
+                            </button>
+                            <button 
+                              type="button" 
+                              onClick={() => setFormData({...formData, hourlyRate: Math.max((parseFloat(formData.hourlyRate) || 0) - 0.5, 0).toFixed(1)})}
+                              className="employee-edit-profile-increment-button"
+                            >
+                              ▼
+                            </button>
+                          </div>
+                        </div>
+                        <p className="employee-edit-profile-rate-hint">Clients will see this rate on your profile</p>
+                      </div>
+                    )}
+                    
+                    <div className="employee-edit-profile-form-group">
+                      <label>Weekly Availability</label>
+                      <div className="employee-edit-profile-availability-options">
+                        <label className={`employee-edit-profile-availability-option ${formData.weeklyAvailability === "more than 30 hours/week" ? 'selected' : ''}`}>
+                          <input
+                            type="radio"
+                            name="weeklyAvailability"
+                            value="more than 30 hours/week"
+                            checked={formData.weeklyAvailability === "more than 30 hours/week"}
+                            onChange={handleInputChange}
+                          />
+                          <div className="employee-edit-profile-availability-content">
+                            <FaClock className="employee-edit-profile-availability-icon" />
+                            <div className="employee-edit-profile-availability-text">
+                              <h4>More than 30 hours/week</h4>
+                              <p>I can work full-time hours</p>
+                            </div>
+                          </div>
+                        </label>
+                        
+                        <label className={`employee-edit-profile-availability-option ${formData.weeklyAvailability === "less than 30 hours/week" ? 'selected' : ''}`}>
+                          <input
+                            type="radio"
+                            name="weeklyAvailability"
+                            value="less than 30 hours/week"
+                            checked={formData.weeklyAvailability === "less than 30 hours/week"}
+                            onChange={handleInputChange}
+                          />
+                          <div className="employee-edit-profile-availability-content">
+                            <FaClock className="employee-edit-profile-availability-icon" />
+                            <div className="employee-edit-profile-availability-text">
+                              <h4>Less than 30 hours/week</h4>
+                              <p>I can work part-time hours</p>
+                            </div>
+                          </div>
+                        </label>
+                        
+                        <label className={`employee-edit-profile-availability-option ${formData.weeklyAvailability === "I'm open to offers" ? 'selected' : ''}`}>
+                          <input
+                            type="radio"
+                            name="weeklyAvailability"
+                            value="I'm open to offers"
+                            checked={formData.weeklyAvailability === "I'm open to offers"}
+                            onChange={handleInputChange}
+                          />
+                          <div className="employee-edit-profile-availability-content">
+                            <FaCommentDots className="employee-edit-profile-availability-icon" />
+                            <div className="employee-edit-profile-availability-text">
+                              <h4>I'm open to offers</h4>
+                              <p>Let's discuss what works for both of us</p>
+                            </div>
+                          </div>
+                        </label>
+                        
+                        <label className={`employee-edit-profile-availability-option ${formData.weeklyAvailability === "none" ? 'selected' : ''}`}>
+                          <input
+                            type="radio"
+                            name="weeklyAvailability"
+                            value="none"
+                            checked={formData.weeklyAvailability === "none"}
+                            onChange={handleInputChange}
+                          />
+                          <div className="employee-edit-profile-availability-content">
+                            <FaTimes className="employee-edit-profile-availability-icon" />
+                            <div className="employee-edit-profile-availability-text">
+                              <h4>None</h4>
+                              <p>I'm not currently available</p>
+                            </div>
+                          </div>
+                        </label>
+                      </div>
+                    </div>
+                    
+                    <div className="employee-edit-profile-form-group">
+                      <label>Contract-to-hire Opportunities</label>
+                      <div className="employee-edit-profile-contract-to-hire">
+                        <label className={`employee-edit-profile-contract-option ${formData.openToContractToHire ? 'selected' : ''}`}>
+                          <input
+                            type="checkbox"
+                            name="openToContractToHire"
+                            checked={formData.openToContractToHire}
+                            onChange={(e) => setFormData({...formData, openToContractToHire: e.target.checked})}
+                          />
+                          <div className="employee-edit-profile-contract-content">
+                            <FaInfoCircle className="employee-edit-profile-contract-icon" />
+                            <div className="employee-edit-profile-contract-text">
+                              <h4>I'm open to contract-to-hire opportunities</h4>
+                              <p>This means you'll start with a contract and may later explore a full-time option</p>
+                            </div>
+                          </div>
+                        </label>
+                      </div>
+                    </div>
+                  </div>
+                  
+                  <div className="employee-edit-profile-form-actions">
+                    <button 
+                      type="button" 
+                      className="employee-edit-profile-button secondary" 
+                      onClick={handlePrevious}
+                    >
+                      <FaArrowLeft /> Back: Goals
+                    </button>
+                    <button 
+                      type="button" 
+                      className="employee-edit-profile-button primary" 
+                      onClick={handleSubmit}
+                    >
+                      <FaCheck /> Complete Profile
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
           </div>
         </div>
       </main>
       
-      {/* Footer Section */}
-      <footer className="dashboard-footer">
-        <div className="footer-grid">
-          <div className="footer-column">
-            <h3>For Freelancers</h3>
-            <ul>
-              <li><Link to="/find-jobs">Find Work</Link></li>
-              <li><Link to="/resources">Resources</Link></li>
-              <li><Link to="/freelancer-tips">Tips & Guides</Link></li>
-              <li><Link to="/freelancer-forum">Community Forum</Link></li>
-              <li><Link to="/freelancer-stories">Success Stories</Link></li>
-            </ul>
-          </div>
-          
-          <div className="footer-column">
-            <h3>Resources</h3>
-            <ul>
-              <li><Link to="/help-center">Help Center</Link></li>
-              <li><Link to="/webinars">Webinars</Link></li>
-              <li><Link to="/blog">Blog</Link></li>
-              <li><Link to="/api-docs">Developer API</Link></li>
-              <li><Link to="/partner-program">Partner Program</Link></li>
-            </ul>
-          </div>
-          
-          <div className="footer-column">
-            <h3>Company</h3>
-            <ul>
-              <li><Link to="/about">About Us</Link></li>
-              <li><Link to="/leadership">Leadership</Link></li>
-              <li><Link to="/careers">Careers</Link></li>
-              <li><Link to="/press">Press</Link></li>
-              <li><Link to="/contact">Contact Us</Link></li>
-            </ul>
-          </div>
+      {isLoading && (
+        <div className="employee-edit-profile-loading-overlay">
+          <div className="employee-edit-profile-spinner"></div>
         </div>
-        
-        <div className="footer-bottom">
-          <div className="footer-bottom-container">
-            <div className="footer-logo">
-              <Link to="/">Next Youth</Link>
+      )}
+      
+      {showRatingModal && (
+        <RatingModal
+          isOpen={true}
+          onClose={() => setShowRatingModal(false)}
+          viewOnly={true}
+        />
+      )}
+      
+      {/* Add professional footer */}
+      <footer className="employee-edit-profile-footer">
+        <div className="employee-edit-profile-footer-container">
+          <div className="employee-edit-profile-footer-grid">
+            <div className="employee-edit-profile-footer-column">
+              <h3>For Freelancers</h3>
+              <ul>
+                <li><Link to="/find-jobs">Find Work</Link></li>
+                <li><Link to="/resources">Resources</Link></li>
+                <li><Link to="/freelancer-tips">Tips & Guides</Link></li>
+                <li><Link to="/freelancer-forum">Community Forum</Link></li>
+              </ul>
             </div>
             
-            <div className="footer-legal-links">
+            <div className="employee-edit-profile-footer-column">
+              <h3>Resources</h3>
+              <ul>
+                <li><Link to="/help-center">Help Center</Link></li>
+                <li><Link to="/webinars">Webinars</Link></li>
+                <li><Link to="/blog">Blog</Link></li>
+                <li><Link to="/api-docs">Developer API</Link></li>
+              </ul>
+            </div>
+            
+            <div className="employee-edit-profile-footer-column">
+              <h3>Company</h3>
+              <ul>
+                <li><Link to="/about">About Us</Link></li>
+                <li><Link to="/careers">Careers</Link></li>
+                <li><Link to="/press">Press</Link></li>
+                <li><Link to="/contact">Contact Us</Link></li>
+              </ul>
+            </div>
+          </div>
+          
+          <div className="employee-edit-profile-footer-bottom">
+            <div className="employee-edit-profile-footer-logo">
+              <img 
+                src={isDarkMode ? logoDark : logoLight} 
+                alt="Next Youth" 
+                className="employee-edit-profile-footer-logo-image" 
+              />
+            </div>
+            
+            <div className="employee-edit-profile-footer-links">
               <Link to="/terms">Terms of Service</Link>
               <Link to="/privacy">Privacy Policy</Link>
               <Link to="/accessibility">Accessibility</Link>
-              <Link to="/sitemap">Site Map</Link>
             </div>
             
-            <div className="footer-social">
+            <div className="employee-edit-profile-footer-social">
               <a href="https://facebook.com" aria-label="Facebook">
                 <FaFacebook />
               </a>
@@ -1606,26 +1923,11 @@ const EmployeeProfile = () => {
             </div>
           </div>
           
-          <div className="footer-copyright">
+          <div className="employee-edit-profile-footer-copyright">
             <p>&copy; {new Date().getFullYear()} Next Youth. All rights reserved.</p>
           </div>
         </div>
       </footer>
-
-      {/* Display loading overlay when isLoading is true */}
-      {isLoading && (
-        <div className="loading-overlay">
-          <div className="spinner"></div>
-        </div>
-      )}
-
-      {showRatingModal && (
-        <RatingModal
-            isOpen={true}
-            onClose={() => setShowRatingModal(false)}
-            viewOnly={true}
-        />
-      )}
     </div>
   );
 };
