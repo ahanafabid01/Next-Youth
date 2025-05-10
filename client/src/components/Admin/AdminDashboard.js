@@ -378,14 +378,6 @@ const AdminDashboard = () => {
                   <Legend />
                   <Line 
                     type="monotone" 
-                    dataKey="users" 
-                    name="Users" 
-                    stroke="#3a86ff" 
-                    activeDot={{ r: 8 }} 
-                    strokeWidth={2}
-                  />
-                  <Line 
-                    type="monotone" 
                     dataKey="consultations" 
                     name="Consultations" 
                     stroke="#10b981" 
