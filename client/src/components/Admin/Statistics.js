@@ -1,1250 +1,912 @@
 import React, { useState, useEffect, useCallback } from "react";
-import axios from "axios";
-import {
-  FaUsers,
-  FaChartBar,
-  FaBriefcase,
-  FaCheckCircle,
-  FaTimesCircle,
-  FaInfoCircle,
-  FaSync,
-  FaCalendarCheck,
-  FaClipboardList,
-  FaArrowUp,
-  FaArrowDown,
-  FaRegClock,
-  FaThumbsUp,
-  FaMoneyBillWave,
-  FaBuilding,
-  FaShieldAlt
+import { 
+  FaChartBar, FaUsers, FaBriefcase, FaCalendarCheck, 
+  FaFilter, FaRedoAlt, FaFileDownload, FaSearch
 } from "react-icons/fa";
-import {
-  LineChart,
-  BarChart,
-  Bar,
-  PieChart,
-  Pie,
-  Cell,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  Tooltip,
-  Legend,
-  ResponsiveContainer
+import { 
+  PieChart, Pie, LineChart, Line, 
+  XAxis, YAxis, CartesianGrid, Tooltip, Legend, 
+  ResponsiveContainer, Cell
 } from "recharts";
-import "./Statistics.css";
 import Sidebar from "./Sidebar";
+import { Link } from "react-router-dom";
+import "./Statistics.css";
+import axios from "axios";
+import logoLight from "../../assets/images/logo-light.png";
+import logoDark from "../../assets/images/logo-dark.png";
+import { eventEmitter, dataStore } from '../../utils/eventEmitter';
 
-// Create an event system for real-time updates
-const updateEvents = {};
-const updateListeners = {};
-
-// Function to notify the Statistics component that data has changed
-export const notifyDataUpdate = (dataType) => {
-  if (updateEvents[dataType]) {
-    clearTimeout(updateEvents[dataType]);
-  }
-  
-  // Debounce the update to prevent multiple rapid updates
-  updateEvents[dataType] = setTimeout(() => {
-    if (updateListeners[dataType]) {
-      updateListeners[dataType].forEach(listener => listener());
-    }
-  }, 500);
-};
-
-// Custom tooltip component
-const CustomTooltip = ({ active, payload, label }) => {
-  if (active && payload && payload.length) {
-    return (
-      <div className="admin-stats-custom-tooltip">
-        <p className="admin-stats-tooltip-label">{label}</p>
-        {payload.map((entry, index) => (
-          <p key={index} style={{ color: entry.color }}>
-            {entry.name}: {entry.value}
-          </p>
-        ))}
-      </div>
-    );
-  }
-  return null;
+// Export this function to be used by other components
+export const notifyDataUpdate = (type) => {
+  eventEmitter.emit('dataUpdated', { type });
 };
 
 const Statistics = () => {
-  // State for all types of data
-  const [users, setUsers] = useState([]);
-  const [consultations, setConsultations] = useState([]);
-  const [jobs, setJobs] = useState([]);
-  const [applications, setApplications] = useState([]);
+  // State management
+  const [userData, setUserData] = useState([]);
+  const [jobData, setJobData] = useState([]);
+  const [consultationData, setConsultationData] = useState([]);
+  const [applicationData, setApplicationData] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [timeframe, setTimeframe] = useState('7d');
-  const [refreshing, setRefreshing] = useState(false);
-  const [lastUpdated, setLastUpdated] = useState(new Date());
-  const [activeTab, setActiveTab] = useState('overview');
+  const [currentPage, setCurrentPage] = useState(1);
+  const [activeTab, setActiveTab] = useState("overview");
+  const [timeFrame, setTimeFrame] = useState("month");
+  const [sidebarOpen, setSidebarOpen] = useState(false);
   const [darkMode, setDarkMode] = useState(() => {
     return localStorage.getItem("adminTheme") === "dark";
   });
+  
+  const itemsPerPage = 8;
+
+  // Colors for charts
+  const colors = {
+    primary: "#3a86ff",
+    secondary: "#10b981",
+    accent: "#f59e0b",
+    danger: "#ef4444",
+    chartColors: ["#3a86ff", "#10b981", "#f59e0b", "#ef4444", "#8b5cf6", "#ec4899"]
+  };
 
   // Listen for theme changes
   useEffect(() => {
     const handleStorageChange = () => {
-      setDarkMode(localStorage.getItem("adminTheme") === "dark");
+      const theme = localStorage.getItem("adminTheme");
+      setDarkMode(theme === "dark");
     };
-
+    
     window.addEventListener('storage', handleStorageChange);
+    handleStorageChange();
+    
     return () => {
       window.removeEventListener('storage', handleStorageChange);
     };
   }, []);
 
-  // Color palette for consistent design
-  const colorPalette = {
-    primary: darkMode ? "#60a5fa" : "#3a86ff",
-    secondary: darkMode ? "#34d399" : "#10b981",
-    accent: darkMode ? "#fbbf24" : "#f97316",
-    danger: darkMode ? "#f87171" : "#ef4444",
-    neutral: darkMode ? "#94a3b8" : "#6b7280",
-    chartColors: darkMode ? 
-      ["#60a5fa", "#34d399", "#fbbf24", "#f87171", "#a78bfa", "#f472b6"] : 
-      ["#3a86ff", "#10b981", "#f97316", "#ef4444", "#8b5cf6", "#ec4899"]
-  };
-
-  // Get color for status badges
-  const getStatusColor = (status) => {
-    switch (status) {
-      case 'verified':
-      case 'completed':
-      case 'accepted':
-      case 'active':
-        return colorPalette.secondary;
-      case 'pending':
-      case 'confirmed':
-        return colorPalette.accent;
-      case 'rejected':
-      case 'closed':
-        return colorPalette.danger;
-      default:
-        return colorPalette.neutral;
-    }
-  };
-
-  // Fetch all data types
+  // Fetch statistics data
   const fetchData = useCallback(async () => {
+    setLoading(true);
     try {
-      setRefreshing(true);
+      // Try to get data from dataStore first
+      let users = dataStore.users || [];
+      let jobs = dataStore.jobs || [];
+      let consultations = dataStore.consultations || [];
+      let applications = [];
       
-      // Fetch user data
-      const usersResponse = await axios.get("http://localhost:4000/api/auth/admin/users", {
-        withCredentials: true
+      // Fetch data if not available in store
+      if (users.length === 0) {
+        const usersResponse = await axios.get("http://localhost:4000/api/auth/admin/users", {
+          withCredentials: true
+        });
+        if (usersResponse.data?.success) {
+          users = usersResponse.data.users;
+          dataStore.setUsers(users);
+        }
+      }
+      
+      if (consultations.length === 0) {
+        const consultationsResponse = await axios.get("http://localhost:4000/api/contact/all", {
+          withCredentials: true
+        });
+        if (consultationsResponse.data?.success) {
+          consultations = consultationsResponse.data.consultations;
+          dataStore.setConsultations(consultations);
+        }
+      }
+      
+      if (jobs.length === 0) {
+        const jobsResponse = await axios.get("http://localhost:4000/api/jobs/available", {
+          withCredentials: true
+        });
+        if (jobsResponse.data?.success) {
+          jobs = jobsResponse.data.jobs;
+          dataStore.setJobs(jobs);
+        }
+      }
+      
+      // Fetch applications data
+      try {
+        const applicationsResponse = await axios.get("http://localhost:4000/api/jobs/applications", {
+          withCredentials: true
+        });
+        if (applicationsResponse.data?.success) {
+          applications = applicationsResponse.data.applications;
+        }
+      } catch (appError) {
+        console.warn("Failed to fetch applications data:", appError);
+      }
+      
+      // Format data for our component
+      const formattedUsers = users.map(user => ({
+        id: user._id,
+        name: user.name || 'Unknown',
+        email: user.email || 'No email',
+        status: user.status || 'active',
+        registeredAt: user.createdAt,
+        verificationStatus: user.idVerification?.status || 'notsubmitted'
+      }));
+      
+      const formattedJobs = jobs.map(job => ({
+        id: job._id,
+        title: job.title || 'Untitled Job',
+        company: job.company || 'Unknown',
+        status: job.status || 'active',
+        postedAt: job.createdAt,
+        applications: 0 // Will update this below
+      }));
+      
+      const formattedConsultations = consultations.map(consultation => ({
+        id: consultation._id,
+        title: consultation.subject || 'No Subject',
+        status: consultation.status || 'pending',
+        scheduledFor: consultation.scheduledDate || consultation.createdAt,
+        duration: consultation.duration || 30
+      }));
+      
+      const formattedApplications = applications.map(app => ({
+        id: app._id,
+        jobId: app.jobId,
+        userId: app.userId,
+        status: app.status || 'pending',
+        appliedAt: app.createdAt
+      }));
+      
+      // Count applications per job
+      formattedApplications.forEach(app => {
+        const jobIndex = formattedJobs.findIndex(job => job.id === app.jobId);
+        if (jobIndex !== -1) {
+          formattedJobs[jobIndex].applications++;
+        }
       });
       
-      // Fetch consultations
-      const consultationsResponse = await axios.get("http://localhost:4000/api/contact/all", {
-        withCredentials: true
+      setUserData(formattedUsers);
+      setJobData(formattedJobs);
+      setConsultationData(formattedConsultations);
+      setApplicationData(formattedApplications);
+      
+      // Set up listener for data updates
+      const unsubscribe = eventEmitter.on('dataUpdated', ({ type }) => {
+        console.log(`Data updated: ${type}`);
+        fetchData();
       });
       
-      // Fetch jobs
-      const jobsResponse = await axios.get("http://localhost:4000/api/jobs/available", {
-        withCredentials: true
-      });
+      return () => unsubscribe();
       
-      // Fetch job applications
-      const applicationsResponse = await axios.get("http://localhost:4000/api/applications/all", {
-        withCredentials: true
-      }).catch(() => ({ data: { success: true, applications: [] } }));
-      
-      // Update state with fetched data
-      if (usersResponse.data?.success) {
-        setUsers(usersResponse.data.users || []);
-      }
-      
-      if (consultationsResponse.data?.success) {
-        setConsultations(consultationsResponse.data.consultations || []);
-      }
-      
-      if (jobsResponse.data?.success) {
-        setJobs(jobsResponse.data.jobs || []);
-      }
-      
-      if (applicationsResponse.data?.success) {
-        setApplications(applicationsResponse.data.applications || []);
-      }
-      
-      setLastUpdated(new Date());
-      setLoading(false);
-      setRefreshing(false);
-      setError(null);
     } catch (err) {
-      console.error("Error fetching statistics data:", err);
-      setError(err.message || "Failed to fetch statistics data");
+      console.error("Error fetching statistics:", err);
+      setError(err.message || "Failed to fetch statistics");
+    } finally {
       setLoading(false);
-      setRefreshing(false);
     }
   }, []);
 
-  // Set up listeners for data updates
   useEffect(() => {
-    // Register update listeners for each data type
-    updateListeners['users'] = [fetchData];
-    updateListeners['consultations'] = [fetchData];
-    updateListeners['jobs'] = [fetchData];
-    updateListeners['applications'] = [fetchData];
-    
-    // Initial data fetch
     fetchData();
-    
-    // Cleanup listeners on unmount
-    return () => {
-      updateListeners['users'] = [];
-      updateListeners['consultations'] = [];
-      updateListeners['jobs'] = [];
-      updateListeners['applications'] = [];
-    };
   }, [fetchData]);
 
-  // Filter data based on the selected timeframe
-  const filterDataByTimeframe = (data) => {
-    if (!Array.isArray(data) || timeframe === 'all') return data;
+  // Data preparation functions
+  const prepareStatusData = (data, statusField = 'status') => {
+    const statusCounts = data.reduce((acc, item) => {
+      const status = item[statusField] || 'unknown';
+      acc[status] = (acc[status] || 0) + 1;
+      return acc;
+    }, {});
     
+    return Object.entries(statusCounts).map(([key, value]) => ({
+      name: key.charAt(0).toUpperCase() + key.slice(1),
+      value: value
+    }));
+  };
+
+  const prepareTrendData = () => {
+    // Create date buckets for the last 6 months
     const now = new Date();
-    let cutoff = new Date();
-    
-    switch (timeframe) {
-      case '24h':
-        cutoff.setDate(now.getDate() - 1);
-        break;
-      case '7d':
-        cutoff.setDate(now.getDate() - 7);
-        break;
-      case '30d':
-        cutoff.setDate(now.getDate() - 30);
-        break;
-      case '90d':
-        cutoff.setDate(now.getDate() - 90);
-        break;
-      default:
-        return data;
-    }
-    
-    return data.filter(item => new Date(item.createdAt) >= cutoff);
-  };
-
-  // Format date for display
-  const formatDate = (date) => {
-    return new Date(date).toLocaleString('en-US', {
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit'
-    });
-  };
-
-  // Prepare data for the Job Status Chart
-  const prepareJobStatusData = () => {
-    const active = jobs.filter(job => 
-      job.status === 'active' || 
-      job.isAvailable === true || 
-      job.status === 'available'
-    ).length;
-    
-    const closed = jobs.filter(job => 
-      job.status === 'closed' || 
-      job.isAvailable === false
-    ).length;
-    
-    return [
-      { name: 'Active', value: active, color: colorPalette.secondary },
-      { name: 'Closed', value: closed, color: colorPalette.neutral },
-    ];
-  };
-
-  // Prepare monthly job trend data
-  const prepareJobTrendData = () => {
-    const data = [];
-    const now = new Date();
-    
+    const months = [];
     for (let i = 5; i >= 0; i--) {
-      const date = new Date(now);
-      date.setMonth(now.getMonth() - i);
-      date.setDate(1);
-      date.setHours(0, 0, 0, 0);
-      
-      const nextMonth = new Date(date);
-      nextMonth.setMonth(date.getMonth() + 1);
-      
-      const monthJobs = jobs.filter(job => {
-        const jobDate = new Date(job.createdAt);
-        return jobDate >= date && jobDate < nextMonth;
-      });
-      
-      const active = monthJobs.filter(job => 
-        job.status === 'active' || 
-        job.isAvailable === true || 
-        job.status === 'available'
-      ).length;
-      
-      const closed = monthJobs.filter(job => 
-        job.status === 'closed' || 
-        job.isAvailable === false
-      ).length;
-      
-      data.push({
-        name: date.toLocaleDateString('en-US', { month: 'short' }),
-        'Posted Jobs': monthJobs.length,
-        'Active': active,
-        'Closed': closed
+      const d = new Date(now);
+      d.setMonth(d.getMonth() - i);
+      months.push({
+        date: d,
+        name: d.toLocaleString('default', { month: 'short' }),
+        users: 0,
+        jobs: 0,
+        consultations: 0,
+        applications: 0
       });
     }
     
-    return data;
-  };
-
-  // Prepare job category distribution data
-  const prepareJobCategoryData = () => {
-    const categories = {};
-    
-    jobs.forEach(job => {
-      const category = job.category || 'Uncategorized';
-      if (categories[category]) {
-        categories[category]++;
-      } else {
-        categories[category] = 1;
-      }
-    });
-    
-    const colors = colorPalette.chartColors;
-    let colorIndex = 0;
-    
-    return Object.entries(categories).map(([name, value]) => {
-      const color = colors[colorIndex % colors.length];
-      colorIndex++;
-      return { name, value, color };
-    });
-  };
-
-  // Prepare job salary range distribution data
-  const prepareJobSalaryRangeData = () => {
-    const ranges = {
-      'Under $1k': 0,
-      '$1k - $3k': 0,
-      '$3k - $5k': 0,
-      '$5k - $10k': 0,
-      'Above $10k': 0
+    // Count items by month
+    const countByMonth = (data, dateField) => {
+      data.forEach(item => {
+        if (!item[dateField]) return;
+        
+        const itemDate = new Date(item[dateField]);
+        const monthIndex = months.findIndex(m => 
+          m.date.getMonth() === itemDate.getMonth() && 
+          m.date.getFullYear() === itemDate.getFullYear()
+        );
+        
+        if (monthIndex >= 0) {
+          if (item.id.startsWith('u')) months[monthIndex].users++;
+          else if (item.id.startsWith('j')) months[monthIndex].jobs++;
+          else if (item.id.startsWith('c')) months[monthIndex].consultations++;
+          else if (item.id.startsWith('a')) months[monthIndex].applications++;
+        }
+      });
     };
     
-    jobs.forEach(job => {
-      const amount = job.fixedAmount || 0;
-      
-      if (amount < 1000) {
-        ranges['Under $1k']++;
-      } else if (amount < 3000) {
-        ranges['$1k - $3k']++;
-      } else if (amount < 5000) {
-        ranges['$3k - $5k']++;
-      } else if (amount < 10000) {
-        ranges['$5k - $10k']++;
-      } else {
-        ranges['Above $10k']++;
-      }
-    });
+    // Count users, jobs, consultations, and applications by month
+    countByMonth(userData, 'registeredAt');
+    countByMonth(jobData, 'postedAt');
+    countByMonth(consultationData, 'scheduledFor');
+    countByMonth(applicationData, 'appliedAt');
     
-    const colors = colorPalette.chartColors;
-    let colorIndex = 0;
-    
-    return Object.entries(ranges).map(([name, value]) => {
-      const color = colors[colorIndex % colors.length];
-      colorIndex++;
-      return { name, value, color };
-    });
+    return months;
   };
 
-  // Prepare job applications per month data
-  const prepareApplicationsPerJobData = () => {
-    if (jobs.length === 0) return [];
-    
-    // Get the top 10 jobs with the most applications
-    const jobApplications = jobs.map(job => {
-      const jobApps = applications.filter(app => app.jobId === job._id);
-      return {
-        jobTitle: job.title || `Job #${job._id.substring(0, 6)}`,
-        applications: jobApps.length
-      };
-    });
-    
-    return jobApplications
-      .sort((a, b) => b.applications - a.applications)
-      .slice(0, 10)
-      .map(item => ({
-        name: item.jobTitle.length > 20 ? 
-          item.jobTitle.substring(0, 18) + '...' : 
-          item.jobTitle,
-        Applications: item.applications
-      }));
+  // Calculate summary statistics
+  const totalUsers = userData.length;
+  const activeUsers = userData.filter(user => user.status === "active").length;
+  const verifiedUsers = userData.filter(user => user.verificationStatus === "verified").length;
+  
+  const totalJobs = jobData.length;
+  const activeJobs = jobData.filter(job => job.status === "active").length;
+  
+  const totalConsultations = consultationData.length;
+  const completedConsultations = consultationData.filter(cons => cons.status === "completed").length;
+  
+  const totalApplications = applicationData.length;
+  const acceptedApplications = applicationData.filter(app => app.status === "accepted").length;
+
+  // Prepare specific data sets
+  const userStatusData = prepareStatusData(userData);
+  const jobStatusData = prepareStatusData(jobData);
+  const consultationStatusData = prepareStatusData(consultationData);
+  const applicationStatusData = prepareStatusData(applicationData);
+  const trendData = prepareTrendData();
+
+  // Handle page change for pagination
+  const handlePageChange = (page) => {
+    setCurrentPage(page);
   };
 
-  // Calculate growth rates
-  const calculateGrowthRate = (currentValue, previousValue) => {
-    if (previousValue === 0) return currentValue > 0 ? 100 : 0;
-    return ((currentValue - previousValue) / previousValue) * 100;
-  };
-
-  // Handle refresh button click
-  const handleRefresh = () => {
-    if (!refreshing) {
-      fetchData();
+  // Determine which data to paginate based on active tab
+  const getTabData = () => {
+    switch (activeTab) {
+      case "users": return userData;
+      case "jobs": return jobData;
+      case "consultations": return consultationData;
+      case "applications": return applicationData;
+      default: return [];
     }
   };
 
-  // Calculate the chart data
-  const jobStatusData = prepareJobStatusData();
-  const jobTrendData = prepareJobTrendData();
-  const jobCategoryData = prepareJobCategoryData();
-  const jobSalaryRangeData = prepareJobSalaryRangeData();
-  const applicationsPerJobData = prepareApplicationsPerJobData();
+  const tabData = getTabData();
+  const totalPages = Math.ceil(tabData.length / itemsPerPage);
+  const currentData = tabData.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
 
-  // Loading state with skeleton UI
+  // Render loading state
   if (loading) {
     return (
-      <div className={`admin-stats-container ${darkMode ? 'admin-stats-dark-mode' : ''}`}>
+      <div className={`stats-container ${darkMode ? "stats-dark-mode" : ""}`}>
         <Sidebar />
-        <main className="admin-stats-main">
-          <div className="admin-stats-loading">
-            <div className="admin-stats-spinner"></div>
+        <div className="stats-mobile-header">
+          <button 
+            className="stats-mobile-toggle"
+            onClick={() => setSidebarOpen(!sidebarOpen)}
+            aria-label="Toggle sidebar"
+          >
+            {sidebarOpen ? "✕" : "☰"}
+          </button>
+          <img 
+            src={darkMode ? logoDark : logoLight}
+            alt="NextYouth Admin"
+            className="stats-mobile-logo"
+          />
+        </div>
+        <div className="stats-main">
+          <div className="stats-loading">
+            <div className="stats-loading-spinner"></div>
             <p>Loading analytics data...</p>
-            <p className="admin-stats-loading-subtext">Preparing your dashboard insights</p>
           </div>
-        </main>
+        </div>
       </div>
     );
   }
 
+  // Render error state
   if (error) {
     return (
-      <div className={`admin-stats-container ${darkMode ? 'admin-stats-dark-mode' : ''}`}>
+      <div className={`stats-container ${darkMode ? "stats-dark-mode" : ""}`}>
         <Sidebar />
-        <main className="admin-stats-main">
-          <div className="admin-stats-error-container">
-            <FaTimesCircle size={50} />
-            <h2>Error Loading Data</h2>
-            <p>{error}</p>
-            <button className="admin-stats-retry-button" onClick={fetchData}>
-              <FaSync /> Retry
+        <div className="stats-mobile-header">
+          <button 
+            className="stats-mobile-toggle"
+            onClick={() => setSidebarOpen(!sidebarOpen)}
+            aria-label="Toggle sidebar"
+          >
+            {sidebarOpen ? "✕" : "☰"}
+          </button>
+          <img 
+            src={darkMode ? logoDark : logoLight}
+            alt="NextYouth Admin"
+            className="stats-mobile-logo"
+          />
+        </div>
+        <div className="stats-main">
+          <div className="stats-error-message">
+            <p>Failed to load statistics: {error}</p>
+            <button onClick={fetchData} className="stats-retry-button">
+              <FaRedoAlt /> Try Again
             </button>
           </div>
-        </main>
+        </div>
       </div>
     );
   }
 
-  // Calculate statistics for the dashboard
-  const totalUsers = users.length;
-  const filteredUsers = filterDataByTimeframe(users);
-  const userGrowth = calculateGrowthRate(
-    filteredUsers.length,
-    users.length - filteredUsers.length
-  );
-
-  const totalConsultations = consultations.length;
-  const verifiedUsers = users.filter(user => user.idVerification && user.idVerification.status === 'verified').length;
-  const pendingVerifications = users.filter(user => user.idVerification && user.idVerification.status === 'pending').length;
-  const verificationRate = totalUsers ? Math.round((verifiedUsers / totalUsers) * 100) : 0;
-
-  // Calculate consultation statistics
-  const completedConsultations = consultations.filter(c => c.status === 'completed').length;
-  const pendingConsultations = consultations.filter(c => c.status === 'pending' || !c.status).length;
-  const confirmedConsultations = consultations.filter(c => c.status === 'confirmed').length;
-  const completionRate = totalConsultations ? Math.round((completedConsultations / totalConsultations) * 100) : 0;
-
-  // Calculate job statistics
-  const totalJobs = jobs.length;
-  const activeJobs = jobs.filter(job => 
-    job.status === 'active' || 
-    job.isAvailable === true || 
-    job.status === 'available'
-  ).length;
-  
-  const closedJobs = jobs.filter(job => 
-    job.status === 'closed' || 
-    job.isAvailable === false
-  ).length;
-  
-  // Calculate the average fixed budget amount for jobs
-  const avgBudget = jobs.length ? 
-    Math.round(jobs.reduce((sum, job) => sum + (job.fixedAmount || 0), 0) / jobs.length) : 0;
-
-  // Update job availability calculation
-  const availableJobs = activeJobs;
-  const notAvailableJobs = closedJobs;
-
-  // Calculate applications statistics
-  const totalApplications = applications.length;
-  const pendingApplications = applications.filter(app => app.status === 'pending' || !app.status).length;
-  const acceptedApplications = applications.filter(app => app.status === 'accepted').length;
-  const rejectedApplications = applications.filter(app => app.status === 'rejected').length;
-  const acceptanceRate = totalApplications ? Math.round((acceptedApplications / totalApplications) * 100) : 0;
-
   return (
-    <div className={`admin-stats-container ${darkMode ? 'admin-stats-dark-mode' : ''}`}>
+    <div className={`stats-container ${darkMode ? "stats-dark-mode" : ""}`}>
       <Sidebar />
-      <main className="admin-stats-main">
-        <div className="admin-stats-header">
-          <div className="admin-stats-title">
+      
+      <div className="stats-mobile-header">
+        <button 
+          className="stats-mobile-toggle"
+          onClick={() => setSidebarOpen(!sidebarOpen)}
+          aria-label="Toggle sidebar"
+        >
+          {sidebarOpen ? "✕" : "☰"}
+        </button>
+        <img 
+          src={darkMode ? logoDark : logoLight}
+          alt="NextYouth Admin"
+          className="stats-mobile-logo"
+        />
+      </div>
+      
+      <div className="stats-main">
+        <div className="stats-header">
+          <div className="stats-title">
             <h1>Analytics Dashboard</h1>
-            <p>Comprehensive insights and performance metrics for NextYouth platform</p>
+            <p>Comprehensive statistical insights into platform performance</p>
           </div>
-          <div className="admin-stats-actions">
-            <div className="admin-stats-last-updated">
-              <span>Last updated: {formatDate(lastUpdated)}</span>
-              <button 
-                className={`admin-stats-refresh-button ${refreshing ? 'refreshing' : ''}`}
-                onClick={handleRefresh}
-                disabled={refreshing}
+          <div className="stats-actions">
+            <button className="stats-action-button" onClick={fetchData} title="Refresh data">
+              <FaRedoAlt /> <span>Refresh</span>
+            </button>
+            <div className="stats-time-filter">
+              <FaFilter />
+              <select 
+                value={timeFrame} 
+                onChange={(e) => setTimeFrame(e.target.value)}
+                className="stats-select"
               >
-                <FaSync className="admin-stats-refresh-icon" /> {refreshing ? 'Refreshing...' : 'Refresh Data'}
-              </button>
+                <option value="week">Last Week</option>
+                <option value="month">Last Month</option>
+                <option value="quarter">Last Quarter</option>
+                <option value="year">Last Year</option>
+              </select>
+            </div>
+            <button className="stats-action-button" title="Export data">
+              <FaFileDownload /> <span>Export</span>
+            </button>
+          </div>
+        </div>
+        
+        {/* Summary Cards */}
+        <div className="stats-summary-grid">
+          <div className="stats-summary-card">
+            <div className="stats-summary-icon users">
+              <FaUsers />
+            </div>
+            <div className="stats-summary-info">
+              <h3>Users</h3>
+              <div className="stats-summary-value">{totalUsers}</div>
+              <div className="stats-summary-detail">
+                <span>{activeUsers} active</span>
+                <span className="stats-percentage">{totalUsers ? Math.round((activeUsers / totalUsers) * 100) : 0}%</span>
+              </div>
+            </div>
+          </div>
+          
+          <div className="stats-summary-card">
+            <div className="stats-summary-icon jobs">
+              <FaBriefcase />
+            </div>
+            <div className="stats-summary-info">
+              <h3>Jobs</h3>
+              <div className="stats-summary-value">{totalJobs}</div>
+              <div className="stats-summary-detail">
+                <span>{activeJobs} active</span>
+                <span className="stats-percentage">{totalJobs ? Math.round((activeJobs / totalJobs) * 100) : 0}%</span>
+              </div>
+            </div>
+          </div>
+          
+          <div className="stats-summary-card">
+            <div className="stats-summary-icon consultations">
+              <FaCalendarCheck />
+            </div>
+            <div className="stats-summary-info">
+              <h3>Consultations</h3>
+              <div className="stats-summary-value">{totalConsultations}</div>
+              <div className="stats-summary-detail">
+                <span>{completedConsultations} completed</span>
+                <span className="stats-percentage">
+                  {totalConsultations ? Math.round((completedConsultations / totalConsultations) * 100) : 0}%
+                </span>
+              </div>
+            </div>
+          </div>
+          
+          <div className="stats-summary-card">
+            <div className="stats-summary-icon applications">
+              <FaChartBar />
+            </div>
+            <div className="stats-summary-info">
+              <h3>Applications</h3>
+              <div className="stats-summary-value">{totalApplications}</div>
+              <div className="stats-summary-detail">
+                <span>{acceptedApplications} accepted</span>
+                <span className="stats-percentage">
+                  {totalApplications ? Math.round((acceptedApplications / totalApplications) * 100) : 0}%
+                </span>
+              </div>
             </div>
           </div>
         </div>
         
-        <div className="admin-stats-tabs">
-          <button 
-            className={`admin-stats-tab-button ${activeTab === 'overview' ? 'active' : ''}`}
-            onClick={() => setActiveTab('overview')}
-          >
-            <FaChartBar /> Overview
-          </button>
-          <button 
-            className={`admin-stats-tab-button ${activeTab === 'users' ? 'active' : ''}`}
-            onClick={() => setActiveTab('users')}
-          >
-            <FaUsers /> User Analytics
-          </button>
-          <button 
-            className={`admin-stats-tab-button ${activeTab === 'consultations' ? 'active' : ''}`}
-            onClick={() => setActiveTab('consultations')}
-          >
-            <FaCalendarCheck /> Consultations
-          </button>
-          <button 
-            className={`admin-stats-tab-button ${activeTab === 'jobs' ? 'active' : ''}`}
-            onClick={() => setActiveTab('jobs')}
-          >
-            <FaBriefcase /> Job Statistics
-          </button>
-          <button 
-            className={`admin-stats-tab-button ${activeTab === 'applications' ? 'active' : ''}`}
-            onClick={() => setActiveTab('applications')}
-          >
-            <FaClipboardList /> Applications
-          </button>
-        </div>
-        
-        <div className="admin-stats-filter-controls">
-          <label htmlFor="timeframe">Data Timeframe:</label>
-          <select 
-            id="timeframe" 
-            value={timeframe}
-            onChange={(e) => setTimeframe(e.target.value)}
-            className="admin-stats-select"
-          >
-            <option value="24h">Last 24 Hours</option>
-            <option value="7d">Last 7 Days</option>
-            <option value="30d">Last 30 Days</option>
-            <option value="90d">Last 90 Days</option>
-            <option value="all">All Time</option>
-          </select>
-        </div>
-        
-        {activeTab === 'overview' && (
-          <>
-            <div className="admin-stats-overview">
-              <div className="admin-stats-card">
-                <div className="admin-stats-card-header">
-                  <h3 className="admin-stats-card-title">Total Users</h3>
-                  <div className="admin-stats-card-icon">
-                    <FaUsers />
-                  </div>
-                </div>
-                <p className="admin-stats-card-value">{totalUsers}</p>
-                <p className={`admin-stats-card-change ${userGrowth >= 0 ? 'positive' : 'negative'}`}>
-                  {userGrowth >= 0 ? <FaArrowUp /> : <FaArrowDown />} {Math.abs(userGrowth).toFixed(1)}% {timeframe === 'all' ? 'growth' : `in last ${timeframe}`}
-                </p>
-              </div>
-              
-              <div className="admin-stats-card">
-                <div className="admin-stats-card-header">
-                  <h3 className="admin-stats-card-title">User Verification</h3>
-                  <div className="admin-stats-card-icon">
-                    <FaCheckCircle />
-                  </div>
-                </div>
-                <p className="admin-stats-card-value">{verificationRate}%</p>
-                <div className="admin-stats-progress-bar">
-                  <div 
-                    className="admin-stats-progress" 
-                    style={{width: `${verificationRate}%`, backgroundColor: getStatusColor('verified')}}
-                  ></div>
-                </div>
-                <p className="admin-stats-card-note">
-                  <FaInfoCircle /> {pendingVerifications} pending verification{pendingVerifications !== 1 ? 's' : ''}
-                </p>
-              </div>
-              
-              <div className="admin-stats-card">
-                <div className="admin-stats-card-header">
-                  <h3 className="admin-stats-card-title">Consultations</h3>
-                  <div className="admin-stats-card-icon">
-                    <FaCalendarCheck />
-                  </div>
-                </div>
-                <p className="admin-stats-card-value">{totalConsultations}</p>
-                <div className="admin-stats-progress-bar">
-                  <div 
-                    className="admin-stats-progress" 
-                    style={{width: `${completionRate}%`, backgroundColor: getStatusColor('completed')}}
-                  ></div>
-                </div>
-                <p className="admin-stats-card-note">
-                  <FaThumbsUp /> {completionRate}% completion rate
-                </p>
-              </div>
-              
-              <div className="admin-stats-card">
-                <div className="admin-stats-card-header">
-                  <h3 className="admin-stats-card-title">Job Listings</h3>
-                  <div className="admin-stats-card-icon">
-                    <FaBriefcase />
-                  </div>
-                </div>
-                <p className="admin-stats-card-value">{totalJobs}</p>
-                <p className="admin-stats-card-note">
-                  <span className="admin-stats-badge active">{activeJobs} Active</span>
-                  <span className="admin-stats-badge closed">{closedJobs} Closed</span>
-                </p>
-                <p className="admin-stats-card-note">
-                  <FaInfoCircle /> Avg. Budget: ${avgBudget}
-                </p>
-              </div>
+        {/* Main Charts Section */}
+        <div className="stats-charts-section">
+          <div className="stats-chart-container full-width">
+            <h2>Growth Trends</h2>
+            <div className="stats-chart-wrapper">
+              <ResponsiveContainer width="100%" height={300}>
+                <LineChart data={trendData}>
+                  <CartesianGrid strokeDasharray="3 3" stroke={darkMode ? "#2d3748" : "#e2e8f0"} />
+                  <XAxis dataKey="name" stroke={darkMode ? "#e2e8f0" : "#334155"} />
+                  <YAxis stroke={darkMode ? "#e2e8f0" : "#334155"} />
+                  <Tooltip 
+                    contentStyle={{ 
+                      backgroundColor: darkMode ? "#1e293b" : "#ffffff",
+                      border: `1px solid ${darkMode ? "#2d3748" : "#e2e8f0"}`,
+                      color: darkMode ? "#e2e8f0" : "#334155"
+                    }}
+                  />
+                  <Legend />
+                  <Line 
+                    type="monotone" 
+                    dataKey="users" 
+                    stroke={colors.primary} 
+                    activeDot={{ r: 8 }} 
+                    name="Users" 
+                  />
+                  <Line 
+                    type="monotone" 
+                    dataKey="jobs" 
+                    stroke={colors.secondary} 
+                    activeDot={{ r: 8 }} 
+                    name="Jobs" 
+                  />
+                  <Line 
+                    type="monotone" 
+                    dataKey="consultations" 
+                    stroke={colors.accent} 
+                    activeDot={{ r: 8 }} 
+                    name="Consultations" 
+                  />
+                  <Line 
+                    type="monotone" 
+                    dataKey="applications" 
+                    stroke={colors.danger} 
+                    activeDot={{ r: 8 }} 
+                    name="Applications" 
+                  />
+                </LineChart>
+              </ResponsiveContainer>
             </div>
-            
-            <div className="admin-stats-grid">
-              <div className="admin-stats-chart-card">
-                <div className="admin-stats-chart-header">
-                  <h3 className="admin-stats-chart-title">User Registration Trend</h3>
-                </div>
-                <div className="admin-stats-chart-container">
-                  <ResponsiveContainer width="100%" height={300}>
-                    <BarChart data={userRegistrationData} margin={{ top: 20, right: 30, left: 20, bottom: 20 }}>
-                      <CartesianGrid strokeDasharray="3 3" stroke={darkMode ? "#2d3748" : "#e2e8f0"} />
-                      <XAxis 
-                        dataKey="name" 
-                        tick={{ fill: darkMode ? "#e2e8f0" : "#334155" }} 
-                        tickLine={{ stroke: darkMode ? "#4a5568" : "#cbd5e1" }}
-                      />
-                      <YAxis 
-                        tick={{ fill: darkMode ? "#e2e8f0" : "#334155" }}
-                        tickLine={{ stroke: darkMode ? "#4a5568" : "#cbd5e1" }}
-                      />
-                      <Tooltip 
-                        contentStyle={{ 
-                          backgroundColor: darkMode ? "#1e293b" : "#ffffff",
-                          color: darkMode ? "#e2e8f0" : "#334155",
-                          border: `1px solid ${darkMode ? "#2d3748" : "#e2e8f0"}`
-                        }}
-                      />
-                      <Legend />
-                      <Bar dataKey="New Users" fill={colorPalette.primary} radius={[4, 4, 0, 0]} />
-                    </BarChart>
-                  </ResponsiveContainer>
-                </div>
-              </div>
-              
-              <div className="admin-stats-chart-card">
-                <div className="admin-stats-chart-header">
-                  <h3 className="admin-stats-chart-title">Consultation Trends (6 Months)</h3>
-                </div>
-                <div className="admin-stats-chart-container">
-                  <ResponsiveContainer width="100%" height={300}>
-                    <BarChart data={consultationTrendData} margin={{ top: 20, right: 30, left: 20, bottom: 20 }}>
-                      <CartesianGrid strokeDasharray="3 3" stroke={darkMode ? "#2d3748" : "#e2e8f0"} />
-                      <XAxis 
-                        dataKey="name" 
-                        tick={{ fill: darkMode ? "#e2e8f0" : "#334155" }}
-                        tickLine={{ stroke: darkMode ? "#4a5568" : "#cbd5e1" }}
-                      />
-                      <YAxis 
-                        tick={{ fill: darkMode ? "#e2e8f0" : "#334155" }}
-                        tickLine={{ stroke: darkMode ? "#4a5568" : "#cbd5e1" }}
-                      />
-                      <Tooltip 
-                        contentStyle={{ 
-                          backgroundColor: darkMode ? "#1e293b" : "#ffffff",
-                          color: darkMode ? "#e2e8f0" : "#334155",
-                          border: `1px solid ${darkMode ? "#2d3748" : "#e2e8f0"}`
-                        }}
-                      />
-                      <Legend />
-                      <Bar dataKey="All Consultations" fill={colorPalette.primary} radius={[4, 4, 0, 0]} />
-                      <Bar dataKey="Completed" fill={colorPalette.secondary} radius={[4, 4, 0, 0]} />
-                    </BarChart>
-                  </ResponsiveContainer>
-                </div>
-              </div>
-            </div>
-            
-            <div className="admin-stats-pie-charts">
-              <div className="admin-stats-chart-card">
-                <div className="admin-stats-chart-header">
-                  <h3 className="admin-stats-chart-title">User Verification Status</h3>
-                </div>
-                <div className="admin-stats-chart-container">
-                  <ResponsiveContainer width="100%" height={280}>
-                    <PieChart>
-                      <Pie
-                        data={userStatusData}
-                        cx="50%"
-                        cy="50%"
-                        innerRadius={60}
-                        outerRadius={80}
-                        paddingAngle={5}
-                        dataKey="value"
-                        label={({percent}) => percent > 0.08 ? `${(percent * 100).toFixed(0)}%` : ''}
-                        labelLine={false}
-                      >
-                        {userStatusData.map((entry, index) => (
-                          <Cell key={`cell-${index}`} fill={entry.color} />
-                        ))}
-                      </Pie>
-                      <Tooltip 
-                        contentStyle={{ 
-                          backgroundColor: darkMode ? "#1e293b" : "#ffffff",
-                          color: darkMode ? "#e2e8f0" : "#334155",
-                          border: `1px solid ${darkMode ? "#2d3748" : "#e2e8f0"}`
-                        }}
-                      />
-                      <Legend 
-                        layout="horizontal" 
-                        verticalAlign="bottom" 
-                        align="center"
-                        wrapperStyle={{ paddingTop: '20px' }}
-                      />
-                    </PieChart>
-                  </ResponsiveContainer>
-                </div>
-              </div>
-              
-              <div className="admin-stats-chart-card">
-                <div className="admin-stats-chart-header">
-                  <h3 className="admin-stats-chart-title">Consultation Status</h3>
-                </div>
-                <div className="admin-stats-chart-container">
-                  <ResponsiveContainer width="100%" height={280}>
-                    <PieChart>
-                      <Pie
-                        data={consultationStatusData}
-                        cx="50%"
-                        cy="50%"
-                        innerRadius={60}
-                        outerRadius={80}
-                        paddingAngle={5}
-                        dataKey="value"
-                        label={({percent}) => percent > 0.08 ? `${(percent * 100).toFixed(0)}%` : ''}
-                        labelLine={false}
-                      >
-                        {consultationStatusData.map((entry, index) => (
-                          <Cell key={`cell-${index}`} fill={entry.color} />
-                        ))}
-                      </Pie>
-                      <Tooltip 
-                        contentStyle={{ 
-                          backgroundColor: darkMode ? "#1e293b" : "#ffffff",
-                          color: darkMode ? "#e2e8f0" : "#334155",
-                          border: `1px solid ${darkMode ? "#2d3748" : "#e2e8f0"}`
-                        }}
-                      />
-                      <Legend 
-                        layout="horizontal" 
-                        verticalAlign="bottom" 
-                        align="center"
-                        wrapperStyle={{ paddingTop: '20px' }}
-                      />
-                    </PieChart>
-                  </ResponsiveContainer>
-                </div>
-              </div>
-              
-              <div className="admin-stats-chart-card">
-                <div className="admin-stats-chart-header">
-                  <h3 className="admin-stats-chart-title">Job Status</h3>
-                </div>
-                <div className="admin-stats-chart-container">
-                  <ResponsiveContainer width="100%" height={280}>
-                    <PieChart>
-                      <Pie
-                        data={jobStatusData}
-                        cx="50%"
-                        cy="50%"
-                        innerRadius={60}
-                        outerRadius={80}
-                        paddingAngle={5}
-                        dataKey="value"
-                        label={({percent}) => percent > 0.08 ? `${(percent * 100).toFixed(0)}%` : ''}
-                        labelLine={false}
-                      >
-                        {jobStatusData.map((entry, index) => (
-                          <Cell key={`cell-${index}`} fill={entry.color} />
-                        ))}
-                      </Pie>
-                      <Tooltip 
-                        contentStyle={{ 
-                          backgroundColor: darkMode ? "#1e293b" : "#ffffff",
-                          color: darkMode ? "#e2e8f0" : "#334155",
-                          border: `1px solid ${darkMode ? "#2d3748" : "#e2e8f0"}`
-                        }}
-                      />
-                      <Legend 
-                        layout="horizontal" 
-                        verticalAlign="bottom" 
-                        align="center"
-                        wrapperStyle={{ paddingTop: '20px' }}
-                      />
-                    </PieChart>
-                  </ResponsiveContainer>
-                </div>
-              </div>
-            </div>
-
-            <div className="admin-stats-chart-card admin-stats-full-width">
-              <div className="admin-stats-chart-header">
-                <h3 className="admin-stats-chart-title">Applications Status Overview</h3>
-              </div>
-              <div className="admin-stats-chart-container">
-                <ResponsiveContainer width="100%" height={300}>
-                  <PieChart>
-                    <Pie
-                      data={applicationStatusData}
-                      cx="50%"
-                      cy="50%"
-                      innerRadius={70}
-                      outerRadius={100}
-                      paddingAngle={5}
-                      dataKey="value"
-                      label={({name, percent}) => `${name}: ${(percent * 100).toFixed(0)}%`}
-                    >
-                      {applicationStatusData.map((entry, index) => (
-                        <Cell key={`cell-${index}`} fill={entry.color} />
-                      ))}
-                    </Pie>
-                    <Tooltip 
-                      contentStyle={{ 
-                        backgroundColor: darkMode ? "#1e293b" : "#ffffff",
-                        color: darkMode ? "#e2e8f0" : "#334155",
-                        border: `1px solid ${darkMode ? "#2d3748" : "#e2e8f0"}`
-                      }}
-                    />
-                    <Legend />
-                  </PieChart>
-                </ResponsiveContainer>
-              </div>
-            </div>
-          </>
-        )}
-        
-        {activeTab === 'users' && (
-          <div className="admin-stats-tab-content">
-            <div className="admin-stats-section-header">
-              <h2>User Analytics</h2>
-              <p className="admin-stats-section-description">
-                Detailed insights about user registration, verification status, and growth trends.
-              </p>
-            </div>
-            
-            <div className="admin-stats-summary-cards">
-              <div className="admin-stats-summary-card">
-                <div className="admin-stats-summary-icon"><FaUsers /></div>
-                <div className="admin-stats-summary-details">
-                  <h3>{totalUsers}</h3>
-                  <p>Total Users</p>
-                </div>
-              </div>
-              <div className="admin-stats-summary-card">
-                <div className="admin-stats-summary-icon"><FaCheckCircle /></div>
-                <div className="admin-stats-summary-details">
-                  <h3>{verifiedUsers}</h3>
-                  <p>Verified Users</p>
-                </div>
-              </div>
-              <div className="admin-stats-summary-card">
-                <div className="admin-stats-summary-icon"><FaTimesCircle /></div>
-                <div className="admin-stats-summary-details">
-                  <h3>{totalUsers - verifiedUsers}</h3>
-                  <p>Not Verified</p>
-                </div>
-              </div>
-            </div>
-
-            <div className="admin-stats-chart-card admin-stats-full-width">
-              <div className="admin-stats-chart-header">
-                <h3 className="admin-stats-chart-title">Monthly User Growth</h3>
-              </div>
-              <div className="admin-stats-chart-container">
-                <ResponsiveContainer width="100%" height={300}>
-                  <BarChart 
-                    data={userGrowthTrendData}
-                    margin={{ top: 20, right: 30, left: 20, bottom: 20 }}
-                  >
-                    <CartesianGrid strokeDasharray="3 3" stroke={darkMode ? "#2d3748" : "#e2e8f0"} />
-                    <XAxis 
-                      dataKey="name"
-                      tick={{ fill: darkMode ? "#e2e8f0" : "#334155" }}
-                      tickLine={{ stroke: darkMode ? "#4a5568" : "#cbd5e1" }}
-                    />
-                    <YAxis 
-                      tick={{ fill: darkMode ? "#e2e8f0" : "#334155" }}
-                      tickLine={{ stroke: darkMode ? "#4a5568" : "#cbd5e1" }}
-                    />
-                    <Tooltip 
-                      contentStyle={{ 
-                        backgroundColor: darkMode ? "#1e293b" : "#ffffff",
-                        color: darkMode ? "#e2e8f0" : "#334155",
-                        border: `1px solid ${darkMode ? "#2d3748" : "#e2e8f0"}`
-                      }}
-                    />
-                    <Legend />
-                    <Bar dataKey="Users" fill={colorPalette.primary} radius={[4, 4, 0, 0]} />
-                  </BarChart>
-                </ResponsiveContainer>
-              </div>
-            </div>
-
-            <div className="admin-stats-chart-card admin-stats-full-width">
-              <div className="admin-stats-chart-header">
-                <h3 className="admin-stats-chart-title">User Verification Distribution</h3>
-              </div>
-              <div className="admin-stats-chart-container">
-                <ResponsiveContainer width="100%" height={300}>
+          </div>
+          
+          <div className="stats-charts-grid">
+            <div className="stats-chart-container">
+              <h2>User Status</h2>
+              <div className="stats-chart-wrapper">
+                <ResponsiveContainer width="100%" height={240}>
                   <PieChart>
                     <Pie
                       data={userStatusData}
                       cx="50%"
                       cy="50%"
-                      outerRadius={100}
+                      labelLine={false}
+                      outerRadius={80}
+                      fill="#8884d8"
                       dataKey="value"
-                      label={({name, percent}) => `${name}: ${(percent * 100).toFixed(0)}%`}
+                      label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
                     >
                       {userStatusData.map((entry, index) => (
-                        <Cell key={`cell-${index}`} fill={entry.color} />
+                        <Cell key={`cell-${index}`} fill={colors.chartColors[index % colors.chartColors.length]} />
                       ))}
                     </Pie>
                     <Tooltip 
+                      formatter={(value, name, props) => [`${value} (${totalUsers ? ((value / totalUsers) * 100).toFixed(1) : 0}%)`, name]}
                       contentStyle={{ 
                         backgroundColor: darkMode ? "#1e293b" : "#ffffff",
-                        color: darkMode ? "#e2e8f0" : "#334155",
-                        border: `1px solid ${darkMode ? "#2d3748" : "#e2e8f0"}`
+                        border: `1px solid ${darkMode ? "#2d3748" : "#e2e8f0"}`,
+                        color: darkMode ? "#e2e8f0" : "#334155"
                       }}
                     />
-                    <Legend />
                   </PieChart>
                 </ResponsiveContainer>
               </div>
             </div>
-          </div>
-        )}
-        
-        {activeTab === 'consultations' && (
-          <div className="admin-stats-tab-content">
-            <div className="admin-stats-section-header">
-              <h2>Consultation Analytics</h2>
-              <p className="admin-stats-section-description">
-                Detailed metrics about consultation requests, status breakdowns, and completion rates.
-              </p>
-            </div>
             
-            <div className="admin-stats-summary-cards">
-              <div className="admin-stats-summary-card">
-                <div className="admin-stats-summary-icon"><FaCalendarCheck /></div>
-                <div className="admin-stats-summary-details">
-                  <h3>{totalConsultations}</h3>
-                  <p>Total Consultations</p>
-                </div>
-              </div>
-              <div className="admin-stats-summary-card">
-                <div className="admin-stats-summary-icon"><FaCheckCircle /></div>
-                <div className="admin-stats-summary-details">
-                  <h3>{completedConsultations}</h3>
-                  <p>Completed</p>
-                </div>
-              </div>
-              <div className="admin-stats-summary-card">
-                <div className="admin-stats-summary-icon"><FaRegClock /></div>
-                <div className="admin-stats-summary-details">
-                  <h3>{confirmedConsultations}</h3>
-                  <p>Confirmed</p>
-                </div>
-              </div>
-              <div className="admin-stats-summary-card">
-                <div className="admin-stats-summary-icon"><FaInfoCircle /></div>
-                <div className="admin-stats-summary-details">
-                  <h3>{pendingConsultations}</h3>
-                  <p>Pending</p>
-                </div>
-              </div>
-            </div>
-            
-            <div className="admin-stats-chart-card admin-stats-full-width">
-              <div className="admin-stats-chart-header">
-                <h3 className="admin-stats-chart-title">Monthly Consultation Trends</h3>
-              </div>
-              <div className="admin-stats-chart-container">
-                <ResponsiveContainer width="100%" height={300}>
-                  <BarChart 
-                    data={consultationTrendData} 
-                    margin={{ top: 20, right: 30, left: 20, bottom: 20 }}
-                  >
-                    <CartesianGrid strokeDasharray="3 3" stroke={darkMode ? "#2d3748" : "#e2e8f0"} />
-                    <XAxis 
-                      dataKey="name" 
-                      tick={{ fill: darkMode ? "#e2e8f0" : "#334155" }} 
-                      tickLine={{ stroke: darkMode ? "#4a5568" : "#cbd5e1" }}
-                    />
-                    <YAxis 
-                      tick={{ fill: darkMode ? "#e2e8f0" : "#334155" }}
-                      tickLine={{ stroke: darkMode ? "#4a5568" : "#cbd5e1" }}
-                    />
-                    <Tooltip 
-                      contentStyle={{ 
-                        backgroundColor: darkMode ? "#1e293b" : "#ffffff",
-                        color: darkMode ? "#e2e8f0" : "#334155",
-                        border: `1px solid ${darkMode ? "#2d3748" : "#e2e8f0"}`
-                      }}
-                    />
-                    <Legend />
-                    <Bar dataKey="All Consultations" fill={colorPalette.primary} radius={[4, 4, 0, 0]} />
-                    <Bar dataKey="Completed" fill={colorPalette.secondary} radius={[4, 4, 0, 0]} />
-                  </BarChart>
-                </ResponsiveContainer>
-              </div>
-            </div>
-            
-            <div className="admin-stats-chart-card admin-stats-full-width">
-              <div className="admin-stats-chart-header">
-                <h3 className="admin-stats-chart-title">Consultation Status Distribution</h3>
-              </div>
-              <div className="admin-stats-chart-container">
-                <ResponsiveContainer width="100%" height={300}>
-                  <PieChart>
-                    <Pie
-                      data={consultationStatusData}
-                      cx="50%"
-                      cy="50%"
-                      outerRadius={100}
-                      dataKey="value"
-                      label={({name, percent}) => `${name}: ${(percent * 100).toFixed(0)}%`}
-                    >
-                      {consultationStatusData.map((entry, index) => (
-                        <Cell key={`cell-${index}`} fill={entry.color} />
-                      ))}
-                    </Pie>
-                    <Tooltip 
-                      contentStyle={{ 
-                        backgroundColor: darkMode ? "#1e293b" : "#ffffff",
-                        color: darkMode ? "#e2e8f0" : "#334155",
-                        border: `1px solid ${darkMode ? "#2d3748" : "#e2e8f0"}`
-                      }}
-                    />
-                    <Legend />
-                  </PieChart>
-                </ResponsiveContainer>
-              </div>
-            </div>
-          </div>
-        )}
-        
-        {activeTab === 'jobs' && (
-          <div className="admin-stats-tab-content">
-            <div className="admin-stats-section-header">
-              <h2>Job Statistics</h2>
-              <p className="admin-stats-section-description">
-                Detailed metrics about job postings, status distribution, and budget information.
-              </p>
-            </div>
-            
-            <div className="admin-stats-summary-cards">
-              <div className="admin-stats-summary-card">
-                <div className="admin-stats-summary-icon"><FaBriefcase /></div>
-                <div className="admin-stats-summary-details">
-                  <h3>{totalJobs}</h3>
-                  <p>Total Jobs</p>
-                </div>
-              </div>
-              <div className="admin-stats-summary-card">
-                <div className="admin-stats-summary-icon"><FaCheckCircle /></div>
-                <div className="admin-stats-summary-details">
-                  <h3>{availableJobs}</h3>
-                  <p>Available</p>
-                </div>
-              </div>
-              <div className="admin-stats-summary-card">
-                <div className="admin-stats-summary-icon"><FaTimesCircle /></div>
-                <div className="admin-stats-summary-details">
-                  <h3>{notAvailableJobs}</h3>
-                  <p>Not Available</p>
-                </div>
-              </div>
-              <div className="admin-stats-summary-card">
-                <div className="admin-stats-summary-icon"><FaRegClock /></div>
-                <div className="admin-stats-summary-details">
-                  <h3>${avgBudget}</h3>
-                  <p>Avg. Budget</p>
-                </div>
-              </div>
-            </div>
-            
-            <div className="admin-stats-chart-card admin-stats-full-width">
-              <div className="admin-stats-chart-header">
-                <h3 className="admin-stats-chart-title">Job Status Distribution</h3>
-              </div>
-              <div className="admin-stats-chart-container">
-                <ResponsiveContainer width="100%" height={300}>
+            <div className="stats-chart-container">
+              <h2>Job Status</h2>
+              <div className="stats-chart-wrapper">
+                <ResponsiveContainer width="100%" height={240}>
                   <PieChart>
                     <Pie
                       data={jobStatusData}
                       cx="50%"
                       cy="50%"
-                      outerRadius={100}
+                      labelLine={false}
+                      outerRadius={80}
+                      fill="#8884d8"
                       dataKey="value"
-                      label={({name, percent}) => `${name}: ${(percent * 100).toFixed(0)}%`}
+                      label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
                     >
                       {jobStatusData.map((entry, index) => (
-                        <Cell key={`cell-${index}`} fill={entry.color} />
+                        <Cell key={`cell-${index}`} fill={colors.chartColors[index % colors.chartColors.length]} />
                       ))}
                     </Pie>
                     <Tooltip 
+                      formatter={(value, name, props) => [`${value} (${totalJobs ? ((value / totalJobs) * 100).toFixed(1) : 0}%)`, name]}
                       contentStyle={{ 
                         backgroundColor: darkMode ? "#1e293b" : "#ffffff",
-                        color: darkMode ? "#e2e8f0" : "#334155",
-                        border: `1px solid ${darkMode ? "#2d3748" : "#e2e8f0"}`
+                        border: `1px solid ${darkMode ? "#2d3748" : "#e2e8f0"}`,
+                        color: darkMode ? "#e2e8f0" : "#334155"
                       }}
                     />
-                    <Legend />
                   </PieChart>
                 </ResponsiveContainer>
               </div>
             </div>
-          </div>
-        )}
-
-        {activeTab === 'applications' && (
-          <div className="admin-stats-tab-content">
-            <div className="admin-stats-section-header">
-              <h2>Application Analytics</h2>
-              <p className="admin-stats-section-description">
-                Detailed metrics about job applications, status distribution, and acceptance rates.
-              </p>
-            </div>
             
-            <div className="admin-stats-summary-cards">
-              <div className="admin-stats-summary-card">
-                <div className="admin-stats-summary-icon"><FaClipboardList /></div>
-                <div className="admin-stats-summary-details">
-                  <h3>{totalApplications}</h3>
-                  <p>Total Applications</p>
-                </div>
-              </div>
-              <div className="admin-stats-summary-card">
-                <div className="admin-stats-summary-icon"><FaCheckCircle /></div>
-                <div className="admin-stats-summary-details">
-                  <h3>{acceptedApplications}</h3>
-                  <p>Accepted</p>
-                </div>
-              </div>
-              <div className="admin-stats-summary-card">
-                <div className="admin-stats-summary-icon"><FaRegClock /></div>
-                <div className="admin-stats-summary-details">
-                  <h3>{pendingApplications}</h3>
-                  <p>Pending</p>
-                </div>
-              </div>
-              <div className="admin-stats-summary-card">
-                <div className="admin-stats-summary-icon"><FaTimesCircle /></div>
-                <div className="admin-stats-summary-details">
-                  <h3>{rejectedApplications}</h3>
-                  <p>Rejected</p>
-                </div>
+            <div className="stats-chart-container">
+              <h2>Consultation Status</h2>
+              <div className="stats-chart-wrapper">
+                <ResponsiveContainer width="100%" height={240}>
+                  <PieChart>
+                    <Pie
+                      data={consultationStatusData}
+                      cx="50%"
+                      cy="50%"
+                      labelLine={false}
+                      outerRadius={80}
+                      fill="#8884d8"
+                      dataKey="value"
+                      label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
+                    >
+                      {consultationStatusData.map((entry, index) => (
+                        <Cell key={`cell-${index}`} fill={colors.chartColors[index % colors.chartColors.length]} />
+                      ))}
+                    </Pie>
+                    <Tooltip 
+                      formatter={(value, name, props) => [`${value} (${totalConsultations ? ((value / totalConsultations) * 100).toFixed(1) : 0}%)`, name]}
+                      contentStyle={{ 
+                        backgroundColor: darkMode ? "#1e293b" : "#ffffff",
+                        border: `1px solid ${darkMode ? "#2d3748" : "#e2e8f0"}`,
+                        color: darkMode ? "#e2e8f0" : "#334155"
+                      }}
+                    />
+                  </PieChart>
+                </ResponsiveContainer>
               </div>
             </div>
             
-            <div className="admin-stats-chart-card admin-stats-full-width">
-              <div className="admin-stats-chart-header">
-                <h3 className="admin-stats-chart-title">Application Status Distribution</h3>
-              </div>
-              <div className="admin-stats-chart-container">
-                <ResponsiveContainer width="100%" height={300}>
+            <div className="stats-chart-container">
+              <h2>Application Status</h2>
+              <div className="stats-chart-wrapper">
+                <ResponsiveContainer width="100%" height={240}>
                   <PieChart>
                     <Pie
                       data={applicationStatusData}
                       cx="50%"
                       cy="50%"
-                      outerRadius={100}
+                      labelLine={false}
+                      outerRadius={80}
+                      fill="#8884d8"
                       dataKey="value"
-                      label={({name, percent}) => `${name}: ${(percent * 100).toFixed(0)}%`}
+                      label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
                     >
                       {applicationStatusData.map((entry, index) => (
-                        <Cell key={`cell-${index}`} fill={entry.color} />
+                        <Cell key={`cell-${index}`} fill={colors.chartColors[index % colors.chartColors.length]} />
                       ))}
                     </Pie>
                     <Tooltip 
+                      formatter={(value, name, props) => [`${value} (${totalApplications ? ((value / totalApplications) * 100).toFixed(1) : 0}%)`, name]}
                       contentStyle={{ 
                         backgroundColor: darkMode ? "#1e293b" : "#ffffff",
-                        color: darkMode ? "#e2e8f0" : "#334155",
-                        border: `1px solid ${darkMode ? "#2d3748" : "#e2e8f0"}`
+                        border: `1px solid ${darkMode ? "#2d3748" : "#e2e8f0"}`,
+                        color: darkMode ? "#e2e8f0" : "#334155"
                       }}
                     />
-                    <Legend />
                   </PieChart>
                 </ResponsiveContainer>
               </div>
             </div>
-            
-            <div className="admin-stats-chart-card admin-stats-full-width">
-              <div className="admin-stats-chart-header">
-                <h3 className="admin-stats-chart-title">Monthly Application Trends</h3>
-              </div>
-              <div className="admin-stats-chart-container">
-                <ResponsiveContainer width="100%" height={300}>
-                  <BarChart 
-                    data={applicationsTrendData} 
-                    margin={{ top: 20, right: 30, left: 20, bottom: 20 }}
-                  >
-                    <CartesianGrid strokeDasharray="3 3" stroke={darkMode ? "#2d3748" : "#e2e8f0"} />
-                    <XAxis 
-                      dataKey="name" 
-                      tick={{ fill: darkMode ? "#e2e8f0" : "#334155" }}
-                      tickLine={{ stroke: darkMode ? "#4a5568" : "#cbd5e1" }}
-                    />
-                    <YAxis 
-                      tick={{ fill: darkMode ? "#e2e8f0" : "#334155" }}
-                      tickLine={{ stroke: darkMode ? "#4a5568" : "#cbd5e1" }}
-                    />
-                    <Tooltip 
-                      contentStyle={{ 
-                        backgroundColor: darkMode ? "#1e293b" : "#ffffff",
-                        color: darkMode ? "#e2e8f0" : "#334155",
-                        border: `1px solid ${darkMode ? "#2d3748" : "#e2e8f0"}`
-                      }}
-                    />
-                    <Legend />
-                    <Bar dataKey="All Applications" fill={colorPalette.primary} radius={[4, 4, 0, 0]} />
-                    <Bar dataKey="Accepted" fill={colorPalette.secondary} radius={[4, 4, 0, 0]} />
-                  </BarChart>
-                </ResponsiveContainer>
-              </div>
+          </div>
+        </div>
+        
+        {/* Data Table Section */}
+        <div className="stats-table-section">
+          <div className="stats-table-header">
+            <h2>Detailed Data</h2>
+            <div className="stats-tab-navigation">
+              <button 
+                className={activeTab === "overview" ? "active" : ""} 
+                onClick={() => setActiveTab("overview")}
+              >
+                Overview
+              </button>
+              <button 
+                className={activeTab === "users" ? "active" : ""} 
+                onClick={() => {
+                  setActiveTab("users");
+                  setCurrentPage(1);
+                }}
+              >
+                Users
+              </button>
+              <button 
+                className={activeTab === "jobs" ? "active" : ""} 
+                onClick={() => {
+                  setActiveTab("jobs");
+                  setCurrentPage(1);
+                }}
+              >
+                Jobs
+              </button>
+              <button 
+                className={activeTab === "consultations" ? "active" : ""} 
+                onClick={() => {
+                  setActiveTab("consultations");
+                  setCurrentPage(1);
+                }}
+              >
+                Consultations
+              </button>
+              <button 
+                className={activeTab === "applications" ? "active" : ""} 
+                onClick={() => {
+                  setActiveTab("applications");
+                  setCurrentPage(1);
+                }}
+              >
+                Applications
+              </button>
             </div>
           </div>
-        )}
-      </main>
+          
+          {activeTab === "overview" ? (
+            <div className="stats-overview-cards">
+              <div className="stats-metric-card">
+                <h3>Verification Rate</h3>
+                <div className="stats-metric-value">{totalUsers ? Math.round((verifiedUsers / totalUsers) * 100) : 0}%</div>
+                <p>Users with verified accounts</p>
+              </div>
+              
+              <div className="stats-metric-card">
+                <h3>Job Activity</h3>
+                <div className="stats-metric-value">{totalJobs ? Math.round((activeJobs / totalJobs) * 100) : 0}%</div>
+                <p>Currently active job listings</p>
+              </div>
+              
+              <div className="stats-metric-card">
+                <h3>Completion Rate</h3>
+                <div className="stats-metric-value">{totalConsultations ? Math.round((completedConsultations / totalConsultations) * 100) : 0}%</div>
+                <p>Consultations successfully completed</p>
+              </div>
+              
+              <div className="stats-metric-card">
+                <h3>Acceptance Rate</h3>
+                <div className="stats-metric-value">{totalApplications ? Math.round((acceptedApplications / totalApplications) * 100) : 0}%</div>
+                <p>Job applications accepted</p>
+              </div>
+            </div>
+          ) : (
+            <>
+              <div className="stats-table-container">
+                <table className="stats-data-table">
+                  <thead>
+                    <tr>
+                      {activeTab === "users" && (
+                        <>
+                          <th>Name</th>
+                          <th>Email</th>
+                          <th>Status</th>
+                          <th>Registration Date</th>
+                          <th>Verification</th>
+                        </>
+                      )}
+                      
+                      {activeTab === "jobs" && (
+                        <>
+                          <th>Title</th>
+                          <th>Company</th>
+                          <th>Status</th>
+                          <th>Posted Date</th>
+                          <th>Applications</th>
+                        </>
+                      )}
+                      
+                      {activeTab === "consultations" && (
+                        <>
+                          <th>Title</th>
+                          <th>Status</th>
+                          <th>Scheduled For</th>
+                          <th>Duration</th>
+                        </>
+                      )}
+                      
+                      {activeTab === "applications" && (
+                        <>
+                          <th>Job ID</th>
+                          <th>User ID</th>
+                          <th>Status</th>
+                          <th>Applied Date</th>
+                        </>
+                      )}
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {currentData.length > 0 ? (
+                      currentData.map((item) => (
+                        <tr key={item.id}>
+                          {activeTab === "users" && (
+                            <>
+                              <td>{item.name}</td>
+                              <td>{item.email}</td>
+                              <td>
+                                <span className={`stats-status-badge ${item.status}`}>
+                                  {item.status}
+                                </span>
+                              </td>
+                              <td>{new Date(item.registeredAt).toLocaleDateString()}</td>
+                              <td>
+                                <span className={`stats-status-badge ${item.verificationStatus}`}>
+                                  {item.verificationStatus}
+                                </span>
+                              </td>
+                            </>
+                          )}
+                          
+                          {activeTab === "jobs" && (
+                            <>
+                              <td>{item.title}</td>
+                              <td>{item.company}</td>
+                              <td>
+                                <span className={`stats-status-badge ${item.status}`}>
+                                  {item.status}
+                                </span>
+                              </td>
+                              <td>{new Date(item.postedAt).toLocaleDateString()}</td>
+                              <td>{item.applications}</td>
+                            </>
+                          )}
+                          
+                          {activeTab === "consultations" && (
+                            <>
+                              <td>{item.title}</td>
+                              <td>
+                                <span className={`stats-status-badge ${item.status}`}>
+                                  {item.status}
+                                </span>
+                              </td>
+                              <td>{new Date(item.scheduledFor).toLocaleDateString()}</td>
+                              <td>{item.duration} min</td>
+                            </>
+                          )}
+                          
+                          {activeTab === "applications" && (
+                            <>
+                              <td>
+                                <Link to={`/admin-dashboard/job-details/${item.jobId}`}>
+                                  {item.jobId}
+                                </Link>
+                              </td>
+                              <td>
+                                <Link to={`/admin-dashboard/users/${item.userId}`}>
+                                  {item.userId}
+                                </Link>
+                              </td>
+                              <td>
+                                <span className={`stats-status-badge ${item.status}`}>
+                                  {item.status}
+                                </span>
+                              </td>
+                              <td>{new Date(item.appliedAt).toLocaleDateString()}</td>
+                            </>
+                          )}
+                        </tr>
+                      ))
+                    ) : (
+                      <tr>
+                        <td colSpan="5" style={{ textAlign: 'center', padding: '2rem' }}>
+                          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '1rem' }}>
+                            <FaSearch style={{ fontSize: '2rem', opacity: 0.5 }} />
+                            <p>No data available for this category</p>
+                          </div>
+                        </td>
+                      </tr>
+                    )}
+                  </tbody>
+                </table>
+              </div>
+              
+              {/* Pagination */}
+              {totalPages > 1 && (
+                <div className="stats-pagination">
+                  <button 
+                    onClick={() => handlePageChange(1)} 
+                    disabled={currentPage === 1}
+                    className="stats-pagination-button"
+                  >
+                    First
+                  </button>
+                  <button 
+                    onClick={() => handlePageChange(currentPage - 1)} 
+                    disabled={currentPage === 1}
+                    className="stats-pagination-button"
+                  >
+                    Prev
+                  </button>
+                  
+                  {/* Show page numbers */}
+                  {Array.from({ length: totalPages }, (_, i) => i + 1)
+                    .filter(pageNum => 
+                      pageNum === 1 || 
+                      pageNum === totalPages || 
+                      (pageNum >= currentPage - 1 && pageNum <= currentPage + 1)
+                    )
+                    .map(pageNum => {
+                      // If there's a gap in page numbers, show ellipsis
+                      if (pageNum !== 1 && 
+                          pageNum !== totalPages && 
+                          !(pageNum >= currentPage - 1 && pageNum <= currentPage + 1)) {
+                        return <span key={`ellipsis-${pageNum}`} className="stats-pagination-ellipsis">...</span>;
+                      }
+                      return (
+                        <button
+                          key={pageNum}
+                          onClick={() => handlePageChange(pageNum)}
+                          className={`stats-pagination-button ${currentPage === pageNum ? "active" : ""}`}
+                        >
+                          {pageNum}
+                        </button>
+                      );
+                    })}
+                  
+                  <button 
+                    onClick={() => handlePageChange(currentPage + 1)} 
+                    disabled={currentPage === totalPages}
+                    className="stats-pagination-button"
+                  >
+                    Next
+                  </button>
+                  <button 
+                    onClick={() => handlePageChange(totalPages)} 
+                    disabled={currentPage === totalPages}
+                    className="stats-pagination-button"
+                  >
+                    Last
+                  </button>
+                </div>
+              )}
+            </>
+          )}
+        </div>
+      </div>
     </div>
   );
 };
