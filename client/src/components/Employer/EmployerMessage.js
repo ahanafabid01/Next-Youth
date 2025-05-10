@@ -142,6 +142,8 @@ const EmployerMessage = ({ darkMode }) => {
   const [showDeleteMessageDialog, setShowDeleteMessageDialog] = useState(false);
   const [deleteOption, setDeleteOption] = useState(null); // "me" or "everyone"
   const [showDeleteConversationDialog, setShowDeleteConversationDialog] = useState(false);
+  // State variable for online users
+  const [onlineUsers, setOnlineUsers] = useState(new Set());
   
   // Refs
   const messagesEndRef = useRef(null);
@@ -281,6 +283,11 @@ const EmployerMessage = ({ darkMode }) => {
         });
         if (response.data.success) {
           setCurrentUser(response.data.user);
+          
+          // Tell the server this user is now online
+          if (response.data.user?._id) {
+            socket.emit('user_connected', response.data.user._id);
+          }
         }
       } catch (error) {
         console.error("Error fetching current user:", error);
@@ -288,6 +295,23 @@ const EmployerMessage = ({ darkMode }) => {
     };
 
     fetchCurrentUser();
+    
+    // Add listeners for online status
+    socket.on('online_users', (userIds) => {
+      setOnlineUsers(new Set(userIds));
+    });
+    
+    socket.on('user_status_changed', ({ userId, isOnline }) => {
+      setOnlineUsers(prev => {
+        const updated = new Set(prev);
+        if (isOnline) {
+          updated.add(userId);
+        } else {
+          updated.delete(userId);
+        }
+        return updated;
+      });
+    });
     
     // Clean up socket connection when component unmounts
     return () => {
@@ -457,6 +481,14 @@ const EmployerMessage = ({ darkMode }) => {
     // Find the participant that isn't the current user
     return conversation.participants.find(p => p._id !== myId) || { name: "Unknown" };
   };
+
+  // Add this helper function after getOtherParticipant
+
+  // Check if a user is online
+  const isUserOnline = useCallback((userId) => {
+    if (!userId) return false;
+    return onlineUsers.has(userId);
+  }, [onlineUsers]);
   
   // Fetch messages
   const fetchMessages = async (conversationId, page = 1, append = false) => {
@@ -1121,8 +1153,8 @@ const EmployerMessage = ({ darkMode }) => {
                 
                 <div className="whatsapp-chat-user-info">
                   <h3>{getOtherParticipant(activeConversation).name}</h3>
-                  <span className="whatsapp-user-status">
-                    {getOtherParticipant(activeConversation).isOnline ? "Online" : "Offline"}
+                  <span className={`whatsapp-user-status ${isUserOnline(getOtherParticipant(activeConversation)._id) ? "whatsapp-status-online" : ""}`}>
+                    {isUserOnline(getOtherParticipant(activeConversation)._id) ? "Online" : "Offline"}
                   </span>
                 </div>
               </div>

@@ -106,7 +106,15 @@ const userSchema = new mongoose.Schema({
             type: Date,
             default: Date.now
         }
-    }]
+    }],
+    isOnline: {
+        type: Boolean,
+        default: false
+    },
+    lastSeen: {
+        type: Date,
+        default: Date.now
+    }
 }, { timestamps: true });
 
 const userModel = mongoose.models.user || mongoose.model("user", userSchema);

@@ -17,6 +17,7 @@ import fs from "fs";
 import { createServer } from 'http'; // Add this
 import { Server } from 'socket.io'; // Add this
 import { Message } from "./models/MessageModel.js"; // Add this
+import userModel from "./models/userModel.js"; // Add this
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -78,10 +79,40 @@ app.use("/api/payment", employerPaymentRoutes);
 app.use("/api/employee-payment", employeePaymentRoutes);
 app.use("/api/messages", messageRouter); // Add this
 
+// Track online users: userId -> socketId
+const onlineUsers = new Map();
+
 // Socket.IO connection handling
 io.on('connection', (socket) => {
   console.log('a user connected', socket.id);
   
+  // Handle user connection
+  socket.on('user_connected', async (userId) => {
+    try {
+      if (!userId) return;
+      
+      // Store the user's online status
+      onlineUsers.set(userId, socket.id);
+      
+      // Update user status in database (optional)
+      await userModel.findByIdAndUpdate(userId, { isOnline: true, lastSeen: new Date() });
+      
+      // Broadcast to all users that this user is online
+      socket.broadcast.emit('user_status_changed', {
+        userId: userId,
+        isOnline: true
+      });
+      
+      console.log(`User ${userId} is now online. Socket: ${socket.id}`);
+      
+      // Send the current online users list to the connected user
+      const onlineUserIds = [...onlineUsers.keys()];
+      socket.emit('online_users', onlineUserIds);
+    } catch (err) {
+      console.error("Error handling user connection:", err);
+    }
+  });
+
   // Join a conversation
   socket.on('join_conversation', (conversationId) => {
     if (conversationId) {
@@ -181,8 +212,41 @@ io.on('connection', (socket) => {
     }
   });
   
-  socket.on('disconnect', () => {
-    console.log('user disconnected', socket.id);
+  // Handle user disconnection
+  socket.on('disconnect', async () => {
+    try {
+      // Find which user this socket belongs to
+      let disconnectedUserId = null;
+      for (const [userId, socketId] of onlineUsers.entries()) {
+        if (socketId === socket.id) {
+          disconnectedUserId = userId;
+          break;
+        }
+      }
+      
+      if (disconnectedUserId) {
+        // Remove from online users
+        onlineUsers.delete(disconnectedUserId);
+        
+        // Update user status in database (optional)
+        await userModel.findByIdAndUpdate(disconnectedUserId, { 
+          isOnline: false,
+          lastSeen: new Date()
+        });
+        
+        // Broadcast to all users that this user is offline
+        socket.broadcast.emit('user_status_changed', {
+          userId: disconnectedUserId,
+          isOnline: false
+        });
+        
+        console.log(`User ${disconnectedUserId} is now offline`);
+      }
+      
+      console.log('user disconnected', socket.id);
+    } catch (err) {
+      console.error("Error handling disconnection:", err);
+    }
   });
 });
 

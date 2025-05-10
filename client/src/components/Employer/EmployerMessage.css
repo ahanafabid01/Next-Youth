@@ -1256,3 +1256,28 @@
   0% { background-color: rgba(0, 128, 105, 0.1); }
   100% { background-color: transparent; }
 }
+
+/* Online Status */
+.whatsapp-status-online {
+  color: #25D366 !important;
+  display: flex;
+  align-items: center;
+}
+
+.whatsapp-status-online::before {
+  content: "";
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background-color: #25D366;
+  margin-right: 4px;
+}
+
+.whatsapp-dark .whatsapp-status-online {
+  color: #00E676 !important;
+}
+
+.whatsapp-dark .whatsapp-status-online::before {
+  background-color: #00E676;
+}
