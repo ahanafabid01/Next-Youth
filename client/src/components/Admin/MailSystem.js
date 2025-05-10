@@ -1,4 +1,5 @@
-import React, { useState, useRef, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
+import axios from "axios";
 import { 
   FaPaperPlane, 
   FaSpinner, 
@@ -7,18 +8,20 @@ import {
   FaPaperclip,
   FaTimes,
   FaImage,
-  FaInfoCircle,
-  FaUsers,
-  FaUserCheck,
-  FaUserTimes
+  FaHistory,
+  FaFilter,
+  FaChevronLeft,
+  FaChevronRight,
+  FaRegEnvelope,
+  FaEnvelopeOpenText
 } from "react-icons/fa";
 import "./MailSystem.css";
 import Sidebar from "./Sidebar";
 import EmojiPicker from 'emoji-picker-react';
-import logoLight from '../../assets/images/logo-light.png';
-import logoDark from '../../assets/images/logo-dark.png';
 
 const MailSystem = () => {
+  // State management
+  const [darkMode, setDarkMode] = useState(() => localStorage.getItem("adminTheme") === "dark");
   const [subject, setSubject] = useState("");
   const [emailContent, setEmailContent] = useState("");
   const [sending, setSending] = useState(false);
@@ -29,28 +32,65 @@ const MailSystem = () => {
   const [attachments, setAttachments] = useState([]);
   const [photoAttachments, setPhotoAttachments] = useState([]);
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
-  const [darkMode, setDarkMode] = useState(false);
+  const [activeTab, setActiveTab] = useState("compose");
+  const [emailHistory, setEmailHistory] = useState([]);
+  const [loading, setLoading] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
-  const [emailsSent, setEmailsSent] = useState([]);
-  const [totalSentEmails, setTotalSentEmails] = useState(0);
-  
+  const [totalPages, setTotalPages] = useState(1);
+  const [filter, setFilter] = useState("all");
   const fileInputRef = useRef(null);
   const photoInputRef = useRef(null);
   const API_BASE_URL = 'http://localhost:4000/api';
   
-  // Check for theme when component mounts
+  // Theme monitoring
   useEffect(() => {
-    const checkTheme = () => {
+    const handleStorageChange = () => {
       setDarkMode(localStorage.getItem("adminTheme") === "dark");
     };
-    
-    checkTheme();
-    window.addEventListener('storage', checkTheme);
+
+    window.addEventListener('storage', handleStorageChange);
     
     return () => {
-      window.removeEventListener('storage', checkTheme);
+      window.removeEventListener('storage', handleStorageChange);
     };
   }, []);
+  
+  // Fetch email history when tab changes or page changes
+  useEffect(() => {
+    if (activeTab === "history") {
+      fetchEmailHistory();
+    }
+  }, [activeTab, currentPage, filter]);
+  
+  const fetchEmailHistory = async () => {
+    try {
+      setLoading(true);
+      setError("");
+      
+      // Make the actual API call to fetch email history
+      const response = await axios.get(
+        `${API_BASE_URL}/admin/email-history`, 
+        { 
+          params: { page: currentPage, filter: filter },
+          withCredentials: true 
+        }
+      );
+      
+      if (response.data.success) {
+        setEmailHistory(response.data.emails);
+        setTotalPages(response.data.totalPages || 1);
+      } else {
+        setError(response.data.message || "Failed to fetch email history");
+        setEmailHistory([]);
+      }
+    } catch (error) {
+      console.error("Failed to fetch email history:", error);
+      setError("Failed to load email history. Please try again.");
+      setEmailHistory([]);
+    } finally {
+      setLoading(false);
+    }
+  };
   
   const handleAttachmentChange = (e) => {
     const files = Array.from(e.target.files);
@@ -96,7 +136,7 @@ const MailSystem = () => {
       // Create form data
       const formData = new FormData();
       formData.append("subject", subject);
-      formData.append("textContent", emailContent); // Make sure this matches what server expects
+      formData.append("textContent", emailContent);
       formData.append("recipientType", selectedRecipients);
       
       // Add file attachments if any
@@ -120,24 +160,15 @@ const MailSystem = () => {
       
       if (response.ok && data.success) {
         setSuccess(`Email sent successfully to ${data.recipientCount} recipients`);
-        
-        // Add to sent emails list (for display purposes only)
-        const newEmail = {
-          id: Date.now(),
-          subject,
-          recipientType: selectedRecipients,
-          sentAt: new Date().toISOString(),
-          recipientCount: data.recipientCount
-        };
-        
-        setEmailsSent(prev => [newEmail, ...prev]);
-        setTotalSentEmails(prev => prev + 1);
-        
         // Clear form after successful send
         setSubject("");
         setEmailContent("");
         setAttachments([]);
         setPhotoAttachments([]);
+        // Refresh email history if we're viewing that
+        if (activeTab === "history") {
+          fetchEmailHistory();
+        }
       } else {
         throw new Error(data.message || "Failed to send email");
       }
@@ -173,7 +204,18 @@ const MailSystem = () => {
     setShowEmojiPicker(false);
   };
   
-  const getRecipientTypeLabel = (type) => {
+  const formatDate = (dateString) => {
+    const options = { year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' };
+    return new Date(dateString).toLocaleDateString(undefined, options);
+  };
+  
+  const handlePageChange = (newPage) => {
+    if (newPage >= 1 && newPage <= totalPages) {
+      setCurrentPage(newPage);
+    }
+  };
+  
+  const getRecipientTypeName = (type) => {
     switch(type) {
       case 'all': return 'All Users';
       case 'active': return 'Verified Users';
@@ -181,341 +223,389 @@ const MailSystem = () => {
       default: return type;
     }
   };
-  
-  const getRecipientTypeIcon = (type) => {
-    switch(type) {
-      case 'all': return <FaUsers />;
-      case 'active': return <FaUserCheck />;
-      case 'inactive': return <FaUserTimes />;
-      default: return <FaUsers />;
-    }
-  };
 
   return (
-    <div className={`admin-dashboard ${darkMode ? 'admin-dash-dark-mode' : ''}`}>
+    <div className={`mail-system-container ${darkMode ? 'mail-system-dark-mode' : ''}`}>
       <Sidebar />
       
-      <div className="admin-dash-mail-system">
-        <div className="admin-dash-mail-header">
-          <div className="admin-dash-mail-header-content">
+      <div className="mail-system-main">
+        <div className="mail-system-header-area">
+          <div className="mail-system-title">
             <h1>Central Mailing System</h1>
             <p>Communicate with your users via email broadcasts</p>
           </div>
-          <img 
-            src={darkMode ? logoDark : logoLight} 
-            alt="NextYouth Admin" 
-            className="admin-dash-mail-logo" 
-          />
         </div>
 
-        {error && <div className="admin-dash-mail-alert admin-dash-mail-error">{error}</div>}
-        {success && <div className="admin-dash-mail-alert admin-dash-mail-success">{success}</div>}
+        <div className="mail-system-tabs">
+          <button 
+            className={`mail-system-tab ${activeTab === 'compose' ? 'active' : ''}`}
+            onClick={() => setActiveTab('compose')}
+          >
+            <FaPaperPlane /> Compose Email
+          </button>
+          <button 
+            className={`mail-system-tab ${activeTab === 'history' ? 'active' : ''}`}
+            onClick={() => setActiveTab('history')}
+          >
+            <FaHistory /> Email History
+          </button>
+        </div>
 
-        <div className="admin-dash-mail-content">
-          {previewMode ? (
-            <div className="admin-dash-mail-preview">
-              <div className="admin-dash-mail-preview-header">
-                <h2>Email Preview</h2>
-                <button onClick={handlePreview} className="admin-dash-mail-btn admin-dash-mail-btn-secondary">
-                  <FaEdit /> Back to Edit
-                </button>
-              </div>
-              <div className="admin-dash-mail-preview-subject">
-                <strong>Subject:</strong> {subject}
-              </div>
-              <div className="admin-dash-mail-preview-body">
-                {formatEmailPreview(emailContent)}
-                
-                {photoAttachments.length > 0 && (
-                  <div className="admin-dash-mail-preview-photos">
-                    <h4>Images ({photoAttachments.length}):</h4>
-                    <div className="admin-dash-mail-photo-grid">
-                      {photoAttachments.map((photo, index) => (
-                        <div key={index} className="admin-dash-mail-photo-item">
-                          <img 
-                            src={URL.createObjectURL(photo)} 
-                            alt={`Preview ${index+1}`} 
-                            className="admin-dash-mail-photo-img" 
-                          />
-                        </div>
-                      ))}
+        {error && <div className="mail-system-error">{error}</div>}
+        {success && <div className="mail-system-success">{success}</div>}
+
+        {activeTab === 'compose' ? (
+          <div className="mail-system-content-area">
+            {previewMode ? (
+              <div className="mail-system-preview-container">
+                <div className="mail-system-preview-header">
+                  <h2><FaEnvelopeOpenText /> Email Preview</h2>
+                  <button onClick={handlePreview} className="mail-system-btn-secondary">
+                    <FaEdit /> Back to Edit
+                  </button>
+                </div>
+                <div className="mail-system-preview">
+                  <div className="mail-system-preview-section">
+                    <div className="mail-system-preview-label">Recipient Group:</div>
+                    <div className="mail-system-preview-value">{getRecipientTypeName(selectedRecipients)}</div>
+                  </div>
+                  
+                  <div className="mail-system-preview-section">
+                    <div className="mail-system-preview-label">Subject:</div>
+                    <div className="mail-system-preview-value mail-system-preview-subject">{subject}</div>
+                  </div>
+                  
+                  <div className="mail-system-preview-section">
+                    <div className="mail-system-preview-label">Message:</div>
+                    <div className="mail-system-preview-value mail-system-preview-body">
+                      {formatEmailPreview(emailContent)}
                     </div>
                   </div>
-                )}
-                
-                {attachments.length > 0 && (
-                  <div className="admin-dash-mail-preview-attachments">
-                    <h4>Attachments ({attachments.length}):</h4>
-                    <ul className="admin-dash-mail-file-list">
-                      {attachments.map((file, index) => (
-                        <li key={index} className="admin-dash-mail-file-item">
-                          <span className="admin-dash-mail-file-name">{file.name}</span>
-                          <span className="admin-dash-mail-file-size">({Math.round(file.size / 1024)} KB)</span>
-                        </li>
-                      ))}
-                    </ul>
+                  
+                  {photoAttachments.length > 0 && (
+                    <div className="mail-system-preview-section">
+                      <div className="mail-system-preview-label">Images ({photoAttachments.length}):</div>
+                      <div className="mail-system-preview-photos">
+                        {photoAttachments.map((photo, index) => (
+                          <div key={index} className="mail-system-photo-preview-item">
+                            <img 
+                              src={URL.createObjectURL(photo)} 
+                              alt={`Preview ${index+1}`} 
+                              className="mail-system-photo-preview" 
+                            />
+                            <span className="mail-system-photo-name">{photo.name}</span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                  
+                  {attachments.length > 0 && (
+                    <div className="mail-system-preview-section">
+                      <div className="mail-system-preview-label">Attachments ({attachments.length}):</div>
+                      <ul className="mail-system-preview-attachments">
+                        {attachments.map((file, index) => (
+                          <li key={index} className="mail-system-preview-attachment">
+                            {file.name} ({Math.round(file.size / 1024)} KB)
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+                  
+                  <div className="mail-system-preview-actions">
+                    <button onClick={handlePreview} className="mail-system-btn-secondary">
+                      <FaEdit /> Edit Email
+                    </button>
+                    <button 
+                      onClick={handleSendMail} 
+                      className="mail-system-btn-primary"
+                      disabled={sending}
+                    >
+                      {sending ? (
+                        <>
+                          <FaSpinner className="mail-system-spinner" /> Sending...
+                        </>
+                      ) : (
+                        <>
+                          <FaPaperPlane /> Send Email
+                        </>
+                      )}
+                    </button>
                   </div>
-                )}
+                </div>
               </div>
-            </div>
-          ) : (
-            <form onSubmit={handleSendMail} className="admin-dash-mail-form">
-              <div className="admin-dash-mail-form-group">
-                <label htmlFor="recipients">
-                  <FaUsers /> Recipients:
+            ) : (
+              <form onSubmit={handleSendMail} className="mail-system-form">
+                <div className="mail-system-form-group">
+                  <label htmlFor="recipients" className="mail-system-label">Recipients:</label>
+                  <select 
+                    id="recipients" 
+                    value={selectedRecipients} 
+                    onChange={(e) => setSelectedRecipients(e.target.value)}
+                    className="mail-system-select"
+                  >
+                    <option value="all">All Users</option>
+                    <option value="active">Verified Users Only</option>
+                    <option value="inactive">Unverified Users Only</option>
+                  </select>
+                </div>
+
+                <div className="mail-system-form-group">
+                  <label htmlFor="subject" className="mail-system-label">Subject:</label>
+                  <input
+                    type="text"
+                    id="subject"
+                    value={subject}
+                    onChange={(e) => setSubject(e.target.value)}
+                    placeholder="Enter email subject"
+                    required
+                    className="mail-system-input"
+                  />
+                </div>
+
+                <div className="mail-system-form-group">
+                  <label htmlFor="emailContent" className="mail-system-label">Email Body:</label>
+                  <div className="mail-system-textarea-container">
+                    <textarea
+                      id="emailContent"
+                      value={emailContent}
+                      onChange={(e) => setEmailContent(e.target.value)}
+                      placeholder="Type your message here..."
+                      required
+                      className="mail-system-textarea"
+                      rows="12"
+                    />
+                    
+                    <button 
+                      type="button" 
+                      className="mail-system-emoji-button"
+                      onClick={() => setShowEmojiPicker(!showEmojiPicker)}
+                    >
+                      😊
+                    </button>
+                    
+                    {showEmojiPicker && (
+                      <div className="mail-system-emoji-picker-container">
+                        <div 
+                          className="mail-system-emoji-picker-backdrop" 
+                          onClick={() => setShowEmojiPicker(false)}
+                        ></div>
+                        <EmojiPicker
+                          onEmojiClick={handleEmojiSelect}
+                          disableAutoFocus={true}
+                          native={true}
+                          className="mail-system-emoji-picker"
+                        />
+                      </div>
+                    )}
+                  </div>
+                  <p className="mail-system-helper-text">
+                    Use line breaks for new paragraphs. Click the emoji button to add emojis.
+                  </p>
+                </div>
+
+                <div className="mail-system-form-group">
+                  <label className="mail-system-label">Photos & Attachments:</label>
+                  <div className="mail-system-file-upload-container">
+                    <button 
+                      type="button" 
+                      className="mail-system-file-button"
+                      onClick={() => photoInputRef.current.click()}
+                    >
+                      <FaImage /> Add Photos
+                    </button>
+                    <input
+                      type="file"
+                      ref={photoInputRef}
+                      onChange={handlePhotoChange}
+                      multiple
+                      accept="image/*"
+                      style={{ display: 'none' }}
+                    />
+                    
+                    <button 
+                      type="button" 
+                      className="mail-system-file-button"
+                      onClick={() => fileInputRef.current.click()}
+                    >
+                      <FaPaperclip /> Add Files
+                    </button>
+                    <input
+                      type="file"
+                      ref={fileInputRef}
+                      onChange={handleAttachmentChange}
+                      multiple
+                      style={{ display: 'none' }}
+                    />
+                    <span className="mail-system-helper-text">
+                      Maximum total size: 10MB
+                    </span>
+                  </div>
+                  
+                  {photoAttachments.length > 0 && (
+                    <div className="mail-system-photo-gallery">
+                      <h4>Selected Photos ({photoAttachments.length})</h4>
+                      <div className="mail-system-photo-grid">
+                        {photoAttachments.map((photo, index) => (
+                          <div key={index} className="mail-system-photo-item">
+                            <img 
+                              src={URL.createObjectURL(photo)} 
+                              alt={`Photo ${index+1}`}
+                              className="mail-system-photo-thumbnail" 
+                            />
+                            <button 
+                              type="button"
+                              className="mail-system-remove-photo"
+                              onClick={() => removePhotoAttachment(index)}
+                              title="Remove photo"
+                            >
+                              <FaTimes />
+                            </button>
+                            <span className="mail-system-photo-size">
+                              {Math.round(photo.size / 1024)} KB
+                            </span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                  
+                  {attachments.length > 0 && (
+                    <div className="mail-system-attachment-list">
+                      <h4>Selected Files ({attachments.length})</h4>
+                      <ul>
+                        {attachments.map((file, index) => (
+                          <li key={index} className="mail-system-attachment-item">
+                            <span className="mail-system-attachment-name">{file.name}</span>
+                            <span className="mail-system-attachment-size">({Math.round(file.size / 1024)} KB)</span>
+                            <button 
+                              type="button"
+                              className="mail-system-remove-attachment"
+                              onClick={() => removeAttachment(index)}
+                            >
+                              <FaTimes />
+                            </button>
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+                </div>
+
+                <div className="mail-system-button-group">
+                  <button
+                    type="button"
+                    onClick={handlePreview}
+                    className="mail-system-btn-secondary"
+                    disabled={sending || !subject || !emailContent}
+                  >
+                    <FaEye /> Preview Email
+                  </button>
+                  <button
+                    type="submit"
+                    className="mail-system-btn-primary"
+                    disabled={sending || !subject || !emailContent}
+                  >
+                    {sending ? (
+                      <>
+                        <FaSpinner className="mail-system-spinner" /> Sending...
+                      </>
+                    ) : (
+                      <>
+                        <FaPaperPlane /> Send Email
+                      </>
+                    )}
+                  </button>
+                </div>
+              </form>
+            )}
+          </div>
+        ) : (
+          <div className="mail-system-content-area">
+            <div className="mail-system-history-header">
+              <h2><FaHistory /> Email History</h2>
+              <div className="mail-system-filter-container">
+                <label htmlFor="historyFilter" className="mail-system-filter-label">
+                  <FaFilter /> Filter:
                 </label>
                 <select 
-                  id="recipients" 
-                  value={selectedRecipients} 
-                  onChange={(e) => setSelectedRecipients(e.target.value)}
-                  className="admin-dash-mail-select"
+                  id="historyFilter"
+                  value={filter}
+                  onChange={(e) => {
+                    setFilter(e.target.value);
+                    setCurrentPage(1);
+                  }}
+                  className="mail-system-filter-select"
                 >
-                  <option value="all">All Users</option>
-                  <option value="active">Verified Users Only</option>
-                  <option value="inactive">Unverified Users Only</option>
+                  <option value="all">All Emails</option>
+                  <option value="week">Last 7 Days</option>
+                  <option value="month">Last 30 Days</option>
                 </select>
               </div>
-
-              <div className="admin-dash-mail-form-group">
-                <label htmlFor="subject">
-                  <FaPaperPlane /> Subject:
-                </label>
-                <input
-                  type="text"
-                  id="subject"
-                  value={subject}
-                  onChange={(e) => setSubject(e.target.value)}
-                  placeholder="Email subject"
-                  required
-                  className="admin-dash-mail-input"
-                />
-              </div>
-
-              <div className="admin-dash-mail-form-group">
-                <label htmlFor="emailContent">
-                  <FaEdit /> Email Body:
-                </label>
-                <div className="admin-dash-mail-textarea-container">
-                  <textarea
-                    id="emailContent"
-                    value={emailContent}
-                    onChange={(e) => setEmailContent(e.target.value)}
-                    placeholder="Enter your email content here..."
-                    required
-                    className="admin-dash-mail-textarea"
-                    rows="12"
-                  />
-                  
-                  <button 
-                    type="button" 
-                    className="admin-dash-mail-emoji-btn"
-                    onClick={() => setShowEmojiPicker(!showEmojiPicker)}
-                  >
-                    😊
-                  </button>
-                  
-                  {showEmojiPicker && (
-                    <div className="admin-dash-mail-emoji-picker">
-                      <div className="admin-dash-mail-emoji-backdrop" onClick={() => setShowEmojiPicker(false)}></div>
-                      <EmojiPicker
-                        onEmojiClick={handleEmojiSelect}
-                        disableAutoFocus={true}
-                        native={true}
-                      />
-                    </div>
-                  )}
-                </div>
-                <p className="admin-dash-mail-helper">
-                  Type your message using regular text format. Use line breaks for new paragraphs.
-                </p>
-              </div>
-
-              <div className="admin-dash-mail-form-group">
-                <label>
-                  <FaPaperclip /> Photos & Attachments:
-                </label>
-                <div className="admin-dash-mail-upload">
-                  <button 
-                    type="button" 
-                    className="admin-dash-mail-btn admin-dash-mail-upload-btn"
-                    onClick={() => photoInputRef.current.click()}
-                  >
-                    <FaImage /> Add Photos
-                  </button>
-                  <input
-                    type="file"
-                    ref={photoInputRef}
-                    onChange={handlePhotoChange}
-                    multiple
-                    accept="image/*"
-                    style={{ display: 'none' }}
-                  />
-                  
-                  <button 
-                    type="button" 
-                    className="admin-dash-mail-btn admin-dash-mail-upload-btn"
-                    onClick={() => fileInputRef.current.click()}
-                  >
-                    <FaPaperclip /> Add Files
-                  </button>
-                  <input
-                    type="file"
-                    ref={fileInputRef}
-                    onChange={handleAttachmentChange}
-                    multiple
-                    style={{ display: 'none' }}
-                  />
-                </div>
-                <p className="admin-dash-mail-helper">
-                  <FaInfoCircle /> Maximum total size: 10MB
-                </p>
-                
-                {photoAttachments.length > 0 && (
-                  <div className="admin-dash-mail-photos">
-                    <h4>Selected Photos ({photoAttachments.length})</h4>
-                    <div className="admin-dash-mail-photo-grid">
-                      {photoAttachments.map((photo, index) => (
-                        <div key={index} className="admin-dash-mail-photo-item">
-                          <img 
-                            src={URL.createObjectURL(photo)} 
-                            alt={`Photo ${index+1}`}
-                            className="admin-dash-mail-photo-img" 
-                          />
-                          <button 
-                            type="button"
-                            className="admin-dash-mail-photo-remove"
-                            onClick={() => removePhotoAttachment(index)}
-                            title="Remove photo"
-                          >
-                            <FaTimes />
-                          </button>
-                          <span className="admin-dash-mail-photo-size">
-                            {Math.round(photo.size / 1024)} KB
-                          </span>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                )}
-                
-                {attachments.length > 0 && (
-                  <div className="admin-dash-mail-files">
-                    <h4>Selected Files ({attachments.length})</h4>
-                    <ul className="admin-dash-mail-file-list">
-                      {attachments.map((file, index) => (
-                        <li key={index} className="admin-dash-mail-file-item">
-                          <span className="admin-dash-mail-file-name">{file.name}</span>
-                          <span className="admin-dash-mail-file-size">({Math.round(file.size / 1024)} KB)</span>
-                          <button 
-                            type="button"
-                            className="admin-dash-mail-file-remove"
-                            onClick={() => removeAttachment(index)}
-                            title="Remove file"
-                          >
-                            <FaTimes />
-                          </button>
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
-                )}
-              </div>
-
-              <div className="admin-dash-mail-buttons">
-                <button
-                  type="button"
-                  onClick={handlePreview}
-                  className="admin-dash-mail-btn admin-dash-mail-btn-secondary"
-                  disabled={sending || !subject || !emailContent}
-                >
-                  <FaEye /> Preview Email
-                </button>
-                <button
-                  type="submit"
-                  className="admin-dash-mail-btn admin-dash-mail-btn-primary"
-                  disabled={sending || !subject || !emailContent}
-                >
-                  {sending ? (
-                    <>
-                      <FaSpinner className="admin-dash-mail-spinner" /> Sending...
-                    </>
-                  ) : (
-                    <>
-                      <FaPaperPlane /> Send Email
-                    </>
-                  )}
-                </button>
-              </div>
-            </form>
-          )}
-          
-          {/* Email sending history - visible only when there are sent emails */}
-          {emailsSent.length > 0 && (
-            <div className="admin-dash-mail-history">
-              <h3>Recent Email Campaigns</h3>
-              <div className="admin-dash-mail-table">
-                <div className="admin-dash-mail-table-header">
-                  <div className="admin-dash-mail-table-cell">Subject</div>
-                  <div className="admin-dash-mail-table-cell">Recipients</div>
-                  <div className="admin-dash-mail-table-cell">Sent</div>
-                  <div className="admin-dash-mail-table-cell">Count</div>
-                </div>
-                
-                {emailsSent.slice((currentPage-1)*5, currentPage*5).map(email => (
-                  <div key={email.id} className="admin-dash-mail-table-row">
-                    <div className="admin-dash-mail-table-cell">{email.subject}</div>
-                    <div className="admin-dash-mail-table-cell">
-                      {getRecipientTypeIcon(email.recipientType)}
-                      {getRecipientTypeLabel(email.recipientType)}
-                    </div>
-                    <div className="admin-dash-mail-table-cell">
-                      {new Date(email.sentAt).toLocaleString()}
-                    </div>
-                    <div className="admin-dash-mail-table-cell">
-                      {email.recipientCount} recipients
-                    </div>
-                  </div>
-                ))}
-              </div>
-              
-              {/* Pagination */}
-              {Math.ceil(emailsSent.length / 5) > 1 && (
-                <div className="admin-dash-mail-pagination">
-                  <button 
-                    className="admin-dash-mail-page-button"
-                    onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
-                    disabled={currentPage === 1}
-                  >
-                    ←
-                  </button>
-                  
-                  {Array.from(
-                    { length: Math.ceil(emailsSent.length / 5) },
-                    (_, i) => i + 1
-                  ).map(page => (
-                    <button
-                      key={page}
-                      className={`admin-dash-mail-page-button ${currentPage === page ? 'active' : ''}`}
-                      onClick={() => setCurrentPage(page)}
-                    >
-                      {page}
-                    </button>
-                  ))}
-                  
-                  <button 
-                    className="admin-dash-mail-page-button"
-                    onClick={() => setCurrentPage(prev => 
-                      Math.min(prev + 1, Math.ceil(emailsSent.length / 5))
-                    )}
-                    disabled={currentPage === Math.ceil(emailsSent.length / 5)}
-                  >
-                    →
-                  </button>
-                </div>
-              )}
             </div>
-          )}
-        </div>
+            
+            {loading ? (
+              <div className="mail-system-loading">
+                <FaSpinner className="mail-system-spinner" /> Loading email history...
+              </div>
+            ) : emailHistory.length === 0 ? (
+              <div className="mail-system-no-data">
+                <FaRegEnvelope size={40} />
+                <p>No email history found</p>
+              </div>
+            ) : (
+              <>
+                <div className="mail-system-history-table-container">
+                  <table className="mail-system-history-table">
+                    <thead>
+                      <tr>
+                        <th>Subject</th>
+                        <th>Sent Date</th>
+                        <th>Recipients</th>
+                        <th>Type</th>
+                        <th>Attachments</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {emailHistory.map((email) => (
+                        <tr key={email.id}>
+                          <td>{email.subject}</td>
+                          <td>{formatDate(email.sentAt)}</td>
+                          <td>{email.recipientCount}</td>
+                          <td>{getRecipientTypeName(email.recipientType)}</td>
+                          <td>{email.attachmentCount || 0}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+                
+                <div className="mail-system-pagination">
+                  <button 
+                    onClick={() => handlePageChange(currentPage - 1)}
+                    disabled={currentPage === 1}
+                    className="mail-system-pagination-button"
+                  >
+                    <FaChevronLeft />
+                  </button>
+                  
+                  <div className="mail-system-pagination-info">
+                    Page {currentPage} of {totalPages}
+                  </div>
+                  
+                  <button 
+                    onClick={() => handlePageChange(currentPage + 1)}
+                    disabled={currentPage === totalPages}
+                    className="mail-system-pagination-button"
+                  >
+                    <FaChevronRight />
+                  </button>
+                </div>
+              </>
+            )}
+          </div>
+        )}
       </div>
     </div>
   );

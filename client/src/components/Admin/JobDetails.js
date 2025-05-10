@@ -9,7 +9,6 @@ import {
     FaSearch, 
     FaFilter, 
     FaPaperPlane, 
-    FaPlus, 
     FaAngleLeft, 
     FaAngleRight,
     FaExclamationTriangle,
@@ -67,6 +66,8 @@ const JobDetails = () => {
 
     useEffect(() => {
         fetchJobs();
+        // Debug log to check actual job statuses
+        console.log("Job statuses:", jobs.map(job => job.status));
     }, []);
 
     const handleRecipientChange = (e) => {
@@ -309,11 +310,6 @@ NextYouth Team
             <div className="job-details-main">
                 <div className="job-details-header">
                     <div className="job-details-logo-container">
-                        <img 
-                            src={darkMode ? logoDark : logoLight} 
-                            alt="NextYouth Admin" 
-                            className="job-details-logo" 
-                        />
                         <h1>Job Management</h1>
                     </div>
                     
@@ -333,8 +329,8 @@ NextYouth Team
                                 <FaChartLine />
                             </div>
                             <div className="job-details-stat-text">
-                                <span>Active Jobs</span>
-                                <h3>{jobs.filter(job => job.status === 'active' || job.status === 'available').length}</h3>
+                                <span>Available Jobs</span>
+                                <h3>{jobs.length}</h3>
                             </div>
                         </div>
                     </div>
@@ -365,10 +361,6 @@ NextYouth Team
                             </select>
                         </div>
                     </div>
-                    
-                    <button className="job-details-add-btn">
-                        <FaPlus /> Add Job
-                    </button>
                 </div>
 
                 {error && (
