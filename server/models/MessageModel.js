@@ -24,6 +24,14 @@ const messageSchema = new mongoose.Schema(
       type: Boolean,
       default: false,
     },
+    isDeleted: {
+      type: Boolean,
+      default: false,
+    },
+    deletedFor: [{
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "user",
+    }],
   },
   { timestamps: true }
 );
@@ -45,6 +53,10 @@ const conversationSchema = new mongoose.Schema(
       type: mongoose.Schema.Types.ObjectId,
       ref: "Message",
     },
+    deletedFor: [{
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "user",
+    }],
   },
   { timestamps: true }
 );

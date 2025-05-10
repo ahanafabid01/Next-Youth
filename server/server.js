@@ -16,6 +16,7 @@ import { fileURLToPath } from "url";
 import fs from "fs";
 import { createServer } from 'http'; // Add this
 import { Server } from 'socket.io'; // Add this
+import { Message } from "./models/MessageModel.js"; // Add this
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -64,7 +65,9 @@ if (!fs.existsSync(uploadDir)) {
     fs.mkdirSync(uploadDir, { recursive: true });
 }
 
+// Static file serving middleware
 app.use("/uploads", express.static(path.join(__dirname, "uploads")));
+app.use('/uploads/messages', express.static(path.join(__dirname, 'uploads/messages')));
 
 // API routes
 app.use("/api/auth", authRouter);
@@ -86,38 +89,95 @@ io.on('connection', (socket) => {
       console.log(`User ${socket.id} joined conversation: ${conversationId}`);
     }
   });
+
+  // Leave a conversation
+  socket.on('leave_conversation', (conversationId) => {
+    if (conversationId) {
+      socket.leave(conversationId);
+      console.log(`User ${socket.id} left conversation: ${conversationId}`);
+    }
+  });
   
   // Send a message
   socket.on('send_message', async (message) => {
     try {
-      if (message.conversation) {
-        const conversationId = typeof message.conversation === 'object' ? 
-          message.conversation.toString() : message.conversation.toString();
-        
-        // Populate sender information before broadcasting
-        let messageToSend;
-        
-        if (message._id) {
+      console.log("Received message to broadcast:", message);
+      
+      // Get the conversation ID from either direct property or nested object
+      const conversationId = message.conversationId || 
+        (message.conversation && 
+          (typeof message.conversation === 'object' ? 
+            message.conversation._id?.toString() : message.conversation.toString()));
+      
+      if (!conversationId) {
+        console.error("Missing conversationId in message:", message);
+        return;
+      }
+      
+      // Populate sender information before broadcasting
+      let messageToSend;
+      
+      if (message._id) {
+        try {
           const populatedMessage = await Message.findById(message._id)
             .populate('sender', 'name email profilePicture');
             
           if (populatedMessage) {
             messageToSend = populatedMessage.toObject();
           } else {
-            messageToSend = message;
+            messageToSend = {...message};
           }
-        } else {
-          messageToSend = message;
+        } catch (err) {
+          console.error("Error populating message:", err);
+          messageToSend = {...message};
         }
-        
-        // Add conversationId field for client-side processing
-        messageToSend.conversationId = conversationId;
-        
-        io.to(conversationId).emit('new_message', messageToSend);
-        console.log(`Message sent to conversation: ${conversationId}`);
+      } else {
+        messageToSend = {...message};
       }
+      
+      // Always ensure the conversationId is included
+      messageToSend.conversationId = conversationId;
+      
+      console.log(`Broadcasting message to conversation ${conversationId}`);
+      io.to(conversationId).emit('new_message', messageToSend);
     } catch (error) {
       console.error("Error broadcasting message:", error);
+    }
+  });
+  
+  // Update the socket.on("delete_message") handler
+  socket.on('delete_message', async (data) => {
+    try {
+      const { messageId, conversationId, deleteFor } = data;
+      console.log("Received delete_message event:", { messageId, conversationId, deleteFor });
+      
+      if (!messageId || !conversationId) {
+        console.error("Missing messageId or conversationId in delete_message event");
+        return;
+      }
+      
+      if (deleteFor === 'everyone') {
+        try {
+          // Find the message to verify it exists
+          const message = await Message.findById(messageId);
+          
+          if (message) {
+            // Broadcast the deletion to all clients in the conversation room
+            io.to(conversationId.toString()).emit('message_deleted', {
+              messageId,
+              deleteFor: 'everyone'
+            });
+            
+            console.log(`Message ${messageId} marked as deleted for everyone in conversation ${conversationId}`);
+          } else {
+            console.log(`Message ${messageId} not found when processing delete_message event`);
+          }
+        } catch (err) {
+          console.error(`Error finding message ${messageId}:`, err);
+        }
+      }
+    } catch (error) {
+      console.error("Error in delete_message socket event:", error);
     }
   });
   

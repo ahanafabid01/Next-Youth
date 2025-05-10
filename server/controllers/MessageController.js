@@ -8,8 +8,10 @@ export const getConversations = async (req, res) => {
   try {
     const userId = req.user.id;
 
+    // Add filter to exclude conversations marked as deleted for this user
     const conversations = await Conversation.find({
       participants: { $in: [userId] },
+      deletedFor: { $nin: [userId] }  // This line excludes deleted conversations
     })
       .populate({
         path: "participants",
@@ -59,13 +61,18 @@ export const getMessages = async (req, res) => {
     // Calculate skip for pagination
     const skip = (page - 1) * limit;
 
-    // Count total messages for pagination
+    // Count total messages for pagination, excluding deleted messages
     const totalMessages = await Message.countDocuments({
       conversation: conversationId,
+      deletedFor: { $nin: [userId] } // Don't count messages deleted for this user
     });
 
     // Get messages with pagination and populate sender information
-    const messages = await Message.find({ conversation: conversationId })
+    // Filter out messages that have been deleted for this user
+    const messages = await Message.find({ 
+      conversation: conversationId,
+      deletedFor: { $nin: [userId] } // Don't return messages deleted for this user
+    })
       .populate('sender', 'name email profilePicture')
       .sort({ createdAt: -1 })
       .skip(skip)
@@ -150,7 +157,7 @@ export const sendMessage = async (req, res) => {
     await conversation.save();
 
     // Populate the sender info for response
-    const populatedMessage = await Message.findById(message._id);
+    const populatedMessage = await Message.findById(message._id).populate('sender', 'name email profilePicture');
 
     return res.status(201).json({
       success: true,
@@ -214,7 +221,7 @@ export const sendAttachment = async (req, res) => {
     }
 
     // Determine file type
-    const fileUrl = `${req.protocol}://${req.get("host")}/uploads/${file.filename}`;
+    const fileUrl = `${req.protocol}://${req.get("host")}/uploads/messages/${file.filename}`;
     const fileType = file.mimetype;
     const filename = file.originalname;
 
@@ -235,7 +242,7 @@ export const sendAttachment = async (req, res) => {
     await conversation.save();
 
     // Populate the sender info for response
-    const populatedMessage = await Message.findById(message._id);
+    const populatedMessage = await Message.findById(message._id).populate('sender', 'name email profilePicture');
 
     return res.status(201).json({
       success: true,
@@ -447,6 +454,146 @@ export const createConversationFromApplication = async (req, res) => {
     });
   } catch (error) {
     console.error("Error creating conversation from application:", error);
+    return res.status(500).json({
+      success: false,
+      message: "Internal server error",
+    });
+  }
+};
+
+// Delete a message
+export const deleteMessage = async (req, res) => {
+  try {
+    const messageId = req.params.messageId;
+    const userId = req.user.id;
+    const deleteFor = req.query.deleteFor || "me";
+    
+    // Validate messageId format
+    if (!mongoose.Types.ObjectId.isValid(messageId)) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid message ID format",
+      });
+    }
+    
+    // Find the message
+    const message = await Message.findById(messageId);
+    
+    if (!message) {
+      return res.status(404).json({
+        success: false,
+        message: "Message not found",
+      });
+    }
+    
+    // Check if user is part of the conversation
+    const conversationId = message.conversation;
+    const conversation = await Conversation.findOne({
+      _id: conversationId,
+      participants: { $in: [userId] },
+    });
+    
+    if (!conversation) {
+      return res.status(403).json({
+        success: false,
+        message: "You don't have permission to delete this message",
+      });
+    }
+    
+    // Handle delete for different scenarios
+    if (deleteFor === "everyone") {
+      // Check if user is the sender
+      const isSender = message.sender.toString() === userId.toString();
+      
+      if (!isSender) {
+        return res.status(403).json({
+          success: false,
+          message: "Only the sender can delete messages for everyone",
+        });
+      }
+      
+      // Mark message as deleted for everyone
+      message.isDeleted = true;
+      message.content = "This message was deleted";
+      message.attachment = null;
+      await message.save();
+      
+      // Emit socket event to notify other users
+      const io = req.app.get("io");
+      if (io) {
+        io.to(conversation._id.toString()).emit("message_deleted", {
+          messageId,
+          deleteFor: "everyone"
+        });
+      }
+    } else {
+      // Delete for me - add to deletedFor array
+      if (!message.deletedFor) {
+        message.deletedFor = [];
+      }
+      
+      // Add user to deletedFor if not already there
+      if (!message.deletedFor.map(id => id.toString()).includes(userId.toString())) {
+        message.deletedFor.push(userId);
+        await message.save();
+      }
+    }
+    
+    return res.status(200).json({
+      success: true,
+      message: `Message deleted ${deleteFor === "everyone" ? "for everyone" : "for you"}`,
+    });
+  } catch (error) {
+    console.error("Error deleting message:", error);
+    return res.status(500).json({
+      success: false,
+      message: "Internal server error",
+    });
+  }
+};
+
+// Delete a conversation
+export const deleteConversation = async (req, res) => {
+  try {
+    const conversationId = req.params.conversationId;
+    const userId = req.user.id;
+    
+    // Check if conversation exists and user is part of it
+    const conversation = await Conversation.findOne({
+      _id: conversationId,
+      participants: { $in: [userId] },
+    });
+    
+    if (!conversation) {
+      return res.status(404).json({
+        success: false,
+        message: "Conversation not found or you don't have access",
+      });
+    }
+    
+    // For personal deletion, we don't actually delete the conversation
+    // Instead, we mark all messages as deleted for this user
+    await Message.updateMany(
+      { conversation: conversationId },
+      { $addToSet: { deletedFor: userId } }
+    );
+    
+    // Add user to the conversation's deletedFor array
+    if (!conversation.deletedFor) {
+      conversation.deletedFor = [];
+    }
+    
+    if (!conversation.deletedFor.includes(userId)) {
+      conversation.deletedFor.push(userId);
+      await conversation.save();
+    }
+    
+    return res.status(200).json({
+      success: true,
+      message: "Conversation deleted successfully",
+    });
+  } catch (error) {
+    console.error("Error deleting conversation:", error);
     return res.status(500).json({
       success: false,
       message: "Internal server error",

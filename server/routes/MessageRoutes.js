@@ -10,6 +10,8 @@ import {
   markConversationAsRead,
   getUnreadCount,
   createConversationFromApplication,
+  deleteMessage,
+  deleteConversation,
 } from "../controllers/MessageController.js";
 
 const router = express.Router();
@@ -37,5 +39,11 @@ router.get("/unread-count/:conversationId", userAuth, getUnreadCount);
 
 // Create conversation when application is accepted
 router.post("/create-from-application", userAuth, createConversationFromApplication);
+
+// Delete a message
+router.delete("/message/:messageId", userAuth, deleteMessage);
+
+// Delete a conversation
+router.delete("/conversation/:conversationId", userAuth, deleteConversation);
 
 export default router;
