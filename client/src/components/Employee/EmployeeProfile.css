@@ -1030,7 +1030,7 @@
 .employee-edit-profile-button.secondary {
   background-color: transparent;
   border: 1px solid var(--light-border);
-  color: var(--dark-text);
+  color: var (--dark-text);
 }
 
 .dark-theme .employee-edit-profile-button.secondary {
@@ -2062,5 +2062,39 @@
   
   .employee-edit-profile-footer {
     padding: 2rem 1.5rem 1rem;
+  }
+}
+
+/* Add this to the CSS file */
+
+.employee-edit-profile-button-group {
+  display: flex;
+  gap: 0.8rem;
+}
+
+.employee-edit-profile-button.save {
+  background-color: #10b981;
+  color: white;
+}
+
+.employee-edit-profile-button.save:hover {
+  background-color: #059669;
+  transform: translateY(-2px);
+}
+
+.employee-edit-profile-button.save:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none;
+}
+
+@media (max-width: 576px) {
+  .employee-edit-profile-button-group {
+    flex-direction: column;
+    width: 100%;
+  }
+  
+  .employee-edit-profile-button-group .employee-edit-profile-button {
+    width: 100%;
   }
 }
