@@ -65,29 +65,33 @@ const MailSystem = () => {
   const fetchEmailHistory = async () => {
     try {
       setLoading(true);
-      setError("");
+      // Sample response - replace with actual API call when available
+      // const response = await axios.get(`${API_BASE_URL}/admin/email-history?page=${currentPage}&filter=${filter}`, { withCredentials: true });
       
-      // Make the actual API call to fetch email history
-      const response = await axios.get(
-        `${API_BASE_URL}/admin/email-history`, 
-        { 
-          params: { page: currentPage, filter: filter },
-          withCredentials: true 
-        }
-      );
+      // Simulated response for now
+      setTimeout(() => {
+        const mockEmails = Array(10).fill(null).map((_, i) => ({
+          id: `email-${currentPage}-${i}`,
+          subject: `Monthly newsletter ${currentPage}.${i+1}`,
+          sentAt: new Date(Date.now() - (i * 86400000)).toISOString(),
+          recipientCount: Math.floor(Math.random() * 500) + 50,
+          recipientType: ['all', 'active', 'inactive'][Math.floor(Math.random() * 3)],
+          attachmentCount: Math.floor(Math.random() * 3)
+        }));
+        
+        setEmailHistory(mockEmails);
+        setTotalPages(5); // Mock 5 pages total
+        setLoading(false);
+      }, 800);
       
-      if (response.data.success) {
-        setEmailHistory(response.data.emails);
-        setTotalPages(response.data.totalPages || 1);
-      } else {
-        setError(response.data.message || "Failed to fetch email history");
-        setEmailHistory([]);
-      }
+      // When API is ready, use this:
+      // if (response.data.success) {
+      //   setEmailHistory(response.data.emails);
+      //   setTotalPages(response.data.totalPages);
+      // }
     } catch (error) {
       console.error("Failed to fetch email history:", error);
       setError("Failed to load email history. Please try again.");
-      setEmailHistory([]);
-    } finally {
       setLoading(false);
     }
   };

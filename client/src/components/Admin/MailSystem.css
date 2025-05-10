@@ -231,7 +231,7 @@
 
 .mail-system-emoji-button {
   position: absolute;
-  top: 10px; /* Changed from bottom to top */
+  top: 10px;
   right: 10px;
   background: none;
   border: none;
@@ -247,7 +247,7 @@
 
 .mail-system-emoji-picker-container {
   position: absolute;
-  top: 50px; /* Changed from bottom to top */
+  top: 50px;
   right: 0;
   z-index: 10;
 }
@@ -289,13 +289,13 @@
   border: 1px solid #e2e8f0;
   border-radius: 8px;
   color: #334155;
-  font-weight: 600;
+  font-weight: 500;
   cursor: pointer;
   transition: all 0.2s ease;
 }
 
 .mail-system-dark-mode .mail-system-file-button {
-  background-color: #1e293b;
+  background-color: #1a2234;
   border: 1px solid #2d3748;
   color: #e2e8f0;
 }
@@ -316,15 +316,15 @@
 
 .mail-system-photo-gallery h4,
 .mail-system-attachment-list h4 {
-  font-size: 1rem;
-  font-weight: 600;
-  color: #334155;
+  font-size: 0.9rem;
+  color: #64748b;
   margin: 0 0 0.75rem;
+  font-weight: 600;
 }
 
 .mail-system-dark-mode .mail-system-photo-gallery h4,
 .mail-system-dark-mode .mail-system-attachment-list h4 {
-  color: #e2e8f0;
+  color: #94a3b8;
 }
 
 .mail-system-photo-grid {
@@ -337,17 +337,20 @@
   position: relative;
   border-radius: 8px;
   overflow: hidden;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+  background-color: #f8fafc;
 }
 
 .mail-system-dark-mode .mail-system-photo-item {
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.15);
+  background-color: #0f172a;
 }
 
 .mail-system-photo-thumbnail {
   width: 100%;
-  height: 120px;
+  height: 100px;
   object-fit: cover;
+  display: block;
 }
 
 .mail-system-remove-photo {
@@ -356,15 +359,14 @@
   right: 5px;
   width: 24px;
   height: 24px;
-  background-color: rgba(255, 255, 255, 0.8);
-  border: none;
   border-radius: 50%;
+  background-color: rgba(0, 0, 0, 0.5);
+  color: white;
+  border: none;
   display: flex;
   align-items: center;
   justify-content: center;
   cursor: pointer;
-  color: #ef4444;
-  font-size: 0.75rem;
   opacity: 0;
   transition: opacity 0.2s ease;
 }
@@ -374,15 +376,9 @@
 }
 
 .mail-system-photo-size {
-  position: absolute;
-  bottom: 0;
-  left: 0;
-  right: 0;
-  padding: 0.25rem;
-  background-color: rgba(0, 0, 0, 0.6);
-  color: #ffffff;
+  padding: 0.5rem;
   font-size: 0.75rem;
-  text-align: center;
+  color: #64748b;
 }
 
 /* Attachment list */
@@ -395,20 +391,23 @@
 .mail-system-attachment-item {
   display: flex;
   align-items: center;
-  background-color: #f1f5f9;
-  border-radius: 6px;
-  padding: 0.75rem;
-  margin-bottom: 0.5rem;
+  justify-content: space-between;
+  padding: 0.75rem 1rem;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  margin-bottom: 0.75rem;
+  background-color: #f8fafc;
 }
 
 .mail-system-dark-mode .mail-system-attachment-item {
-  background-color: #1e293b;
+  border: 1px solid #2d3748;
+  background-color: #0f172a;
 }
 
 .mail-system-attachment-name {
-  flex: 1;
   font-weight: 500;
   color: #334155;
+  flex: 1;
 }
 
 .mail-system-dark-mode .mail-system-attachment-name {
@@ -417,7 +416,7 @@
 
 .mail-system-attachment-size {
   color: #64748b;
-  margin: 0 0.5rem;
+  margin: 0 1rem;
   font-size: 0.85rem;
 }
 
@@ -430,25 +429,28 @@
   border: none;
   color: #ef4444;
   cursor: pointer;
-  font-size: 0.875rem;
-  opacity: 0.8;
-  transition: opacity 0.2s ease;
+  padding: 5px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 4px;
 }
 
 .mail-system-remove-attachment:hover {
-  opacity: 1;
+  background-color: rgba(239, 68, 68, 0.1);
 }
 
 /* Buttons */
 .mail-system-button-group {
   display: flex;
+  justify-content: flex-end;
   gap: 1rem;
   margin-top: 1rem;
 }
 
 .mail-system-btn-primary,
 .mail-system-btn-secondary {
-  padding: 0.8rem 1.5rem;
+  padding: 0.75rem 1.5rem;
   border-radius: 8px;
   font-weight: 600;
   display: flex;
@@ -460,8 +462,8 @@
 }
 
 .mail-system-btn-primary {
-  background: linear-gradient(90deg, #3a86ff, #4cc9f0);
-  color: #ffffff;
+  background-color: #3a86ff;
+  color: white;
 }
 
 .mail-system-btn-secondary {
@@ -471,13 +473,13 @@
 }
 
 .mail-system-dark-mode .mail-system-btn-secondary {
-  background-color: #1e293b;
+  background-color: #1a2234;
   color: #e2e8f0;
   border: 1px solid #2d3748;
 }
 
 .mail-system-btn-primary:hover {
-  background: linear-gradient(90deg, #2976fc, #3bb9e0);
+  background-color: #2563eb;
 }
 
 .mail-system-btn-secondary:hover {
@@ -490,35 +492,43 @@
 
 .mail-system-btn-primary:disabled,
 .mail-system-btn-secondary:disabled {
-  opacity: 0.5;
+  opacity: 0.6;
   cursor: not-allowed;
 }
 
 .mail-system-spinner {
-  animation: mail-system-spin 1s linear infinite;
+  display: inline-block;
+  width: 16px;
+  height: 16px;
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  border-radius: 50%;
+  border-top-color: #fff;
+  animation: mail-system-spin 1s ease-in-out infinite;
 }
 
 @keyframes mail-system-spin {
-  from { transform: rotate(0deg); }
-  to { transform: rotate(360deg); }
+  to {
+    transform: rotate(360deg);
+  }
 }
 
 /* Preview mode */
 .mail-system-preview-container {
-  border: 1px solid #e2e8f0;
-  border-radius: 8px;
+  background-color: #ffffff;
+  border-radius: 12px;
+  padding: 2rem;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
 }
 
 .mail-system-dark-mode .mail-system-preview-container {
-  border: 1px solid #2d3748;
+  background-color: #1e293b;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
 }
 
 .mail-system-preview-header {
-  padding: 1.25rem;
+  margin-bottom: 1.5rem;
   border-bottom: 1px solid #e2e8f0;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
+  padding-bottom: 1rem;
 }
 
 .mail-system-dark-mode .mail-system-preview-header {
@@ -526,10 +536,10 @@
 }
 
 .mail-system-preview-header h2 {
-  font-size: 1.25rem;
+  margin: 0;
+  font-size: 1.3rem;
   font-weight: 600;
   color: #334155;
-  margin: 0;
   display: flex;
   align-items: center;
   gap: 0.5rem;
@@ -540,22 +550,30 @@
 }
 
 .mail-system-preview {
-  padding: 1.25rem;
+  background-color: #f8fafc;
+  border-radius: 8px;
+  padding: 1.5rem;
+  margin-bottom: 1.5rem;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
 }
 
 .mail-system-preview-section {
   margin-bottom: 1.5rem;
+  padding-bottom: 1.5rem;
+  border-bottom: 1px solid #e2e8f0;
 }
 
 .mail-system-preview-section:last-child {
   margin-bottom: 0;
+  padding-bottom: 0;
+  border-bottom: none;
 }
 
 .mail-system-preview-label {
   font-weight: 600;
-  font-size: 0.9rem;
   color: #64748b;
   margin-bottom: 0.5rem;
+  font-size: 0.9rem;
 }
 
 .mail-system-dark-mode .mail-system-preview-label {
@@ -571,81 +589,83 @@
 }
 
 .mail-system-preview-subject {
-  font-size: 1.25rem;
+  font-size: 1.2rem;
   font-weight: 600;
-  margin-bottom: 0.5rem;
 }
 
 .mail-system-preview-body {
-  line-height: 1.6;
-  font-size: 1rem;
+  line-height: 1.7;
+  white-space: pre-wrap;
 }
 
 .mail-system-preview-photos {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
   gap: 1rem;
-  margin-top: 0.5rem;
+  margin-top: 1rem;
 }
 
 .mail-system-photo-preview-item {
-  display: flex;
-  flex-direction: column;
   border-radius: 8px;
   overflow: hidden;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
+  background-color: #ffffff;
 }
 
 .mail-system-dark-mode .mail-system-photo-preview-item {
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
+  background-color: #0f172a;
 }
 
 .mail-system-photo-preview {
   width: 100%;
   height: 120px;
   object-fit: cover;
+  display: block;
 }
 
 .mail-system-photo-name {
   padding: 0.5rem;
-  background-color: #f1f5f9;
-  color: #334155;
   font-size: 0.8rem;
+  color: #64748b;
+  text-align: center;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
 }
 
 .mail-system-dark-mode .mail-system-photo-name {
-  background-color: #1e293b;
-  color: #e2e8f0;
+  color: #94a3b8;
 }
 
 .mail-system-preview-attachments {
-  list-style: none;
-  padding: 0;
-  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
 }
 
 .mail-system-preview-attachment {
-  background-color: #f1f5f9;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
   padding: 0.75rem;
-  border-radius: 6px;
-  margin-bottom: 0.5rem;
+  border-radius: 8px;
+  background-color: #ffffff;
   color: #334155;
   font-size: 0.9rem;
+  border: 1px solid #e2e8f0;
 }
 
 .mail-system-dark-mode .mail-system-preview-attachment {
-  background-color: #1e293b;
+  background-color: #1a2234;
   color: #e2e8f0;
+  border: 1px solid #2d3748;
 }
 
 .mail-system-preview-actions {
-  margin-top: 2rem;
   display: flex;
-  gap: 1rem;
   justify-content: flex-end;
+  gap: 1rem;
 }
 
 /* Email history */
@@ -657,10 +677,10 @@
 }
 
 .mail-system-history-header h2 {
-  font-size: 1.25rem;
+  margin: 0;
+  font-size: 1.3rem;
   font-weight: 600;
   color: #334155;
-  margin: 0;
   display: flex;
   align-items: center;
   gap: 0.5rem;
@@ -677,11 +697,11 @@
 }
 
 .mail-system-filter-label {
+  font-weight: 500;
+  color: #64748b;
   display: flex;
   align-items: center;
-  gap: 0.5rem;
-  color: #64748b;
-  font-weight: 500;
+  gap: 0.25rem;
 }
 
 .mail-system-dark-mode .mail-system-filter-label {
@@ -690,16 +710,20 @@
 
 .mail-system-filter-select {
   padding: 0.5rem 0.75rem;
+  border: 1px solid #e2e8f0;
   border-radius: 6px;
+  background-color: #ffffff;
+  color: #334155;
+  font-size: 0.9rem;
 }
 
 .mail-system-loading {
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 3rem;
+  padding: 3rem 0;
   color: #64748b;
-  font-weight: 500;
+  font-size: 1.1rem;
   gap: 0.75rem;
 }
 
@@ -712,7 +736,7 @@
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  padding: 4rem 2rem;
+  padding: 4rem 0;
   color: #64748b;
 }
 
@@ -764,7 +788,37 @@
 }
 
 .mail-system-dark-mode .mail-system-history-table tr:hover td {
-  background-color: #1e293b;
+  background-color: #1a2234;
+}
+
+.mail-system-status-delivered {
+  display: inline-block;
+  padding: 0.25rem 0.5rem;
+  border-radius: 4px;
+  font-size: 0.85rem;
+  font-weight: 500;
+  color: #10b981;
+  background-color: rgba(16, 185, 129, 0.1);
+}
+
+.mail-system-status-failed {
+  display: inline-block;
+  padding: 0.25rem 0.5rem;
+  border-radius: 4px;
+  font-size: 0.85rem;
+  font-weight: 500;
+  color: #ef4444;
+  background-color: rgba(239, 68, 68, 0.1);
+}
+
+.mail-system-status-pending {
+  display: inline-block;
+  padding: 0.25rem 0.5rem;
+  border-radius: 4px;
+  font-size: 0.85rem;
+  font-weight: 500;
+  color: #f59e0b;
+  background-color: rgba(245, 158, 11, 0.1);
 }
 
 /* Pagination */
@@ -772,32 +826,28 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 1rem;
-  margin-top: 1.5rem;
+  gap: 0.75rem;
 }
 
 .mail-system-pagination-button {
-  width: 40px;
-  height: 40px;
-  border-radius: 20px;
-  background-color: #f1f5f9;
+  padding: 0.5rem 0.75rem;
   border: 1px solid #e2e8f0;
+  border-radius: 6px;
+  background-color: #ffffff;
   color: #334155;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+  font-size: 0.9rem;
   cursor: pointer;
   transition: all 0.2s ease;
 }
 
 .mail-system-dark-mode .mail-system-pagination-button {
-  background-color: #1e293b;
+  background-color: #1a2234;
   border: 1px solid #2d3748;
   color: #e2e8f0;
 }
 
 .mail-system-pagination-button:hover:not(:disabled) {
-  background-color: #e2e8f0;
+  background-color: #f1f5f9;
 }
 
 .mail-system-dark-mode .mail-system-pagination-button:hover:not(:disabled) {
@@ -810,8 +860,8 @@
 }
 
 .mail-system-pagination-info {
-  font-size: 0.95rem;
   color: #64748b;
+  font-size: 0.9rem;
 }
 
 .mail-system-dark-mode .mail-system-pagination-info {
@@ -822,7 +872,7 @@
 @media (max-width: 1024px) {
   .mail-system-main {
     margin-left: 0;
-    padding-top: 90px;
+    padding: 1.5rem;
   }
   
   .mail-system-header-area {
@@ -832,24 +882,7 @@
   
   .mail-system-logo-container {
     margin-bottom: 1rem;
-  }
-  
-  .mail-system-button-group {
-    flex-direction: column;
-  }
-  
-  .mail-system-preview-actions {
-    flex-direction: column;
-  }
-}
-
-@media (max-width: 768px) {
-  .mail-system-main {
-    padding: 90px 1rem 1rem;
-  }
-  
-  .mail-system-content-area {
-    padding: 1.5rem;
+    margin-right: 0;
   }
   
   .mail-system-history-header {
@@ -857,38 +890,53 @@
     align-items: flex-start;
     gap: 1rem;
   }
-  
-  .mail-system-file-upload-container {
-    flex-direction: column;
-    align-items: flex-start;
+}
+
+@media (max-width: 768px) {
+  .mail-system-tabs {
+    overflow-x: auto;
+    white-space: nowrap;
+    padding-bottom: 0.5rem;
   }
   
-  .mail-system-file-button {
+  .mail-system-content-area {
+    padding: 1.5rem;
+  }
+  
+  .mail-system-button-group {
+    flex-direction: column;
+  }
+  
+  .mail-system-btn-primary,
+  .mail-system-btn-secondary {
     width: 100%;
+    justify-content: center;
+  }
+  
+  .mail-system-preview-actions {
+    flex-direction: column;
   }
 }
 
 @media (max-width: 480px) {
-  .mail-system-content-area {
-    padding: 1.25rem;
+  .mail-system-main {
+    padding: 1rem;
   }
   
-  .mail-system-tabs {
-    gap: 0;
+  .mail-system-content-area {
+    padding: 1rem;
   }
   
   .mail-system-tab {
-    flex: 1;
-    padding: 0.75rem 0.5rem;
-    font-size: 0.9rem;
-    justify-content: center;
+    padding: 0.75rem 1rem;
   }
   
-  .mail-system-photo-grid {
+  .mail-system-photo-grid,
+  .mail-system-preview-photos {
     grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
   }
   
-  .mail-system-preview-photos {
-    grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+  .mail-system-pagination {
+    flex-wrap: wrap;
   }
 }
