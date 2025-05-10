@@ -25,57 +25,47 @@ import {
 
 import './EmployeePayment.css';
 
-// Update the MobileBankingLogo component with more accurate logos
-
-// Mobile banking logo components
+// Replace the MobileBankingLogo component with this image-based version using local assets
 const MobileBankingLogo = ({ provider }) => {
   switch(provider.toLowerCase()) {
     case 'bkash':
       return (
         <div className="mobile-banking-logo bkash">
-          <svg viewBox="0 0 80 80" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <rect width="80" height="80" rx="16" fill="#E2136E" />
-            <path d="M64 34.6665C64 43.8406 56.5491 51.3333 47.3333 51.3333H35.3333V46H47.3333C53.5999 46 58.6667 40.9332 58.6667 34.6665C58.6667 28.3999 53.5999 23.3332 47.3333 23.3332H32L34.6667 19.3332H47.3333C56.5491 19.3332 64 26.8259 64 35.9999V34.6665Z" fill="white"/>
-            <path d="M16 45.3333C16 36.1592 23.4508 28.6666 32.6666 28.6666H44.6666V33.9999H32.6666C26.4 33.9999 21.3333 39.0666 21.3333 45.3333C21.3333 51.5999 26.4 56.6666 32.6666 56.6666H48L45.3333 60.6666H32.6666C23.4508 60.6666 16 53.1738 16 44.0057V45.3333Z" fill="white"/>
-          </svg>
+          <img 
+            src={require('../../assets/images/bkash.png')}
+            alt="bKash" 
+            className="mobile-banking-logo-image" 
+          />
         </div>
       );
     case 'nagad':
       return (
         <div className="mobile-banking-logo nagad">
-          <svg viewBox="0 0 80 80" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <rect width="80" height="80" rx="16" fill="#F6F6F6" />
-            <path d="M59.9999 20.0001H20C14.4772 20.0001 10 24.4773 10 30.0001V50.0001C10 55.5229 14.4772 60.0001 20 60.0001H59.9999V30.0001C59.9999 24.4773 55.5227 20.0001 49.9999 20.0001H59.9999Z" fill="#F3722C"/>
-            <path d="M31.1828 39.3041C31.1828 40.4544 31.7615 41.4749 32.671 42.0518V36.5564C31.7615 37.1333 31.1828 38.1538 31.1828 39.3041Z" fill="white"/>
-            <path d="M35.3257 36.5564V42.0518C36.2352 41.4749 36.8139 40.4544 36.8139 39.3041C36.8139 38.1538 36.2352 37.1333 35.3257 36.5564Z" fill="white"/>
-            <path d="M36.548 32.8533H31.4473C31.9053 32.8533 32.2769 33.225 32.2769 33.6829V35.5252C33.0752 34.9891 34.039 34.6588 35.0772 34.6588C35.7258 34.6588 36.3469 34.7906 36.919 35.0273V33.6829C36.919 33.225 37.2906 32.8533 37.7485 32.8533H36.548Z" fill="white"/>
-            <path d="M42.4052 32.8533H37.7319C38.1899 32.8533 38.5615 33.225 38.5615 33.6829V36.2249C40.1492 38.242 39.8615 41.1666 37.8443 42.7544C37.4527 43.0458 37.013 43.2707 36.5479 43.4207V45.7532C36.5479 46.2112 36.1763 46.5828 35.7183 46.5828H36.5454C36.9783 46.5828 37.3687 46.4422 37.6693 46.2017C37.9698 46.4422 38.3603 46.5828 38.7932 46.5828H42.4052C42.8631 46.5828 43.2348 46.2112 43.2348 45.7532V33.6829C43.2348 33.225 42.8631 32.8533 42.4052 32.8533Z" fill="white"/>
-            <path d="M32.2769 46.5828H35.7183C35.2603 46.5828 34.8887 46.2112 34.8887 45.7532V43.4207C34.4236 43.2707 33.9839 43.0458 33.5922 42.7544C31.5751 41.1666 31.2874 38.242 32.8751 36.2249V33.6829C32.8751 33.225 32.5034 32.8533 32.0455 32.8533H31.447C31.0141 32.8533 30.6237 32.9939 30.3231 33.2343C30.0226 32.9939 29.6321 32.8533 29.1992 32.8533H28.0001C27.5421 32.8533 27.1705 33.225 27.1705 33.6829V45.7532C27.1705 46.2112 27.5421 46.5828 28.0001 46.5828H31.6121C32.045 46.5828 32.4354 46.4422 32.736 46.2017C33.0365 46.4422 33.427 46.5828 33.8599 46.5828H32.2769Z" fill="white"/>
-            <path d="M37.7993 32.8533H36.5454C37.0034 32.8533 37.375 33.225 37.375 33.6829V35.0273C37.947 34.7906 38.5681 34.6588 39.2168 34.6588C40.255 34.6588 41.2188 34.9891 42.017 35.5252V33.6829C42.017 33.225 42.3887 32.8533 42.8466 32.8533H41.6461C41.213 32.8533 40.8226 32.9938 40.522 33.2343C40.2214 32.9938 39.831 32.8533 39.3981 32.8533H37.7993Z" fill="white"/>
-            <path d="M52.9232 38.4738C51.7994 37.351 50.1619 36.9407 48.4326 36.774V34.1014C48.4326 33.0109 47.5496 32.1279 46.4591 32.1279H45.9232C45.9232 32.1279 45.9232 32.1279 45.9232 32.128C44.8326 32.128 43.9497 33.0109 43.9497 34.1015V34.8244V38.1292C43.9497 38.5758 44.0621 38.9968 44.2566 39.3613C44.9558 40.6169 46.4149 41.1425 46.4149 41.1425C49.1785 42.0957 49.6769 42.3254 49.6769 43.3209C49.6769 44.3163 48.6836 44.6941 47.6904 44.6941C46.2602 44.6941 45.3891 44.0674 44.5635 43.1382C44.5635 43.1382 44.3936 42.9501 44.0179 42.5273C43.8704 42.3622 43.6211 42.3445 43.456 42.492C43.291 42.6396 43.2733 42.8889 43.4208 43.054L43.92 43.6166C44.9762 44.8079 46.2013 46.228 48.3535 46.228C50.4613 46.228 52.1838 44.7956 52.1838 42.9771C52.1838 40.6986 54.0471 39.5967 52.9232 38.4738Z" fill="white"/>
-          </svg>
+          <img 
+            src={require('../../assets/images/nogod.jpg')}
+            alt="Nagad" 
+            className="mobile-banking-logo-image" 
+          />
         </div>
       );
     case 'rocket':
       return (
         <div className="mobile-banking-logo rocket">
-          <svg viewBox="0 0 80 80" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <rect width="80" height="80" rx="16" fill="#8A3989" />
-            <path d="M59 40C59 50.4934 50.4934 59 40 59C29.5066 59 21 50.4934 21 40C21 29.5066 29.5066 21 40 21C50.4934 21 59 29.5066 59 40Z" fill="white"/>
-            <path d="M49.6665 30.3334C49.6665 30.3334 41.1249 29.6667 40.7082 41.0834C40.2499 41.0834 39.6665 41.0834 39.6665 41.0834C39.6665 41.0834 39.0832 29.6667 30.3332 30.3334C30.3332 30.3334 22.9582 44.4167 40.0415 49.6667C40.0415 49.6667 57.0415 44.4167 49.6665 30.3334Z" fill="#8A3989"/>
-            <path d="M39.9999 42.5834L35.0832 37.6667H44.9165L39.9999 42.5834Z" fill="#8A3989"/>
-          </svg>
+          <img 
+            src={require('../../assets/images/rocket.png')}
+            alt="Rocket" 
+            className="mobile-banking-logo-image" 
+          />
         </div>
       );
     case 'upay':
       return (
         <div className="mobile-banking-logo upay">
-          <svg viewBox="0 0 80 80" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <rect width="80" height="80" rx="16" fill="#EC3D24" />
-            <path d="M26.6667 24H53.3334C57.0153 24 60 26.9847 60 30.6666V46.6666C60 50.3485 57.0153 53.3333 53.3334 53.3333H26.6667C22.9848 53.3333 20 50.3485 20 46.6666V30.6666C20 26.9847 22.9848 24 26.6667 24Z" fill="white"/>
-            <path d="M40 30L30 42H40L50 30H40Z" fill="#EC3D24"/>
-            <path d="M35 44.0001L40 48.0001L45 44.0001H35Z" fill="#EC3D24"/>
-          </svg>
+          <img 
+            src={require('../../assets/images/upay.png')}
+            alt="Upay" 
+            className="mobile-banking-logo-image" 
+          />
         </div>
       );
     default:
@@ -102,6 +92,7 @@ const EmployeePayment = () => {
     cardHolderName: '',
     expiryMonth: '01',
     expiryYear: '25', // Change this default value to match our new range
+    cvv: '',     // Add CVV field
     cardType: 'visa'
   });
   
@@ -240,6 +231,18 @@ const handleMobileInputChange = (e) => {
 
   // Update the addCardPaymentMethod function
 
+const resetCardForm = () => {
+  setCardData({
+    cardNumber: '',
+    cardHolderName: '',
+    expiryMonth: '01',
+    expiryYear: '25',
+    cvv: '',     // Clear CVV
+    cardType: 'visa'
+  });
+  setShowCardForm(false);
+};
+
 const addCardPaymentMethod = async (e) => {
   e.preventDefault();
   setLoading(true);
@@ -260,14 +263,7 @@ const addCardPaymentMethod = async (e) => {
     
     if (response.data.success) {
       // Reset form and hide it
-      setCardData({
-        cardNumber: '',
-        cardHolderName: '',
-        expiryMonth: '01',
-        expiryYear: '25', // Update this as well
-        cardType: 'visa'
-      });
-      setShowCardForm(false);
+      resetCardForm(); // Use the new reset function
       
       // Refresh payment methods list
       fetchPaymentMethods();
@@ -401,13 +397,41 @@ const addMobilePaymentMethod = async (e) => {
     }
   };
   
-  // Replace the getCardTypeIcon function with this enhanced version
+  // Add this function to display card logos using local images
 const getCardTypeIcon = (type) => {
   switch(type.toLowerCase()) {
-    case 'visa': return <FaCcVisa className="employee-payment-card-logo visa" />;
-    case 'mastercard': return <FaCcMastercard className="employee-payment-card-logo mastercard" />;
-    case 'amex': return <FaCcAmex className="employee-payment-card-logo amex" />;
-    default: return <FaCreditCard className="employee-payment-card-logo" />;
+    case 'visa':
+      return (
+        <div className="card-logo-container">
+          <img 
+            src={require('../../assets/images/visa card.jpg')}
+            alt="Visa" 
+            className="employee-payment-card-logo visa" 
+          />
+        </div>
+      );
+    case 'mastercard':
+      return (
+        <div className="card-logo-container">
+          <img 
+            src={require('../../assets/images/mastercard.png')}
+            alt="Mastercard" 
+            className="employee-payment-card-logo mastercard" 
+          />
+        </div>
+      );
+    case 'amex':
+      return (
+        <div className="card-logo-container">
+          <img 
+            src={require('../../assets/images/AmericanExpress.png')}
+            alt="American Express" 
+            className="employee-payment-card-logo amex" 
+          />
+        </div>
+      );
+    default:
+      return <FaCreditCard className="employee-payment-card-logo" />;
   }
 };
 
@@ -612,6 +636,7 @@ const getProviderLogo = (provider) => {
                         name="cardType" 
                         value={cardData.cardType}
                         onChange={handleCardInputChange}
+                        className="employee-payment-input"
                         required
                       >
                         <option value="visa">Visa</option>
@@ -623,6 +648,25 @@ const getProviderLogo = (provider) => {
                       </div>
                     </div>
                   </div>
+                </div>
+
+                <div className="employee-payment-form-group">
+                  <label htmlFor="cvv">CVV/CVC</label>
+                  <input
+                    type="password"
+                    id="cvv"
+                    name="cvv"
+                    value={cardData.cvv}
+                    onChange={handleCardInputChange}
+                    placeholder="•••"
+                    maxLength="4"
+                    pattern="[0-9]{3,4}"
+                    title="3-4 digits security code"
+                    required
+                  />
+                  <small className="employee-payment-form-hint">
+                    3-4 digit security code on the back of your card
+                  </small>
                 </div>
                 
                 <div className="employee-payment-form-actions">

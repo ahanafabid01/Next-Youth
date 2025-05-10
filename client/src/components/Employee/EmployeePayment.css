@@ -263,6 +263,14 @@
   box-shadow: 0 0 0 2px rgba(52, 152, 219, 0.15);
 }
 
+/* Add these styles for the CVV input field */
+.employee-payment-form-group input[type="password"] {
+  font-family: monospace;
+  letter-spacing: 0.2em;
+  text-align: center;
+  padding: 0.75rem;
+}
+
 .employee-payment-form-actions {
   display: flex;
   justify-content: flex-end;
@@ -384,6 +392,16 @@
   background: linear-gradient(135deg, rgba(52, 152, 219, 0.15) 0%, rgba(52, 152, 219, 0.05) 100%);
   box-shadow: 0 2px 4px rgba(52, 152, 219, 0.1);
   color: var(--primary-color, #3498db);
+}
+
+/* For better mobile banking logo visibility */
+.employee-payment-method-type.mobile {
+  width: 3rem;
+  height: 3rem;
+  padding: 0.25rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .employee-payment-method-type.mobile {
@@ -596,8 +614,8 @@
 
 /* Mobile Banking Logo Styles */
 .mobile-banking-logo {
-  width: 2rem;
-  height: 2rem;
+  width: 2.5rem;
+  height: 2.5rem;
   border-radius: 8px;
   overflow: hidden;
   box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
@@ -890,4 +908,75 @@
 
 .employee-settings-dark-mode .employee-payment-form-hint {
   color: var(--text-light-secondary, #94a3b8);
+}
+
+/* Add these styles for image-based logos */
+.card-logo-container {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.employee-payment-card-logo {
+  max-width: 100%;
+  height: auto;
+  max-height: 28px;
+  object-fit: contain;
+}
+
+.employee-payment-card-logo-large .employee-payment-card-logo {
+  max-height: 32px;
+}
+
+.mobile-banking-logo {
+  width: 2.5rem;
+  height: 2.5rem;
+  border-radius: 8px;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: white;
+  padding: 2px;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+}
+
+.mobile-banking-logo-image {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+/* Update the method type containers to better display images */
+.employee-payment-method-type.mobile {
+  background: white;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 3rem;
+  height: 3rem;
+  border-radius: 8px;
+  padding: 0.25rem;
+}
+
+/* Update provider-specific styling for borders */
+.employee-payment-method-card[data-provider="visa"] {
+  border-top: 3px solid #1a1f71;
+}
+
+.employee-payment-method-card[data-provider="mastercard"] {
+  border-top: 3px solid #eb001b;
+}
+
+.employee-payment-method-card[data-provider="amex"] {
+  border-top: 3px solid #006fcf;
+}
+
+/* History method display improvements */
+.employee-payment-history-method .mobile-banking-logo,
+.employee-payment-history-method .card-logo-container {
+  width: 2rem;
+  height: 1.5rem;
+  margin-right: 0.5rem;
 }
