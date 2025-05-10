@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback } from "react";
+import axios from "axios";
 import {
   FaUsers,
   FaChartBar,
@@ -12,7 +13,10 @@ import {
   FaArrowUp,
   FaArrowDown,
   FaRegClock,
-  FaThumbsUp
+  FaThumbsUp,
+  FaMoneyBillWave,
+  FaBuilding,
+  FaShieldAlt
 } from "react-icons/fa";
 import {
   LineChart,
@@ -30,7 +34,6 @@ import {
 } from "recharts";
 import "./Statistics.css";
 import Sidebar from "./Sidebar";
-import axios from "axios";
 
 // Create an event system for real-time updates
 const updateEvents = {};
@@ -238,36 +241,6 @@ const Statistics = () => {
     });
   };
 
-  // Prepare data for the User Status Chart
-  const prepareUserStatusData = () => {
-    const verified = users.filter(user => user.idVerification?.status === 'verified').length;
-    const pending = users.filter(user => user.idVerification?.status === 'pending').length;
-    const rejected = users.filter(user => user.idVerification?.status === 'rejected').length;
-    const notSubmitted = users.length - verified - pending - rejected;
-    
-    return [
-      { name: 'Verified', value: verified, color: colorPalette.secondary },
-      { name: 'Pending', value: pending, color: colorPalette.accent },
-      { name: 'Rejected', value: rejected, color: colorPalette.danger },
-      { name: 'Not Submitted', value: notSubmitted, color: colorPalette.neutral }
-    ];
-  };
-
-  // Prepare data for the Consultation Status Chart
-  const prepareConsultationStatusData = () => {
-    const completed = consultations.filter(c => c.status === 'completed').length;
-    const pending = consultations.filter(c => c.status === 'pending' || !c.status).length;
-    const confirmed = consultations.filter(c => c.status === 'confirmed').length;
-    const cancelled = consultations.filter(c => c.status === 'cancelled').length;
-    
-    return [
-      { name: 'Completed', value: completed, color: colorPalette.secondary },
-      { name: 'Pending', value: pending, color: colorPalette.accent },
-      { name: 'Confirmed', value: confirmed, color: colorPalette.primary },
-      { name: 'Cancelled', value: cancelled, color: colorPalette.danger }
-    ];
-  };
-
   // Prepare data for the Job Status Chart
   const prepareJobStatusData = () => {
     const active = jobs.filter(job => 
@@ -287,138 +260,128 @@ const Statistics = () => {
     ];
   };
 
-  // Prepare data for the Application Status Chart
-  const prepareApplicationStatusData = () => {
-    const accepted = applications.filter(app => app.status === 'accepted').length;
-    const pending = applications.filter(app => app.status === 'pending' || !app.status).length;
-    const rejected = applications.filter(app => app.status === 'rejected').length;
-    
-    return [
-      { name: 'Accepted', value: accepted, color: colorPalette.secondary },
-      { name: 'Pending', value: pending, color: colorPalette.accent },
-      { name: 'Rejected', value: rejected, color: colorPalette.danger }
-    ];
-  };
-
-  // Prepare weekly registration data
-  const prepareWeeklyRegistrationsData = () => {
-    const data = [];
-    const now = new Date();
-    
-    for (let i = 6; i >= 0; i--) {
-      const date = new Date(now);
-      date.setDate(now.getDate() - i);
-      date.setHours(0, 0, 0, 0);
-      
-      const nextDay = new Date(date);
-      nextDay.setDate(date.getDate() + 1);
-      
-      const dayUsers = users.filter(user => {
-        const userDate = new Date(user.createdAt);
-        return userDate >= date && userDate < nextDay;
-      });
-      
-      data.push({
-        name: date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
-        'New Users': dayUsers.length
-      });
-    }
-    
-    return data;
-  };
-
-  // Prepare monthly consultation growth data
-  const prepareConsultationTrendData = () => {
+  // Prepare monthly job trend data
+  const prepareJobTrendData = () => {
     const data = [];
     const now = new Date();
     
     for (let i = 5; i >= 0; i--) {
       const date = new Date(now);
       date.setMonth(now.getMonth() - i);
-      date.setDate(1); // First day of month
+      date.setDate(1);
       date.setHours(0, 0, 0, 0);
       
       const nextMonth = new Date(date);
       nextMonth.setMonth(date.getMonth() + 1);
       
-      const monthConsultations = consultations.filter(consult => {
-        const consultDate = new Date(consult.createdAt);
-        return consultDate >= date && consultDate < nextMonth;
+      const monthJobs = jobs.filter(job => {
+        const jobDate = new Date(job.createdAt);
+        return jobDate >= date && jobDate < nextMonth;
       });
       
-      const completed = monthConsultations.filter(c => c.status === 'completed').length;
+      const active = monthJobs.filter(job => 
+        job.status === 'active' || 
+        job.isAvailable === true || 
+        job.status === 'available'
+      ).length;
+      
+      const closed = monthJobs.filter(job => 
+        job.status === 'closed' || 
+        job.isAvailable === false
+      ).length;
       
       data.push({
         name: date.toLocaleDateString('en-US', { month: 'short' }),
-        'All Consultations': monthConsultations.length,
-        'Completed': completed
+        'Posted Jobs': monthJobs.length,
+        'Active': active,
+        'Closed': closed
       });
     }
     
     return data;
   };
 
-  // Prepare applications trend data
-  const prepareApplicationsTrendData = () => {
-    const data = [];
-    const now = new Date();
+  // Prepare job category distribution data
+  const prepareJobCategoryData = () => {
+    const categories = {};
     
-    for (let i = 5; i >= 0; i--) {
-      const date = new Date(now);
-      date.setMonth(now.getMonth() - i);
-      date.setDate(1); // First day of month
-      date.setHours(0, 0, 0, 0);
-      
-      const nextMonth = new Date(date);
-      nextMonth.setMonth(date.getMonth() + 1);
-      
-      const monthApplications = applications.filter(app => {
-        const appDate = new Date(app.createdAt);
-        return appDate >= date && appDate < nextMonth;
-      });
-      
-      const accepted = monthApplications.filter(app => app.status === 'accepted').length;
-      
-      data.push({
-        name: date.toLocaleDateString('en-US', { month: 'short' }),
-        'All Applications': monthApplications.length,
-        'Accepted': accepted
-      });
-    }
+    jobs.forEach(job => {
+      const category = job.category || 'Uncategorized';
+      if (categories[category]) {
+        categories[category]++;
+      } else {
+        categories[category] = 1;
+      }
+    });
     
-    return data;
+    const colors = colorPalette.chartColors;
+    let colorIndex = 0;
+    
+    return Object.entries(categories).map(([name, value]) => {
+      const color = colors[colorIndex % colors.length];
+      colorIndex++;
+      return { name, value, color };
+    });
   };
 
-  // Prepare user growth trend data
-  const prepareUserGrowthTrendData = () => {
-    const data = [];
-    const now = new Date();
-    const startDate = new Date(now);
-    startDate.setMonth(now.getMonth() - 5);
-    startDate.setDate(1);
-    startDate.setHours(0, 0, 0, 0);
+  // Prepare job salary range distribution data
+  const prepareJobSalaryRangeData = () => {
+    const ranges = {
+      'Under $1k': 0,
+      '$1k - $3k': 0,
+      '$3k - $5k': 0,
+      '$5k - $10k': 0,
+      'Above $10k': 0
+    };
     
-    let currentDate = new Date(startDate);
+    jobs.forEach(job => {
+      const amount = job.fixedAmount || 0;
+      
+      if (amount < 1000) {
+        ranges['Under $1k']++;
+      } else if (amount < 3000) {
+        ranges['$1k - $3k']++;
+      } else if (amount < 5000) {
+        ranges['$3k - $5k']++;
+      } else if (amount < 10000) {
+        ranges['$5k - $10k']++;
+      } else {
+        ranges['Above $10k']++;
+      }
+    });
     
-    while (currentDate <= now) {
-      const monthStart = new Date(currentDate);
-      const monthEnd = new Date(currentDate);
-      monthEnd.setMonth(monthStart.getMonth() + 1);
-      
-      const monthUsers = users.filter(user => {
-        const userDate = new Date(user.createdAt);
-        return userDate >= monthStart && userDate < monthEnd;
-      });
-      
-      data.push({
-        name: currentDate.toLocaleDateString('en-US', { month: 'short' }),
-        'Users': monthUsers.length
-      });
-      
-      currentDate.setMonth(currentDate.getMonth() + 1);
-    }
+    const colors = colorPalette.chartColors;
+    let colorIndex = 0;
     
-    return data;
+    return Object.entries(ranges).map(([name, value]) => {
+      const color = colors[colorIndex % colors.length];
+      colorIndex++;
+      return { name, value, color };
+    });
+  };
+
+  // Prepare job applications per month data
+  const prepareApplicationsPerJobData = () => {
+    if (jobs.length === 0) return [];
+    
+    // Get the top 10 jobs with the most applications
+    const jobApplications = jobs.map(job => {
+      const jobApps = applications.filter(app => app.jobId === job._id);
+      return {
+        jobTitle: job.title || `Job #${job._id.substring(0, 6)}`,
+        applications: jobApps.length
+      };
+    });
+    
+    return jobApplications
+      .sort((a, b) => b.applications - a.applications)
+      .slice(0, 10)
+      .map(item => ({
+        name: item.jobTitle.length > 20 ? 
+          item.jobTitle.substring(0, 18) + '...' : 
+          item.jobTitle,
+        Applications: item.applications
+      }));
   };
 
   // Calculate growth rates
@@ -435,14 +398,11 @@ const Statistics = () => {
   };
 
   // Calculate the chart data
-  const userStatusData = prepareUserStatusData();
-  const consultationStatusData = prepareConsultationStatusData();
   const jobStatusData = prepareJobStatusData();
-  const applicationStatusData = prepareApplicationStatusData();
-  const userRegistrationData = prepareWeeklyRegistrationsData();
-  const consultationTrendData = prepareConsultationTrendData();
-  const applicationsTrendData = prepareApplicationsTrendData();
-  const userGrowthTrendData = prepareUserGrowthTrendData();
+  const jobTrendData = prepareJobTrendData();
+  const jobCategoryData = prepareJobCategoryData();
+  const jobSalaryRangeData = prepareJobSalaryRangeData();
+  const applicationsPerJobData = prepareApplicationsPerJobData();
 
   // Loading state with skeleton UI
   if (loading) {
