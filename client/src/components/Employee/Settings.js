@@ -77,22 +77,41 @@ const Settings = () => {
         withCredentials: true 
       });
       
+      // Log the entire response for debugging
+      console.log("API Response:", response.data);
+      
       if (response.data.success) {
-        // Extract the user data properly
         const userData = response.data.user;
         
-        // Log the full user data to inspect all field names
-        console.log('Full user data from API:', userData);
-        
-        // Set the user state with all fields, checking all possible field names for phone number
-        setUser({
-          name: userData.name || '',
-          email: userData.email || '',
-          profilePicture: userData.profilePicture || userData.profilePic || '',
-          phoneNumber: userData.phoneNumber || userData.phone || userData.phoneNum || '' 
+        // Log the specific fields we're trying to extract
+        console.log("User data fields:", {
+          name: userData.name,
+          email: userData.email,
+          profilePic: userData.profilePic,
+          profilePicture: userData.profilePicture,
+          phone: userData.phone,
+          phoneNumber: userData.phoneNumber
         });
+
+        // Get complete profile with all fields
+        const profileResponse = await axios.get(`${API_BASE_URL}/auth/profile`, {
+          withCredentials: true
+        });
+
+        console.log("Complete profile response:", profileResponse.data);
         
-        console.log('Phone number being used:', userData.phoneNumber || userData.phone || userData.phoneNum || 'Not found');
+        if (profileResponse.data.success) {
+          const completeUserData = profileResponse.data.user;
+          
+          // Set the user state with all available data
+          setUser({
+            name: userData.name || '',
+            email: userData.email || '',
+            profilePicture: userData.profilePicture || userData.profilePic || '',
+            // Make sure to get phoneNumber from the complete profile data
+            phoneNumber: completeUserData.phoneNumber || ''
+          });
+        }
       }
     } catch (error) {
       console.error('Error fetching user data:', error);
@@ -139,27 +158,32 @@ const Settings = () => {
     }));
   };
 
-  // Save profile changes
+  // Modify the saveProfileChanges function to handle both field names for better compatibility
   const saveProfileChanges = async (e) => {
     e.preventDefault();
     setLoading(true);
+    
+    console.log("Updating profile with data:", {
+      name: user.name,
+      email: user.email,
+      phoneNumber: user.phoneNumber,
+      profilePicture: user.profilePicture
+    });
+    
     try {
-      // Log what we're sending to the API for debugging
-      console.log('Sending profile data:', user);
-      
+      // First try updateEmployeeProfile endpoint which handles phone number correctly
       const response = await axios.put(
-        `${API_BASE_URL}/auth/update-profile`,
+        `${API_BASE_URL}/auth/update-employee-profile`,
         {
           name: user.name,
           email: user.email,
-          phoneNumber: user.phoneNumber,  // Make sure this is explicitly included
+          phoneNumber: user.phoneNumber,
           profilePicture: user.profilePicture
         }, 
         { withCredentials: true }
       );
       
       if (response.data.success) {
-        // Fetch user data again to ensure we have the latest data with correct field names
         await fetchUserData();
         setMessage({ type: 'success', text: 'Profile updated successfully' });
       }

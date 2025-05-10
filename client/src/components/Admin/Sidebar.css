@@ -1,33 +1,246 @@
-.sidebar {
-  width: 250px;
-  background-color: #f4f4f4;
-  padding: 20px;
+/* Admin Dashboard Sidebar - Minimalist Professional Theme */
+.admin-dash-sidebar {
+  width: 280px;
   height: 100vh;
+  position: fixed;
+  left: 0;
+  top: 0;
+  background-color: #ffffff;
+  box-shadow: 0 0 20px rgba(0, 0, 0, 0.05);
+  transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+  display: flex;
+  flex-direction: column;
+  z-index: 1000;
+  overflow-y: auto;
+  scrollbar-width: thin;
 }
 
-.sidebar .logo h2 {
-  margin: 0;
+.admin-dash-dark-mode .admin-dash-sidebar {
+  background-color: #1a2234;
+  box-shadow: 0 0 20px rgba(0, 0, 0, 0.2);
+}
+
+.admin-dash-sidebar::-webkit-scrollbar {
+  width: 4px;
+}
+
+.admin-dash-sidebar::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.admin-dash-sidebar::-webkit-scrollbar-thumb {
+  background-color: #3a86ff;
+  border-radius: 20px;
+}
+
+.admin-dash-logo-container {
+  padding: 1.5rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 1px solid #f1f5f9;
+}
+
+.admin-dash-dark-mode .admin-dash-logo-container {
+  border-bottom: 1px solid #2d3748;
+}
+
+.admin-dash-logo {
+  height: 40px;
+  width: auto;
+}
+
+.admin-dash-hamburger {
+  display: none;
+  background: none;
+  border: none;
+  color: #64748b;
   font-size: 1.5rem;
-  color: #4f46e5;
+  cursor: pointer;
+  width: 40px;
+  height: 40px;
+  border-radius: 20px;
+  transition: all 0.2s ease;
 }
 
-.sidebar .menu ul {
+.admin-dash-dark-mode .admin-dash-hamburger {
+  color: #94a3b8;
+}
+
+.admin-dash-hamburger:hover {
+  background-color: rgba(0, 0, 0, 0.05);
+}
+
+.admin-dash-dark-mode .admin-dash-hamburger:hover {
+  background-color: rgba(255, 255, 255, 0.05);
+}
+
+.admin-dash-menu {
+  padding: 1.5rem 0;
+  flex: 1;
+}
+
+.admin-dash-menu ul {
   list-style: none;
   padding: 0;
+  margin: 0;
 }
 
-.sidebar .menu ul li {
-  margin: 15px 0;
+.admin-dash-menu li {
+  margin: 0.25rem 0;
 }
 
-.sidebar .menu ul li a {
-  text-decoration: none;
-  color: #333;
-  font-size: 1rem;
+.admin-dash-menu li a,
+.admin-dash-menu li button {
   display: flex;
   align-items: center;
+  gap: 0.875rem;
+  padding: 0.75rem 1.5rem;
+  color: #334155;
+  text-decoration: none;
+  font-weight: 500;
+  font-size: 0.95rem;
+  border-radius: 0;
+  transition: all 0.2s ease;
+  border: none;
+  background: none;
+  width: 100%;
+  text-align: left;
+  cursor: pointer;
+  position: relative;
+  overflow: hidden;
 }
 
-.sidebar .menu ul li a:hover {
-  color: #4f46e5;
+.admin-dash-dark-mode .admin-dash-menu li a,
+.admin-dash-dark-mode .admin-dash-menu li button {
+  color: #e2e8f0;
+}
+
+.admin-dash-menu li a svg,
+.admin-dash-menu li button svg {
+  font-size: 1.1rem;
+  color: #64748b;
+  transition: all 0.2s ease;
+}
+
+.admin-dash-dark-mode .admin-dash-menu li a svg,
+.admin-dash-dark-mode .admin-dash-menu li button svg {
+  color: #94a3b8;
+}
+
+.admin-dash-menu li a:hover,
+.admin-dash-menu li button:hover {
+  background-color: #f8fafc;
+  color: #3a86ff;
+}
+
+.admin-dash-dark-mode .admin-dash-menu li a:hover,
+.admin-dash-dark-mode .admin-dash-menu li button:hover {
+  background-color: #1e293b;
+  color: #60a5fa;
+}
+
+.admin-dash-menu li a:hover svg,
+.admin-dash-menu li button:hover svg {
+  color: #3a86ff;
+}
+
+.admin-dash-dark-mode .admin-dash-menu li a:hover svg,
+.admin-dash-dark-mode .admin-dash-menu li button:hover svg {
+  color: #60a5fa;
+}
+
+.admin-dash-menu li a.active,
+.admin-dash-menu li button.active {
+  background-color: rgba(58, 134, 255, 0.1);
+  color: #3a86ff;
+  font-weight: 600;
+}
+
+.admin-dash-dark-mode .admin-dash-menu li a.active,
+.admin-dash-dark-mode .admin-dash-menu li button.active {
+  background-color: rgba(96, 165, 250, 0.15);
+  color: #60a5fa;
+}
+
+.admin-dash-menu li a.active svg,
+.admin-dash-menu li button.active svg {
+  color: #3a86ff;
+}
+
+.admin-dash-dark-mode .admin-dash-menu li a.active svg,
+.admin-dash-dark-mode .admin-dash-menu li button.active svg {
+  color: #60a5fa;
+}
+
+.admin-dash-menu li a.active::before,
+.admin-dash-menu li button.active::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 0;
+  height: 100%;
+  width: 4px;
+  background: linear-gradient(to bottom, #3a86ff, #4cc9f0);
+  border-radius: 0 2px 2px 0;
+}
+
+.admin-dash-theme-toggle {
+  margin-top: auto;
+  border-top: 1px solid #f1f5f9;
+  padding-top: 0.5rem;
+}
+
+.admin-dash-dark-mode .admin-dash-theme-toggle {
+  border-top: 1px solid #2d3748;
+}
+
+.admin-dash-footer {
+  padding: 1rem 1.5rem;
+  font-size: 0.8rem;
+  color: #64748b;
+  text-align: center;
+  border-top: 1px solid #f1f5f9;
+}
+
+.admin-dash-dark-mode .admin-dash-footer {
+  color: #94a3b8;
+  border-top: 1px solid #2d3748;
+}
+
+/* Responsive adjustments */
+@media (max-width: 1024px) {
+  .admin-dash-sidebar {
+    transform: translateX(-100%);
+    width: 260px;
+    box-shadow: 0 0 20px rgba(0, 0, 0, 0.1);
+    z-index: 1001;
+  }
+  
+  .admin-dash-sidebar.expanded {
+    transform: translateX(0);
+  }
+  
+  .admin-dash-hamburger {
+    display: block;
+  }
+  
+  .admin-dash-logo {
+    height: 36px;
+  }
+}
+
+@media (max-width: 480px) {
+  .admin-dash-sidebar {
+    width: 85%;
+  }
+  
+  .admin-dash-logo {
+    height: 32px;
+  }
+  
+  .admin-dash-menu li a,
+  .admin-dash-menu li button {
+    padding: 0.75rem 1.25rem;
+  }
 }

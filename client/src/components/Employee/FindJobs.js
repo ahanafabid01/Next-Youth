@@ -76,6 +76,9 @@ const FindJobs = () => {
     'Mobile Development', 'Graphic Design', 'SEO'
   ];
   
+  // Add this at the beginning of the component
+  const [filtersActive, setFiltersActive] = useState(false);
+
   const fetchUserData = useCallback(async () => {
     try {
       const [userResponse, verificationResponse] = await Promise.all([
@@ -114,25 +117,34 @@ const FindJobs = () => {
     setLoading(true);
     try {
       // Build query parameters
-      let queryParams = `page=${page}&limit=${jobsPerPage}`;
-      if (categoryFilter !== 'All Categories') {
-        queryParams += `&category=${categoryFilter}`;
-      }
-      if (searchQuery) {
-        queryParams += `&search=${searchQuery}`;
-      }
-      if (budgetRange.min) {
-        queryParams += `&minBudget=${budgetRange.min}`;
-      }
-      if (budgetRange.max) {
-        queryParams += `&maxBudget=${budgetRange.max}`;
-      }
-      if (selectedSkills.length > 0) {
-        queryParams += `&skills=${selectedSkills.join(',')}`;
+      const params = new URLSearchParams();
+      params.append('page', page);
+      params.append('limit', jobsPerPage);
+      
+      if (categoryFilter && categoryFilter !== 'All Categories') {
+        params.append('category', categoryFilter);
       }
       
+      if (searchQuery && searchQuery.trim()) {
+        params.append('search', searchQuery.trim());
+      }
+      
+      if (budgetRange.min) {
+        params.append('minBudget', budgetRange.min);
+      }
+      
+      if (budgetRange.max) {
+        params.append('maxBudget', budgetRange.max);
+      }
+      
+      if (selectedSkills.length > 0) {
+        params.append('skills', selectedSkills.join(','));
+      }
+      
+      const queryString = params.toString();
+      
       const [jobsResponse, savedResponse] = await Promise.all([
-        axios.get(`${API_BASE_URL}/jobs/available?${queryParams}`, { withCredentials: true }),
+        axios.get(`${API_BASE_URL}/jobs/available?${queryString}`, { withCredentials: true }),
         axios.get(`${API_BASE_URL}/jobs/saved`, { withCredentials: true })
       ]);
       
@@ -245,10 +257,12 @@ const FindJobs = () => {
 
   const handleSearchSubmit = useCallback((e) => {
     e.preventDefault();
-    setCurrentPage(1);
-    setIsSearching(true);
-    fetchAvailableJobs(1);
-  }, [fetchAvailableJobs]);
+    if (searchQuery && searchQuery.trim() !== '') {
+      setCurrentPage(1);
+      setIsSearching(true);
+      fetchAvailableJobs(1);
+    }
+  }, [fetchAvailableJobs, searchQuery]);
 
   const toggleMobileNav = useCallback((e) => {
     e.stopPropagation();
@@ -292,7 +306,12 @@ const FindJobs = () => {
     setSelectedSkills([]);
     setSearchQuery('');
     setCurrentPage(1);
-  }, []);
+    
+    // Wait for state updates to complete
+    setTimeout(() => {
+      fetchAvailableJobs(1);
+    }, 100);
+  }, [fetchAvailableJobs]);
 
   const handleMarkAllAsRead = useCallback((e) => {
     e.stopPropagation();
@@ -316,6 +335,17 @@ const FindJobs = () => {
       setShowFilters(false);
     }
   }, []);
+
+  // Update when any filter changes
+  useEffect(() => {
+    const hasActiveFilters = 
+      categoryFilter !== 'All Categories' ||
+      budgetRange.min !== '' ||
+      budgetRange.max !== '' ||
+      selectedSkills.length > 0;
+    
+    setFiltersActive(hasActiveFilters);
+  }, [categoryFilter, budgetRange, selectedSkills]);
 
   // Effect for outside clicks
   useEffect(() => {
@@ -656,7 +686,24 @@ const FindJobs = () => {
                   placeholder="Search for jobs by title, skill, or keyword..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
+                  aria-label="Search jobs"
                 />
+                {searchQuery && (
+                  <button
+                    className="employee-search-clear"
+                    onClick={() => {
+                      setSearchQuery('');
+                      if (searchQuery.trim() !== '') {
+                        setCurrentPage(1);
+                        setTimeout(() => fetchAvailableJobs(1), 100);
+                      }
+                    }}
+                    aria-label="Clear search"
+                    type="button"
+                  >
+                    ×
+                  </button>
+                )}
               </div>
               <button 
                 type="submit" 
@@ -698,11 +745,11 @@ const FindJobs = () => {
               <div className="employee-jobs-actions">
                 <div className="employee-filter-container" ref={filtersRef}>
                   <button 
-                    className="employee-filter-button"
+                    className={`employee-filter-button ${filtersActive ? 'filter-active' : ''}`}
                     onClick={toggleFilters}
                     aria-expanded={showFilters}
                   >
-                    <FaFilter /> Filters
+                    <FaFilter /> Filters {filtersActive && <span className="employee-filter-indicator"></span>}
                   </button>
                   
                   <div className={`employee-filters-panel ${showFilters ? 'active' : ''}`}>
@@ -798,8 +845,13 @@ const FindJobs = () => {
                         className="employee-filter-apply"
                         onClick={() => {
                           setCurrentPage(1);
-                          fetchAvailableJobs(1);
                           setShowFilters(false);
+                          // Add loading state for feedback
+                          setLoading(true);
+                          // Small timeout to allow UI update before fetch
+                          setTimeout(() => {
+                            fetchAvailableJobs(1);
+                          }, 100);
                         }}
                       >
                         Apply Filters

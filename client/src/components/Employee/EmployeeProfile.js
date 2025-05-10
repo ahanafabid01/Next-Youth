@@ -112,6 +112,7 @@ const EmployeeProfile = () => {
   const [unreadNotifications, setUnreadNotifications] = useState(() => {
     return parseInt(localStorage.getItem("unread-notifications") || "2");
   });
+  const [highestStepReached, setHighestStepReached] = useState(1);
   const navigate = useNavigate();
   const profileDropdownRef = useRef(null);
   const notificationsRef = useRef(null);
@@ -261,6 +262,13 @@ const EmployeeProfile = () => {
   useEffect(() => {
     localStorage.setItem("unread-notifications", unreadNotifications.toString());
   }, [unreadNotifications]);
+
+  useEffect(() => {
+    // Update highest step reached if current step is higher
+    if (step > highestStepReached) {
+      setHighestStepReached(step);
+    }
+  }, [step, highestStepReached]);
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -561,6 +569,164 @@ const EmployeeProfile = () => {
 
   const currentYear = new Date().getFullYear();
 
+  // Add this new function to handle saving individual sections
+  const handleSaveSection = async () => {
+    try {
+      setIsLoading(true);
+      let payload = {};
+      const shouldIncludeField = (newValue, origValue) => {
+        if (newValue === '' || newValue === null || newValue === undefined) return false;
+        return newValue !== origValue;
+      };
+
+      // Determine which fields to include based on current step
+      switch(step) {
+        case 1: // Basic Info
+          if (shouldIncludeField(formData.name, originalUserData?.name)) payload.name = formData.name;
+          if (shouldIncludeField(formData.bio, originalUserData?.bio)) payload.bio = formData.bio;
+          if (shouldIncludeField(formData.profilePicture, originalUserData?.profilePicture)) {
+            payload.profilePicture = formData.profilePicture;
+            payload.profilePic = formData.profilePicture;
+          }
+          break;
+          
+        case 2: // Education
+          const origEducation = originalUserData?.education || {};
+          const hasEducationChanges = 
+            (formData.education.school.name && formData.education.school.name !== origEducation.school?.name) ||
+            (formData.education.school.enteringYear && formData.education.school.enteringYear !== origEducation.school?.enteringYear) ||
+            (formData.education.school.passingYear && formData.education.school.passingYear !== origEducation.school?.passingYear) ||
+            (formData.education.college.name && formData.education.college.name !== origEducation.college?.name) ||
+            (formData.education.college.enteringYear && formData.education.college.enteringYear !== origEducation.college?.enteringYear) ||
+            (formData.education.college.passingYear && formData.education.college.passingYear !== origEducation.college?.passingYear) ||
+            (formData.education.university.name && formData.education.university.name !== origEducation.university?.name) ||
+            (formData.education.university.enteringYear && formData.education.university.enteringYear !== origEducation.university?.enteringYear) ||
+            (formData.education.university.passingYear && formData.education.university.passingYear !== origEducation.university?.passingYear);
+            
+          if (hasEducationChanges) {
+            payload.education = {
+              school: {
+                name: formData.education.school.name || origEducation.school?.name || '',
+                enteringYear: formData.education.school.enteringYear || origEducation.school?.enteringYear || '',
+                passingYear: formData.education.school.passingYear || origEducation.school?.passingYear || '',
+              },
+              college: {
+                name: formData.education.college.name || origEducation.college?.name || '',
+                enteringYear: formData.education.college.enteringYear || origEducation.college?.enteringYear || '',
+                passingYear: formData.education.college.passingYear || origEducation.college?.passingYear || '',
+              },
+              university: {
+                name: formData.education.university.name || origEducation.university?.name || '',
+                enteringYear: formData.education.university.enteringYear || origEducation.university?.enteringYear || '',
+                passingYear: formData.education.university.passingYear || origEducation.university?.passingYear || '',
+              },
+            };
+          }
+          break;
+          
+        case 3: // Skills & Languages
+          if (formData.skills.length > 0 && JSON.stringify(formData.skills) !== JSON.stringify(originalUserData?.skills || [])) {
+            payload.skills = formData.skills;
+          }
+          
+          if (formData.languageSkills.length > 0 && 
+              JSON.stringify(formData.languageSkills) !== JSON.stringify(originalUserData?.languageSkills || [])) {
+            payload.languageSkills = formData.languageSkills;
+          }
+          break;
+          
+        case 4: // Contact Info
+          if (shouldIncludeField(formData.address, originalUserData?.address)) payload.address = formData.address;
+          if (shouldIncludeField(formData.country, originalUserData?.country)) payload.country = formData.country;
+          if (shouldIncludeField(formData.phoneNumber, originalUserData?.phoneNumber)) payload.phoneNumber = formData.phoneNumber;
+          if (shouldIncludeField(formData.email, originalUserData?.email)) payload.email = formData.email;
+          if (shouldIncludeField(formData.linkedInProfile, originalUserData?.linkedInProfile)) 
+            payload.linkedInProfile = formData.linkedInProfile;
+          if (shouldIncludeField(formData.socialMediaLink, originalUserData?.socialMediaLink)) 
+            payload.socialMediaLink = formData.socialMediaLink;
+          break;
+          
+        case 5: // Goals & Questions
+          if (shouldIncludeField(formData.goals, originalUserData?.goals)) payload.goals = formData.goals;
+          if (shouldIncludeField(formData.freelanceExperience, originalUserData?.freelanceExperience)) 
+            payload.freelanceExperience = formData.freelanceExperience;
+            
+          // Handle resume upload if present
+          if (formData.resume) {
+            const resumeFormData = new FormData();
+            resumeFormData.append('file', formData.resume);
+            
+            try {
+              const resumeResponse = await axios.post(
+                `${API_BASE_URL}/auth/upload-file`,
+                resumeFormData,
+                { withCredentials: true }
+              );
+              
+              if (resumeResponse.data.success) {
+                payload.resumeUrl = resumeResponse.data.url;
+              }
+            } catch (error) {
+              console.error('Error uploading resume:', error);
+              toast.error('Failed to upload resume');
+              setIsLoading(false);
+              return;
+            }
+          }
+          
+          // Handle questions array
+          if (formData.questions.length > 0 && 
+              JSON.stringify(formData.questions) !== JSON.stringify(originalUserData?.questions || [])) {
+            const filteredQuestions = formData.questions.filter(q => q.trim() !== '');
+            if (filteredQuestions.length > 0) {
+              payload.questions = filteredQuestions;
+            }
+          }
+          break;
+          
+        case 6: // Price Preference
+          if (shouldIncludeField(formData.paymentType, originalUserData?.paymentType)) 
+            payload.paymentType = formData.paymentType;
+          if (shouldIncludeField(formData.fixedRate, originalUserData?.fixedRate)) 
+            payload.fixedRate = formData.fixedRate;
+          if (shouldIncludeField(formData.hourlyRate, originalUserData?.hourlyRate)) 
+            payload.hourlyRate = formData.hourlyRate;
+          if (shouldIncludeField(formData.weeklyAvailability, originalUserData?.weeklyAvailability))
+            payload.weeklyAvailability = formData.weeklyAvailability;
+          if (formData.openToContractToHire !== originalUserData?.openToContractToHire)
+            payload.openToContractToHire = formData.openToContractToHire;
+          break;
+          
+        default:
+          break;
+      }
+      
+      // Only make the API call if there are changes to send
+      if (Object.keys(payload).length > 0) {
+        const response = await axios.put(
+          `${API_BASE_URL}/auth/update-employee-profile`,
+          payload,
+          { withCredentials: true }
+        );
+
+        if (response.data.success) {
+          // Update the original data with the new data
+          setOriginalUserData(prev => ({...prev, ...response.data.user}));
+          toast.success('Section updated successfully!');
+        } else {
+          toast.error('Failed to update: ' + response.data.message);
+        }
+      } else {
+        toast.info('No changes detected in this section.');
+      }
+    } catch (error) {
+      console.error('Error updating section:', error);
+      toast.error('An error occurred while updating this section');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   return (
     <div className={`employee-edit-profile ${isDarkMode ? 'dark-theme' : 'light-theme'}`}>
       <ToastContainer position="top-right" autoClose={5000} theme={isDarkMode ? 'dark' : 'light'} />
@@ -775,19 +941,18 @@ const EmployeeProfile = () => {
               <div className="employee-edit-profile-completion-bar">
                 <div 
                   className="employee-edit-profile-completion-progress" 
-                  style={{ width: `${Math.min(step / 6 * 100, 100)}%` }}
+                  style={{ width: `${Math.min(highestStepReached / 6 * 100, 100)}%` }}
                 ></div>
               </div>
               <p className="employee-edit-profile-completion-text">
-                Step {step} of 6 • {Math.round(step / 6 * 100)}% Complete
+                Step {step} of 6 • {Math.round(highestStepReached / 6 * 100)}% Complete
               </p>
             </div>
             
             <nav className="employee-edit-profile-steps-nav">
               <button 
                 className={`employee-edit-profile-step-link ${step === 1 ? 'active' : step > 1 ? 'completed' : ''}`}
-                onClick={() => step > 1 && setStep(1)}
-                disabled={step < 1}
+                onClick={() => setStep(1)}
               >
                 <span className="employee-edit-profile-step-number">1</span>
                 <span className="employee-edit-profile-step-text">Basic Info</span>
@@ -796,8 +961,7 @@ const EmployeeProfile = () => {
               
               <button 
                 className={`employee-edit-profile-step-link ${step === 2 ? 'active' : step > 2 ? 'completed' : ''}`}
-                onClick={() => step > 2 && setStep(2)}
-                disabled={step < 2}
+                onClick={() => setStep(2)}
               >
                 <span className="employee-edit-profile-step-number">2</span>
                 <span className="employee-edit-profile-step-text">Education</span>
@@ -806,8 +970,7 @@ const EmployeeProfile = () => {
               
               <button 
                 className={`employee-edit-profile-step-link ${step === 3 ? 'active' : step > 3 ? 'completed' : ''}`}
-                onClick={() => step > 3 && setStep(3)}
-                disabled={step < 3}
+                onClick={() => setStep(3)}
               >
                 <span className="employee-edit-profile-step-number">3</span>
                 <span className="employee-edit-profile-step-text">Skills</span>
@@ -816,8 +979,7 @@ const EmployeeProfile = () => {
               
               <button 
                 className={`employee-edit-profile-step-link ${step === 4 ? 'active' : step > 4 ? 'completed' : ''}`}
-                onClick={() => step > 4 && setStep(4)}
-                disabled={step < 4}
+                onClick={() => setStep(4)}
               >
                 <span className="employee-edit-profile-step-number">4</span>
                 <span className="employee-edit-profile-step-text">Contact</span>
@@ -826,8 +988,7 @@ const EmployeeProfile = () => {
               
               <button 
                 className={`employee-edit-profile-step-link ${step === 5 ? 'active' : step > 5 ? 'completed' : ''}`}
-                onClick={() => step > 5 && setStep(5)}
-                disabled={step < 5}
+                onClick={() => setStep(5)}
               >
                 <span className="employee-edit-profile-step-number">5</span>
                 <span className="employee-edit-profile-step-text">Goals</span>
@@ -836,8 +997,7 @@ const EmployeeProfile = () => {
               
               <button 
                 className={`employee-edit-profile-step-link ${step === 6 ? 'active' : ''}`}
-                onClick={() => step > 6 && setStep(6)}
-                disabled={step < 6}
+                onClick={() => setStep(6)}
               >
                 <span className="employee-edit-profile-step-number">6</span>
                 <span className="employee-edit-profile-step-text">Price</span>
@@ -954,13 +1114,23 @@ const EmployeeProfile = () => {
                     >
                       Cancel
                     </button>
-                    <button 
-                      type="button" 
-                      className="employee-edit-profile-button primary" 
-                      onClick={handleNext}
-                    >
-                      Next: Education <FaAngleRight />
-                    </button>
+                    <div className="employee-edit-profile-button-group">
+                      <button 
+                        type="button" 
+                        className="employee-edit-profile-button save" 
+                        onClick={handleSaveSection}
+                        disabled={isLoading}
+                      >
+                        {isLoading ? 'Saving...' : 'Save Changes'}
+                      </button>
+                      <button 
+                        type="button" 
+                        className="employee-edit-profile-button primary" 
+                        onClick={handleNext}
+                      >
+                        Next: Education <FaAngleRight />
+                      </button>
+                    </div>
                   </div>
                 </div>
               )}
@@ -1120,13 +1290,23 @@ const EmployeeProfile = () => {
                     >
                       <FaArrowLeft /> Back: Basic Info
                     </button>
-                    <button 
-                      type="button" 
-                      className="employee-edit-profile-button primary" 
-                      onClick={handleNext}
-                    >
-                      Next: Skills <FaAngleRight />
-                    </button>
+                    <div className="employee-edit-profile-button-group">
+                      <button 
+                        type="button" 
+                        className="employee-edit-profile-button save" 
+                        onClick={handleSaveSection}
+                        disabled={isLoading}
+                      >
+                        {isLoading ? 'Saving...' : 'Save Changes'}
+                      </button>
+                      <button 
+                        type="button" 
+                        className="employee-edit-profile-button primary" 
+                        onClick={handleNext}
+                      >
+                        Next: Skills <FaAngleRight />
+                      </button>
+                    </div>
                   </div>
                 </div>
               )}
@@ -1303,13 +1483,23 @@ const EmployeeProfile = () => {
                     >
                       <FaArrowLeft /> Back: Education
                     </button>
-                    <button 
-                      type="button" 
-                      className="employee-edit-profile-button primary" 
-                      onClick={handleNext}
-                    >
-                      Next: Contact <FaAngleRight />
-                    </button>
+                    <div className="employee-edit-profile-button-group">
+                      <button 
+                        type="button" 
+                        className="employee-edit-profile-button save" 
+                        onClick={handleSaveSection}
+                        disabled={isLoading}
+                      >
+                        {isLoading ? 'Saving...' : 'Save Changes'}
+                      </button>
+                      <button 
+                        type="button" 
+                        className="employee-edit-profile-button primary" 
+                        onClick={handleNext}
+                      >
+                        Next: Contact <FaAngleRight />
+                      </button>
+                    </div>
                   </div>
                 </div>
               )}
@@ -1433,13 +1623,23 @@ const EmployeeProfile = () => {
                     >
                       <FaArrowLeft /> Back: Skills
                     </button>
-                    <button 
-                      type="button" 
-                      className="employee-edit-profile-button primary" 
-                      onClick={handleNext}
-                    >
-                      Next: Goals <FaAngleRight />
-                    </button>
+                    <div className="employee-edit-profile-button-group">
+                      <button 
+                        type="button" 
+                        className="employee-edit-profile-button save" 
+                        onClick={handleSaveSection}
+                        disabled={isLoading}
+                      >
+                        {isLoading ? 'Saving...' : 'Save Changes'}
+                      </button>
+                      <button 
+                        type="button" 
+                        className="employee-edit-profile-button primary" 
+                        onClick={handleNext}
+                      >
+                        Next: Goals <FaAngleRight />
+                      </button>
+                    </div>
                   </div>
                 </div>
               )}
@@ -1587,13 +1787,23 @@ const EmployeeProfile = () => {
                     >
                       <FaArrowLeft /> Back: Contact
                     </button>
-                    <button 
-                      type="button" 
-                      className="employee-edit-profile-button primary" 
-                      onClick={handleNext}
-                    >
-                      Next: Price <FaAngleRight />
-                    </button>
+                    <div className="employee-edit-profile-button-group">
+                      <button 
+                        type="button" 
+                        className="employee-edit-profile-button save" 
+                        onClick={handleSaveSection}
+                        disabled={isLoading}
+                      >
+                        {isLoading ? 'Saving...' : 'Save Changes'}
+                      </button>
+                      <button 
+                        type="button" 
+                        className="employee-edit-profile-button primary" 
+                        onClick={handleNext}
+                      >
+                        Next: Price <FaAngleRight />
+                      </button>
+                    </div>
                   </div>
                 </div>
               )}
@@ -1832,8 +2042,9 @@ const EmployeeProfile = () => {
                       type="button" 
                       className="employee-edit-profile-button primary" 
                       onClick={handleSubmit}
+                      disabled={isLoading}
                     >
-                      <FaCheck /> Complete Profile
+                      {isLoading ? 'Saving...' : <><FaCheck /> Complete Profile</>}
                     </button>
                   </div>
                 </div>

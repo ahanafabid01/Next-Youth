@@ -58,7 +58,10 @@ const EmployeeDashboard = () => {
   });
 
   const [isDarkMode, setIsDarkMode] = useState(() => {
-    return localStorage.getItem("dashboard-theme") === "dark";
+    const dashboardTheme = localStorage.getItem("dashboard-theme");
+    const loginTheme = localStorage.getItem("theme");
+    // First check dashboard-theme, then fall back to theme
+    return dashboardTheme ? dashboardTheme === "dark" : loginTheme === "dark";
   });
 
   const API_BASE_URL = 'http://localhost:4000/api';
@@ -322,7 +325,13 @@ const EmployeeDashboard = () => {
   }, [navigate]);
 
   const toggleDarkMode = useCallback(() => {
-    setIsDarkMode(prev => !prev);
+    setIsDarkMode(prevMode => {
+      const newMode = !prevMode;
+      // Update both theme keys for consistency
+      localStorage.setItem("dashboard-theme", newMode ? "dark" : "light");
+      localStorage.setItem("theme", newMode ? "dark" : "light");
+      return newMode;
+    });
   }, []);
 
   const formatBudget = useCallback((job) => {
@@ -400,7 +409,9 @@ const EmployeeDashboard = () => {
     if (dashboardElement) {
       dashboardElement.classList.toggle('employee-dark-mode', isDarkMode);
     }
+    // Update both keys
     localStorage.setItem("dashboard-theme", isDarkMode ? "dark" : "light");
+    localStorage.setItem("theme", isDarkMode ? "dark" : "light");
   }, [isDarkMode]);
 
   useEffect(() => {
@@ -418,6 +429,14 @@ const EmployeeDashboard = () => {
       document.body.classList.remove('mobile-nav-active');
     };
   }, [showMobileNav]);
+
+  useEffect(() => {
+    // On initial load, check if user came from login with dark mode
+    const loginTheme = localStorage.getItem("theme");
+    if (loginTheme === "dark" && !isDarkMode) {
+      setIsDarkMode(true);
+    }
+  }, []);
 
   const currentYear = new Date().getFullYear();
   const totalPages = Math.ceil(totalJobs / jobsPerPage);

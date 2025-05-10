@@ -82,15 +82,6 @@ export const sendMassEmail = async (req, res) => {
 
     // Format HTML content with line breaks
     htmlContent = htmlContent.replace(/\n/g, '<br>');
-    htmlContent = `
-      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
-        <h2 style="color: #3b82f6;">${subject}</h2>
-        <div style="line-height: 1.6;">${htmlContent}</div>
-        <div style="margin-top: 30px; padding-top: 20px; border-top: 1px solid #eee; color: #888; font-size: 12px;">
-          <p>This is an automated message from Next Youth. Please do not reply to this email.</p>
-        </div>
-      </div>
-    `;
 
     // Send emails in batches of 10 to avoid rate limits
     const batchSize = 10;
@@ -100,11 +91,26 @@ export const sendMassEmail = async (req, res) => {
       const batch = recipients.slice(i, i + batchSize);
       
       const emailPromises = batch.map(recipient => {
+        // Create personalized HTML content for each recipient
+        const personalizedHtml = `
+          <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
+            <h2 style="color: #3b82f6;">Hello ${recipient.name},</h2>
+            <p style="margin-top: 5px; color: #4b5563;">We hope this email finds you well.</p>
+            <div style="line-height: 1.6;">${htmlContent}</div>
+            <div style="margin-top: 20px; color: #4b5563;">
+              <p>Best Regards,<br><span style="color: #3b82f6;">Next Youth Team</span></p>
+            </div>
+            <div style="margin-top: 30px; padding-top: 20px; border-top: 1px solid #eee; color: #888; font-size: 12px;">
+              <p>This is an automated message from Next Youth. Please do not reply to this email.</p>
+            </div>
+          </div>
+        `;
+        
         return transporter.sendMail({
           from: `"Next Youth" <${process.env.SENDER_EMAIL}>`,
           to: recipient.email,
           subject: subject,
-          html: htmlContent,
+          html: personalizedHtml,
           attachments: attachments
         });
       });
