@@ -15,7 +15,8 @@ import {
   FaArrowLeft,
   FaDownload,
   FaImage,
-  FaCircle
+  FaCircle,
+  FaMicrophone
 } from "react-icons/fa";
 import "./EmployerMessage.css";
 import logoLight from '../../assets/images/logo-light.png';
@@ -40,6 +41,7 @@ const EmployerMessage = ({ darkMode }) => {
   const [showConversations, setShowConversations] = useState(true);
   const [unreadCounts, setUnreadCounts] = useState({});
   const [showUploadOptions, setShowUploadOptions] = useState(false);
+  const [currentUser, setCurrentUser] = useState(null);
   
   // Refs
   const messagesEndRef = useRef(null);
@@ -70,6 +72,26 @@ const EmployerMessage = ({ darkMode }) => {
         }));
       }
     });
+
+    // Get current user information
+    const fetchCurrentUser = async () => {
+      try {
+        const response = await axios.get("http://localhost:4000/api/auth/profile", { 
+          withCredentials: true 
+        });
+        if (response.data.success) {
+          const user = response.data.user;
+          setCurrentUser(user);
+          
+          // Store user ID in localStorage for convenience
+          localStorage.setItem("userId", user._id);
+        }
+      } catch (error) {
+        console.error("Error fetching current user:", error);
+      }
+    };
+
+    fetchCurrentUser();
     
     return () => {
       socket.disconnect();
@@ -105,6 +127,18 @@ const EmployerMessage = ({ darkMode }) => {
       messagesEndRef.current.scrollIntoView({ behavior: "smooth" });
     }
   }, [messages]);
+  
+  // Get other participant in conversation - FIXED FUNCTION
+  const getOtherParticipant = (conversation) => {
+    if (!conversation || !conversation.participants) return { name: "Loading..." };
+    
+    // Use currentUser._id directly instead of relying on localStorage
+    const myId = currentUser?._id;
+    if (!myId) return { name: "Loading..." };
+    
+    // Find the participant that isn't the current user
+    return conversation.participants.find(p => p._id !== myId) || { name: "Unknown" };
+  };
   
   // Fetch conversations
   const fetchConversations = async () => {
@@ -198,9 +232,7 @@ const EmployerMessage = ({ darkMode }) => {
         {
           conversationId: activeConversation._id,
           content: newMessage,
-          receiverId: activeConversation.participants.find(
-            p => p._id !== localStorage.getItem("userId")
-          )._id
+          receiverId: getOtherParticipant(activeConversation)._id
         },
         { withCredentials: true }
       );
@@ -229,9 +261,7 @@ const EmployerMessage = ({ darkMode }) => {
     const formData = new FormData();
     formData.append('file', file);
     formData.append('conversationId', activeConversation._id);
-    formData.append('receiverId', activeConversation.participants.find(
-      p => p._id !== localStorage.getItem("userId")
-    )._id);
+    formData.append('receiverId', getOtherParticipant(activeConversation)._id);
 
     try {
       const response = await axios.post(
@@ -295,11 +325,12 @@ const EmployerMessage = ({ darkMode }) => {
   
   // Filter conversations based on search term
   const filteredConversations = conversations.filter(conv => {
-    const otherParticipant = conv.participants.find(
-      p => p._id !== localStorage.getItem("userId")
-    );
+    // Only run this if we have the currentUser properly loaded
+    if (!currentUser) return true;
     
-    return otherParticipant?.name.toLowerCase().includes(searchTerm.toLowerCase());
+    const otherParticipant = getOtherParticipant(conv);
+    
+    return otherParticipant?.name?.toLowerCase().includes(searchTerm.toLowerCase());
   });
   
   // Format timestamp
@@ -318,116 +349,127 @@ const EmployerMessage = ({ darkMode }) => {
     return date.toLocaleDateString([], { month: 'short', day: 'numeric' });
   };
   
-  // Get other participant in conversation
-  const getOtherParticipant = (conversation) => {
-    if (!conversation || !conversation.participants) return { name: "Loading..." };
-    return conversation.participants.find(p => p._id !== localStorage.getItem("userId")) || { name: "Unknown" };
+  // Check if a message is from the current user
+  const isOwnMessage = (message) => {
+    if (!currentUser || !message.sender) return false;
+    return message.sender._id === currentUser._id;
   };
   
   // Render messages
   const renderMessages = () => {
-    const userId = localStorage.getItem("userId");
+    let lastDate = null;
     let lastSenderId = null;
     
     return messages.map((message, index) => {
-      const isOwn = message.sender === userId;
-      const showHeader = index === 0 || messages[index - 1].sender !== message.sender;
-      const showAvatar = showHeader;
-      lastSenderId = message.sender;
+      // Check if this is the user's own message
+      const isOwn = isOwnMessage(message);
       
-      // Get sender name
-      const senderName = isOwn ? 'You' : getOtherParticipant(activeConversation).name;
+      // Determine if we should show the date header
+      const messageDate = new Date(message.createdAt).toDateString();
+      const showDate = lastDate !== messageDate;
+      if (showDate) lastDate = messageDate;
+      
+      // Track sender for grouping (still needed for sender name display)
+      const showSenderInfo = lastSenderId !== message.sender?._id;
+      lastSenderId = message.sender?._id;
+      
+      // Get sender name (for non-own messages)
+      const senderName = isOwn ? 'You' : (message.sender ? message.sender.name : 'Unknown');
       
       return (
-        <div 
-          key={message._id}
-          className={`employer-message-bubble ${isOwn ? "employer-message-own" : "employer-message-other"}`}
-        >
-          {showHeader && !isOwn && (
-            <div className="employer-message-sender-name">
-              {senderName}
+        <React.Fragment key={message._id}>
+          {showDate && (
+            <div className="whatsapp-date-divider">
+              <span>{new Date(message.createdAt).toLocaleDateString()}</span>
             </div>
           )}
           
-          {!isOwn && showAvatar && (
-            <div className="employer-message-avatar">
-              {activeConversation && getOtherParticipant(activeConversation).profilePicture ? (
-                <img src={getOtherParticipant(activeConversation).profilePicture} alt="User" />
-              ) : (
-                <FaUser />
-              )}
-            </div>
-          )}
-          
-          <div className="employer-message-content-wrapper">
-            <div className="employer-message-content">
-              {message.content}
-              
-              {message.attachment && (
-                <div className="employer-message-attachment">
-                  {message.attachment.type && message.attachment.type.startsWith("image") ? (
-                    <div className="employer-message-image-attachment">
-                      <img src={message.attachment.url} alt="Attachment" />
-                      <a href={message.attachment.url} download target="_blank" rel="noreferrer">
-                        <FaDownload />
-                      </a>
-                    </div>
-                  ) : (
-                    <div className="employer-message-file-attachment">
-                      <FaFile />
-                      <span>{message.attachment.filename || "File"}</span>
-                      <a href={message.attachment.url} download target="_blank" rel="noreferrer">
-                        <FaDownload />
-                      </a>
-                    </div>
-                  )}
+          <div className={`whatsapp-message ${isOwn ? "whatsapp-message-own" : "whatsapp-message-other"}`}>
+            <div className={`whatsapp-bubble ${isOwn ? "whatsapp-bubble-own" : "whatsapp-bubble-other"}`}>
+              {!isOwn && showSenderInfo && (
+                <div className="whatsapp-sender-name">
+                  {senderName}
                 </div>
               )}
               
-              <div className="employer-message-timestamp">
-                {formatTimestamp(message.createdAt)}
-                {isOwn && (
-                  <span className="employer-message-status">
-                    {message.read ? <FaCheckDouble /> : <FaCheck />}
-                  </span>
+              <div className="whatsapp-message-content">
+                {message.content}
+                
+                {message.attachment && (
+                  <div className="whatsapp-attachment">
+                    {message.attachment.type && message.attachment.type.startsWith("image") ? (
+                      <div className="whatsapp-image-attachment">
+                        <img src={message.attachment.url} alt="Attachment" />
+                        <a href={message.attachment.url} download target="_blank" rel="noreferrer" 
+                           className="whatsapp-download-btn">
+                          <FaDownload />
+                        </a>
+                      </div>
+                    ) : (
+                      <div className="whatsapp-file-attachment">
+                        <FaFile />
+                        <span>{message.attachment.filename || "File"}</span>
+                        <a href={message.attachment.url} download target="_blank" rel="noreferrer">
+                          <FaDownload />
+                        </a>
+                      </div>
+                    )}
+                  </div>
                 )}
+                
+                <div className="whatsapp-message-meta">
+                  <span className="whatsapp-message-time">{formatTimestamp(message.createdAt)}</span>
+                  {isOwn && (
+                    <span className="whatsapp-message-status">
+                      {message.read ? <FaCheckDouble /> : <FaCheck />}
+                    </span>
+                  )}
+                </div>
               </div>
             </div>
           </div>
-        </div>
+        </React.Fragment>
       );
     });
   };
 
   return (
-    <div className={`employer-message-container ${darkMode ? "employer-message-dark" : ""}`}>
-      <div 
-        className={`
-          employer-message-sidebar 
-          ${mobileView && !showConversations ? "employer-message-sidebar-hidden" : ""}
-        `}
-      >
-        <div className="employer-message-header">
-          <div className="employer-message-logo">
-            <img src={darkMode ? logoDark : logoLight} alt="Next Youth" />
+    <div className={`whatsapp-container ${darkMode ? "whatsapp-dark" : ""}`}>
+      <div className={`whatsapp-sidebar ${mobileView && !showConversations ? "whatsapp-sidebar-hidden" : ""}`}>
+        <div className="whatsapp-header">
+          <div className="whatsapp-user-info">
+            {currentUser?.profilePicture ? (
+              <img src={currentUser.profilePicture} alt="Profile" className="whatsapp-profile-image" />
+            ) : (
+              <div className="whatsapp-default-avatar whatsapp-header-avatar">
+                {currentUser?.name ? currentUser.name.charAt(0).toUpperCase() : "U"}
+              </div>
+            )}
+            <h2>Messages</h2>
           </div>
-          <h2>Messages</h2>
+          <div className="whatsapp-header-actions">
+            <button className="whatsapp-icon-button">
+              <FaEllipsisV />
+            </button>
+          </div>
         </div>
         
-        <div className="employer-message-search">
-          <FaSearch />
-          <input 
-            type="text" 
-            placeholder="Search conversations..." 
-            value={searchTerm}
-            onChange={handleSearch}
-          />
+        <div className="whatsapp-search">
+          <div className="whatsapp-search-container">
+            <FaSearch className="whatsapp-search-icon" />
+            <input 
+              type="text" 
+              placeholder="Search or start new chat" 
+              value={searchTerm}
+              onChange={handleSearch}
+            />
+          </div>
         </div>
         
-        <div className="employer-message-conversations-list">
+        <div className="whatsapp-chats">
           {loading ? (
-            <div className="employer-message-loading">
-              <FaSpinner className="employer-message-spin" />
+            <div className="whatsapp-loading">
+              <FaSpinner className="whatsapp-spinner" />
               <p>Loading conversations...</p>
             </div>
           ) : filteredConversations.length > 0 ? (
@@ -439,112 +481,110 @@ const EmployerMessage = ({ darkMode }) => {
               return (
                 <div 
                   key={conversation._id}
-                  className={`employer-message-conversation-item ${isActive ? "employer-message-active" : ""}`}
+                  className={`whatsapp-chat-item ${isActive ? "whatsapp-active-chat" : ""}`}
                   onClick={() => handleSelectConversation(conversation)}
                 >
-                  <div className="employer-message-conversation-avatar">
+                  <div className="whatsapp-chat-avatar">
                     {otherParticipant.profilePicture ? (
                       <img src={otherParticipant.profilePicture} alt={otherParticipant.name} />
                     ) : (
-                      <FaUser />
-                    )}
-                    
-                    {otherParticipant.isOnline && (
-                      <div className="employer-message-online-status"></div>
+                      <div className="whatsapp-default-avatar">
+                        {otherParticipant.name ? otherParticipant.name.charAt(0).toUpperCase() : "?"}
+                      </div>
                     )}
                   </div>
                   
-                  <div className="employer-message-conversation-info">
-                    <div className="employer-message-conversation-top">
+                  <div className="whatsapp-chat-details">
+                    <div className="whatsapp-chat-header">
                       <h4>{otherParticipant.name}</h4>
-                      <span className="employer-message-time">
+                      <span className="whatsapp-chat-time">
                         {conversation.lastMessage ? formatTimestamp(conversation.lastMessage.createdAt) : ""}
                       </span>
                     </div>
                     
-                    <div className="employer-message-conversation-bottom">
+                    <div className="whatsapp-chat-message">
                       <p>
                         {conversation.lastMessage ? (
                           conversation.lastMessage.content 
-                            ? (conversation.lastMessage.content.length > 28
-                              ? conversation.lastMessage.content.substring(0, 28) + "..."
+                            ? (conversation.lastMessage.content.length > 40
+                              ? conversation.lastMessage.content.substring(0, 40) + "..."
                               : conversation.lastMessage.content)
                             : (conversation.lastMessage.attachment 
-                              ? (conversation.lastMessage.attachment.type.startsWith("image") 
-                                ? "📷 Image" 
-                                : "📎 File") 
+                              ? (conversation.lastMessage.attachment.type && conversation.lastMessage.attachment.type.startsWith("image") 
+                                ? "📷 Photo" 
+                                : "📎 Document") 
                               : "No message")
                         ) : "Start a conversation"}
                       </p>
+                      
+                      {unreadCount > 0 && (
+                        <div className="whatsapp-unread-count">{unreadCount}</div>
+                      )}
                     </div>
                   </div>
                 </div>
               );
             })
           ) : (
-            <div className="employer-message-empty-state">
+            <div className="whatsapp-empty">
               <p>No conversations found</p>
             </div>
           )}
         </div>
       </div>
       
-      <div 
-        className={`
-          employer-message-chat-container 
-          ${mobileView && showConversations ? "employer-message-chat-hidden" : ""}
-        `}
-      >
+      <div className={`whatsapp-chat ${mobileView && showConversations ? "whatsapp-chat-hidden" : ""}`}>
         {activeConversation ? (
           <>
-            <div className="employer-message-chat-header">
+            <div className="whatsapp-chat-header">
               {mobileView && (
                 <button 
-                  className="employer-message-back-btn" 
+                  className="whatsapp-back-button"
                   onClick={() => setShowConversations(true)}
                 >
                   <FaArrowLeft />
                 </button>
               )}
               
-              <div className="employer-message-chat-user">
-                <div className="employer-message-chat-avatar">
+              <div className="whatsapp-chat-user" onClick={() => {}}>
+                <div className="whatsapp-chat-avatar">
                   {getOtherParticipant(activeConversation).profilePicture ? (
                     <img 
                       src={getOtherParticipant(activeConversation).profilePicture} 
                       alt={getOtherParticipant(activeConversation).name} 
                     />
                   ) : (
-                    <FaUser />
-                  )}
-                  
-                  {getOtherParticipant(activeConversation).isOnline && (
-                    <div className="employer-message-online-status"></div>
+                    <div className="whatsapp-default-avatar">
+                      {getOtherParticipant(activeConversation).name.charAt(0).toUpperCase()}
+                    </div>
                   )}
                 </div>
                 
-                <div className="employer-message-chat-user-info">
+                <div className="whatsapp-chat-user-info">
                   <h3>{getOtherParticipant(activeConversation).name}</h3>
-                  <span>
+                  <span className="whatsapp-user-status">
                     {getOtherParticipant(activeConversation).isOnline ? "Online" : "Offline"}
                   </span>
                 </div>
               </div>
               
-              <div className="employer-message-chat-actions">
-                <button className="employer-message-more-btn">
+              <div className="whatsapp-chat-actions">
+                <button className="whatsapp-icon-button">
+                  <FaSearch />
+                </button>
+                <button className="whatsapp-icon-button">
                   <FaEllipsisV />
                 </button>
               </div>
             </div>
             
-            <div className="employer-message-chat-body" ref={messagesContainerRef}>
+            <div className="whatsapp-chat-body" ref={messagesContainerRef}>
               {hasMore && (
-                <div className="employer-message-load-more">
+                <div className="whatsapp-load-more">
                   <button onClick={handleLoadMore} disabled={loadingMore}>
                     {loadingMore ? (
                       <>
-                        <FaSpinner className="employer-message-spin" />
+                        <FaSpinner className="whatsapp-spinner" />
                         Loading...
                       </>
                     ) : (
@@ -554,97 +594,96 @@ const EmployerMessage = ({ darkMode }) => {
                 </div>
               )}
               
-              {messages.length > 0 ? (
-                <div className="employer-message-messages-container">
-                  {renderMessages()}
-                  <div ref={messagesEndRef} />
-                </div>
-              ) : loading ? (
-                <div className="employer-message-loading">
-                  <FaSpinner className="employer-message-spin" />
-                  <p>Loading messages...</p>
-                </div>
-              ) : (
-                <div className="employer-message-empty-chat">
-                  <p>No messages yet. Start the conversation!</p>
-                </div>
-              )}
+              <div className="whatsapp-messages">
+                {messages.length > 0 ? renderMessages() : (
+                  <div className="whatsapp-no-messages">
+                    <p>No messages yet. Start the conversation!</p>
+                  </div>
+                )}
+                <div ref={messagesEndRef} />
+              </div>
             </div>
             
-            <div className="employer-message-chat-footer">
-              <div className="employer-message-input-actions">
-                <div className="employer-message-attachment-wrapper">
-                  <button 
-                    className="employer-message-attach-btn"
-                    onClick={() => setShowUploadOptions(!showUploadOptions)}
-                  >
-                    <FaPaperclip />
-                  </button>
-                  
-                  {showUploadOptions && (
-                    <div className="employer-message-upload-options">
-                      <button 
-                        className="employer-message-upload-option"
-                        onClick={() => imageInputRef.current.click()}
-                      >
-                        <FaImage /> Image
-                      </button>
-                      <button 
-                        className="employer-message-upload-option"
-                        onClick={() => fileInputRef.current.click()}
-                      >
-                        <FaFile /> File
-                      </button>
-                    </div>
-                  )}
-                  
-                  <input 
-                    type="file" 
-                    ref={fileInputRef} 
-                    onChange={(e) => handleFileUpload(e, 'file')}
-                    style={{ display: 'none' }}
-                    accept=".pdf,.doc,.docx,.txt,.zip,.rar"
-                  />
-                  
-                  <input 
-                    type="file" 
-                    ref={imageInputRef} 
-                    onChange={(e) => handleFileUpload(e, 'image')}
-                    style={{ display: 'none' }}
-                    accept="image/*"
-                  />
-                </div>
-              </div>
+            <div className="whatsapp-chat-footer">
+              <button 
+                className="whatsapp-icon-button whatsapp-emoji"
+                onClick={() => {}}
+              >
+                <FaSmile />
+              </button>
               
-              <div className="employer-message-input-container">
+              <button 
+                className="whatsapp-icon-button whatsapp-attach"
+                onClick={() => setShowUploadOptions(!showUploadOptions)}
+              >
+                <FaPaperclip />
+              </button>
+              
+              {showUploadOptions && (
+                <div className="whatsapp-upload-options">
+                  <button 
+                    className="whatsapp-upload-option"
+                    onClick={() => imageInputRef.current.click()}
+                  >
+                    <div className="whatsapp-upload-icon whatsapp-photo-icon">
+                      <FaImage />
+                    </div>
+                    <span>Photo</span>
+                  </button>
+                  <button 
+                    className="whatsapp-upload-option"
+                    onClick={() => fileInputRef.current.click()}
+                  >
+                    <div className="whatsapp-upload-icon whatsapp-doc-icon">
+                      <FaFile />
+                    </div>
+                    <span>Document</span>
+                  </button>
+                </div>
+              )}
+              
+              <input 
+                type="file" 
+                ref={fileInputRef} 
+                onChange={(e) => handleFileUpload(e, 'file')}
+                style={{ display: 'none' }}
+                accept=".pdf,.doc,.docx,.txt,.zip,.rar"
+              />
+              
+              <input 
+                type="file" 
+                ref={imageInputRef} 
+                onChange={(e) => handleFileUpload(e, 'image')}
+                style={{ display: 'none' }}
+                accept="image/*"
+              />
+              
+              <div className="whatsapp-input-container">
                 <input
                   type="text"
-                  placeholder="Type a message..."
+                  placeholder="Type a message"
                   value={newMessage}
                   onChange={(e) => setNewMessage(e.target.value)}
                   onKeyPress={(e) => e.key === "Enter" && handleSendMessage()}
                   ref={messageInputRef}
                 />
-                
-                <button className="employer-message-emoji-btn">
-                  <FaSmile />
-                </button>
               </div>
               
               <button 
-                className={`employer-message-send-btn ${!newMessage.trim() ? "employer-message-disabled" : ""}`}
+                className="whatsapp-icon-button whatsapp-send"
                 onClick={handleSendMessage}
                 disabled={!newMessage.trim()}
               >
-                <FaPaperPlane />
+                {newMessage.trim() ? <FaPaperPlane /> : <FaMicrophone />}
               </button>
             </div>
           </>
         ) : (
-          <div className="employer-message-no-chat-selected">
-            <div className="employer-message-no-chat-content">
-              <h3>Select a conversation</h3>
-              <p>Choose a conversation from the list to start messaging</p>
+          <div className="whatsapp-welcome">
+            <div className="whatsapp-welcome-container">
+              <div className="whatsapp-welcome-image"></div>
+              <h1>Keep your phone connected</h1>
+              <p>Select a chat to start messaging</p>
             </div>
           </div>
         )}

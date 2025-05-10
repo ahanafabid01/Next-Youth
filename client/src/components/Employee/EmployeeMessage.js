@@ -19,6 +19,7 @@ import {
   FaCircle,
   FaPlus
 } from "react-icons/fa";
+import { useNavigate } from "react-router-dom";
 import "./EmployeeMessage.css";
 import logoLight from '../../assets/images/logo-light.png';
 import logoDark from '../../assets/images/logo-dark.png';
@@ -28,6 +29,7 @@ const ENDPOINT = "http://localhost:4000";
 let socket;
 
 const EmployeeMessage = ({ darkMode }) => {
+  const navigate = useNavigate();
   // State for conversations and messages
   const [conversations, setConversations] = useState([]);
   const [activeConversation, setActiveConversation] = useState(null);
@@ -338,32 +340,27 @@ const EmployeeMessage = ({ darkMode }) => {
   // Render messages
   const renderMessages = () => {
     const userId = localStorage.getItem("userId");
-    let lastSenderId = null;
     
     return messages.map((message, index) => {
-      const isOwn = message.sender === userId;
-      const showHeader = index === 0 || messages[index - 1].sender !== message.sender;
-      const showAvatar = showHeader;
-      lastSenderId = message.sender;
+      // Fix the sender comparison to handle both object and string IDs
+      const isOwn = message.sender?._id === userId || 
+                    message.sender === userId || 
+                    (typeof message.sender === 'object' && message.sender?.toString() === userId);
       
-      // Get sender name
-      const senderName = isOwn ? 'You' : getOtherParticipant(activeConversation).name;
+      const showAvatar = index === 0 || 
+                        (messages[index - 1].sender?._id || messages[index - 1].sender) !== 
+                        (message.sender?._id || message.sender);
       
       return (
         <div 
           key={message._id}
           className={`employee-message-bubble ${isOwn ? "employee-message-own" : "employee-message-other"}`}
         >
-          {showHeader && !isOwn && (
-            <div className="employee-message-sender-name">
-              {senderName}
-            </div>
-          )}
-          
+          {/* Only show avatar for incoming messages when sender changes */}
           {!isOwn && showAvatar && (
             <div className="employee-message-avatar">
-              {activeConversation && getOtherParticipant(activeConversation).profilePicture ? (
-                <img src={getOtherParticipant(activeConversation).profilePicture} alt="User" />
+              {message.sender?.profilePicture ? (
+                <img src={message.sender.profilePicture} alt="Sender" />
               ) : (
                 <FaUser />
               )}
@@ -410,8 +407,18 @@ const EmployeeMessage = ({ darkMode }) => {
     });
   };
 
+  // Handle exit
+  const handleExit = () => {
+    navigate('/employee-dashboard');
+  };
+
   return (
     <div className={`employee-message-container ${darkMode ? "employee-message-dark" : ""}`}>
+      {/* Exit button */}
+      <button className="employee-message-exit-btn" onClick={handleExit}>
+        <FaTimes />
+      </button>
+      
       {/* Conversations Sidebar */}
       <div 
         className={`
