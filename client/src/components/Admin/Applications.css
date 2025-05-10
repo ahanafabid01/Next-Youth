@@ -25,20 +25,47 @@
 /* Header styling */
 .app-mgmt-header {
   display: flex;
+  justify-content: space-between;
   align-items: center;
-  margin-bottom: 30px;
-  padding-bottom: 15px;
-  border-bottom: 1px solid rgba(203, 213, 225, 0.4);
+  margin-bottom: 2rem;
+  padding-bottom: 0;
 }
 
-.app-mgmt-dark-mode .app-mgmt-header {
-  border-bottom-color: rgba(51, 65, 85, 0.6);
+.app-mgmt-title {
+  flex: 1;
 }
 
+.app-mgmt-title h1 {
+  font-size: 1.8rem;
+  font-weight: 700;
+  margin: 0;
+  background: linear-gradient(90deg, #3a86ff, #4cc9f0);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+.app-mgmt-title p {
+  margin: 0.5rem 0 0;
+  color: #64748b;
+  font-size: 1.05rem;
+}
+
+.app-mgmt-dark-mode .app-mgmt-title p {
+  color: #94a3b8;
+}
+
+.app-mgmt-dark-mode .app-mgmt-title h1 {
+  color: #f8fafc; /* This will be overridden by the gradient if the gradient works */
+}
+
+/* Hide the logo */
 .app-mgmt-header-logo {
-  margin-right: 20px;
+  display: none; /* Changed from margin-right: 20px; */
 }
 
+/* These styles won't have any effect when the logo is hidden, 
+   but you can keep them in case you want to show the logo again later */
 .app-mgmt-header-logo img {
   height: 45px;
   width: auto;
@@ -55,14 +82,14 @@
 .app-mgmt-container {
   background-color: #ffffff;
   border-radius: 12px;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
-  padding: 24px;
-  margin-bottom: 30px;
+  padding: 1.5rem;
+  margin-bottom: 2rem;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
 }
 
 .app-mgmt-dark-mode .app-mgmt-container {
   background-color: #1e293b;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
 }
 
 /* Stats cards */
@@ -74,45 +101,45 @@
 }
 
 .app-mgmt-stat-card {
-  background: linear-gradient(to right, #ffffff, #f8fafc);
+  background-color: #ffffff;
   border-radius: 12px;
-  padding: 20px;
+  padding: 1.5rem;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+  transition: all 0.3s ease;
   display: flex;
   align-items: center;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.04);
-  border-left: 4px solid #cbd5e1;
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  border-left: none; /* Remove the left border */
 }
 
 .app-mgmt-dark-mode .app-mgmt-stat-card {
-  background: linear-gradient(to right, #1e293b, #1a2234);
-  border-left: 4px solid #334155;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+  background-color: #1e293b;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  border-left: none;
 }
 
 .app-mgmt-stat-card:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.08);
+  transform: translateY(-5px);
+  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1);
 }
 
 .app-mgmt-dark-mode .app-mgmt-stat-card:hover {
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
 }
 
 .app-mgmt-stat-icon {
+  width: 50px;
+  height: 50px;
+  border-radius: 12px;
+  background: linear-gradient(135deg, rgba(58, 134, 255, 0.1), rgba(76, 201, 240, 0.1));
   display: flex;
   justify-content: center;
   align-items: center;
-  width: 46px;
-  height: 46px;
-  border-radius: 12px;
   margin-right: 15px;
-  background-color: rgba(58, 134, 255, 0.1);
   color: #3a86ff;
 }
 
 .app-mgmt-dark-mode .app-mgmt-stat-icon {
-  background-color: rgba(96, 165, 250, 0.15);
+  background: linear-gradient(135deg, rgba(58, 134, 255, 0.15), rgba(76, 201, 240, 0.15));
   color: #60a5fa;
 }
 
@@ -1061,6 +1088,109 @@
 
 .app-mgmt-dark-mode .app-mgmt-retry-btn:hover {
   background-color: #3b82f6;
+}
+
+/* Status update feedback */
+.app-mgmt-status-feedback {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  border-radius: 6px;
+  font-size: 0.875rem;
+  animation: app-mgmt-feedback-in 0.3s ease-out;
+}
+
+@keyframes app-mgmt-feedback-in {
+  from {
+    opacity: 0;
+    transform: translateY(-5px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.app-mgmt-status-feedback.app-mgmt-success {
+  background-color: rgba(16, 185, 129, 0.1);
+  color: #10b981;
+}
+
+.app-mgmt-dark-mode .app-mgmt-status-feedback.app-mgmt-success {
+  background-color: rgba(34, 197, 94, 0.2);
+  color: #22c55e;
+}
+
+.app-mgmt-status-feedback.app-mgmt-error {
+  background-color: rgba(239, 68, 68, 0.1);
+  color: #ef4444;
+}
+
+.app-mgmt-dark-mode .app-mgmt-status-feedback.app-mgmt-error {
+  background-color: rgba(248, 113, 113, 0.2);
+  color: #f87171;
+}
+
+.app-mgmt-status-feedback.app-mgmt-loading {
+  background-color: rgba(59, 130, 246, 0.1);
+  color: #3b82f6;
+}
+
+.app-mgmt-dark-mode .app-mgmt-status-feedback.app-mgmt-loading {
+  background-color: rgba(96, 165, 250, 0.2);
+  color: #60a5fa;
+}
+
+.app-mgmt-mini-spinner {
+  border: 2px solid rgba(203, 213, 225, 0.3);
+  border-top: 2px solid #3a86ff;
+  border-radius: 50%;
+  width: 16px;
+  height: 16px;
+  animation: app-mgmt-spin 1s linear infinite;
+}
+
+.app-mgmt-dark-mode .app-mgmt-mini-spinner {
+  border-color: rgba(71, 85, 105, 0.3);
+  border-top-color: #60a5fa;
+}
+
+/* Quick action buttons in table */
+.app-mgmt-quick-accept-btn {
+  background-color: rgba(16, 185, 129, 0.1);
+  color: #10b981;
+}
+
+.app-mgmt-quick-accept-btn:hover {
+  background-color: rgba(16, 185, 129, 0.2);
+}
+
+.app-mgmt-dark-mode .app-mgmt-quick-accept-btn {
+  background-color: rgba(34, 197, 94, 0.2);
+  color: #22c55e;
+}
+
+.app-mgmt-dark-mode .app-mgmt-quick-accept-btn:hover {
+  background-color: rgba(34, 197, 94, 0.3);
+}
+
+.app-mgmt-quick-reject-btn {
+  background-color: rgba(239, 68, 68, 0.1);
+  color: #ef4444;
+}
+
+.app-mgmt-quick-reject-btn:hover {
+  background-color: rgba(239, 68, 68, 0.2);
+}
+
+.app-mgmt-dark-mode .app-mgmt-quick-reject-btn {
+  background-color: rgba(248, 113, 113, 0.2);
+  color: #f87171;
+}
+
+.app-mgmt-dark-mode .app-mgmt-quick-reject-btn:hover {
+  background-color: rgba(248, 113, 113, 0.3);
 }
 
 /* Responsive adjustments */

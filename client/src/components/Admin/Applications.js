@@ -26,6 +26,7 @@ const Applications = () => {
   const [selectedApplication, setSelectedApplication] = useState(null);
   const [showDetailModal, setShowDetailModal] = useState(false);
   const [darkMode, setDarkMode] = useState(false);
+  const [statusUpdateFeedback, setStatusUpdateFeedback] = useState(null);
   
   // Pagination state
   const [currentPage, setCurrentPage] = useState(1);
@@ -106,9 +107,11 @@ const Applications = () => {
     setSelectedApplication(null);
   };
 
-  // Handle application status update
+  // Updated version of the function
   const updateApplicationStatus = async (id, newStatus) => {
     try {
+      setStatusUpdateFeedback({ type: 'loading', message: `Updating status to ${newStatus}...` });
+      
       const response = await axios.put(
         `http://localhost:4000/api/jobs/applications/${id}/status`,
         { status: newStatus },
@@ -130,10 +133,23 @@ const Applications = () => {
             status: newStatus
           });
         }
+        
+        setStatusUpdateFeedback({ 
+          type: 'success', 
+          message: `Status successfully updated to ${newStatus}` 
+        });
+        
+        // Clear feedback after 3 seconds
+        setTimeout(() => setStatusUpdateFeedback(null), 3000);
       }
     } catch (err) {
       console.error("Error updating application status:", err);
-      alert("Failed to update application status. Please try again.");
+      setStatusUpdateFeedback({ 
+        type: 'error', 
+        message: `Failed to update status: ${err.message || 'Unknown error'}` 
+      });
+      // Keep error message visible longer
+      setTimeout(() => setStatusUpdateFeedback(null), 5000);
     }
   };
 
@@ -216,12 +232,11 @@ const Applications = () => {
     <div className={`app-mgmt-dashboard ${darkMode ? 'app-mgmt-dark-mode' : ''}`}>
       <Sidebar />
       <div className="app-mgmt-main-content">
-        <header className="app-mgmt-header">
-          <div className="app-mgmt-header-logo">
-            <img src={darkMode ? logoDark : logoLight} alt="NextYouth Logo" />
+          <div className="app-mgmt-title">
+            <h1>Job Applications Management</h1>
+            <p className="app-mgmt-header-subtitle">Track and manage application statuses efficiently in one place.</p>
+            <br></br>
           </div>
-          <h1>Job Applications Management</h1>
-        </header>
         
         <div className="app-mgmt-container">
           <div className="app-mgmt-stats-grid">
@@ -536,22 +551,14 @@ const Applications = () => {
                 )}
               </div>
               <div className="app-mgmt-modal-footer">
-                <div className="app-mgmt-status-buttons">
-                  <button 
-                    className={`app-mgmt-status-btn app-mgmt-accept-btn ${selectedApplication.status === 'accepted' ? 'app-mgmt-active' : ''}`}
-                    onClick={() => updateApplicationStatus(selectedApplication._id, 'accepted')}
-                    disabled={selectedApplication.status === 'accepted'}
-                  >
-                    <FaCheck /> Accept Application
-                  </button>
-                  <button 
-                    className={`app-mgmt-status-btn app-mgmt-reject-btn ${selectedApplication.status === 'rejected' ? 'app-mgmt-active' : ''}`}
-                    onClick={() => updateApplicationStatus(selectedApplication._id, 'rejected')}
-                    disabled={selectedApplication.status === 'rejected'}
-                  >
-                    <FaTimesCircle /> Reject Application
-                  </button>
-                </div>
+                {statusUpdateFeedback && (
+                  <div className={`app-mgmt-status-feedback app-mgmt-${statusUpdateFeedback.type}`}>
+                    {statusUpdateFeedback.type === 'loading' && <div className="app-mgmt-mini-spinner"></div>}
+                    {statusUpdateFeedback.type === 'success' && <FaCheck />}
+                    {statusUpdateFeedback.type === 'error' && <FaTimesCircle />}
+                    <span>{statusUpdateFeedback.message}</span>
+                  </div>
+                )}
                 <button className="app-mgmt-close-btn" onClick={closeModal}>Close</button>
               </div>
             </div>
