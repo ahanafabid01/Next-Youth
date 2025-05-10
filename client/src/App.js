@@ -35,6 +35,8 @@ import HelpAndSupport from './Homepages/Help&Support';
 import EmployerSettings from "./components/Employer/EmployerSettings";
 import Proposals from "./components/Employee/Proposals";
 import EmployeeHelp from "./components/Employee/EmployeeHelp";
+import EmployerMessage from "./components/Employer/EmployerMessage";
+import EmployeeMessage from "./components/Employee/EmployeeMessage";
 import "./App.css";
 
 const App = () => {
@@ -79,6 +81,8 @@ const App = () => {
                 <Route path="/employer-settings" element={<EmployerSettings />} />
                 <Route path="/proposals" element={<Proposals />} />
                 <Route path="/help" element={<EmployeeHelp />} />
+                <Route path="/employer-dashboard/messages" element={<EmployerMessage />} />
+                <Route path="/employee-dashboard/messages" element={<EmployeeMessage />} />
             </Routes>
         </Router>
     );

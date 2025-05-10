@@ -38,6 +38,7 @@ import Applications from "./Applications";
 import EmployerVerification from './EmployerVerification';
 import EmployerSettings from './EmployerSettings'; // Add this import
 import EmployerPayment from './EmployerPayment'; // Add this import
+import EmployerMessage from './EmployerMessage'; // Add this import
 import logoLight from '../../assets/images/logo-light.png';
 import logoDark from '../../assets/images/logo-dark.png';
 
@@ -548,8 +549,9 @@ const EmployerDashboard = () => {
             case "settings":
                 return <EmployerSettings />;
             case "payment":
-                return <EmployerPayment />; // Add this case
+                return <EmployerPayment />;
             case "messages":
+                return <EmployerMessage darkMode={darkMode} />; // Add this case
             default:
                 return (
                     <div className="dashboard-main">

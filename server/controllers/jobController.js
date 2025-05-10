@@ -482,7 +482,7 @@ export const updateApplicationStatus = async (req, res) => {
         const { status } = req.body;
         const userId = req.user.id;
         
-        // Validate the status value
+        // Validate status
         const validStatuses = ["pending", "accepted", "rejected", "withdrawn"];
         if (!validStatuses.includes(status)) {
             return res.status(400).json({
@@ -495,7 +495,9 @@ export const updateApplicationStatus = async (req, res) => {
         const applicationModel = await import("../models/applicationModel.js").then(module => module.default);
         
         // First, find the application to check if it exists and get job info
-        const application = await applicationModel.findById(id);
+        const application = await applicationModel.findById(id)
+            .populate('job')
+            .populate('applicant');
         
         if (!application) {
             return res.status(404).json({
@@ -505,7 +507,7 @@ export const updateApplicationStatus = async (req, res) => {
         }
         
         // Get job info to check if current user is the job owner
-        const job = await jobModel.findById(application.job);
+        const job = await jobModel.findById(application.job._id);
         
         if (!job) {
             return res.status(404).json({
@@ -523,24 +525,76 @@ export const updateApplicationStatus = async (req, res) => {
         }
         
         // Update the application status
-        const updatedApplication = await applicationModel.findByIdAndUpdate(
-            id,
-            { status },
-            { new: true }
-        );
+        application.status = status;
+        await application.save();
+        
+        // If application is accepted, create a conversation between employer and applicant
+        // and send a congratulatory message
+        if (status === "accepted") {
+            try {
+                // Import MessageModel using consistent approach
+                const { Message, Conversation } = await import("../models/MessageModel.js");
+                
+                // Check if a conversation already exists for this job and these participants
+                let conversation = await Conversation.findOne({
+                    job: job._id,
+                    participants: { $all: [job.employer, application.applicant._id] }
+                });
+                
+                // If no conversation exists, create one
+                if (!conversation) {
+                    conversation = await Conversation.create({
+                        participants: [job.employer, application.applicant._id],
+                        job: job._id
+                    });
+                    
+                    console.log('Conversation created for accepted application');
+                }
+
+                // Send automatic congratulations message from employer to applicant
+                const message = await Message.create({
+                    conversation: conversation._id,
+                    sender: job.employer,
+                    content: `Congratulations! Your application for ${job.title} has been accepted. We look forward to working with you!`,
+                    read: false
+                });
+
+                // Update the conversation's last message
+                conversation.lastMessage = message._id;
+                await conversation.save();
+
+                // Get the populated message to include in socket broadcast
+                const populatedMessage = await Message.findById(message._id)
+                    .populate('sender', 'name email profilePicture');
+
+                if (populatedMessage) {
+                    // Add the conversationId property expected by clients
+                    const messageToSend = populatedMessage.toObject();
+                    messageToSend.conversationId = conversation._id;
+                    
+                    // Emit the message through socket if available
+                    if (req.app.get('io')) {
+                        // Send to the conversation room
+                        req.app.get('io').to(conversation._id.toString()).emit('new_message', messageToSend);
+                    }
+                    
+                    console.log('Congratulatory message sent to applicant');
+                }
+            } catch (error) {
+                console.error("Error in creating conversation or sending message:", error);
+                // Log the full error for debugging
+                console.error(error.stack);
+            }
+        }
         
         return res.status(200).json({
             success: true,
-            message: `Application status updated to ${status} successfully`,
-            application: updatedApplication
+            message: `Application status updated to ${status}`
         });
         
     } catch (error) {
         console.error("Error updating application status:", error);
-        return res.status(500).json({
-            success: false,
-            message: "Internal server error"
-        });
+        res.status(500).json({ success: false, message: "Internal server error" });
     }
 };
 

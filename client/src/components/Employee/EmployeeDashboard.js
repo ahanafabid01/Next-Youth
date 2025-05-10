@@ -544,6 +544,7 @@ const EmployeeDashboard = () => {
               <Link to="/find-jobs/saved" className="employee-nav-link" style={{"--item-index": 1}}>Saved Jobs</Link>
               <Link to="/proposals" className="employee-nav-link" style={{"--item-index": 2}}>Proposals</Link>
               <Link to="/help" className="employee-nav-link" style={{"--item-index": 3}}>Help</Link>
+              <Link to="/employee-dashboard/messages" className="employee-nav-link" style={{"--item-index": 4}}>Messages</Link>
             </nav>
           </div>
           

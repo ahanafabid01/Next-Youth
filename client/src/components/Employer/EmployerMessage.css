@@ -1,0 +1,943 @@
+/* Employer Message Component - Isolated Styling */
+.employer-message-container {
+  display: flex;
+  height: calc(100vh - 4rem);
+  background-color: var(--light-bg);
+  border-radius: var(--border-radius);
+  overflow: hidden;
+  box-shadow: var(--shadow-light);
+  position: relative;
+  transition: var(--transition);
+}
+
+.employer-message-container.employer-message-dark {
+  background-color: var(--dark-bg);
+}
+
+/* Sidebar Styles */
+.employer-message-sidebar {
+  width: 320px;
+  height: 100%;
+  border-right: 1px solid var(--border-light);
+  display: flex;
+  flex-direction: column;
+  transition: var(--transition);
+  background-color: var(--light-card);
+}
+
+.employer-message-dark .employer-message-sidebar {
+  border-right: 1px solid var(--border-dark);
+  background-color: var(--dark-card);
+}
+
+.employer-message-header {
+  padding: 1rem;
+  border-bottom: 1px solid var(--border-light);
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.employer-message-dark .employer-message-header {
+  border-bottom: 1px solid var(--border-dark);
+}
+
+.employer-message-header h2 {
+  font-size: 1.2rem;
+  font-weight: 600;
+  color: var(--dark-text);
+  margin: 0;
+}
+
+.employer-message-dark .employer-message-header h2 {
+  color: var(--light-text);
+}
+
+.employer-message-logo {
+  height: 40px;
+  display: flex;
+  align-items: center;
+}
+
+.employer-message-logo img {
+  height: 28px;
+  object-fit: contain;
+}
+
+.employer-message-search {
+  padding: 0.75rem 1rem;
+  position: relative;
+  border-bottom: 1px solid var(--border-light);
+}
+
+.employer-message-dark .employer-message-search {
+  border-bottom: 1px solid var(--border-dark);
+}
+
+.employer-message-search input {
+  width: 100%;
+  padding: 0.75rem 1rem 0.75rem 2.25rem;
+  border-radius: var(--border-radius-sm);
+  border: none;
+  background-color: var(--light-bg);
+  color: var(--dark-text);
+  font-size: 0.9rem;
+  outline: none;
+  transition: var(--transition);
+}
+
+.employer-message-dark .employer-message-search input {
+  background-color: rgba(255, 255, 255, 0.05);
+  color: var(--light-text);
+}
+
+.employer-message-search svg {
+  position: absolute;
+  left: 1.5rem;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #64748b;
+  font-size: 0.9rem;
+}
+
+.employer-message-dark .employer-message-search svg {
+  color: #94a3b8;
+}
+
+/* Conversations List */
+.employer-message-conversations-list {
+  flex: 1;
+  overflow-y: auto;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(0, 0, 0, 0.2) transparent;
+}
+
+.employer-message-conversations-list::-webkit-scrollbar {
+  width: 4px;
+}
+
+.employer-message-conversations-list::-webkit-scrollbar-thumb {
+  background-color: rgba(0, 0, 0, 0.2);
+  border-radius: 10px;
+}
+
+.employer-message-dark .employer-message-conversations-list::-webkit-scrollbar-thumb {
+  background-color: rgba(255, 255, 255, 0.2);
+}
+
+.employer-message-conversation-item {
+  display: flex;
+  gap: 0.875rem;
+  padding: 0.875rem 1rem;
+  border-bottom: 1px solid var(--border-light);
+  cursor: pointer;
+  transition: var(--transition);
+}
+
+.employer-message-dark .employer-message-conversation-item {
+  border-bottom: 1px solid var(--border-dark);
+}
+
+.employer-message-conversation-item:hover {
+  background-color: rgba(0, 0, 0, 0.03);
+}
+
+.employer-message-dark .employer-message-conversation-item:hover {
+  background-color: rgba(255, 255, 255, 0.03);
+}
+
+.employer-message-conversation-item.employer-message-active {
+  background-color: rgba(58, 134, 255, 0.08);
+}
+
+.employer-message-dark .employer-message-conversation-item.employer-message-active {
+  background-color: rgba(58, 134, 255, 0.12);
+}
+
+.employer-message-conversation-avatar {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  background-color: rgba(58, 134, 255, 0.1);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--primary-color);
+  position: relative;
+  flex-shrink: 0;
+}
+
+.employer-message-conversation-avatar img {
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  object-fit: cover;
+}
+
+.employer-message-online-status {
+  width: 12px;
+  height: 12px;
+  background-color: var(--success-color);
+  border-radius: 50%;
+  position: absolute;
+  bottom: 0;
+  right: 0;
+  border: 2px solid var(--light-card);
+}
+
+.employer-message-dark .employer-message-online-status {
+  border-color: var(--dark-card);
+}
+
+.employer-message-conversation-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.employer-message-conversation-top {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 0.25rem;
+  align-items: center;
+}
+
+.employer-message-conversation-top h4 {
+  font-size: 0.95rem;
+  font-weight: 600;
+  margin: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  color: var(--dark-text);
+}
+
+.employer-message-dark .employer-message-conversation-top h4 {
+  color: var(--light-text);
+}
+
+.employer-message-time {
+  font-size: 0.75rem;
+  color: #64748b;
+}
+
+.employer-message-dark .employer-message-time {
+  color: #94a3b8;
+}
+
+.employer-message-conversation-bottom {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.employer-message-conversation-bottom p {
+  font-size: 0.85rem;
+  color: #64748b;
+  margin: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  flex: 1;
+}
+
+.employer-message-dark .employer-message-conversation-bottom p {
+  color: #94a3b8;
+}
+
+.employer-message-unread-badge {
+  background-color: var(--primary-color);
+  color: white;
+  font-size: 0.7rem;
+  border-radius: 50%;
+  width: 18px;
+  height: 18px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 600;
+  margin-left: 0.5rem;
+}
+
+/* Chat Container */
+.employer-message-chat-container {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  background-color: var(--light-card);
+}
+
+.employer-message-dark .employer-message-chat-container {
+  background-color: var(--dark-card);
+}
+
+.employer-message-chat-header {
+  height: 70px;
+  padding: 0 1.25rem;
+  border-bottom: 1px solid var(--border-light);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.employer-message-dark .employer-message-chat-header {
+  border-bottom: 1px solid var(--border-dark);
+}
+
+.employer-message-chat-user {
+  display: flex;
+  align-items: center;
+  gap: 0.875rem;
+}
+
+.employer-message-chat-avatar {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background-color: rgba(58, 134, 255, 0.1);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--primary-color);
+  position: relative;
+  flex-shrink: 0;
+}
+
+.employer-message-chat-avatar img {
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  object-fit: cover;
+}
+
+.employer-message-chat-user-info h3 {
+  font-size: 1rem;
+  font-weight: 600;
+  margin: 0;
+  color: var(--dark-text);
+}
+
+.employer-message-dark .employer-message-chat-user-info h3 {
+  color: var(--light-text);
+}
+
+.employer-message-chat-user-info span {
+  font-size: 0.8rem;
+  color: #64748b;
+}
+
+.employer-message-dark .employer-message-chat-user-info span {
+  color: #94a3b8;
+}
+
+.employer-message-chat-actions button {
+  background: transparent;
+  border: none;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  color: #64748b;
+  transition: var(--transition);
+}
+
+.employer-message-dark .employer-message-chat-actions button {
+  color: #94a3b8;
+}
+
+.employer-message-chat-actions button:hover {
+  background-color: rgba(0, 0, 0, 0.05);
+}
+
+.employer-message-dark .employer-message-chat-actions button:hover {
+  background-color: rgba(255, 255, 255, 0.05);
+}
+
+/* Chat Body */
+.employer-message-chat-body {
+  flex: 1;
+  padding: 1.25rem;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  background-color: var(--light-bg);
+  scrollbar-width: thin;
+  scrollbar-color: rgba(0, 0, 0, 0.2) transparent;
+}
+
+.employer-message-dark .employer-message-chat-body {
+  background-color: rgba(0, 0, 0, 0.2);
+}
+
+.employer-message-chat-body::-webkit-scrollbar {
+  width: 4px;
+}
+
+.employer-message-chat-body::-webkit-scrollbar-thumb {
+  background-color: rgba(0, 0, 0, 0.2);
+  border-radius: 10px;
+}
+
+.employer-message-dark .employer-message-chat-body::-webkit-scrollbar-thumb {
+  background-color: rgba(255, 255, 255, 0.2);
+}
+
+.employer-message-load-more {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 1rem;
+}
+
+.employer-message-load-more button {
+  background-color: transparent;
+  border: 1px solid var(--border-light);
+  padding: 0.5rem 1rem;
+  border-radius: var(--border-radius-sm);
+  color: #64748b;
+  font-size: 0.85rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  transition: var(--transition);
+}
+
+.employer-message-dark .employer-message-load-more button {
+  border: 1px solid var(--border-dark);
+  color: #94a3b8;
+}
+
+.employer-message-load-more button:hover {
+  background-color: rgba(0, 0, 0, 0.03);
+}
+
+.employer-message-dark .employer-message-load-more button:hover {
+  background-color: rgba(255, 255, 255, 0.03);
+}
+
+.employer-message-messages-container {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+/* Message Bubbles */
+.employer-message-bubble {
+  display: flex;
+  gap: 0.5rem;
+  max-width: 80%;
+}
+
+.employer-message-own {
+  align-self: flex-end;
+  flex-direction: row-reverse;
+}
+
+.employer-message-other {
+  align-self: flex-start;
+}
+
+.employer-message-avatar {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background-color: rgba(58, 134, 255, 0.1);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--primary-color);
+  flex-shrink: 0;
+}
+
+.employer-message-avatar img {
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  object-fit: cover;
+}
+
+.employer-message-content-wrapper {
+  display: flex;
+  flex-direction: column;
+}
+
+.employer-message-content {
+  padding: 0.75rem 1rem;
+  border-radius: 18px;
+  position: relative;
+  font-size: 0.95rem;
+  line-height: 1.5;
+}
+
+.employer-message-own .employer-message-content {
+  background-color: var(--primary-color);
+  color: white;
+  border-bottom-right-radius: 4px;
+}
+
+.employer-message-other .employer-message-content {
+  background-color: rgba(0, 0, 0, 0.05);
+  color: var(--dark-text);
+  border-bottom-left-radius: 4px;
+}
+
+.employer-message-dark .employer-message-other .employer-message-content {
+  background-color: rgba(255, 255, 255, 0.07);
+  color: var(--light-text);
+}
+
+.employer-message-sender-name {
+  font-size: 0.8rem;
+  color: #64748b;
+  margin-bottom: 4px;
+  margin-left: 42px;
+  font-weight: 500;
+}
+
+.employer-message-dark .employer-message-sender-name {
+  color: #94a3b8;
+}
+
+.employer-message-timestamp {
+  font-size: 0.7rem;
+  margin-top: 0.25rem;
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+.employer-message-own .employer-message-timestamp {
+  color: rgba(255, 255, 255, 0.8);
+  justify-content: flex-end;
+}
+
+.employer-message-other .employer-message-timestamp {
+  color: #64748b;
+}
+
+.employer-message-dark .employer-message-other .employer-message-timestamp {
+  color: #94a3b8;
+}
+
+.employer-message-status {
+  display: flex;
+  align-items: center;
+}
+
+/* Attachments */
+.employer-message-attachment {
+  margin-top: 0.5rem;
+  border-radius: var(--border-radius-sm);
+  overflow: hidden;
+  position: relative;
+}
+
+.employer-message-image-attachment {
+  position: relative;
+  max-width: 200px;
+}
+
+.employer-message-image-attachment img {
+  width: 100%;
+  height: auto;
+  border-radius: var(--border-radius-sm);
+  display: block;
+}
+
+.employer-message-image-attachment a,
+.employer-message-file-attachment a {
+  position: absolute;
+  right: 8px;
+  top: 8px;
+  width: 28px;
+  height: 28px;
+  background-color: rgba(0, 0, 0, 0.6);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  transition: var(--transition);
+}
+
+.employer-message-image-attachment a:hover,
+.employer-message-file-attachment a:hover {
+  background-color: rgba(0, 0, 0, 0.8);
+}
+
+.employer-message-file-attachment {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 0.75rem;
+  background-color: rgba(0, 0, 0, 0.05);
+  border-radius: var(--border-radius-sm);
+  position: relative;
+}
+
+.employer-message-dark .employer-message-file-attachment {
+  background-color: rgba(255, 255, 255, 0.05);
+}
+
+.employer-message-file-attachment span {
+  font-size: 0.85rem;
+  flex: 1;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  padding-right: 2rem;
+}
+
+.employer-message-attachment-wrapper {
+  position: relative;
+}
+
+.employer-message-upload-options {
+  position: absolute;
+  bottom: calc(100% + 10px);
+  left: 0;
+  background-color: var(--light-card, #ffffff);
+  border-radius: 8px;
+  box-shadow: 0 5px 20px rgba(0, 0, 0, 0.1);
+  padding: 0.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+  min-width: 120px;
+  z-index: 5;
+  animation: employer-message-fade-in 0.2s ease;
+}
+
+.employer-message-dark .employer-message-upload-options {
+  background-color: var(--dark-card, #1e293b);
+  box-shadow: 0 5px 20px rgba(0, 0, 0, 0.3);
+}
+
+.employer-message-upload-option {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 0.75rem;
+  border-radius: 6px;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  color: var(--dark-text, #1e293b);
+  font-size: 0.9rem;
+  transition: all 0.2s ease;
+  text-align: left;
+  white-space: nowrap;
+}
+
+.employer-message-dark .employer-message-upload-option {
+  color: var(--light-text, #f8fafc);
+}
+
+.employer-message-upload-option:hover {
+  background-color: rgba(0, 0, 0, 0.05);
+}
+
+.employer-message-dark .employer-message-upload-option:hover {
+  background-color: rgba(255, 255, 255, 0.05);
+}
+
+@keyframes employer-message-fade-in {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* Chat Footer */
+.employer-message-chat-footer {
+  height: 70px;
+  padding: 0.875rem 1.25rem;
+  border-top: 1px solid var(--border-light);
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.employer-message-dark .employer-message-chat-footer {
+  border-top: 1px solid var(--border-dark);
+}
+
+.employer-message-input-actions {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.employer-message-attach-btn, 
+.employer-message-emoji-btn {
+  background: transparent;
+  border: none;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  color: #64748b;
+  transition: var(--transition);
+}
+
+.employer-message-dark .employer-message-attach-btn,
+.employer-message-dark .employer-message-emoji-btn {
+  color: #94a3b8;
+}
+
+.employer-message-attach-btn:hover,
+.employer-message-emoji-btn:hover {
+  background-color: rgba(0, 0, 0, 0.05);
+}
+
+.employer-message-dark .employer-message-attach-btn:hover,
+.employer-message-dark .employer-message-emoji-btn:hover {
+  background-color: rgba(255, 255, 255, 0.05);
+}
+
+.employer-message-input-container {
+  flex: 1;
+  position: relative;
+}
+
+.employer-message-input-container input {
+  width: 100%;
+  padding: 0.75rem 2.5rem 0.75rem 1rem;
+  border-radius: 20px;
+  border: 1px solid var(--border-light);
+  background-color: var(--light-bg);
+  color: var(--dark-text);
+  font-size: 0.95rem;
+  outline: none;
+  transition: var(--transition);
+}
+
+.employer-message-dark .employer-message-input-container input {
+  border: 1px solid var(--border-dark);
+  background-color: rgba(255, 255, 255, 0.05);
+  color: var(--light-text);
+}
+
+.employer-message-input-container input:focus {
+  border-color: var(--primary-color);
+}
+
+.employer-message-emoji-btn {
+  position: absolute;
+  right: 0.3rem;
+  top: 50%;
+  transform: translateY(-50%);
+}
+
+.employer-message-send-btn {
+  width: 42px;
+  height: 42px;
+  border-radius: 50%;
+  background-color: var(--primary-color);
+  color: white;
+  border: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: var(--transition);
+  flex-shrink: 0;
+}
+
+.employer-message-send-btn:hover {
+  background-color: var(--primary-dark);
+  transform: translateY(-2px);
+}
+
+.employer-message-send-btn.employer-message-disabled {
+  background-color: #a3a3a3;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.employer-message-dark .employer-message-send-btn.employer-message-disabled {
+  background-color: #4b5563;
+}
+
+/* Empty and Loading States */
+.employer-message-empty-state, 
+.employer-message-loading,
+.employer-message-no-chat-selected,
+.employer-message-empty-chat {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  padding: 2rem;
+  text-align: center;
+  color: #64748b;
+}
+
+.employer-message-dark .employer-message-empty-state,
+.employer-message-dark .employer-message-loading,
+.employer-message-dark .employer-message-no-chat-selected,
+.employer-message-dark .employer-message-empty-chat {
+  color: #94a3b8;
+}
+
+.employer-message-no-chat-selected {
+  background-color: var(--light-bg);
+}
+
+.employer-message-dark .employer-message-no-chat-selected {
+  background-color: var(--dark-bg);
+}
+
+.employer-message-no-chat-content {
+  max-width: 300px;
+}
+
+.employer-message-no-chat-content h3 {
+  margin-bottom: 0.5rem;
+  font-weight: 600;
+  color: var(--dark-text);
+}
+
+.employer-message-dark .employer-message-no-chat-content h3 {
+  color: var(--light-text);
+}
+
+.employer-message-spin {
+  animation: spin 1s linear infinite;
+  font-size: 1.5rem;
+  margin-bottom: 0.75rem;
+  color: var(--primary-color);
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+/* Back Button for Mobile */
+.employer-message-back-btn {
+  background: transparent;
+  border: none;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  color: #64748b;
+  margin-right: 0.5rem;
+}
+
+.employer-message-dark .employer-message-back-btn {
+  color: #94a3b8;
+}
+
+.employer-message-back-btn:hover {
+  background-color: rgba(0, 0, 0, 0.05);
+}
+
+.employer-message-dark .employer-message-back-btn:hover {
+  background-color: rgba(255, 255, 255, 0.05);
+}
+
+/* Responsive Styles */
+@media (max-width: 992px) {
+  .employer-message-container {
+    height: calc(100vh - 5.5rem);
+  }
+  
+  .employer-message-sidebar {
+    width: 280px;
+  }
+}
+
+@media (max-width: 768px) {
+  .employer-message-container {
+    height: calc(100vh - 5rem);
+  }
+  
+  .employer-message-sidebar {
+    width: 100%;
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: 0;
+    bottom: 0;
+    z-index: 10;
+  }
+  
+  .employer-message-sidebar-hidden {
+    display: none;
+  }
+  
+  .employer-message-chat-container {
+    width: 100%;
+  }
+  
+  .employer-message-chat-hidden {
+    display: none;
+  }
+}
+
+@media (max-width: 576px) {
+  .employer-message-container {
+    height: calc(100vh - 4.5rem);
+  }
+  
+  .employer-message-header {
+    padding: 0.75rem;
+  }
+  
+  .employer-message-chat-header {
+    height: 60px;
+    padding: 0 0.875rem;
+  }
+  
+  .employer-message-chat-footer {
+    height: 60px;
+    padding: 0.75rem;
+  }
+  
+  .employer-message-conversation-avatar {
+    width: 40px;
+    height: 40px;
+  }
+  
+  .employer-message-chat-avatar {
+    width: 38px;
+    height: 38px;
+  }
+  
+  .employer-message-bubble {
+    max-width: 85%;
+  }
+}
+
+@media (max-width: 375px) {
+  .employer-message-search input {
+    padding: 0.7rem 1rem 0.7rem 2.25rem;
+  }
+  
+  .employer-message-chat-body {
+    padding: 1rem;
+  }
+  
+  .employer-message-input-container input {
+    padding: 0.6rem 2.5rem 0.6rem 0.875rem;
+  }
+  
+  .employer-message-send-btn {
+    width: 38px;
+    height: 38px;
+  }
+}
+
+/* Fix for sidebar scrolling on iOS devices */
+.employer-message-conversations-list,
+.employer-message-chat-body {
+  -webkit-overflow-scrolling: touch;
+}
