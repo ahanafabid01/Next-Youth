@@ -5,6 +5,10 @@ import {
   FaSearch, 
   FaPaperPlane, 
   FaEllipsisV, 
+  formatCallDuration,
+  toggleVideo,
+  toggleMute,
+  toggleSpeaker,
   FaUser, 
   FaCheck, 
   FaCheckDouble, 
@@ -21,7 +25,15 @@ import {
   FaEllipsisH,
   FaPlay,
   FaPause,
-  FaTrash
+  FaTrash,
+  FaPhoneAlt,
+  FaVideo,
+  FaMicrophoneSlash,
+  FaVideoSlash,
+  FaPhone,
+  FaVolumeUp,
+  FaVolumeMute,
+  FaDesktop
 } from "react-icons/fa";
 import DOMPurify from "dompurify";
 import twemoji from "twemoji";
@@ -282,6 +294,23 @@ const EmployeeMessage = ({ darkMode }) => {
   // State variables for emoji picker
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
   const emojiPickerRef = useRef(null);
+  // State variables for call functionality
+  const [callStatus, setCallStatus] = useState(null); // "ringing", "ongoing", "ended"
+  const [isIncomingCall, setIsIncomingCall] = useState(false);
+  const [isMakingCall, setIsMakingCall] = useState(false);
+  const [isCallAccepted, setIsCallAccepted] = useState(false);
+  const [isVideoCall, setIsVideoCall] = useState(false);
+  const [callerId, setCallerId] = useState(null);
+  const [callerName, setCallerName] = useState(null);
+  const [callerAvatar, setCallerAvatar] = useState(null);
+  const [calleeId, setCalleeId] = useState(null);
+  const [isMuted, setIsMuted] = useState(false);
+  const [isVideoOff, setIsVideoOff] = useState(false);
+  const [isSpeakerOn, setIsSpeakerOn] = useState(true);
+  const [callDuration, setCallDuration] = useState(0);
+  const [callTimer, setCallTimer] = useState(null);
+  const [callHistory, setCallHistory] = useState([]);
+  const [screenSharing, setScreenSharing] = useState(false);
   
   // Refs
   const messagesEndRef = useRef(null);
@@ -292,6 +321,11 @@ const EmployeeMessage = ({ darkMode }) => {
   const previousConversation = useRef(null);
   const socketRef = useRef(null);
   const pendingMessagesRef = useRef([]);
+  const localVideoRef = useRef(null);
+  const remoteVideoRef = useRef(null);
+  const peerConnectionRef = useRef(null);
+  const localStreamRef = useRef(null);
+  const screenStreamRef = useRef(null);
   
   // Add a debounced preview for the input field
   const debouncedNewMessage = useMemo(() => {
@@ -410,6 +444,235 @@ const EmployeeMessage = ({ darkMode }) => {
       });
     });
   }, [fetchConversations]);
+
+  // Clean up call resources
+  const cleanupCallResources = () => {
+    // Stop call timer
+    if (callTimer) {
+      clearInterval(callTimer);
+      setCallTimer(null);
+    }
+    
+    // Stop local stream
+    if (localStreamRef.current) {
+      localStreamRef.current.getTracks().forEach(track => track.stop());
+      localStreamRef.current = null;
+    }
+    
+    // Stop screen sharing
+    if (screenStreamRef.current) {
+      screenStreamRef.current.getTracks().forEach(track => track.stop());
+      screenStreamRef.current = null;
+    }
+    
+    // Close peer connection
+    if (peerConnectionRef.current) {
+      peerConnectionRef.current.close();
+      peerConnectionRef.current = null;
+    }
+    
+    // Clear video elements
+    if (localVideoRef.current) {
+      localVideoRef.current.srcObject = null;
+    }
+    
+    if (remoteVideoRef.current) {
+      remoteVideoRef.current.srcObject = null;
+    }
+    
+    // Reset screen sharing state
+    setScreenSharing(false);
+  };
+
+  // Handle when call is ended by either party
+  const handleCallEnded = useCallback(() => {
+    // Just clean up if we've already ended
+    if (callStatus === 'ended') {
+      return;
+    }
+    
+    // Update status
+    setCallStatus('ended');
+    
+    // Show ended message
+    const callLength = callDuration;
+    
+    // Clean up resources
+    cleanupCallResources();
+    
+    // Update call history with duration
+    if (window.__currentCallId) {
+      setCallHistory(prev => 
+        prev.map(call => 
+          call.id === window.__currentCallId 
+            ? { ...call, status: 'completed', duration: callLength } 
+            : call
+        )
+      );
+    }
+    
+    // Reset state after a delay
+    setTimeout(() => {
+      setCallStatus(null);
+      setIsCallAccepted(false);
+      setIsMakingCall(false);
+      setIsIncomingCall(false);
+      setCallerId(null);
+      setCallerName(null);
+      setCallerAvatar(null);
+      setCalleeId(null);
+      setCallDuration(0);
+    }, 3000);
+  }, [callStatus, callDuration]);
+
+  // Handle when call is accepted
+  const handleCallAccepted = useCallback(async (data) => {
+    if (!peerConnectionRef.current) return;
+    
+    try {
+      // Set remote description from answer
+      await peerConnectionRef.current.setRemoteDescription(
+        new RTCSessionDescription(data.sdp)
+      );
+      
+      // Update call state
+      setIsMakingCall(false);
+      setIsCallAccepted(true);
+      setCallStatus('ongoing');
+      
+      // Start call timer
+      startCallTimer();
+      
+      // Update call in database - only if callId exists
+      if (window.__callId) {
+        try {
+          await axios.put(
+            `http://localhost:4000/api/calls/status/${window.__callId}`,
+            { status: "connected" },
+            { withCredentials: true }
+          );
+        } catch (error) {
+          console.error("Error updating call status:", error);
+        }
+      }
+      
+    } catch (error) {
+      console.error('Error handling accepted call:', error);
+      handleEndCall();
+    }
+  }, []);
+
+  // Handle when call is declined
+  const handleCallDeclined = useCallback(() => {
+    // Update call state
+    setIsMakingCall(false);
+    setCallStatus('ended');
+    
+    // Clean up resources
+    cleanupCallResources();
+    
+    // Show declined message
+    alert('Call was declined');
+    
+    // Update call history
+    setCallHistory(prev => 
+      prev.map(call => 
+        call.id === window.__currentCallId 
+          ? { ...call, status: 'declined' } 
+          : call
+      )
+    );
+    
+    // Update call in database
+    try {
+      axios.put(
+        `http://localhost:4000/api/calls/status/${window.__callId}`,
+        { status: "declined" },
+        { withCredentials: true }
+      );
+    } catch (error) {
+      console.error("Error updating call status:", error);
+    }
+    
+    // Reset state after a delay
+    setTimeout(() => {
+      setCallStatus(null);
+      setCalleeId(null);
+    }, 3000);
+  }, []);
+
+  // Handle ICE candidate from remote peer
+  const handleIceCandidate = useCallback((data) => {
+    if (peerConnectionRef.current && data.candidate) {
+      try {
+        peerConnectionRef.current.addIceCandidate(new RTCIceCandidate(data.candidate))
+          .catch(e => console.error('Error adding ICE candidate:', e));
+      } catch (error) {
+        console.error('Error handling ICE candidate:', error);
+      }
+    }
+  }, []);
+
+  // Handle incoming call
+  const handleIncomingCall = useCallback(async (callData) => {
+    // Set call state
+    setIsIncomingCall(true);
+    setCallerId(callData.callerId);
+    setCallerName(callData.callerName);
+    setCallerAvatar(callData.callerAvatar);
+    setIsVideoCall(callData.isVideoCall);
+    setCallStatus('ringing');
+    
+    // Play ringtone
+    const audio = new Audio('/sounds/ringtone.mp3');
+    audio.loop = true;
+    audio.play().catch(e => console.log('Could not play ringtone', e));
+    
+    // Save reference to stop later
+    window.__ringtone = audio;
+  }, []);
+
+  // End the current call
+  const handleEndCall = () => {
+    // Notify the other party
+    if (calleeId) {
+      socketRef.current.emit('call_end', {
+        receiverId: calleeId
+      });
+    } else if (callerId) {
+      socketRef.current.emit('call_end', {
+        receiverId: callerId
+      });
+    }
+    
+    // Update call in database - only if callId exists
+    if (window.__callId) {
+      try {
+        axios.put(
+          `http://localhost:4000/api/calls/status/${window.__callId}`,
+          { 
+            status: "ended",
+            duration: callDuration 
+          },
+          { withCredentials: true }
+        );
+      } catch (error) {
+        console.error("Error updating call status:", error);
+      }
+    }
+    
+    // Handle the rest of cleanup
+    handleCallEnded();
+  };
+
+  // Start call timer
+  const startCallTimer = () => {
+    const timer = setInterval(() => {
+      setCallDuration(prev => prev + 1);
+    }, 1000);
+    
+    setCallTimer(timer);
+  };
 
   // Effect 1: Initialize socket only once when component mounts
   useEffect(() => {
@@ -671,6 +934,26 @@ const EmployeeMessage = ({ darkMode }) => {
     preloadEmojis();
   }, []);
   
+  // Add this useEffect with your other socket-related useEffects
+  useEffect(() => {
+    if (!socketRef.current) return;
+
+    // Call offer received
+    socketRef.current.on('call_offer', async (data) => {
+      console.log('Call offer received:', data);
+      if (data.sdp) {
+        window.__lastOffer = data.sdp;
+      }
+      if (data.callId) {
+        window.__callId = data.callId;
+        console.log('Stored call ID:', window.__callId);
+      }
+      handleIncomingCall(data);
+    });
+
+    // Same for the other socket event listeners...
+  }, [handleIncomingCall, handleCallAccepted, handleCallDeclined, handleCallEnded, handleIceCandidate]);
+
   // Get other participant in conversation
   const getOtherParticipant = (conversation) => {
     if (!conversation || !conversation.participants) return { name: "Loading..." };
@@ -1411,6 +1694,374 @@ const EmployeeMessage = ({ darkMode }) => {
       });
   }, [messages, currentUser, isOwnMessage, handleMessageContextMenu]);
 
+  // Initialize WebRTC peer connection
+  const initializePeerConnection = useCallback(() => {
+    // Close any existing connections
+    if (peerConnectionRef.current) {
+      peerConnectionRef.current.close();
+    }
+    
+    // Create new connection with STUN/TURN servers for NAT traversal
+    peerConnectionRef.current = new RTCPeerConnection({
+      iceServers: [
+        { urls: 'stun:stun.l.google.com:19302' },
+        { urls: 'stun:stun1.l.google.com:19302' },
+        // You should add proper TURN servers in production
+        // { urls: 'turn:your-turn-server.com', username: 'username', credential: 'credential' }
+      ]
+    });
+    
+    // Handle ICE candidates
+    peerConnectionRef.current.onicecandidate = (event) => {
+      if (event.candidate) {
+        // Send the ICE candidate to the remote peer via signaling
+        socketRef.current.emit('ice_candidate', {
+          candidate: event.candidate,
+          receiverId: isIncomingCall ? callerId : calleeId
+        });
+      }
+    };
+    
+    // Handle connection state changes
+    peerConnectionRef.current.onconnectionstatechange = () => {
+      console.log('Connection state:', peerConnectionRef.current.connectionState);
+      if (peerConnectionRef.current.connectionState === 'disconnected' || 
+          peerConnectionRef.current.connectionState === 'failed') {
+        handleEndCall();
+      }
+    };
+    
+    // Handle incoming tracks from remote peer
+    peerConnectionRef.current.ontrack = (event) => {
+      console.log('Received remote track');
+      if (remoteVideoRef.current) {
+        remoteVideoRef.current.srcObject = event.streams[0];
+      }
+    };
+    
+    return peerConnectionRef.current;
+  }, [callerId, calleeId, isIncomingCall]);
+
+  // Initialize media stream
+  const initializeMediaStream = async (isVideo = false) => {
+    try {
+      // Get user's media based on call type
+      const stream = await navigator.mediaDevices.getUserMedia({
+        audio: true,
+        video: isVideo ? {
+          width: { ideal: 1280 },
+          height: { ideal: 720 },
+          facingMode: 'user'
+        } : false
+      });
+      
+      // Save the stream reference
+      localStreamRef.current = stream;
+      
+      // Set local video
+      if (localVideoRef.current) {
+        localVideoRef.current.srcObject = stream;
+      }
+      
+      // Add tracks to peer connection
+      if (peerConnectionRef.current) {
+        stream.getTracks().forEach(track => {
+          peerConnectionRef.current.addTrack(track, stream);
+        });
+      }
+      
+      return stream;
+    } catch (error) {
+      console.error('Error getting media stream:', error);
+      alert('Could not access camera/microphone. Please check your permissions.');
+      handleEndCall();
+      return null;
+    }
+  };
+
+  // Handle screen sharing
+  const toggleScreenSharing = async () => {
+    try {
+      if (screenSharing) {
+        // Stop screen sharing
+        if (screenStreamRef.current) {
+          screenStreamRef.current.getTracks().forEach(track => {
+            track.stop();
+            
+            // Remove screen track from peer connection
+            if (peerConnectionRef.current) {
+              const senders = peerConnectionRef.current.getSenders();
+              const sender = senders.find(s => s.track.kind === 'video');
+              if (sender) {
+                // Replace screen track with camera track
+                if (localStreamRef.current) {
+                  const videoTrack = localStreamRef.current.getVideoTracks()[0];
+                  if (videoTrack) {
+                    sender.replaceTrack(videoTrack);
+                    
+                    // Update local video
+                    if (localVideoRef.current) {
+                      localVideoRef.current.srcObject = localStreamRef.current;
+                    }
+                  }
+                }
+              }
+            }
+          });
+        }
+        screenStreamRef.current = null;
+      } else {
+        // Start screen sharing
+        const screenStream = await navigator.mediaDevices.getDisplayMedia({
+          video: true,
+          audio: true
+        });
+        
+        screenStreamRef.current = screenStream;
+        
+        // Replace video track in peer connection
+        if (peerConnectionRef.current) {
+          const senders = peerConnectionRef.current.getSenders();
+          const sender = senders.find(s => s.track.kind === 'video');
+          if (sender) {
+            const screenVideoTrack = screenStream.getVideoTracks()[0];
+            await sender.replaceTrack(screenVideoTrack);
+          }
+        }
+        
+        // Update local video
+        if (localVideoRef.current) {
+          localVideoRef.current.srcObject = screenStream;
+        }
+        
+        // Handle when user stops sharing screen via browser UI
+        screenStream.getVideoTracks()[0].onended = () => {
+          toggleScreenSharing();
+        };
+      }
+      
+      setScreenSharing(!screenSharing);
+    } catch (error) {
+      console.error('Error during screen sharing:', error);
+      alert('Could not start screen sharing. Please try again.');
+    }
+  };
+
+  // Format call duration
+  const formatCallDuration = (seconds) => {
+    const hrs = Math.floor(seconds / 3600);
+    const mins = Math.floor((seconds % 3600) / 60);
+    const secs = seconds % 60;
+    
+    return [
+      hrs > 0 ? String(hrs).padStart(2, '0') : null,
+      String(mins).padStart(2, '0'),
+      String(secs).padStart(2, '0')
+    ]
+      .filter(Boolean)
+      .join(':');
+  };
+
+  // Initiate a call
+  const initiateCall = async (isVideo = false) => {
+    if (!activeConversation) return;
+    
+    const receiver = getOtherParticipant(activeConversation);
+    
+    // Initialize call state
+    setIsVideoCall(isVideo);
+    setIsMakingCall(true);
+    setCallStatus('ringing');
+    setCalleeId(receiver._id);
+    
+    // Initialize WebRTC
+    initializePeerConnection();
+    
+    try {
+      // Get media stream
+      const stream = await initializeMediaStream(isVideo);
+      if (!stream) return;
+      
+      // Create offer
+      const offer = await peerConnectionRef.current.createOffer({
+        offerToReceiveAudio: true,
+        offerToReceiveVideo: isVideo
+      });
+      
+      // Set local description
+      await peerConnectionRef.current.setLocalDescription(offer);
+      
+      // Send call offer via socket
+      socketRef.current.emit('call_offer', {
+        callerId: currentUser._id,
+        callerName: currentUser.name,
+        callerAvatar: currentUser.profilePicture || null,
+        receiverId: receiver._id,
+        sdp: offer,
+        conversationId: activeConversation._id,
+        isVideoCall: isVideo
+      });
+      
+      // Save call to history
+      const newCall = {
+        id: Date.now().toString(),
+        participantId: receiver._id,
+        participantName: receiver.name,
+        participantAvatar: receiver.profilePicture || null,
+        timestamp: new Date().toISOString(),
+        duration: 0,
+        status: 'outgoing',
+        isVideoCall: isVideo
+      };
+      
+      setCallHistory(prev => [newCall, ...prev]);
+      
+      // Record call in database
+      try {
+        await axios.post(
+          "http://localhost:4000/api/calls",
+          {
+            receiverId: receiver._id,
+            conversationId: activeConversation._id,
+            callType: isVideo ? "video" : "audio",
+            status: "initiated"
+          },
+          { withCredentials: true }
+        );
+      } catch (error) {
+        console.error("Error saving call record:", error);
+      }
+      
+    } catch (error) {
+      console.error('Error initiating call:', error);
+      handleEndCall();
+    }
+  };
+
+  // Accept incoming call
+  const acceptCall = async () => {
+    try {
+      // Stop ringtone
+      if (window.__ringtone) {
+        window.__ringtone.pause();
+        window.__ringtone = null;
+      }
+      
+      // Initialize WebRTC
+      initializePeerConnection();
+      
+      // Get media stream
+      const stream = await initializeMediaStream(isVideoCall);
+      if (!stream) return;
+      
+      // Set call as accepted
+      setIsIncomingCall(false);
+      setIsCallAccepted(true);
+      setCallStatus('ongoing');
+      
+      // Start call timer
+      startCallTimer();
+      
+      // Set remote description from offer
+      await peerConnectionRef.current.setRemoteDescription(new RTCSessionDescription(window.__lastOffer));
+      
+      // Create answer
+      const answer = await peerConnectionRef.current.createAnswer();
+      
+      // Set local description
+      await peerConnectionRef.current.setLocalDescription(answer);
+      
+      // Send answer to caller
+      socketRef.current.emit('call_answer', {
+        calleeId: currentUser._id,
+        callerId: callerId,
+        sdp: answer,
+        accepted: true
+      });
+      
+      // Update call in database
+      try {
+        await axios.put(
+          `http://localhost:4000/api/calls/status/${window.__callId}`,
+          { status: "accepted" },
+          { withCredentials: true }
+        );
+      } catch (error) {
+        console.error("Error updating call status:", error);
+      }
+      
+    } catch (error) {
+      console.error('Error accepting call:', error);
+      handleEndCall();
+    }
+  };
+
+  // Decline incoming call
+  const declineCall = () => {
+    // Stop ringtone
+    if (window.__ringtone) {
+      window.__ringtone.pause();
+      window.__ringtone = null;
+    }
+    
+    // Send decline message
+    socketRef.current.emit('call_answer', {
+      calleeId: currentUser._id,
+      callerId: callerId,
+      accepted: false
+    });
+    
+    // Reset call state
+    setIsIncomingCall(false);
+    setCallerId(null);
+    setCallerName(null);
+    setCallerAvatar(null);
+    setCallStatus(null);
+    
+    // Update call in database
+    try {
+      axios.put(
+        `http://localhost:4000/api/calls/status/${window.__callId}`,
+        { status: "declined" },
+        { withCredentials: true }
+      );
+    } catch (error) {
+      console.error("Error updating call status:", error);
+    }
+  };
+
+  // Toggle mute
+  const toggleMute = () => {
+    if (localStreamRef.current) {
+      const audioTracks = localStreamRef.current.getAudioTracks();
+      audioTracks.forEach(track => {
+        track.enabled = isMuted;
+      });
+      setIsMuted(!isMuted);
+    }
+  };
+
+  // Toggle video
+  const toggleVideo = () => {
+    if (localStreamRef.current) {
+      const videoTracks = localStreamRef.current.getVideoTracks();
+      videoTracks.forEach(track => {
+        track.enabled = isVideoOff;
+      });
+      setIsVideoOff(!isVideoOff);
+    }
+  };
+
+  // Toggle speaker
+  const toggleSpeaker = () => {
+    if (remoteVideoRef.current && remoteVideoRef.current.srcObject) {
+      const audioEl = document.createElement('audio');
+      audioEl.srcObject = remoteVideoRef.current.srcObject;
+      audioEl.setSinkId(isSpeakerOn ? 'default' : '');
+      setIsSpeakerOn(!isSpeakerOn);
+    }
+  };
+
   return (
     <div className={`employee-message-container ${darkMode ? "employee-message-dark" : ""}`}>
       <div className={`employee-message-sidebar ${mobileView && !showConversations ? "employee-message-sidebar-hidden" : ""}`}>
@@ -1563,6 +2214,21 @@ const EmployeeMessage = ({ darkMode }) => {
               </div>
               
               <div className="employee-message-chat-actions">
+                {/* Add call buttons */}
+                <button 
+                  className="employee-message-icon-button"
+                  onClick={() => initiateCall(false)}
+                  title="Voice Call"
+                >
+                  <FaPhoneAlt />
+                </button>
+                <button 
+                  className="employee-message-icon-button"
+                  onClick={() => initiateCall(true)}
+                  title="Video Call"
+                >
+                  <FaVideo />
+                </button>
                 <button className="employee-message-icon-button">
                   <FaSearch />
                 </button>
@@ -1923,6 +2589,184 @@ const EmployeeMessage = ({ darkMode }) => {
           </div>
         )}
       </div>
+
+      {/* Incoming call UI */}
+      {isIncomingCall && (
+        <div className="employee-message-call-overlay">
+          <div className="employee-message-incoming-call">
+            <div className="employee-message-call-header">
+              <h3>{isVideoCall ? 'Incoming Video Call' : 'Incoming Call'}</h3>
+            </div>
+            <div className="employee-message-caller-info">
+              <div className="employee-message-caller-avatar">
+                {callerAvatar ? (
+                  <img src={callerAvatar} alt={callerName} />
+                ) : (
+                  <div className="employee-message-default-avatar employee-message-large-avatar">
+                    {callerName ? callerName.charAt(0).toUpperCase() : "U"}
+                  </div>
+                )}
+              </div>
+              <h2>{callerName}</h2>
+              <p className="employee-message-calling-status">Calling...</p>
+            </div>
+            <div className="employee-message-call-actions">
+              <button 
+                className="employee-message-call-action employee-message-decline-call"
+                onClick={declineCall}
+              >
+                <FaPhoneAlt />
+              </button>
+              <button 
+                className="employee-message-call-action employee-message-accept-call"
+                onClick={acceptCall}
+              >
+                <FaPhoneAlt />
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Outgoing call UI */}
+      {isMakingCall && !isCallAccepted && (
+        <div className="employee-message-call-overlay">
+          <div className="employee-message-outgoing-call">
+            <div className="employee-message-call-header">
+              <h3>{isVideoCall ? 'Video Call' : 'Voice Call'}</h3>
+            </div>
+            <div className="employee-message-callee-info">
+              {activeConversation && (
+                <>
+                  <div className="employee-message-callee-avatar">
+                    {getOtherParticipant(activeConversation).profilePicture ? (
+                      <img 
+                        src={getOtherParticipant(activeConversation).profilePicture} 
+                        alt={getOtherParticipant(activeConversation).name} 
+                      />
+                    ) : (
+                      <div className="employee-message-default-avatar employee-message-large-avatar">
+                        {getOtherParticipant(activeConversation).name.charAt(0).toUpperCase()}
+                      </div>
+                    )}
+                  </div>
+                  <h2>{getOtherParticipant(activeConversation).name}</h2>
+                  <p className="employee-message-calling-status">Calling...</p>
+                </>
+              )}
+            </div>
+            <div className="employee-message-call-actions">
+              <button 
+                className="employee-message-call-action employee-message-end-call"
+                onClick={handleEndCall}
+              >
+                <FaPhoneAlt />
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Active call UI */}
+      {isCallAccepted && (
+        <div className="employee-message-call-overlay">
+          <div className={`employee-message-active-call ${isVideoCall ? 'employee-message-video-call' : 'employee-message-audio-call'}`}>
+            {isVideoCall ? (
+              <div className="employee-message-video-container">
+                <video 
+                  ref={remoteVideoRef} 
+                  autoPlay 
+                  playsInline 
+                  className="employee-message-remote-video"
+                />
+                <video 
+                  ref={localVideoRef} 
+                  autoPlay 
+                  playsInline 
+                  muted 
+                  className="employee-message-local-video"
+                />
+              </div>
+            ) : (
+              <div className="employee-message-audio-call-container">
+                <div className="employee-message-call-avatar">
+                  {isIncomingCall ? (
+                    callerAvatar ? (
+                      <img src={callerAvatar} alt={callerName} />
+                    ) : (
+                      <div className="employee-message-default-avatar employee-message-large-avatar">
+                        {callerName ? callerName.charAt(0).toUpperCase() : "U"}
+                      </div>
+                    )
+                  ) : (
+                    getOtherParticipant(activeConversation).profilePicture ? (
+                      <img 
+                        src={getOtherParticipant(activeConversation).profilePicture} 
+                        alt={getOtherParticipant(activeConversation).name} 
+                      />
+                    ) : (
+                      <div className="employee-message-default-avatar employee-message-large-avatar">
+                        {getOtherParticipant(activeConversation).name.charAt(0).toUpperCase()}
+                      </div>
+                    )
+                  )}
+                </div>
+                <h2>
+                  {isIncomingCall ? callerName : getOtherParticipant(activeConversation).name}
+                </h2>
+              </div>
+            )}
+            
+            <div className="employee-message-call-info">
+              <p className="employee-message-call-duration">{formatCallDuration(callDuration)}</p>
+            </div>
+            
+            <div className="employee-message-call-controls">
+              {isVideoCall && (
+                <>
+                  <button 
+                    className={`employee-message-call-control ${isVideoOff ? 'active' : ''}`}
+                    onClick={toggleVideo}
+                  >
+                    {isVideoOff ? <FaVideoSlash /> : <FaVideo />}
+                  </button>
+                  <button 
+                    className={`employee-message-call-control ${screenSharing ? 'active' : ''}`}
+                    onClick={toggleScreenSharing}
+                  >
+                    <FaDesktop />
+                  </button>
+                </>
+              )}
+              <button 
+                className={`employee-message-call-control ${isMuted ? 'active' : ''}`}
+                onClick={toggleMute}
+              >
+                {isMuted ? <FaMicrophoneSlash /> : <FaMicrophone />}
+              </button>
+              <button 
+                className={`employee-message-call-control ${!isSpeakerOn ? 'active' : ''}`}
+                onClick={toggleSpeaker}
+              >
+                {isSpeakerOn ? <FaVolumeUp /> : <FaVolumeMute />}
+              </button>
+              <button 
+                className="employee-message-call-control employee-message-end-call"
+                onClick={handleEndCall}
+              >
+                <FaPhone />
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Call ended UI */}
+      {callStatus === 'ended' && (
+        <div className="employee-message-call-ended">
+          <p>Call ended</p>
+        </div>
+      )}
     </div>
   );
 };

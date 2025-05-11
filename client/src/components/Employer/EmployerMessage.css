@@ -1474,3 +1474,241 @@
   display: inline;
   word-break: break-word;
 }
+
+/* Call related styles */
+.whatsapp-call-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.8);
+  z-index: 1000;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.whatsapp-incoming-call, 
+.whatsapp-outgoing-call {
+  background-color: var(--whatsapp-bg-color);
+  color: var(--whatsapp-text-color);
+  border-radius: 12px;
+  width: 100%;
+  max-width: 400px;
+  padding: 20px;
+  text-align: center;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5);
+  animation: callPulse 2s infinite;
+}
+
+.whatsapp-call-header {
+  margin-bottom: 20px;
+}
+
+.whatsapp-caller-info,
+.whatsapp-callee-info {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin-bottom: 30px;
+}
+
+.whatsapp-caller-avatar,
+.whatsapp-callee-avatar,
+.whatsapp-call-avatar {
+  width: 120px;
+  height: 120px;
+  border-radius: 50%;
+  overflow: hidden;
+  margin-bottom: 15px;
+  background-color: #f0f0f0;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.whatsapp-caller-avatar img,
+.whatsapp-callee-avatar img,
+.whatsapp-call-avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.whatsapp-default-avatar.whatsapp-large-avatar {
+  width: 120px;
+  height: 120px;
+  font-size: 48px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.whatsapp-calling-status {
+  font-size: 14px;
+  color: var(--whatsapp-secondary-text-color);
+  margin-top: 5px;
+}
+
+.whatsapp-call-actions {
+  display: flex;
+  justify-content: center;
+  gap: 50px;
+  margin-top: 30px;
+}
+
+.whatsapp-call-action {
+  width: 60px;
+  height: 60px;
+  border-radius: 50%;
+  border: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 24px;
+  cursor: pointer;
+  transition: all 0.3s;
+}
+
+.whatsapp-accept-call {
+  background-color: #25d366;
+  color: white;
+  transform: rotate(135deg);
+}
+
+.whatsapp-decline-call, .whatsapp-end-call {
+  background-color: #ff4136;
+  color: white;
+  transform: rotate(135deg);
+}
+
+.whatsapp-active-call {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  position: relative;
+}
+
+.whatsapp-video-container {
+  flex: 1;
+  position: relative;
+  background-color: #000;
+  overflow: hidden;
+}
+
+.whatsapp-remote-video {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.whatsapp-local-video {
+  position: absolute;
+  width: 120px;
+  height: 180px;
+  object-fit: cover;
+  top: 20px;
+  right: 20px;
+  border-radius: 8px;
+  border: 2px solid white;
+  z-index: 1;
+}
+
+.whatsapp-audio-call-container {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  padding: 20px;
+  background-color: var(--whatsapp-bg-color);
+}
+
+.whatsapp-call-info {
+  padding: 15px;
+  text-align: center;
+  background-color: rgba(0, 0, 0, 0.4);
+  color: white;
+}
+
+.whatsapp-call-controls {
+  display: flex;
+  justify-content: center;
+  gap: 15px;
+  padding: 20px;
+  background-color: rgba(0, 0, 0, 0.6);
+}
+
+.whatsapp-call-control {
+  width: 50px;
+  height: 50px;
+  border-radius: 50%;
+  background-color: rgba(255, 255, 255, 0.2);
+  border: none;
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 20px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.whatsapp-call-control:hover {
+  background-color: rgba(255, 255, 255, 0.3);
+}
+
+.whatsapp-call-control.active {
+  background-color: rgba(255, 0, 0, 0.6);
+}
+
+.whatsapp-call-control.whatsapp-end-call {
+  background-color: #ff4136;
+  transform: rotate(135deg);
+}
+
+.whatsapp-call-ended {
+  position: fixed;
+  top: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  background-color: rgba(0, 0, 0, 0.7);
+  color: white;
+  padding: 10px 20px;
+  border-radius: 20px;
+  z-index: 999;
+  animation: fadeOut 3s forwards;
+}
+
+@keyframes callPulse {
+  0% {
+    box-shadow: 0 0 0 0 rgba(37, 211, 102, 0.5);
+  }
+  70% {
+    box-shadow: 0 0 0 15px rgba(37, 211, 102, 0);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(37, 211, 102, 0);
+  }
+}
+
+@keyframes fadeOut {
+  0% { opacity: 1; }
+  70% { opacity: 1; }
+  100% { opacity: 0; visibility: hidden; }
+}
+
+/* Dark mode overrides */
+.whatsapp-dark .whatsapp-incoming-call,
+.whatsapp-dark .whatsapp-outgoing-call,
+.whatsapp-dark .whatsapp-audio-call-container {
+  background-color: var(--whatsapp-dark-bg-color);
+  color: var(--whatsapp-dark-text-color);
+}
+
+/* Make sure icons in calling UI are visible in both light and dark mode */
+.whatsapp-call-control svg {
+  fill: currentColor;
+}

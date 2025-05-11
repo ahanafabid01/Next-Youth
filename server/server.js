@@ -18,6 +18,8 @@ import { createServer } from 'http'; // Add this
 import { Server } from 'socket.io'; // Add this
 import { Message } from "./models/MessageModel.js"; // Add this
 import userModel from "./models/userModel.js"; // Add this
+import callRoutes from './routes/callRoutes.js'; // Add this
+import CallModel from './models/callModel.js'; // Add this
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -87,6 +89,7 @@ app.use("/api/admin", adminRouter);
 app.use("/api/payment", employerPaymentRoutes);
 app.use("/api/employee-payment", employeePaymentRoutes);
 app.use("/api/messages", messageRouter); // Add this
+app.use('/api/calls', callRoutes); // Add this
 
 // Track online users: userId -> socketId
 const onlineUsers = new Map();
@@ -257,7 +260,80 @@ io.on('connection', (socket) => {
       console.error("Error handling disconnection:", err);
     }
   });
+
+  // Call signaling events
+  socket.on('call_offer', async (data) => {
+    try {
+      const { callerId, callerName, callerAvatar, receiverId, sdp, conversationId, isVideoCall } = data;
+      
+      // Validate required fields
+      if (!callerId || !receiverId || !conversationId) {
+        console.error('Missing required fields for call_offer:', { callerId, receiverId, conversationId });
+        return;
+      }
+      
+      // Save call to database
+      const newCall = new CallModel({
+        caller: callerId,
+        receiver: receiverId,
+        conversationId,
+        callType: isVideoCall ? 'video' : 'audio',
+        status: 'initiated',
+      });
+      
+      const savedCall = await newCall.save();
+      
+      // Add call ID to the data
+      data.callId = savedCall._id.toString();
+      
+      // Forward the offer to the receiver
+      const receiverSocket = getSocketByUserId(receiverId);
+      if (receiverSocket) {
+        receiverSocket.emit('call_offer', data);
+      } else {
+        console.log(`Receiver socket not found for user ${receiverId}`);
+        // Update call status to missed if receiver is offline
+        await CallModel.findByIdAndUpdate(savedCall._id, { status: 'missed' });
+      }
+    } catch (err) {
+      console.error('Error handling call offer:', err);
+    }
+  });
+
+  socket.on('call_answer', (data) => {
+    const { calleeId, callerId, sdp, accepted } = data;
+    const callerSocket = getSocketByUserId(callerId);
+    if (callerSocket) {
+      callerSocket.emit('call_answer', data);
+    }
+  });
+
+  socket.on('ice_candidate', (data) => {
+    const { candidate, receiverId } = data;
+    const receiverSocket = getSocketByUserId(receiverId);
+    if (receiverSocket) {
+      receiverSocket.emit('ice_candidate', data);
+    }
+  });
+
+  socket.on('call_end', (data) => {
+    const { receiverId } = data;
+    const receiverSocket = getSocketByUserId(receiverId);
+    if (receiverSocket) {
+      receiverSocket.emit('call_end');
+    }
+  });
 });
+
+// Helper function to get socket by user ID
+const getSocketByUserId = (userId) => {
+  if (!userId) return null;
+  
+  const socketId = onlineUsers.get(userId);
+  if (!socketId) return null;
+  
+  return io.sockets.sockets.get(socketId);
+};
 
 // Default route
 app.get('/', (req, res) => {
