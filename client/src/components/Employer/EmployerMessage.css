@@ -8,6 +8,10 @@
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
 }
 
+.whatsapp-container * {
+  backface-visibility: hidden; /* Add this */
+}
+
 .whatsapp-dark {
   background-color: #111b21;
   color: #e9edef;
@@ -48,17 +52,19 @@
   align-items: center;
 }
 
-.whatsapp-profile-image {
+.whatsapp-profile-image,
+.whatsapp-default-avatar {
   width: 40px;
   height: 40px;
+  min-width: 40px; /* Add this */
+  min-height: 40px; /* Add this */
+  position: relative; /* Add this */
+  overflow: hidden; /* Add this */
   border-radius: 50%;
   margin-right: 15px;
 }
 
 .whatsapp-default-avatar {
-  width: 40px;
-  height: 40px;
-  border-radius: 50%;
   background-color: #00a884;
   color: white;
   display: flex;
@@ -66,7 +72,6 @@
   justify-content: center;
   font-weight: bold;
   font-size: 18px;
-  margin-right: 15px;
 }
 
 .whatsapp-header-avatar {
@@ -214,9 +219,14 @@
   flex-shrink: 0;
 }
 
-.whatsapp-chat-avatar img {
-  width: 100%;
-  height: 100%;
+.whatsapp-chat-avatar img,
+.whatsapp-chat-avatar .whatsapp-default-avatar {
+  width: 40px;
+  height: 40px;
+  min-width: 40px; /* Add this */
+  min-height: 40px; /* Add this */
+  position: relative; /* Add this */
+  overflow: hidden; /* Add this */
   border-radius: 50%;
   object-fit: cover;
 }
@@ -436,6 +446,7 @@
 .whatsapp-message.fade-in {
   opacity: 0;
   animation: fadeIn 0.3s forwards;
+  will-change: opacity, transform; /* Add this */
 }
 
 @keyframes fadeIn {
@@ -499,10 +510,37 @@
   color: #111b21;
   position: relative;
   word-wrap: break-word;
+  contain: content; /* Add this */
+  will-change: contents;
+  transform: translateZ(0);
 }
 
 .whatsapp-dark .whatsapp-message-content {
   color: #e9edef;
+}
+
+/* Add these styles to prevent flicker during emoji rendering */
+.emoji-icon {
+  height: 1.2em;
+  width: 1.2em;
+  margin: 0 0.05em 0 0.1em;
+  vertical-align: -0.2em;
+  display: inline;
+  pointer-events: none;
+  backface-visibility: hidden;
+}
+
+/* Force a consistent height for message content to prevent layout shifts */
+.whatsapp-message-content img.emoji-icon {
+  display: inline !important;
+  border: none !important;
+  box-shadow: none !important;
+  height: 1.2em !important;
+  width: 1.2em !important;
+  margin: 0 .1em !important;
+  vertical-align: -0.2em !important;
+  background: none !important;
+  padding: 0 !important;
 }
 
 .whatsapp-message-meta {
@@ -778,6 +816,8 @@
   background: transparent;
   font-size: 15px;
   color: #111b21;
+  will-change: contents;
+  transform: translateZ(0);
 }
 
 .whatsapp-dark .whatsapp-input-container input {
@@ -1280,4 +1320,157 @@
 
 .whatsapp-dark .whatsapp-status-online::before {
   background-color: #00E676;
+}
+
+/* Voice message styles */
+.whatsapp-voice-message {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  padding: 6px 0;
+}
+
+.whatsapp-voice-play-btn {
+  background-color: #075e54;
+  color: white;
+  border-radius: 50%;
+  width: 34px;
+  height: 34px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  border: none;
+  cursor: pointer;
+  margin-right: 10px;
+}
+
+.whatsapp-voice-play-btn.playing {
+  background-color: #128c7e;
+}
+
+.whatsapp-voice-waveform {
+  flex-grow: 1;
+  height: 25px;
+  background-color: rgba(0, 0, 0, 0.05);
+  border-radius: 12px;
+  position: relative;
+  margin: 0 10px;
+}
+
+.whatsapp-voice-progress {
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.15);
+  border-radius: 12px;
+  position: absolute;
+  left: 0;
+  top: 0;
+}
+
+.whatsapp-voice-time {
+  font-size: 12px;
+  color: #555;
+  min-width: 40px;
+  text-align: right;
+}
+
+.whatsapp-recording {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  padding: 0 10px;
+}
+
+.whatsapp-recording-indicator {
+  display: flex;
+  align-items: center;
+  flex-grow: 1;
+}
+
+.recording-dot {
+  width: 10px;
+  height: 10px;
+  background-color: #e74c3c;
+  border-radius: 50%;
+  animation: pulse 1.2s infinite;
+  margin-right: 10px;
+}
+
+.recording-time {
+  font-size: 14px;
+}
+
+@keyframes pulse {
+  0% {
+    transform: scale(0.95);
+    opacity: 0.7;
+  }
+  50% {
+    transform: scale(1);
+    opacity: 1;
+  }
+  100% {
+    transform: scale(0.95);
+    opacity: 0.7;
+  }
+}
+
+.whatsapp-recording-actions {
+  display: flex;
+  gap: 10px;
+}
+
+.whatsapp-cancel-recording {
+  color: #e74c3c;
+}
+
+.whatsapp-send-recording {
+  color: #25d366;
+}
+
+.whatsapp-recording-preview {
+  display: flex;
+  width: 100%;
+  align-items: center;
+  padding: 0 10px;
+}
+
+/* Prevent transitions during page load */
+.no-transition {
+  transition: none !important;
+}
+
+/* Add these styles for emoji picker */
+.whatsapp-emoji-picker {
+  position: absolute;
+  bottom: 70px;
+  left: 10px;
+  z-index: 100;
+  box-shadow: 0 5px 10px rgba(0, 0, 0, 0.2);
+  border-radius: 12px;
+  overflow: hidden;
+  height: 320px;
+}
+
+.whatsapp-dark .whatsapp-emoji-picker {
+  box-shadow: 0 5px 10px rgba(0, 0, 0, 0.4);
+}
+
+/* Custom styling for emoji categories */
+.whatsapp-emoji-picker :global(.emoji-categories) {
+  background-color: #f0f2f5;
+}
+
+.whatsapp-dark .whatsapp-emoji-picker :global(.emoji-categories) {
+  background-color: #2a2f32;
+}
+
+/* Improve active emoji button appearance */
+.whatsapp-icon-button.whatsapp-emoji.active {
+  color: #25d366;
+}
+
+/* Improve emoji rendering in messages */
+.whatsapp-text-content {
+  display: inline;
+  word-break: break-word;
 }

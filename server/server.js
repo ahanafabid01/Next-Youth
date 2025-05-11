@@ -29,15 +29,24 @@ const PORT = process.env.PORT || 4000;
 const httpServer = createServer(app); // Add this
 
 // Socket.IO setup
-const io = new Server(httpServer, { // Add this
+const io = new Server(httpServer, {
   cors: {
     origin: process.env.CLIENT_URL || "http://localhost:3000",
     credentials: true,
   },
+  pingTimeout: 60000,
+  pingInterval: 25000,
+  transports: ['websocket', 'polling']
 });
 
 // Include this after initializing io
 app.set('io', io); // Make io available to controllers
+
+// Ensure proper UTF-8 encoding for emoji support
+app.use((req, res, next) => {
+  res.setHeader('Content-Type', 'application/json; charset=utf-8');
+  next();
+});
 
 // Validate environment variables
 if (!process.env.MONGODB_URI) {

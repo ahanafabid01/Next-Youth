@@ -1,6 +1,9 @@
-import React, { useState, useEffect, useRef, useCallback, memo } from "react";
+import React, { useState, useEffect, useRef, useCallback, memo, useMemo } from "react";
 import axios from "axios";
 import io from "socket.io-client";
+import DOMPurify from "dompurify";
+import twemoji from "twemoji";
+import EmojiPicker from 'emoji-picker-react';
 import { 
   FaSearch, 
   FaPaperPlane, 
@@ -18,18 +21,100 @@ import {
   FaCircle,
   FaMicrophone,
   FaTrashAlt,
-  FaEllipsisH
+  FaEllipsisH,
+  FaTrash,
+  FaPlay,
+  FaPause
 } from "react-icons/fa";
 import "./EmployerMessage.css";
 import logoLight from '../../assets/images/logo-light.png';
 import logoDark from '../../assets/images/logo-dark.png';
 
+// Configure twemoji for better performance
+const parseTwemoji = (text) => {
+  if (!text) return '';
+  
+  // Use cache for parsed emoji html content
+  if (window.__emojiCache === undefined) {
+    window.__emojiCache = new Map();
+  }
+  
+  // Return cached version if available
+  if (window.__emojiCache.has(text)) {
+    return window.__emojiCache.get(text);
+  }
+  
+  // Parse and cache for future use
+  const parsed = twemoji.parse(text, {
+    folder: 'svg',
+    ext: '.svg',
+    className: 'emoji-icon',
+    size: 16,
+    callback: () => true
+  });
+  
+  window.__emojiCache.set(text, parsed);
+  return parsed;
+};
+
 // Socket connection
 const ENDPOINT = "http://localhost:4000";
-let socket;
 
 // Create a memoized message component to prevent unnecessary re-renders
 const MessageBubble = memo(({ message, isOwn, showSenderInfo, senderName, formatTimestamp, onContextMenu }) => {
+  const [isPlaying, setIsPlaying] = useState(false);
+  const [currentTime, setCurrentTime] = useState(0);
+  const [duration, setDuration] = useState(0);
+  const audioRef = useRef(null);
+  
+  // Add memoization for content to prevent unnecessary re-renders
+  const sanitizedContent = useMemo(() => {
+    if (!message.content || message.isDeleted) return null;
+    return DOMPurify.sanitize(parseTwemoji(message.content));
+  }, [message.content, message.isDeleted]);
+  
+  // Set up audio event listeners
+  useEffect(() => {
+    if (audioRef.current) {
+      const audio = audioRef.current;
+      
+      const handleTimeUpdate = () => setCurrentTime(audio.currentTime);
+      const handleDurationChange = () => setDuration(audio.duration);
+      const handleEnded = () => setIsPlaying(false);
+      
+      audio.addEventListener('timeupdate', handleTimeUpdate);
+      audio.addEventListener('durationchange', handleDurationChange);
+      audio.addEventListener('ended', handleEnded);
+      
+      return () => {
+        audio.removeEventListener('timeupdate', handleTimeUpdate);
+        audio.removeEventListener('durationchange', handleDurationChange);
+        audio.removeEventListener('ended', handleEnded);
+      };
+    }
+  }, [message]);
+  
+  // Play/pause audio
+  const togglePlay = (e) => {
+    e.stopPropagation();
+    const audio = audioRef.current;
+    if (!audio) return;
+    
+    if (isPlaying) {
+      audio.pause();
+    } else {
+      audio.play();
+    }
+    setIsPlaying(!isPlaying);
+  };
+  
+  // Format audio time
+  const formatAudioTime = (time) => {
+    const minutes = Math.floor(time / 60).toString().padStart(2, '0');
+    const seconds = Math.floor(time % 60).toString().padStart(2, '0');
+    return `${minutes}:${seconds}`;
+  };
+  
   return (
     <div 
       className={`whatsapp-message ${isOwn ? "whatsapp-message-own" : "whatsapp-message-other"}`}
@@ -47,11 +132,44 @@ const MessageBubble = memo(({ message, isOwn, showSenderInfo, senderName, format
             <span className="whatsapp-deleted-message">This message was deleted</span>
           ) : (
             <>
-              {message.content}
+              {message.content && (
+                <span 
+                  dangerouslySetInnerHTML={{ __html: sanitizedContent }} 
+                  className="whatsapp-text-content"
+                />
+              )}
               
               {message.attachment && (
                 <div className="whatsapp-attachment">
-                  {message.attachment.type && message.attachment.type.startsWith("image") ? (
+                  {/* Handle voice messages */}
+                  {message.attachment.isVoiceMessage || 
+                   (message.attachment.type && message.attachment.type.startsWith("audio")) ? (
+                    <div className="whatsapp-voice-message">
+                      <button 
+                        className={`whatsapp-voice-play-btn ${isPlaying ? 'playing' : ''}`}
+                        onClick={togglePlay}
+                      >
+                        {isPlaying ? <FaPause /> : <FaPlay />}
+                      </button>
+                      
+                      <div className="whatsapp-voice-waveform">
+                        <div className="whatsapp-voice-progress" style={{ 
+                          width: `${duration ? (currentTime / duration) * 100 : 0}%` 
+                        }}></div>
+                      </div>
+                      
+                      <div className="whatsapp-voice-time">
+                        {formatAudioTime(duration - currentTime)}
+                      </div>
+                      
+                      <audio 
+                        ref={audioRef} 
+                        src={message.attachment.url} 
+                        preload="metadata" 
+                        style={{ display: 'none' }}
+                      ></audio>
+                    </div>
+                  ) : message.attachment.type && message.attachment.type.startsWith("image") ? (
                     <div className="whatsapp-image-attachment">
                       <img 
                         src={message.attachment.url} 
@@ -111,6 +229,14 @@ const MessageBubble = memo(({ message, isOwn, showSenderInfo, senderName, format
       </div>
     </div>
   );
+}, (prevProps, nextProps) => {
+  // Custom comparison function to prevent unnecessary re-renders
+  return (
+    prevProps.message._id === nextProps.message._id &&
+    prevProps.message.content === nextProps.message.content &&
+    prevProps.message.isDeleted === nextProps.message.isDeleted &&
+    prevProps.isOwn === nextProps.isOwn
+  );
 });
 
 const EmployerMessage = ({ darkMode }) => {
@@ -144,6 +270,14 @@ const EmployerMessage = ({ darkMode }) => {
   const [showDeleteConversationDialog, setShowDeleteConversationDialog] = useState(false);
   // State variable for online users
   const [onlineUsers, setOnlineUsers] = useState(new Set());
+  // State variables for audio recording
+  const [isRecording, setIsRecording] = useState(false);
+  const [audioBlob, setAudioBlob] = useState(null);
+  const [audioRecorder, setAudioRecorder] = useState(null);
+  const [recordingTime, setRecordingTime] = useState(0);
+  const [audioPlayback, setAudioPlayback] = useState(null);
+  const recordingTimerRef = useRef(null);
+  const [showEmojiPicker, setShowEmojiPicker] = useState(false);
   
   // Refs
   const messagesEndRef = useRef(null);
@@ -152,7 +286,39 @@ const EmployerMessage = ({ darkMode }) => {
   const fileInputRef = useRef(null);
   const imageInputRef = useRef(null);
   const previousConversation = useRef(null);
+  const emojiPickerRef = useRef(null);
+  const socketRef = useRef(null);
+  const pendingMessagesRef = useRef([]);
   
+  // Prevent render flicker on initial load
+  useEffect(() => {
+    // Add a class to prevent transitions during initial load
+    document.body.classList.add('no-transition');
+    
+    // Remove the class after a small delay
+    const timer = setTimeout(() => {
+      document.body.classList.remove('no-transition');
+    }, 300);
+    
+    return () => {
+      clearTimeout(timer);
+      document.body.classList.remove('no-transition');
+    };
+  }, []);
+
+  // Limit rendering when visible only
+  const isVisible = useRef(true);
+  useEffect(() => {
+    const handleVisibilityChange = () => {
+      isVisible.current = document.visibilityState === 'visible';
+    };
+    
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    return () => {
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+    };
+  }, []);
+
   // Mark a message as read
   const markMessageAsRead = async (messageId) => {
     try {
@@ -269,10 +435,23 @@ const EmployerMessage = ({ darkMode }) => {
   // Effect 1: Initialize socket only once when component mounts
   useEffect(() => {
     // Connect to socket server
-    socket = io(ENDPOINT);
+    socketRef.current = io(ENDPOINT, {
+      reconnection: true,
+      reconnectionDelay: 1000,
+      reconnectionAttempts: 10,
+      transports: ['websocket']
+    });
     
-    socket.on("connect", () => {
-      console.log("Socket connected");
+    socketRef.current.on("connect", () => {
+      console.log("Socket connected with ID:", socketRef.current.id);
+    });
+
+    socketRef.current.on("connect_error", (error) => {
+      console.error("Socket connection error:", error);
+    });
+    
+    socketRef.current.on("disconnect", (reason) => {
+      console.log("Socket disconnected:", reason);
     });
     
     // Get current user information
@@ -285,8 +464,8 @@ const EmployerMessage = ({ darkMode }) => {
           setCurrentUser(response.data.user);
           
           // Tell the server this user is now online
-          if (response.data.user?._id) {
-            socket.emit('user_connected', response.data.user._id);
+          if (response.data.user?._id && socketRef.current) {
+            socketRef.current.emit('user_connected', response.data.user._id);
           }
         }
       } catch (error) {
@@ -297,11 +476,11 @@ const EmployerMessage = ({ darkMode }) => {
     fetchCurrentUser();
     
     // Add listeners for online status
-    socket.on('online_users', (userIds) => {
+    socketRef.current.on('online_users', (userIds) => {
       setOnlineUsers(new Set(userIds));
     });
     
-    socket.on('user_status_changed', ({ userId, isOnline }) => {
+    socketRef.current.on('user_status_changed', ({ userId, isOnline }) => {
       setOnlineUsers(prev => {
         const updated = new Set(prev);
         if (isOnline) {
@@ -315,17 +494,19 @@ const EmployerMessage = ({ darkMode }) => {
     
     // Clean up socket connection when component unmounts
     return () => {
-      if (socket) {
-        socket.disconnect();
+      if (socketRef.current) {
+        console.log("Cleaning up socket connection");
+        socketRef.current.disconnect();
+        socketRef.current = null;
       }
     };
   }, []); // Empty dependency array - only runs once
 
-  // Effect 2: Set up message event handlers separately
+  // Separate useEffect for message handlers
   useEffect(() => {
-    if (!socket || !currentUser) return;
+    if (!socketRef.current) return;
     
-    // Handler for incoming messages
+    // Create stable message handler
     const handleNewMessage = (message) => {
       console.log("Received new message event:", message);
       
@@ -334,29 +515,37 @@ const EmployerMessage = ({ darkMode }) => {
         return;
       }
       
+      // If user is not loaded yet, queue the message
+      if (!currentUser) {
+        console.log("User not loaded yet, queuing message");
+        pendingMessagesRef.current.push(message);
+        return;
+      }
+      
       // Check if this message was already deleted for the current user
       const isDeletedForCurrentUser = message.deletedFor && 
                                      Array.isArray(message.deletedFor) && 
                                      message.deletedFor.some(id => 
-                                       (typeof id === 'string' && id === currentUser?._id) || 
-                                       (id?._id && id._id === currentUser?._id)
+                                       (typeof id === 'string' && id === currentUser._id) || 
+                                       (id?._id && id._id === currentUser._id)
                                      );
       
       // Skip processing if the message was deleted for this user
       if (isDeletedForCurrentUser) {
-        console.log("Message was deleted for current user, ignoring:", message);
+        console.log("Message was deleted for current user, ignoring");
         return;
       }
       
       const isFromCurrentUser = message.sender && 
-        ((message.sender._id && message.sender._id === currentUser?._id) || 
-         (typeof message.sender === 'string' && message.sender === currentUser?._id));
+        ((message.sender._id && message.sender._id === currentUser._id) || 
+         (typeof message.sender === 'string' && message.sender === currentUser._id));
 
       // For ALL messages - update the conversation list
       updateConversationList(message);
       
       // Handle messages for the active conversation
       if (activeConversation && message.conversationId === activeConversation._id) {
+        console.log("Message is for active conversation, adding to UI");
         setMessages(prev => {
           // Check for duplicates more thoroughly
           const isDuplicate = prev.some(m => 
@@ -368,11 +557,11 @@ const EmployerMessage = ({ darkMode }) => {
           );
           
           if (isDuplicate) {
-            console.log("Duplicate message detected, not adding:", message);
+            console.log("Duplicate message detected, not adding");
             return prev;
           }
           
-          console.log("Adding new message to state:", message);
+          console.log("Adding new message to state");
           const newMessage = {...message, isNew: true};
           return [...prev, newMessage];
         });
@@ -383,7 +572,7 @@ const EmployerMessage = ({ darkMode }) => {
       } 
       // Handle messages for other conversations - update unread counts
       else if (!isFromCurrentUser) {
-        console.log("Updating unread count for conversation:", message.conversationId);
+        console.log(`Updating unread count for conversation: ${message.conversationId}`);
         setUnreadCounts(prev => ({
           ...prev,
           [message.conversationId]: (prev[message.conversationId] || 0) + 1
@@ -391,10 +580,7 @@ const EmployerMessage = ({ darkMode }) => {
       }
     };
 
-    console.log("Setting up socket event handlers");
-    socket.on("new_message", handleNewMessage);
-
-    socket.on("message_deleted", ({ messageId, deleteFor }) => {
+    const handleMessageDeleted = ({ messageId, deleteFor }) => {
       console.log("Received message_deleted event:", { messageId, deleteFor });
       
       if (deleteFor === "everyone") {
@@ -406,29 +592,50 @@ const EmployerMessage = ({ darkMode }) => {
           )
         );
       }
-      // We don't need to handle "delete for me" here as that's a personal action
-      // already handled in the handleDeleteMessage function
-    });
+    };
+    
+    console.log("Setting up socket event handlers");
+    socketRef.current.on("new_message", handleNewMessage);
+    socketRef.current.on("message_deleted", handleMessageDeleted);
     
     return () => {
-      console.log("Cleaning up socket event handlers");
-      socket.off("new_message", handleNewMessage);
-      socket.off("message_deleted");
+      if (socketRef.current) {
+        console.log("Removing socket event handlers");
+        socketRef.current.off("new_message", handleNewMessage);
+        socketRef.current.off("message_deleted", handleMessageDeleted);
+      }
     };
-  }, [activeConversation, currentUser, markMessageAsRead, updateConversationList]);
+  }, [currentUser, activeConversation]); // Reduced dependency list
 
-  // Ensure this useEffect runs properly to join conversation rooms
+  // Add this effect to process queued messages once user is loaded
   useEffect(() => {
-    if (activeConversation && socket && socket.connected) {
+    if (currentUser && pendingMessagesRef.current.length > 0) {
+      console.log("Processing queued messages:", pendingMessagesRef.current.length);
+      
+      const messagesToProcess = [...pendingMessagesRef.current];
+      pendingMessagesRef.current = []; // Clear the queue
+      
+      messagesToProcess.forEach(message => {
+        // Re-emit these messages to be processed by the normal handler
+        if (socketRef.current) {
+          socketRef.current.emit("new_message", message);
+        }
+      });
+    }
+  }, [currentUser]);
+
+  // Update the join/leave conversation useEffect
+  useEffect(() => {
+    if (activeConversation && socketRef.current && socketRef.current.connected) {
       // Leave any previously joined rooms
       if (previousConversation.current) {
         console.log(`Leaving conversation: ${previousConversation.current}`);
-        socket.emit('leave_conversation', previousConversation.current);
+        socketRef.current.emit('leave_conversation', previousConversation.current);
       }
       
       // Join the new conversation room
       console.log(`Joining conversation: ${activeConversation._id}`);
-      socket.emit('join_conversation', activeConversation._id);
+      socketRef.current.emit('join_conversation', activeConversation._id);
       
       // Update the reference to the current conversation
       previousConversation.current = activeConversation._id;
@@ -469,6 +676,51 @@ const EmployerMessage = ({ darkMode }) => {
       document.removeEventListener('click', handleClickOutside);
     };
   }, [showMessageMenu]);
+
+  useEffect(() => {
+    function handleClickOutside(event) {
+      if (emojiPickerRef.current && !emojiPickerRef.current.contains(event.target) && 
+          !event.target.classList.contains('whatsapp-emoji') && 
+          !event.target.closest('.whatsapp-emoji')) {
+        setShowEmojiPicker(false);
+      }
+    }
+    
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [emojiPickerRef]);
+  
+  // Add this useEffect to preload common emojis in your component
+  useEffect(() => {
+    // Preload common emoji sets to improve first render performance
+    const commonEmojis = ['😀', '😂', '👍', '❤️', '🙏', '👋', '😊', '🎉', '👏', '🔥',
+                          '😁', '😄', '😆', '😅', '😂', '🤣', '😇', '😉', '😘', '🥰'];
+    
+    // Batch process to avoid blocking the main thread
+    const preloadEmojis = (index = 0) => {
+      if (index >= commonEmojis.length) return;
+      
+      const emoji = commonEmojis[index];
+      if (typeof twemoji !== 'undefined') {
+        twemoji.parse(emoji, {
+          folder: 'svg',
+          ext: '.svg'
+        });
+      }
+      
+      // Process next emoji in the next idle period
+      if (window.requestIdleCallback) {
+        window.requestIdleCallback(() => preloadEmojis(index + 1));
+      } else {
+        setTimeout(() => preloadEmojis(index + 1), 0);
+      }
+    };
+    
+    // Start preloading
+    preloadEmojis();
+  }, []);
   
   // Get other participant in conversation - FIXED FUNCTION
   const getOtherParticipant = (conversation) => {
@@ -609,7 +861,7 @@ const EmployerMessage = ({ darkMode }) => {
         }
         
         // Emit message through socket
-        socket.emit("send_message", realMessage);
+        socketRef.current.emit("send_message", realMessage);
       }
     } catch (error) {
       console.error("Error sending message:", error);
@@ -744,7 +996,7 @@ const EmployerMessage = ({ darkMode }) => {
           URL.revokeObjectURL(stagedAttachment.previewUrl);
         }
         
-        socket.emit("send_message", realMessage);
+        socketRef.current.emit("send_message", realMessage);
       }
     } catch (error) {
       console.error("Error uploading file:", error);
@@ -874,9 +1126,9 @@ const EmployerMessage = ({ darkMode }) => {
       if (response.data.success) {
         console.log(`Message deleted successfully with option: ${deleteFor}`);
         
-        // Emit socket event for "delete for everyone" option only
-        if (deleteFor === "everyone" && activeConversation) {
-          socket.emit("delete_message", {
+        // Emit socket event for "delete for everyone" option only (modified)
+        if (deleteFor === "everyone" && activeConversation && socketRef.current && socketRef.current.connected) {
+          socketRef.current.emit("delete_message", {
             messageId: messageId,
             conversationId: activeConversation._id,
             deleteFor: "everyone"
@@ -960,7 +1212,6 @@ const EmployerMessage = ({ darkMode }) => {
     let lastSenderId = null;
     
     return messages
-      // Improved filter to properly handle both types of message deletion
       .filter(message => {
         // If the message is in the user's deletedFor array, filter it out completely
         const isDeletedForCurrentUser = message.deletedFor && 
@@ -979,11 +1230,12 @@ const EmployerMessage = ({ darkMode }) => {
         return true;
       })
       .map((message, index) => {
-        // Rest of your mapping code remains the same
         const isOwn = isOwnMessage(message);
         const messageDate = new Date(message.createdAt).toDateString();
         const showDate = lastDate !== messageDate;
-        if (showDate) lastDate = messageDate;
+        if (showDate) {
+          lastDate = messageDate;
+        }
         
         const showSenderInfo = lastSenderId !== message.sender?._id;
         lastSenderId = message.sender?._id;
@@ -1011,16 +1263,231 @@ const EmployerMessage = ({ darkMode }) => {
       });
   }, [messages, isOwnMessage, formatTimestamp, currentUser, handleMessageContextMenu]);
 
+  // Start recording
+  const startRecording = async () => {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      const mediaRecorder = new MediaRecorder(stream);
+      const audioChunks = [];
+      
+      mediaRecorder.addEventListener("dataavailable", event => {
+        audioChunks.push(event.data);
+      });
+      
+      mediaRecorder.addEventListener("stop", () => {
+        const audioBlob = new Blob(audioChunks, { type: 'audio/webm' });
+        setAudioBlob(audioBlob);
+        
+        // Stop all tracks in the stream to release the microphone
+        stream.getTracks().forEach(track => track.stop());
+      });
+      
+      // Start recording
+      mediaRecorder.start();
+      setAudioRecorder(mediaRecorder);
+      setIsRecording(true);
+      
+      // Start timer
+      setRecordingTime(0);
+      recordingTimerRef.current = setInterval(() => {
+        setRecordingTime(prev => prev + 1);
+      }, 1000);
+      
+    } catch (error) {
+      console.error("Error starting recording:", error);
+      alert("Could not access microphone. Please check permissions.");
+    }
+  };
+
+  // Stop recording
+  const stopRecording = () => {
+    if (audioRecorder && audioRecorder.state !== "inactive") {
+      audioRecorder.stop();
+      setIsRecording(false);
+      
+      // Clear timer
+      if (recordingTimerRef.current) {
+        clearInterval(recordingTimerRef.current);
+        recordingTimerRef.current = null;
+      }
+    }
+  };
+
+  // Cancel recording
+  const cancelRecording = () => {
+    if (audioRecorder && audioRecorder.state !== "inactive") {
+      audioRecorder.stop();
+    }
+    
+    setIsRecording(false);
+    setAudioBlob(null);
+    
+    // Clear timer
+    if (recordingTimerRef.current) {
+      clearInterval(recordingTimerRef.current);
+      recordingTimerRef.current = null;
+    }
+    
+    setRecordingTime(0);
+  };
+
+  // Send voice message
+  const sendVoiceMessage = async () => {
+    if (!audioBlob || !activeConversation) return;
+    
+    // Generate a unique temp ID
+    const tempId = `temp-${Date.now()}`;
+    const currentTimestamp = new Date().toISOString();
+    
+    // Create a temp URL for immediate display
+    const audioUrl = URL.createObjectURL(audioBlob);
+    
+    // Create temporary message for immediate display
+    const tempAttachment = {
+      type: 'audio/webm',
+      filename: 'Voice message',
+      url: audioUrl,
+      isVoiceMessage: true
+    };
+    
+    const tempMessage = {
+      _id: tempId,
+      tempId,
+      content: '',
+      attachment: tempAttachment,
+      createdAt: currentTimestamp,
+      sender: currentUser,
+      read: false,
+      isTemp: true,
+      conversationId: activeConversation._id
+    };
+    
+    // Add to messages for immediate display
+    setMessages(prev => [...prev, tempMessage]);
+    updateConversationList(tempMessage);
+    
+    // Reset audio state
+    setAudioBlob(null);
+    
+    // Create form data for upload
+    const formData = new FormData();
+    formData.append('file', audioBlob, 'voice-message.webm');
+    formData.append('conversationId', activeConversation._id);
+    formData.append('receiverId', getOtherParticipant(activeConversation)._id);
+    formData.append('messageType', 'voice');
+    
+    try {
+      setIsUploading(true);
+      setUploadProgress(0);
+      
+      const response = await axios.post(
+        "http://localhost:4000/api/messages/attachment",
+        formData,
+        { 
+          withCredentials: true,
+          headers: { 'Content-Type': 'multipart/form-data' },
+          onUploadProgress: (progressEvent) => {
+            const percentCompleted = Math.round((progressEvent.loaded * 100) / progressEvent.total);
+            setUploadProgress(percentCompleted);
+          }
+        }
+      );
+      
+      if (response.data.success) {
+        // Add conversationId to the real message
+        const realMessage = {
+          ...response.data.message,
+          conversationId: activeConversation._id
+        };
+        
+        // Replace the temp message with the real one
+        setMessages(prev => 
+          prev.map(msg => (msg._id === tempId || msg.tempId === tempId) ? realMessage : msg)
+        );
+        
+        // Update the conversation list with the real message
+        updateConversationList(realMessage);
+        
+        // Clean up the blob URL
+        URL.revokeObjectURL(audioUrl);
+        
+        // Emit to socket
+        socketRef.current.emit("send_message", realMessage);
+      }
+    } catch (error) {
+      console.error("Error sending voice message:", error);
+      alert("Failed to send voice message. Please try again.");
+      
+      // Remove the temp message
+      setMessages(prev => prev.filter(msg => msg._id !== tempId && msg.tempId !== tempId));
+      
+      // Revoke the blob URL
+      URL.revokeObjectURL(audioUrl);
+      
+      // Refresh conversation list
+      fetchConversations();
+    } finally {
+      setIsUploading(false);
+    }
+  };
+
+  // Format recording time
+  const formatTime = (seconds) => {
+    const mins = Math.floor(seconds / 60).toString().padStart(2, '0');
+    const secs = (seconds % 60).toString().padStart(2, '0');
+    return `${mins}:${secs}`;
+  };
+
+  // Handle emoji selection
+  const handleEmojiClick = useCallback((emojiData) => {
+    const emoji = emojiData.emoji;
+    
+    // Use requestAnimationFrame for smoother UI updates
+    window.requestAnimationFrame(() => {
+      setNewMessage(prev => prev + emoji);
+      
+      // Preload emoji to avoid flickering on first appearance
+      if (typeof twemoji !== 'undefined') {
+        twemoji.parse(emoji, {
+          folder: 'svg',
+          ext: '.svg'
+        });
+      }
+      
+      // Focus back on input in the next frame
+      window.requestAnimationFrame(() => {
+        if (messageInputRef.current) {
+          messageInputRef.current.focus();
+        }
+      });
+    });
+  }, []);
+
   return (
     <div className={`whatsapp-container ${darkMode ? "whatsapp-dark" : ""}`}>
       <div className={`whatsapp-sidebar ${mobileView && !showConversations ? "whatsapp-sidebar-hidden" : ""}`}>
         <div className="whatsapp-header">
           <div className="whatsapp-user-info">
-            {currentUser?.profilePicture ? (
-              <img src={currentUser.profilePicture} alt="Profile" className="whatsapp-profile-image" />
+            {currentUser ? (
+              currentUser.profilePicture ? (
+                <img 
+                  src={currentUser.profilePicture} 
+                  alt="Profile" 
+                  className="whatsapp-profile-image" 
+                  onError={(e) => {
+                    console.log("Failed to load current user avatar:", e);
+                    e.target.onerror = null;
+                    e.target.src = "https://via.placeholder.com/40?text=U";
+                  }}
+                />
+              ) : (
+                <div className="whatsapp-default-avatar whatsapp-header-avatar">
+                  {currentUser.name ? currentUser.name.charAt(0).toUpperCase() : "U"}
+                </div>
+              )
             ) : (
               <div className="whatsapp-default-avatar whatsapp-header-avatar">
-                {currentUser?.name ? currentUser.name.charAt(0).toUpperCase() : "U"}
+                <FaUser />
               </div>
             )}
             <h2>Messages</h2>
@@ -1063,6 +1530,9 @@ const EmployerMessage = ({ darkMode }) => {
                 if (conversation.lastMessage.attachment) {
                   if (conversation.lastMessage.attachment.type?.startsWith("image")) {
                     return "📷 Photo";
+                  }
+                  if (conversation.lastMessage.attachment.isVoiceMessage) {
+                    return "🎤 Voice Message";
                   }
                   return "📎 Document";
                 }
@@ -1139,16 +1609,39 @@ const EmployerMessage = ({ darkMode }) => {
               
               <div className="whatsapp-chat-user" onClick={() => {}}>
                 <div className="whatsapp-chat-avatar">
-                  {getOtherParticipant(activeConversation).profilePicture ? (
-                    <img 
-                      src={getOtherParticipant(activeConversation).profilePicture} 
-                      alt={getOtherParticipant(activeConversation).name} 
-                    />
-                  ) : (
-                    <div className="whatsapp-default-avatar">
-                      {getOtherParticipant(activeConversation).name.charAt(0).toUpperCase()}
-                    </div>
-                  )}
+                  {(() => {
+                    const otherUser = getOtherParticipant(activeConversation);
+                    if (!otherUser) {
+                      return (
+                        <div className="whatsapp-default-avatar">
+                          <FaUser />
+                        </div>
+                      );
+                    }
+                    
+                    if (otherUser.profilePicture) {
+                      // Add console log to debug avatar URLs
+                      console.log("Chat partner avatar URL:", otherUser.profilePicture);
+                      
+                      return (
+                        <img 
+                          src={otherUser.profilePicture} 
+                          alt={otherUser.name || "User"} 
+                          onError={(e) => {
+                            console.log("Failed to load chat partner avatar:", e);
+                            e.target.onerror = null;
+                            e.target.src = "https://via.placeholder.com/40?text=?";
+                          }}
+                        />
+                      );
+                    } else {
+                      return (
+                        <div className="whatsapp-default-avatar">
+                          {otherUser.name ? otherUser.name.charAt(0).toUpperCase() : "?"}
+                        </div>
+                      );
+                    }
+                  })()}
                 </div>
                 
                 <div className="whatsapp-chat-user-info">
@@ -1365,78 +1858,155 @@ const EmployerMessage = ({ darkMode }) => {
               </div>
             )}
             
+            {/* Updated chat footer section */}
             <div className="whatsapp-chat-footer">
-              <button 
-                className="whatsapp-icon-button whatsapp-emoji"
-                onClick={() => {}}
-              >
-                <FaSmile />
-              </button>
-              
-              <button 
-                className="whatsapp-icon-button whatsapp-attach"
-                onClick={() => setShowUploadOptions(!showUploadOptions)}
-              >
-                <FaPaperclip />
-              </button>
-              
-              {showUploadOptions && (
-                <div className="whatsapp-upload-options">
-                  <button 
-                    className="whatsapp-upload-option"
-                    onClick={() => imageInputRef.current.click()}
-                  >
-                    <div className="whatsapp-upload-icon whatsapp-photo-icon">
-                      <FaImage />
-                    </div>
-                    <span>Photo</span>
-                  </button>
-                  <button 
-                    className="whatsapp-upload-option"
-                    onClick={() => fileInputRef.current.click()}
-                  >
-                    <div className="whatsapp-upload-icon whatsapp-doc-icon">
-                      <FaFile />
-                    </div>
-                    <span>Document</span>
-                  </button>
+              {isRecording ? (
+                <div className="whatsapp-recording">
+                  <div className="whatsapp-recording-indicator">
+                    <span className="recording-dot"></span>
+                    <span className="recording-time">{formatTime(recordingTime)}</span>
+                  </div>
+                  <div className="whatsapp-recording-actions">
+                    <button 
+                      className="whatsapp-icon-button whatsapp-cancel-recording"
+                      onClick={cancelRecording}
+                    >
+                      <FaTrash />
+                    </button>
+                    <button 
+                      className="whatsapp-icon-button whatsapp-send-recording"
+                      onClick={stopRecording}
+                    >
+                      <FaCheck />
+                    </button>
+                  </div>
                 </div>
+              ) : audioBlob ? (
+                <div className="whatsapp-recording-preview">
+                  <div className="whatsapp-voice-message">
+                    <button 
+                      className="whatsapp-voice-play-btn"
+                      onClick={() => {
+                        const audio = new Audio(URL.createObjectURL(audioBlob));
+                        if (audioPlayback) {
+                          audioPlayback.pause();
+                        }
+                        audio.play();
+                        setAudioPlayback(audio);
+                      }}
+                    >
+                      <FaPlay />
+                    </button>
+                    <div className="whatsapp-voice-waveform"></div>
+                    <div className="whatsapp-recording-actions">
+                      <button 
+                        className="whatsapp-icon-button whatsapp-cancel-recording"
+                        onClick={() => setAudioBlob(null)}
+                      >
+                        <FaTrash />
+                      </button>
+                      <button 
+                        className="whatsapp-icon-button whatsapp-send-recording"
+                        onClick={sendVoiceMessage}
+                      >
+                        <FaPaperPlane />
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              ) : (
+                <>
+                  <button 
+                    className="whatsapp-icon-button whatsapp-emoji"
+                    onClick={() => setShowEmojiPicker(!showEmojiPicker)}
+                  >
+                    <FaSmile />
+                  </button>
+                  
+                  {showEmojiPicker && (
+                    <div className="whatsapp-emoji-picker" ref={emojiPickerRef}>
+                      <EmojiPicker
+                        onEmojiClick={handleEmojiClick}
+                        searchPlaceholder="Search emoji"
+                        width={300}
+                        height={400}
+                        previewConfig={{
+                          showPreview: false
+                        }}
+                        lazyLoadEmojis={false}
+                        skinTonesDisabled
+                        autoFocusSearch={false}
+                        categories={['suggested', 'smileys_people', 'animals_nature', 'food_drink']}
+                        suggestedEmojisMode="recent"
+                      />
+                    </div>
+                  )}
+                  
+                  <button 
+                    className="whatsapp-icon-button whatsapp-attach"
+                    onClick={() => setShowUploadOptions(!showUploadOptions)}
+                  >
+                    <FaPaperclip />
+                  </button>
+                  
+                  {showUploadOptions && (
+                    <div className="whatsapp-upload-options">
+                      <button 
+                        className="whatsapp-upload-option"
+                        onClick={() => imageInputRef.current.click()}
+                      >
+                        <div className="whatsapp-upload-icon whatsapp-photo-icon">
+                          <FaImage />
+                        </div>
+                        <span>Photo</span>
+                      </button>
+                      <button 
+                        className="whatsapp-upload-option"
+                        onClick={() => fileInputRef.current.click()}
+                      >
+                        <div className="whatsapp-upload-icon whatsapp-doc-icon">
+                          <FaFile />
+                        </div>
+                        <span>Document</span>
+                      </button>
+                    </div>
+                  )}
+                  
+                  <input 
+                    type="file" 
+                    ref={fileInputRef} 
+                    onChange={(e) => handleFileSelection(e, 'file')}
+                    style={{ display: 'none' }}
+                    accept=".pdf,.doc,.docx,.txt,.zip,.rar"
+                  />
+                  
+                  <input 
+                    type="file" 
+                    ref={imageInputRef} 
+                    onChange={(e) => handleFileSelection(e, 'image')}
+                    style={{ display: 'none' }}
+                    accept="image/*"
+                  />
+                  
+                  <div className="whatsapp-input-container">
+                    <input
+                      type="text"
+                      placeholder="Type a message"
+                      value={newMessage}
+                      onChange={(e) => setNewMessage(e.target.value)}
+                      onKeyPress={(e) => e.key === "Enter" && handleSendMessage()}
+                      ref={messageInputRef}
+                    />
+                  </div>
+                  
+                  <button 
+                    className="whatsapp-icon-button whatsapp-send"
+                    onClick={newMessage.trim() ? handleSendMessage : startRecording}
+                  >
+                    {newMessage.trim() ? <FaPaperPlane /> : <FaMicrophone />}
+                  </button>
+                </>
               )}
-              
-              <input 
-                type="file" 
-                ref={fileInputRef} 
-                onChange={(e) => handleFileSelection(e, 'file')}
-                style={{ display: 'none' }}
-                accept=".pdf,.doc,.docx,.txt,.zip,.rar"
-              />
-              
-              <input 
-                type="file" 
-                ref={imageInputRef} 
-                onChange={(e) => handleFileSelection(e, 'image')}
-                style={{ display: 'none' }}
-                accept="image/*"
-              />
-              
-              <div className="whatsapp-input-container">
-                <input
-                  type="text"
-                  placeholder="Type a message"
-                  value={newMessage}
-                  onChange={(e) => setNewMessage(e.target.value)}
-                  onKeyPress={(e) => e.key === "Enter" && handleSendMessage()}
-                  ref={messageInputRef}
-                />
-              </div>
-              
-              <button 
-                className="whatsapp-icon-button whatsapp-send"
-                onClick={handleSendMessage}
-                disabled={!newMessage.trim()}
-              >
-                {newMessage.trim() ? <FaPaperPlane /> : <FaMicrophone />}
-              </button>
             </div>
           </>
         ) : (

@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef, useCallback, memo } from "react";
+import React, { useState, useEffect, useRef, useCallback, memo, useMemo } from "react";
 import axios from "axios";
 import io from "socket.io-client";
 import { 
@@ -18,19 +18,104 @@ import {
   FaCircle,
   FaMicrophone,
   FaTrashAlt,
-  FaEllipsisH
+  FaEllipsisH,
+  FaPlay,
+  FaPause,
+  FaTrash
 } from "react-icons/fa";
+import DOMPurify from "dompurify";
+import twemoji from "twemoji";
 import { useNavigate } from "react-router-dom";
+import EmojiPicker from 'emoji-picker-react';
 import "./EmployeeMessage.css";
 import logoLight from '../../assets/images/logo-light.png';
 import logoDark from '../../assets/images/logo-dark.png';
 
 // Socket connection
 const ENDPOINT = "http://localhost:4000";
-let socket;
+
+// Configure twemoji for better performance
+const parseTwemoji = (text) => {
+  if (!text) return '';
+  
+  // Use cache for parsed emoji html content
+  if (window.__emojiCache === undefined) {
+    window.__emojiCache = new Map();
+  }
+  
+  // Return cached version if available
+  if (window.__emojiCache.has(text)) {
+    return window.__emojiCache.get(text);
+  }
+  
+  // Parse and cache for future use
+  const parsed = twemoji.parse(text, {
+    folder: 'svg',
+    ext: '.svg',
+    className: 'emoji-icon',
+    size: 16,
+    callback: () => true
+  });
+  
+  window.__emojiCache.set(text, parsed);
+  return parsed;
+};
 
 // Create a memoized message component to prevent unnecessary re-renders
 const MessageBubble = memo(({ message, isOwn, showSenderInfo, senderName, formatTimestamp, onContextMenu }) => {
+  const [isPlaying, setIsPlaying] = useState(false);
+  const [currentTime, setCurrentTime] = useState(0);
+  const [duration, setDuration] = useState(0);
+  const audioRef = useRef(null);
+  
+  // Add memoization for content to prevent unnecessary re-renders
+  const sanitizedContent = useMemo(() => {
+    if (!message.content || message.isDeleted) return null;
+    return DOMPurify.sanitize(parseTwemoji(message.content));
+  }, [message.content, message.isDeleted]);
+  
+  // Set up audio event listeners
+  useEffect(() => {
+    if (audioRef.current) {
+      const audio = audioRef.current;
+      
+      const handleTimeUpdate = () => setCurrentTime(audio.currentTime);
+      const handleDurationChange = () => setDuration(audio.duration);
+      const handleEnded = () => setIsPlaying(false);
+      
+      audio.addEventListener('timeupdate', handleTimeUpdate);
+      audio.addEventListener('durationchange', handleDurationChange);
+      audio.addEventListener('ended', handleEnded);
+      
+      return () => {
+        audio.removeEventListener('timeupdate', handleTimeUpdate);
+        audio.removeEventListener('durationchange', handleDurationChange);
+        audio.removeEventListener('ended', handleEnded);
+      };
+    }
+  }, [message]);
+  
+  // Format audio time
+  const formatAudioTime = (time) => {
+    const minutes = Math.floor(time / 60).toString().padStart(2, '0');
+    const seconds = Math.floor(time % 60).toString().padStart(2, '0');
+    return `${minutes}:${seconds}`;
+  };
+  
+  // Play/pause audio
+  const togglePlay = (e) => {
+    e.stopPropagation();
+    const audio = audioRef.current;
+    if (!audio) return;
+    
+    if (isPlaying) {
+      audio.pause();
+    } else {
+      audio.play();
+    }
+    setIsPlaying(!isPlaying);
+  };
+  
   return (
     <div 
       className={`employee-message-message ${isOwn ? "employee-message-message-own" : "employee-message-message-other"}`}
@@ -48,11 +133,44 @@ const MessageBubble = memo(({ message, isOwn, showSenderInfo, senderName, format
             <span className="employee-message-deleted-message">This message was deleted</span>
           ) : (
             <>
-              {message.content}
+              {message.content && (
+                <span 
+                  dangerouslySetInnerHTML={{ __html: sanitizedContent }} 
+                  className="employee-message-text-content"
+                />
+              )}
               
               {message.attachment && (
                 <div className="employee-message-attachment">
-                  {message.attachment.type && message.attachment.type.startsWith("image") ? (
+                  {/* Handle voice messages */}
+                  {message.attachment.isVoiceMessage || 
+                   (message.attachment.type && message.attachment.type.startsWith("audio")) ? (
+                    <div className="employee-message-voice-message">
+                      <button 
+                        className={`employee-message-voice-play-btn ${isPlaying ? 'playing' : ''}`}
+                        onClick={togglePlay}
+                      >
+                        {isPlaying ? <FaPause /> : <FaPlay />}
+                      </button>
+                      
+                      <div className="employee-message-voice-waveform">
+                        <div className="employee-message-voice-progress" style={{ 
+                          width: `${duration ? (currentTime / duration) * 100 : 0}%` 
+                        }}></div>
+                      </div>
+                      
+                      <div className="employee-message-voice-time">
+                        {formatAudioTime(duration - currentTime)}
+                      </div>
+                      
+                      <audio 
+                        ref={audioRef} 
+                        src={message.attachment.url} 
+                        preload="metadata" 
+                        style={{ display: 'none' }}
+                      ></audio>
+                    </div>
+                  ) : message.attachment.type && message.attachment.type.startsWith("image") ? (
                     <div className="employee-message-image-attachment">
                       <img 
                         src={message.attachment.url} 
@@ -112,6 +230,14 @@ const MessageBubble = memo(({ message, isOwn, showSenderInfo, senderName, format
       </div>
     </div>
   );
+}, (prevProps, nextProps) => {
+  // Custom comparison function to prevent unnecessary re-renders
+  return (
+    prevProps.message._id === nextProps.message._id &&
+    prevProps.message.content === nextProps.message.content &&
+    prevProps.message.isDeleted === nextProps.message.isDeleted &&
+    prevProps.isOwn === nextProps.isOwn
+  );
 });
 
 const EmployeeMessage = ({ darkMode }) => {
@@ -146,6 +272,16 @@ const EmployeeMessage = ({ darkMode }) => {
   const [showDeleteConversationDialog, setShowDeleteConversationDialog] = useState(false);
   // State variable for online users
   const [onlineUsers, setOnlineUsers] = useState(new Set());
+  // State variables for audio recording
+  const [isRecording, setIsRecording] = useState(false);
+  const [audioBlob, setAudioBlob] = useState(null);
+  const [audioRecorder, setAudioRecorder] = useState(null);
+  const [recordingTime, setRecordingTime] = useState(0);
+  const [audioPlayback, setAudioPlayback] = useState(null);
+  const recordingTimerRef = useRef(null);
+  // State variables for emoji picker
+  const [showEmojiPicker, setShowEmojiPicker] = useState(false);
+  const emojiPickerRef = useRef(null);
   
   // Refs
   const messagesEndRef = useRef(null);
@@ -154,6 +290,13 @@ const EmployeeMessage = ({ darkMode }) => {
   const fileInputRef = useRef(null);
   const imageInputRef = useRef(null);
   const previousConversation = useRef(null);
+  const socketRef = useRef(null);
+  const pendingMessagesRef = useRef([]);
+  
+  // Add a debounced preview for the input field
+  const debouncedNewMessage = useMemo(() => {
+    return newMessage;
+  }, [newMessage]);
   
   // Mark a message as read
   const markMessageAsRead = async (messageId) => {
@@ -270,11 +413,24 @@ const EmployeeMessage = ({ darkMode }) => {
 
   // Effect 1: Initialize socket only once when component mounts
   useEffect(() => {
-    // Connect to socket server
-    socket = io(ENDPOINT);
+    // Connect to socket server with better configuration
+    socketRef.current = io(ENDPOINT, {
+      reconnection: true,
+      reconnectionDelay: 1000,
+      reconnectionAttempts: 10,
+      transports: ['websocket']
+    });
     
-    socket.on("connect", () => {
-      console.log("Socket connected");
+    socketRef.current.on("connect", () => {
+      console.log("Socket connected with ID:", socketRef.current.id);
+    });
+
+    socketRef.current.on("connect_error", (error) => {
+      console.error("Socket connection error:", error);
+    });
+    
+    socketRef.current.on("disconnect", (reason) => {
+      console.log("Socket disconnected:", reason);
     });
     
     // Get current user information
@@ -287,8 +443,8 @@ const EmployeeMessage = ({ darkMode }) => {
           setCurrentUser(response.data.user);
           
           // Tell the server this user is now online
-          if (response.data.user?._id) {
-            socket.emit('user_connected', response.data.user._id);
+          if (response.data.user?._id && socketRef.current) {
+            socketRef.current.emit('user_connected', response.data.user._id);
           }
         }
       } catch (error) {
@@ -299,11 +455,11 @@ const EmployeeMessage = ({ darkMode }) => {
     fetchCurrentUser();
     
     // Add listeners for online status
-    socket.on('online_users', (userIds) => {
+    socketRef.current.on('online_users', (userIds) => {
       setOnlineUsers(new Set(userIds));
     });
     
-    socket.on('user_status_changed', ({ userId, isOnline }) => {
+    socketRef.current.on('user_status_changed', ({ userId, isOnline }) => {
       setOnlineUsers(prev => {
         const updated = new Set(prev);
         if (isOnline) {
@@ -317,15 +473,17 @@ const EmployeeMessage = ({ darkMode }) => {
     
     // Clean up socket connection when component unmounts
     return () => {
-      if (socket) {
-        socket.disconnect();
+      if (socketRef.current) {
+        console.log("Cleaning up socket connection");
+        socketRef.current.disconnect();
+        socketRef.current = null;
       }
     };
   }, []); // Empty dependency array - only runs once
 
   // Effect 2: Set up message event handlers separately
   useEffect(() => {
-    if (!socket || !currentUser) return;
+    if (!socketRef.current || !currentUser) return;
     
     // Handler for incoming messages
     const handleNewMessage = (message) => {
@@ -340,8 +498,8 @@ const EmployeeMessage = ({ darkMode }) => {
       const isDeletedForCurrentUser = message.deletedFor && 
                                      Array.isArray(message.deletedFor) && 
                                      message.deletedFor.some(id => 
-                                       (typeof id === 'string' && id === currentUser?._id) || 
-                                       (id?._id && id._id === currentUser?._id)
+                                       (typeof id === 'string' && id === currentUser._id) || 
+                                       (id?._id && id._id === currentUser._id)
                                      );
       
       // Skip processing if the message was deleted for this user
@@ -351,8 +509,8 @@ const EmployeeMessage = ({ darkMode }) => {
       }
       
       const isFromCurrentUser = message.sender && 
-        ((message.sender._id && message.sender._id === currentUser?._id) || 
-         (typeof message.sender === 'string' && message.sender === currentUser?._id));
+        ((message.sender._id && message.sender._id === currentUser._id) || 
+         (typeof message.sender === 'string' && message.sender === currentUser._id));
 
       // For ALL messages - update the conversation list
       updateConversationList(message);
@@ -393,10 +551,7 @@ const EmployeeMessage = ({ darkMode }) => {
       }
     };
 
-    console.log("Setting up socket event handlers");
-    socket.on("new_message", handleNewMessage);
-
-    socket.on("message_deleted", ({ messageId, deleteFor }) => {
+    const handleMessageDeleted = ({ messageId, deleteFor }) => {
       console.log("Received message_deleted event:", { messageId, deleteFor });
       
       if (deleteFor === "everyone") {
@@ -408,29 +563,33 @@ const EmployeeMessage = ({ darkMode }) => {
           )
         );
       }
-      // We don't need to handle "delete for me" here as that's a personal action
-      // already handled in the handleDeleteMessage function
-    });
+    };
+
+    console.log("Setting up socket event handlers");
+    socketRef.current.on("new_message", handleNewMessage);
+    socketRef.current.on("message_deleted", handleMessageDeleted);
     
     return () => {
-      console.log("Cleaning up socket event handlers");
-      socket.off("new_message", handleNewMessage);
-      socket.off("message_deleted");
+      if (socketRef.current) {
+        console.log("Cleaning up socket event handlers");
+        socketRef.current.off("new_message", handleNewMessage);
+        socketRef.current.off("message_deleted", handleMessageDeleted);
+      }
     };
   }, [activeConversation, currentUser, markMessageAsRead, updateConversationList]);
 
   // Ensure this useEffect runs properly to join conversation rooms
   useEffect(() => {
-    if (activeConversation && socket && socket.connected) {
+    if (activeConversation && socketRef.current && socketRef.current.connected) {
       // Leave any previously joined rooms
       if (previousConversation.current) {
         console.log(`Leaving conversation: ${previousConversation.current}`);
-        socket.emit('leave_conversation', previousConversation.current);
+        socketRef.current.emit('leave_conversation', previousConversation.current);
       }
       
       // Join the new conversation room
       console.log(`Joining conversation: ${activeConversation._id}`);
-      socket.emit('join_conversation', activeConversation._id);
+      socketRef.current.emit('join_conversation', activeConversation._id);
       
       // Update the reference to the current conversation
       previousConversation.current = activeConversation._id;
@@ -461,8 +620,17 @@ const EmployeeMessage = ({ darkMode }) => {
   // Handle clicks outside context menus
   useEffect(() => {
     const handleClickOutside = (e) => {
+      // For message menu
       if (showMessageMenu) {
         setShowMessageMenu(false);
+      }
+      
+      // For emoji picker
+      if (showEmojiPicker && 
+          emojiPickerRef.current && 
+          !emojiPickerRef.current.contains(e.target) && 
+          !e.target.closest('.employee-message-emoji')) {
+        setShowEmojiPicker(false);
       }
     };
     
@@ -470,7 +638,38 @@ const EmployeeMessage = ({ darkMode }) => {
     return () => {
       document.removeEventListener('click', handleClickOutside);
     };
-  }, [showMessageMenu]);
+  }, [showMessageMenu, showEmojiPicker]);
+  
+  // Add this effect to preload common emojis
+  useEffect(() => {
+    // Preload common emoji sets to improve first render performance
+    const commonEmojis = ['😀', '😂', '👍', '❤️', '🙏', '👋', '😊', '🎉', '👏', '🔥',
+                          '😁', '😄', '😆', '😅', '😂', '🤣', '😇', '😉', '😘', '🥰',
+                          '😗', '😍', '🤔', '🤫', '🤐', '🤨', '😐', '😑', '🙄', '😬'];
+    
+    // Batch process to avoid blocking the main thread
+    const preloadEmojis = (index = 0) => {
+      if (index >= commonEmojis.length) return;
+      
+      const emoji = commonEmojis[index];
+      if (typeof twemoji !== 'undefined') {
+        twemoji.parse(emoji, {
+          folder: 'svg',
+          ext: '.svg'
+        });
+      }
+      
+      // Process next emoji in the next idle period
+      if (window.requestIdleCallback) {
+        window.requestIdleCallback(() => preloadEmojis(index + 1));
+      } else {
+        setTimeout(() => preloadEmojis(index + 1), 0);
+      }
+    };
+    
+    // Start preloading
+    preloadEmojis();
+  }, []);
   
   // Get other participant in conversation
   const getOtherParticipant = (conversation) => {
@@ -608,7 +807,7 @@ const EmployeeMessage = ({ darkMode }) => {
         }
         
         // Emit message through socket
-        socket.emit("send_message", realMessage);
+        socketRef.current.emit("send_message", realMessage);
       }
     } catch (error) {
       console.error("Error sending message:", error);
@@ -742,7 +941,7 @@ const EmployeeMessage = ({ darkMode }) => {
           URL.revokeObjectURL(stagedAttachment.previewUrl);
         }
         
-        socket.emit("send_message", realMessage);
+        socketRef.current.emit("send_message", realMessage);
       }
     } catch (error) {
       console.error("Error uploading file:", error);
@@ -760,6 +959,181 @@ const EmployeeMessage = ({ darkMode }) => {
     }
   };
   
+  // Start recording
+  const startRecording = async () => {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      const mediaRecorder = new MediaRecorder(stream);
+      const audioChunks = [];
+      
+      mediaRecorder.addEventListener("dataavailable", event => {
+        audioChunks.push(event.data);
+      });
+      
+      mediaRecorder.addEventListener("stop", () => {
+        const audioBlob = new Blob(audioChunks, { type: 'audio/webm' });
+        setAudioBlob(audioBlob);
+        
+        // Stop all tracks in the stream to release the microphone
+        stream.getTracks().forEach(track => track.stop());
+      });
+      
+      // Start recording
+      mediaRecorder.start();
+      setAudioRecorder(mediaRecorder);
+      setIsRecording(true);
+      
+      // Start timer
+      setRecordingTime(0);
+      recordingTimerRef.current = setInterval(() => {
+        setRecordingTime(prev => prev + 1);
+      }, 1000);
+      
+    } catch (error) {
+      console.error("Error starting recording:", error);
+      alert("Could not access microphone. Please check permissions.");
+    }
+  };
+
+  // Stop recording
+  const stopRecording = () => {
+    if (audioRecorder && audioRecorder.state !== "inactive") {
+      audioRecorder.stop();
+      setIsRecording(false);
+      
+      // Clear timer
+      if (recordingTimerRef.current) {
+        clearInterval(recordingTimerRef.current);
+        recordingTimerRef.current = null;
+      }
+    }
+  };
+
+  // Cancel recording
+  const cancelRecording = () => {
+    if (audioRecorder && audioRecorder.state !== "inactive") {
+      audioRecorder.stop();
+    }
+    
+    setIsRecording(false);
+    setAudioBlob(null);
+    
+    // Clear timer
+    if (recordingTimerRef.current) {
+      clearInterval(recordingTimerRef.current);
+      recordingTimerRef.current = null;
+    }
+    
+    setRecordingTime(0);
+  };
+
+  // Send voice message
+  const sendVoiceMessage = async () => {
+    if (!audioBlob || !activeConversation) return;
+    
+    // Generate a unique temp ID
+    const tempId = `temp-${Date.now()}`;
+    const currentTimestamp = new Date().toISOString();
+    
+    // Create a temp URL for immediate display
+    const audioUrl = URL.createObjectURL(audioBlob);
+    
+    // Create temporary message for immediate display
+    const tempAttachment = {
+      type: 'audio/webm',
+      filename: 'Voice message',
+      url: audioUrl,
+      isVoiceMessage: true
+    };
+    
+    const tempMessage = {
+      _id: tempId,
+      tempId,
+      content: '',
+      attachment: tempAttachment,
+      createdAt: currentTimestamp,
+      sender: currentUser,
+      read: false,
+      isTemp: true,
+      conversationId: activeConversation._id
+    };
+    
+    // Add to messages for immediate display
+    setMessages(prev => [...prev, tempMessage]);
+    updateConversationList(tempMessage);
+    
+    // Reset audio state
+    setAudioBlob(null);
+    
+    // Create form data for upload
+    const formData = new FormData();
+    formData.append('file', audioBlob, 'voice-message.webm');
+    formData.append('conversationId', activeConversation._id);
+    formData.append('receiverId', getOtherParticipant(activeConversation)._id);
+    formData.append('messageType', 'voice');
+    
+    try {
+      setIsUploading(true);
+      setUploadProgress(0);
+      
+      const response = await axios.post(
+        "http://localhost:4000/api/messages/attachment",
+        formData,
+        { 
+          withCredentials: true,
+          headers: { 'Content-Type': 'multipart/form-data' },
+          onUploadProgress: (progressEvent) => {
+            const percentCompleted = Math.round((progressEvent.loaded * 100) / progressEvent.total);
+            setUploadProgress(percentCompleted);
+          }
+        }
+      );
+      
+      if (response.data.success) {
+        // Add conversationId to the real message
+        const realMessage = {
+          ...response.data.message,
+          conversationId: activeConversation._id
+        };
+        
+        // Replace the temp message with the real one
+        setMessages(prev => 
+          prev.map(msg => (msg._id === tempId || msg.tempId === tempId) ? realMessage : msg)
+        );
+        
+        // Update the conversation list with the real message
+        updateConversationList(realMessage);
+        
+        // Clean up the blob URL
+        URL.revokeObjectURL(audioUrl);
+        
+        // Emit to socket
+        socketRef.current.emit("send_message", realMessage);
+      }
+    } catch (error) {
+      console.error("Error sending voice message:", error);
+      alert("Failed to send voice message. Please try again.");
+      
+      // Remove the temp message
+      setMessages(prev => prev.filter(msg => msg._id !== tempId && msg.tempId !== tempId));
+      
+      // Revoke the blob URL
+      URL.revokeObjectURL(audioUrl);
+      
+      // Refresh conversation list
+      fetchConversations();
+    } finally {
+      setIsUploading(false);
+    }
+  };
+
+  // Format recording time
+  const formatTime = (seconds) => {
+    const mins = Math.floor(seconds / 60).toString().padStart(2, '0');
+    const secs = (seconds % 60).toString().padStart(2, '0');
+    return `${mins}:${secs}`;
+  };
+
   // Handle search
   const handleSearch = (e) => {
     setSearchTerm(e.target.value);
@@ -873,7 +1247,7 @@ const EmployeeMessage = ({ darkMode }) => {
         
         // Emit socket event for "delete for everyone" option only
         if (deleteFor === "everyone" && activeConversation) {
-          socket.emit("delete_message", {
+          socketRef.current.emit("delete_message", {
             messageId: messageId,
             conversationId: activeConversation._id,
             deleteFor: "everyone"
@@ -956,6 +1330,31 @@ const EmployeeMessage = ({ darkMode }) => {
     navigate('/employee-dashboard');
   };
   
+  // Handle emoji click
+  const handleEmojiClick = (emojiData) => {
+    const emoji = emojiData.emoji;
+    
+    // Use requestAnimationFrame for smoother UI updates
+    window.requestAnimationFrame(() => {
+      setNewMessage(prev => prev + emoji);
+      
+      // Preload emoji
+      if (typeof twemoji !== 'undefined') {
+        twemoji.parse(emoji, {
+          folder: 'svg',
+          ext: '.svg'
+        });
+      }
+      
+      // Focus back on input in the next frame
+      window.requestAnimationFrame(() => {
+        if (messageInputRef.current) {
+          messageInputRef.current.focus();
+        }
+      });
+    });
+  };
+
   // Render messages with memoized component
   const renderMessages = useCallback(() => {
     let lastDate = null;
@@ -1139,14 +1538,18 @@ const EmployeeMessage = ({ darkMode }) => {
               
               <div className="employee-message-chat-user">
                 <div className="employee-message-chat-avatar">
-                  {getOtherParticipant(activeConversation).profilePicture ? (
+                  {getOtherParticipant(activeConversation)?.profilePicture ? (
                     <img 
                       src={getOtherParticipant(activeConversation).profilePicture} 
-                      alt={getOtherParticipant(activeConversation).name} 
+                      alt={getOtherParticipant(activeConversation)?.name || "User"} 
+                      onError={(e) => {
+                        e.target.onerror = null;
+                        e.target.src = "https://via.placeholder.com/40?text=?"; // Fallback image
+                      }}
                     />
                   ) : (
                     <div className="employee-message-default-avatar">
-                      {getOtherParticipant(activeConversation).name.charAt(0).toUpperCase()}
+                      {getOtherParticipant(activeConversation)?.name?.charAt(0).toUpperCase() || "?"}
                     </div>
                   )}
                 </div>
@@ -1315,11 +1718,6 @@ const EmployeeMessage = ({ darkMode }) => {
                       ? "Are you sure you want to delete this message for everyone?" 
                       : "Delete this message? It will only be removed for you"}
                   </p>
-                  {deleteOption === "me" && (
-                    <p className="employee-message-dialog-note">
-                      You'll no longer see this message in this chat
-                    </p>
-                  )}
                   <div className="employee-message-dialog-actions">
                     <button 
                       className="employee-message-dialog-btn employee-message-cancel-btn"
@@ -1366,77 +1764,153 @@ const EmployeeMessage = ({ darkMode }) => {
             )}
             
             <div className="employee-message-chat-footer">
-              <button 
-                className="employee-message-icon-button employee-message-emoji"
-                onClick={() => {}}
-              >
-                <FaSmile />
-              </button>
-              
-              <button 
-                className="employee-message-icon-button employee-message-attach"
-                onClick={() => setShowUploadOptions(!showUploadOptions)}
-              >
-                <FaPaperclip />
-              </button>
-              
-              {showUploadOptions && (
-                <div className="employee-message-upload-options">
-                  <button 
-                    className="employee-message-upload-option"
-                    onClick={() => imageInputRef.current.click()}
-                  >
-                    <div className="employee-message-upload-icon employee-message-photo-icon">
-                      <FaImage />
-                    </div>
-                    <span>Photo</span>
-                  </button>
-                  <button 
-                    className="employee-message-upload-option"
-                    onClick={() => fileInputRef.current.click()}
-                  >
-                    <div className="employee-message-upload-icon employee-message-doc-icon">
-                      <FaFile />
-                    </div>
-                    <span>Document</span>
-                  </button>
+              {isRecording ? (
+                <div className="employee-message-recording">
+                  <div className="employee-message-recording-indicator">
+                    <span className="recording-dot"></span>
+                    <span className="recording-time">{formatTime(recordingTime)}</span>
+                  </div>
+                  <div className="employee-message-recording-actions">
+                    <button 
+                      className="employee-message-icon-button employee-message-cancel-recording"
+                      onClick={cancelRecording}
+                    >
+                      <FaTrash />
+                    </button>
+                    <button 
+                      className="employee-message-icon-button employee-message-send-recording"
+                      onClick={stopRecording}
+                    >
+                      <FaCheck />
+                    </button>
+                  </div>
                 </div>
+              ) : audioBlob ? (
+                <div className="employee-message-recording-preview">
+                  <div className="employee-message-voice-message">
+                    <button 
+                      className="employee-message-voice-play-btn"
+                      onClick={() => {
+                        const audio = new Audio(URL.createObjectURL(audioBlob));
+                        if (audioPlayback) {
+                          audioPlayback.pause();
+                        }
+                        audio.play();
+                        setAudioPlayback(audio);
+                      }}
+                    >
+                      <FaPlay />
+                    </button>
+                    <div className="employee-message-voice-waveform"></div>
+                    <div className="employee-message-recording-actions">
+                      <button 
+                        className="employee-message-icon-button employee-message-cancel-recording"
+                        onClick={() => setAudioBlob(null)}
+                      >
+                        <FaTrash />
+                      </button>
+                      <button 
+                        className="employee-message-icon-button employee-message-send-recording"
+                        onClick={sendVoiceMessage}
+                      >
+                        <FaPaperPlane />
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              ) : (
+                <>
+                  <button 
+                    className={`employee-message-icon-button employee-message-emoji ${showEmojiPicker ? 'active' : ''}`}
+                    onClick={() => setShowEmojiPicker(!showEmojiPicker)}
+                  >
+                    <FaSmile />
+                  </button>
+                  
+                  {showEmojiPicker && (
+                    <div className="employee-message-emoji-picker" ref={emojiPickerRef}>
+                      <EmojiPicker
+                        onEmojiClick={handleEmojiClick}
+                        searchPlaceholder="Search emoji"
+                        width={300}
+                        height={400}
+                        previewConfig={{
+                          showPreview: false
+                        }}
+                        lazyLoadEmojis={false}
+                        skinTonesDisabled
+                        autoFocusSearch={false} // Prevent auto focusing search which causes more rendering
+                        categories={['suggested', 'smileys_people', 'animals_nature', 'food_drink']} // Reduce categories for better performance
+                        suggestedEmojisMode="recent"
+                      />
+                    </div>
+                  )}
+                  
+                  <button 
+                    className="employee-message-icon-button employee-message-attach"
+                    onClick={() => setShowUploadOptions(!showUploadOptions)}
+                  >
+                    <FaPaperclip />
+                  </button>
+                  
+                  {showUploadOptions && (
+                    <div className="employee-message-upload-options">
+                      <button 
+                        className="employee-message-upload-option"
+                        onClick={() => imageInputRef.current.click()}
+                      >
+                        <div className="employee-message-upload-icon employee-message-photo-icon">
+                          <FaImage />
+                        </div>
+                        <span>Photo</span>
+                      </button>
+                      <button 
+                        className="employee-message-upload-option"
+                        onClick={() => fileInputRef.current.click()}
+                      >
+                        <div className="employee-message-upload-icon employee-message-doc-icon">
+                          <FaFile />
+                        </div>
+                        <span>Document</span>
+                      </button>
+                    </div>
+                  )}
+                  
+                  <input 
+                    type="file" 
+                    ref={fileInputRef} 
+                    onChange={(e) => handleFileSelection(e, 'file')}
+                    style={{ display: 'none' }}
+                    accept=".pdf,.doc,.docx,.txt,.zip,.rar"
+                  />
+                  
+                  <input 
+                    type="file" 
+                    ref={imageInputRef} 
+                    onChange={(e) => handleFileSelection(e, 'image')}
+                    style={{ display: 'none' }}
+                    accept="image/*"
+                  />
+                  
+                  <div className="employee-message-input-container">
+                    <input
+                      type="text"
+                      placeholder="Type a message"
+                      value={newMessage}
+                      onChange={(e) => setNewMessage(e.target.value)}
+                      onKeyPress={(e) => e.key === "Enter" && handleSendMessage()}
+                      ref={messageInputRef}
+                    />
+                  </div>
+                  
+                  <button 
+                    className="employee-message-icon-button employee-message-send"
+                    onClick={newMessage.trim() ? handleSendMessage : startRecording}
+                  >
+                    {newMessage.trim() ? <FaPaperPlane /> : <FaMicrophone />}
+                  </button>
+                </>
               )}
-              
-              <input 
-                type="file" 
-                ref={fileInputRef} 
-                onChange={(e) => handleFileSelection(e, 'file')}
-                style={{ display: 'none' }}
-                accept=".pdf,.doc,.docx,.txt,.zip,.rar"
-              />
-              
-              <input 
-                type="file" 
-                ref={imageInputRef} 
-                onChange={(e) => handleFileSelection(e, 'image')}
-                style={{ display: 'none' }}
-                accept="image/*"
-              />
-              
-              <div className="employee-message-input-container">
-                <input
-                  type="text"
-                  placeholder="Type a message"
-                  value={newMessage}
-                  onChange={(e) => setNewMessage(e.target.value)}
-                  onKeyPress={(e) => e.key === "Enter" && handleSendMessage()}
-                  ref={messageInputRef}
-                />
-              </div>
-              
-              <button 
-                className="employee-message-icon-button employee-message-send"
-                onClick={handleSendMessage}
-                disabled={!newMessage.trim()}
-              >
-                {newMessage.trim() ? <FaPaperPlane /> : <FaMicrophone />}
-              </button>
             </div>
           </>
         ) : (

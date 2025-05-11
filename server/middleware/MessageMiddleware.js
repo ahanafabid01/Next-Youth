@@ -6,54 +6,49 @@ import fs from "fs";
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
+// Ensure destination directory exists
+const uploadsDir = path.join(__dirname, "../uploads/messages");
+if (!fs.existsSync(uploadsDir)) {
+  fs.mkdirSync(uploadsDir, { recursive: true });
+}
+
 // Configure storage
 const storage = multer.diskStorage({
   destination: function (req, file, cb) {
-    const uploadDir = path.join(__dirname, "../uploads/messages");
-    // Create directory if it doesn't exist
-    if (!fs.existsSync(uploadDir)) {
-      fs.mkdirSync(uploadDir, { recursive: true });
-    }
-    cb(null, uploadDir);
+    cb(null, uploadsDir);
   },
   filename: function (req, file, cb) {
     const uniqueSuffix = Date.now() + "-" + Math.round(Math.random() * 1e9);
-    const ext = path.extname(file.originalname);
-    cb(null, `message-${uniqueSuffix}${ext}`);
+    const fileExt = path.extname(file.originalname);
+    cb(null, `message-${uniqueSuffix}${fileExt}`);
   },
 });
 
-// File filter to limit file types
+// Configure file filter
 const fileFilter = (req, file, cb) => {
-  const allowedTypes = [
-    "image/jpeg",
-    "image/png",
-    "image/gif",
-    "application/pdf",
-    "application/msword",
-    "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-    "text/plain",
-    "application/zip",
-    "application/x-rar-compressed",
-  ];
-
-  if (allowedTypes.includes(file.mimetype)) {
+  // Accept images, documents, and audio files
+  if (
+    file.mimetype.startsWith("image/") ||
+    file.mimetype.startsWith("audio/") ||
+    file.mimetype === "application/pdf" ||
+    file.mimetype === "application/msword" ||
+    file.mimetype ===
+      "application/vnd.openxmlformats-officedocument.wordprocessingml.document" ||
+    file.mimetype === "text/plain"
+  ) {
     cb(null, true);
   } else {
     cb(new Error("Unsupported file type"), false);
   }
 };
 
-// Size limits
-const limits = {
-  fileSize: 5 * 1024 * 1024, // 5MB
-};
-
-// Create multer upload instance
+// Set up multer
 const upload = multer({
-  storage,
-  fileFilter,
-  limits,
+  storage: storage,
+  limits: {
+    fileSize: 5 * 1024 * 1024, // 5MB limit
+  },
+  fileFilter: fileFilter,
 });
 
 export default upload;
