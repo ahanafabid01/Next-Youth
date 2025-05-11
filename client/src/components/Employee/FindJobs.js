@@ -76,6 +76,9 @@ const FindJobs = () => {
     'Mobile Development', 'Graphic Design', 'SEO'
   ];
   
+  // Add this state for custom skill input
+  const [customSkill, setCustomSkill] = useState('');
+
   const fetchUserData = useCallback(async () => {
     try {
       const [userResponse, verificationResponse] = await Promise.all([
@@ -118,8 +121,9 @@ const FindJobs = () => {
       if (categoryFilter !== 'All Categories') {
         queryParams += `&category=${categoryFilter}`;
       }
-      if (searchQuery) {
-        queryParams += `&search=${searchQuery}`;
+      if (searchQuery && searchQuery.trim() !== '') {
+        // Ensure search query is properly encoded for URL
+        queryParams += `&search=${encodeURIComponent(searchQuery.trim())}`;
       }
       if (budgetRange.min) {
         queryParams += `&minBudget=${budgetRange.min}`;
@@ -142,11 +146,74 @@ const FindJobs = () => {
           ? savedResponse.data.jobs.map(job => job._id)
           : [];
         
-        // Mark saved jobs and add sorting
+        // Mark saved jobs
         let processedJobs = allJobs.map(job => ({
           ...job,
           isSaved: savedJobIds.includes(job._id)
         }));
+        
+        // Always ensure client-side filtering for search to work correctly with titles
+        if (searchQuery && searchQuery.trim() !== '') {
+          const query = searchQuery.trim().toLowerCase();
+          processedJobs = processedJobs.filter(job => 
+            job.title && job.title.toLowerCase().includes(query)
+          );
+        }
+        
+        // Apply client-side filters if needed
+        if (categoryFilter !== 'All Categories') {
+          processedJobs = processedJobs.filter(job => {
+            // Skip this filter if job title is missing
+            if (!job.title) return false;
+            
+            // Convert both to lowercase for case-insensitive comparison
+            const jobTitleLower = job.title.toLowerCase();
+            const categoryLower = categoryFilter.toLowerCase();
+            
+            // Check if the full category name is in the job title
+            if (jobTitleLower.includes(categoryLower)) {
+              return true;
+            }
+            
+            // Split the category into words and check if any individual word is in the job title
+            const categoryWords = categoryLower.split(/\s+/);
+            return categoryWords.some(word => jobTitleLower.includes(word));
+          });
+        }
+        
+        if (budgetRange.min) {
+          processedJobs = processedJobs.filter(job => {
+            const jobBudget = job.budgetType === 'fixed' 
+              ? job.fixedAmount 
+              : job.hourlyFrom;
+            return jobBudget >= parseFloat(budgetRange.min);
+          });
+        }
+        
+        if (budgetRange.max) {
+          processedJobs = processedJobs.filter(job => {
+            const jobBudget = job.budgetType === 'fixed' 
+              ? job.fixedAmount 
+              : job.hourlyTo;
+            return jobBudget <= parseFloat(budgetRange.max);
+          });
+        }
+        
+        if (selectedSkills.length > 0) {
+          processedJobs = processedJobs.filter(job => {
+            // Check if job has skills array
+            if (!job.skills || !Array.isArray(job.skills)) return false;
+            
+            // Convert all skills to lowercase for case-insensitive comparison
+            const jobSkillsLower = job.skills.map(skill => skill.toLowerCase());
+            const selectedSkillsLower = selectedSkills.map(skill => skill.toLowerCase());
+            
+            // Show job if it has at least one of the selected skills
+            return selectedSkillsLower.some(selectedSkill => 
+              jobSkillsLower.includes(selectedSkill)
+            );
+          });
+        }
         
         // Apply sorting
         if (sortOption === 'Oldest First') {
@@ -168,7 +235,7 @@ const FindJobs = () => {
         }
         
         setAvailableJobs(processedJobs);
-        setTotalJobs(jobsResponse.data.totalJobs || processedJobs.length);
+        setTotalJobs(processedJobs.length); // Update total count based on filtered results
       } else {
         setError("Failed to fetch available jobs.");
       }
@@ -770,6 +837,67 @@ const FindJobs = () => {
                           </div>
                         ))}
                       </div>
+                      
+                      {/* Add custom skill input */}
+                      <div className="employee-custom-skill-input vertical">
+                        <input
+                          type="text"
+                          placeholder="Add other skills..."
+                          value={customSkill}
+                          onChange={(e) => setCustomSkill(e.target.value)}
+                          className="employee-filter-input"
+                          onKeyDown={(e) => {
+                            if (e.key === 'Enter' && customSkill.trim() !== '') {
+                              e.preventDefault();
+                              if (!selectedSkills.some(s => s.toLowerCase() === customSkill.trim().toLowerCase())) {
+                                setSelectedSkills([...selectedSkills, customSkill.trim()]);
+                                setCustomSkill('');
+                              } else {
+                                // Skill already exists
+                                alert('This skill is already in your filter');
+                              }
+                            }
+                          }}
+                        />
+                        <button
+                          className="employee-add-skill-button full-width"
+                          onClick={() => {
+                            if (customSkill.trim() !== '') {
+                              if (!selectedSkills.some(s => s.toLowerCase() === customSkill.trim().toLowerCase())) {
+                                setSelectedSkills([...selectedSkills, customSkill.trim()]);
+                                setCustomSkill('');
+                              } else {
+                                // Skill already exists
+                                alert('This skill is already in your filter');
+                              }
+                            }
+                          }}
+                          disabled={customSkill.trim() === ''}
+                        >
+                          Add Skill
+                        </button>
+                      </div>
+                      
+                      {/* Display selected skills as tags with option to remove */}
+                      {selectedSkills.length > 0 && (
+                        <div className="employee-selected-skills">
+                          <p>Selected skills:</p>
+                          <div className="employee-selected-skills-list">
+                            {selectedSkills.map(skill => (
+                              <div key={skill} className="employee-selected-skill-tag">
+                                {skill}
+                                <button 
+                                  onClick={() => setSelectedSkills(selectedSkills.filter(s => s !== skill))}
+                                  className="employee-remove-skill"
+                                  aria-label={`Remove ${skill}`}
+                                >
+                                  ×
+                                </button>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      )}
                     </div>
                     
                     <div className="employee-filter-group">
