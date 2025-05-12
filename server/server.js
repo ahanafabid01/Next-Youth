@@ -222,6 +222,13 @@ io.on('connection', (socket) => {
           const message = await Message.findById(messageId);
           
           if (message) {
+            // Update message to be marked as deleted
+            await Message.findByIdAndUpdate(messageId, {
+              isDeleted: true,
+              content: "This message was deleted",
+              attachment: null
+            });
+            
             // Broadcast the deletion to all clients in the conversation room
             io.to(conversationId.toString()).emit('message_deleted', {
               messageId,
@@ -358,6 +365,20 @@ const getSocketByUserId = (userId) => {
   
   return io.sockets.sockets.get(socketId);
 };
+
+// Add graceful shutdown handling for socket connections
+process.on('SIGTERM', () => {
+  console.log('SIGTERM received, shutting down gracefully');
+  io.close(() => {
+    console.log('Socket.IO server closed');
+    process.exit(0);
+  });
+});
+
+// Add heartbeat to keep connections alive
+setInterval(() => {
+  io.emit('heartbeat', { timestamp: new Date().toISOString() });
+}, 25000);
 
 // Default route
 app.get('/', (req, res) => {

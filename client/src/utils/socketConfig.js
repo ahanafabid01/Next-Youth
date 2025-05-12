@@ -8,9 +8,13 @@ const SOCKET_SERVER_URL = API_BASE_URL
 
 let socket = null;
 let reconnectAttempts = 0;
-const MAX_RECONNECT_ATTEMPTS = 5;
-const RECONNECTION_DELAY = 2000;
-const PING_INTERVAL = 10000;
+const MAX_RECONNECT_ATTEMPTS = 10; // Adjusted reconnection attempts
+const RECONNECTION_DELAY = 5000;  // Increase from 2000 to 5000
+const PING_INTERVAL = 30000;      // Increase from 10000 to 30000
+const STATUS_STABILITY_DELAY = 5000;  // New constant for status stability
+
+// Add a stability buffer for online status
+let statusStabilityBuffer = new Map();
 
 export const getSocket = () => {
   if (!socket) {
@@ -20,32 +24,39 @@ export const getSocket = () => {
       reconnection: true,
       reconnectionDelay: RECONNECTION_DELAY,
       reconnectionDelayMax: RECONNECTION_DELAY * 5,
-      reconnectionAttempts: Infinity,
+      reconnectionAttempts: MAX_RECONNECT_ATTEMPTS, // Limit reconnection attempts
       timeout: 20000,
-      pingInterval: PING_INTERVAL, // Add consistent ping to keep connection alive
-      pingTimeout: 5000,
+      pingInterval: PING_INTERVAL,
+      pingTimeout: 10000,  // Increase timeout
       transports: ['websocket', 'polling'],
       forceNew: false,
       withCredentials: true
     });
 
-    // Prevent disconnect/reconnect cycle causing UI flicker
-    socket.io.on("reconnect_attempt", () => {
-      console.log("Socket reconnecting...");
+    // Prevent reconnect/disconnect cycle
+    socket.io.on("reconnect_attempt", (attempt) => {
+      console.log(`Socket reconnection attempt ${attempt}`);
     });
 
-    // More stable online status tracking
+    socket.io.on("reconnect_error", (error) => {
+      console.log("Socket reconnection error:", error);
+    });
+
+    socket.io.on("reconnect_failed", () => {
+      console.log("Socket reconnection failed");
+    });
+
     socket.on('connect', () => {
       console.log('Socket connected successfully');
       reconnectAttempts = 0;
 
-      // Delay emitting user_connected to ensure connection is stable
+      // Delay to ensure connection is stable before emitting user_connected
       setTimeout(() => {
         const userId = localStorage.getItem('userId');
         if (userId) {
           socket.emit('user_connected', userId);
         }
-      }, 500);
+      }, 1000);
     });
 
     socket.on('connect_error', (error) => {

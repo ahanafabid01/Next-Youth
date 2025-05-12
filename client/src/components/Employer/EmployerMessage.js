@@ -41,6 +41,10 @@ import "./EmployerMessage.css";
 import logoLight from '../../assets/images/logo-light.png';
 import logoDark from '../../assets/images/logo-dark.png';
 
+// Add these constants
+const STATUS_STABILITY_DELAY = 5000; // 5 seconds delay for status stability
+const statusStabilityBuffer = {};
+
 // Configure twemoji for better performance
 const parseTwemoji = (text) => {
   if (!text) return '';

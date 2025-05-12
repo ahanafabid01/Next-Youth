@@ -1791,3 +1791,34 @@
     padding-bottom: env(safe-area-inset-bottom);
   }
 }
+
+/* Add to both CSS files */
+
+/* Optimize rendering performance and reduce flickering */
+.whatsapp-status-online, .employee-message-status-online {
+  transition-property: color;
+  transition-duration: 0.5s;
+  transition-timing-function: ease-in-out;
+  transform: translateZ(0);
+  backface-visibility: hidden;
+}
+
+/* Add transition delay to prevent rapid changes */
+.whatsapp-user-status, .employee-message-user-status {
+  transition-property: color;
+  transition-duration: 0.3s;
+  transition-delay: 0.2s;
+}
+
+/* Force hardware acceleration for smoother animations */
+.whatsapp-message, .employee-message-message,
+.whatsapp-chat-item, .employee-message-chat-item {
+  transform: translateZ(0);
+  will-change: transform;
+  backface-visibility: hidden;
+}
+
+/* Add transition for deleted message states */
+.whatsapp-deleted-message, .employee-message-deleted-message {
+  transition: opacity 0.3s ease;
+}

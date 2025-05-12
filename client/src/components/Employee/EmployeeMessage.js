@@ -46,6 +46,9 @@ import logoDark from '../../assets/images/logo-dark.png';
 import { getSocket, disconnectSocket } from '../../utils/socketConfig';
 import debounce from 'lodash.debounce';
 
+const STATUS_STABILITY_DELAY = 5000; // 5 seconds delay for status stability
+const statusStabilityBuffer = {};
+
 // Configure twemoji for better performance
 const parseTwemoji = (text) => {
   if (!text) return '';
@@ -249,6 +252,7 @@ const MessageBubble = memo(({ message, isOwn, showSenderInfo, senderName, format
     prevProps.message.content === nextProps.message.content &&
     prevProps.message.isDeleted === nextProps.message.isDeleted &&
     prevProps.isOwn === nextProps.isOwn
+    
   );
 });
 
@@ -973,9 +977,18 @@ const EmployeeMessage = ({ darkMode }) => {
     };
   }, [onlineUsers]);
 
-  // Debounced online status handler
-  const updateOnlineStatus = useCallback(
-    debounce((userId, isOnline) => {
+  // More stable online status handler with stability buffer
+  const updateOnlineStatus = useCallback((userId, isOnline) => {
+    // Skip empty user IDs
+    if (!userId) return;
+    
+    // Clear any pending status updates for this user
+    if (statusStabilityBuffer[userId]) {
+      clearTimeout(statusStabilityBuffer[userId]);
+    }
+    
+    // Set a delayed update to ensure stability
+    statusStabilityBuffer[userId] = setTimeout(() => {
       setOnlineUsers(prev => {
         const newSet = new Set(prev);
         if (isOnline) {
@@ -983,11 +996,35 @@ const EmployeeMessage = ({ darkMode }) => {
         } else {
           newSet.delete(userId);
         }
+        
+        // Store to localStorage for persistence
+        localStorage.setItem('onlineUsers', JSON.stringify([...newSet]));
         return newSet;
       });
-    }, 500),
-    []
-  );
+      
+      delete statusStabilityBuffer[userId];
+    }, STATUS_STABILITY_DELAY); // Wait 5 seconds before changing status
+  }, []);
+
+  // Update socket handler
+  useEffect(() => {
+    if (!socketRef.current) return;
+    
+    socketRef.current.on("user_status_changed", (data) => {
+      updateOnlineStatus(data.userId, data.isOnline);
+    });
+    
+    socketRef.current.on("online_users", (userIds) => {
+      // Use this batch update for initial list
+      setOnlineUsers(new Set(userIds));
+      localStorage.setItem('onlineUsers', JSON.stringify(userIds));
+    });
+    
+    return () => {
+      socketRef.current?.off("user_status_changed");
+      socketRef.current?.off("online_users");
+    };
+  }, [updateOnlineStatus]);
 
   // Get other participant in conversation
   const getOtherParticipant = (conversation) => {
@@ -1540,62 +1577,51 @@ const EmployeeMessage = ({ darkMode }) => {
   
   // Handle message deletion
   const handleDeleteMessage = async (deleteFor = "me") => {
-    if (!selectedMessage) return;
-    
     try {
-      // Close the dialog immediately for better UX
+      if (!selectedMessage) return;
+      
+      console.log(`Deleting message ${selectedMessage._id} for ${deleteFor}`);
+      
+      // Close dialog and menu
       setShowDeleteMessageDialog(false);
+      setShowMessageMenu(false);
       
-      // Capture the message ID before making the API call
-      const messageId = selectedMessage._id;
-      
-      if (deleteFor === "me") {
-        // For "delete for me", completely remove the message from UI
-        setMessages(prev => prev.filter(msg => msg._id !== messageId));
-      } else {
-        // For "delete for everyone", update UI to show "This message was deleted"
+      // Optimistically update UI
+      if (deleteFor === "everyone") {
         setMessages(prev => 
-          prev.map(msg => 
-            msg._id === messageId ? 
-              { ...msg, isDeleted: true, content: "This message was deleted", attachment: null } : 
-              msg
+          prev.map(m => 
+            m._id === selectedMessage._id ? 
+            { ...m, isDeleted: true, content: "This message was deleted" } : m
           )
         );
+      } else {
+        setMessages(prev => prev.filter(m => m._id !== selectedMessage._id));
       }
       
-      // Make API call to delete the message
+      // Make API call with proper URL formatting
       const response = await axios.delete(
-        `API_BASE_URL/messages/message/${messageId}?deleteFor=${deleteFor}`,
+        `${API_BASE_URL}/messages/message/${selectedMessage._id}?deleteFor=${deleteFor}`,
         { withCredentials: true }
       );
       
-      if (response.data.success) {
-        console.log(`Message deleted successfully with option: ${deleteFor}`);
-        
-        // Emit socket event for "delete for everyone" option only
-        if (deleteFor === "everyone" && activeConversation) {
-          socketRef.current.emit("delete_message", {
-            messageId: messageId,
-            conversationId: activeConversation._id,
-            deleteFor: "everyone"
-          });
-        }
-      } else {
-        // If API call fails, refresh messages to restore state
-        console.error("API returned error:", response.data.message);
-        fetchMessages(activeConversation._id);
-        alert("Failed to delete message: " + response.data.message);
+      console.log("Delete response:", response.data);
+      
+      // If it's for everyone, emit socket event
+      if (deleteFor === "everyone" && socketRef.current && activeConversation) {
+        socketRef.current.emit('delete_message', {
+          messageId: selectedMessage._id,
+          conversationId: activeConversation._id,
+          deleteFor: "everyone"
+        });
       }
     } catch (error) {
-      console.error("Error deleting message:", error);
-      // Refresh messages to ensure UI is in sync with server
-      if (activeConversation) {
-        fetchMessages(activeConversation._id);
-      }
-    } finally {
-      // Clean up
-      setShowMessageMenu(false);
-      setSelectedMessage(null);
+      console.error("Failed to delete message:", error.response?.data || error.message);
+      
+      // Revert the optimistic UI update on error
+      fetchMessages(activeConversation._id);
+      
+      // Display error message
+      alert("Failed to delete message. Please try again.");
     }
   };
   
