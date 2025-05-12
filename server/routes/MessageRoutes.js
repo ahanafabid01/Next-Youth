@@ -46,4 +46,22 @@ router.delete("/message/:messageId", userAuth, deleteMessage);
 // Delete a conversation
 router.delete("/conversation/:conversationId", userAuth, deleteConversation);
 
+// Debug socket information
+router.get("/debug-socket", userAuth, (req, res) => {
+  const io = req.app.get('io');
+  const sockets = Array.from(io.sockets.sockets).map(([id, socket]) => ({
+    id,
+    connected: socket.connected
+  }));
+  
+  const onlineUsers = req.app.get('onlineUsers') || {};
+  
+  res.status(200).json({
+    success: true,
+    socketCount: sockets.length,
+    sockets,
+    onlineUsers: Array.from(onlineUsers.entries())
+  });
+});
+
 export default router;

@@ -108,26 +108,31 @@ const onlineUsers = new Map();
 // Socket.IO connection handling
 io.on('connection', (socket) => {
   console.log('Socket connected:', socket.id);
-  console.log('a user connected', socket.id);
   
-  // Handle user connection
+  // Handle user connection with better error handling
   socket.on('user_connected', async (userId) => {
     try {
-      if (!userId) return;
+      if (!userId) {
+        console.log('User connected without ID');
+        return;
+      }
+      
+      console.log(`User ${userId} connected with socket ${socket.id}`);
       
       // Store the user's online status
       onlineUsers.set(userId, socket.id);
       
-      // Update user status in database (optional)
-      await userModel.findByIdAndUpdate(userId, { isOnline: true, lastSeen: new Date() });
+      // Update user status in database
+      await userModel.findByIdAndUpdate(userId, { 
+        isOnline: true, 
+        lastSeen: new Date() 
+      });
       
       // Broadcast to all users that this user is online
       socket.broadcast.emit('user_status_changed', {
         userId: userId,
         isOnline: true
       });
-      
-      console.log(`User ${userId} is now online. Socket: ${socket.id}`);
       
       // Send the current online users list to the connected user
       const onlineUserIds = [...onlineUsers.keys()];

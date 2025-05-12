@@ -681,19 +681,23 @@ const EmployeeMessage = ({ darkMode }) => {
     // Get current user information
     const fetchCurrentUser = async () => {
       try {
-        const response = await axios.get(`${API_BASE_URL}/auth/profile`, { 
-          withCredentials: true 
+        const response = await axios.get(`${API_BASE_URL}/auth/me`, {
+          withCredentials: true
         });
+        
         if (response.data.success) {
+          console.log("Current user data:", response.data.user);
           setCurrentUser(response.data.user);
           
-          // Tell the server this user is now online
-          if (response.data.user?._id && socketRef.current) {
+          // Identify to the socket server who we are
+          if (socketRef.current) {
             socketRef.current.emit('user_connected', response.data.user._id);
           }
+        } else {
+          console.error("Failed to get current user:", response.data.message);
         }
       } catch (error) {
-        console.error("Error fetching current user:", error);
+        console.error("Error fetching current user:", error.response?.data || error.message);
       }
     };
 
@@ -713,68 +717,87 @@ const EmployeeMessage = ({ darkMode }) => {
 
   // Effect 2: Set up message event handlers separately
   useEffect(() => {
-    if (!socketRef.current || !currentUser) return;
+    if (!socketRef.current || !currentUser) {
+      return;
+    }
     
-    // Handler for incoming messages
+    console.log("Setting up socket message handlers");
+    
+    // Handler for new messages
     const handleNewMessage = (message) => {
-      console.log('Received new message:', message);
+      console.log("Received new message:", message);
       
-      // Check if this message belongs to the current conversation
-      if (activeConversation && 
-          (message.conversation?._id === activeConversation._id || 
-           message.conversationId === activeConversation._id)) {
-        
-        // Check if message already exists in state to prevent duplicates
-        setMessages(prevMessages => {
-          if (prevMessages.some(m => m._id === message._id)) {
-            return prevMessages; // Message already exists
-          }
-          return [...prevMessages, message]; // Add the new message
-        });
-        
-        // If the message is not from current user, mark as read
-        if (message.sender?._id !== currentUser?._id) {
-          markMessageAsRead(message._id);
+      // Check if message is already in our state to avoid duplicates
+      setMessages(prevMessages => {
+        if (prevMessages.some(m => m._id === message._id || 
+                                 (m.tempId && m.tempId === message.tempId))) {
+          return prevMessages;
         }
         
-        // Update the conversation list with this new message
-        updateConversationList(message);
-      } else {
-        // If not in the current conversation, update unread counts
-        setUnreadCounts(prev => ({
-          ...prev,
-          [message.conversation?._id || message.conversationId]: 
-            (prev[message.conversation?._id || message.conversationId] || 0) + 1
-        }));
-      }
+        // Check if this message belongs to the current conversation
+        if (activeConversation && 
+            (message.conversation === activeConversation._id || 
+             message.conversationId === activeConversation._id)) {
+          
+          // Mark as read if we're viewing this conversation
+          if (message.sender !== currentUser._id) {
+            markMessageAsRead(message._id);
+          }
+          
+          return [...prevMessages, message];
+        }
+        
+        return prevMessages;
+      });
+      
+      // Update conversation list with the new message
+      updateConversationList(message);
     };
 
+    // Handle deleted messages
     const handleMessageDeleted = ({ messageId, deleteFor }) => {
-      console.log("Received message_deleted event:", { messageId, deleteFor });
+      console.log("Message deleted event:", messageId, deleteFor);
       
-      if (deleteFor === "everyone") {
+      if (deleteFor === 'everyone') {
         setMessages(prev => 
-          prev.map(msg => 
-            msg._id === messageId ? 
-              { ...msg, isDeleted: true, content: "This message was deleted", attachment: null } : 
-              msg
+          prev.map(m => 
+            m._id === messageId ? 
+              { ...m, isDeleted: true, content: "This message was deleted" } : m
           )
         );
+      } else {
+        // Just remove from this user's view
+        setMessages(prev => prev.filter(m => m._id !== messageId));
       }
     };
-
-    console.log("Setting up socket event handlers");
+    
     socketRef.current.on("new_message", handleNewMessage);
     socketRef.current.on("message_deleted", handleMessageDeleted);
+    socketRef.current.on("user_status_changed", (data) => {
+      console.log("User status changed:", data);
+      setOnlineUsers(prev => {
+        const newSet = new Set(prev);
+        if (data.isOnline) {
+          newSet.add(data.userId);
+        } else {
+          newSet.delete(data.userId);
+        }
+        return newSet;
+      });
+    });
+    
+    socketRef.current.on("online_users", (userIds) => {
+      console.log("Received online users:", userIds);
+      setOnlineUsers(new Set(userIds));
+    });
     
     return () => {
-      if (socketRef.current) {
-        console.log("Cleaning up socket event handlers");
-        socketRef.current.off("new_message", handleNewMessage);
-        socketRef.current.off("message_deleted", handleMessageDeleted);
-      }
+      socketRef.current.off("new_message", handleNewMessage);
+      socketRef.current.off("message_deleted", handleMessageDeleted);
+      socketRef.current.off("user_status_changed");
+      socketRef.current.off("online_users");
     };
-  }, [activeConversation, currentUser, markMessageAsRead, updateConversationList]);
+  }, [activeConversation, currentUser, updateConversationList]);
 
   // Ensure this useEffect runs properly to join conversation rooms
   useEffect(() => {
@@ -905,16 +928,44 @@ const EmployeeMessage = ({ darkMode }) => {
     // Same for the other socket event listeners...
   }, [handleIncomingCall, handleCallAccepted, handleCallDeclined, handleCallEnded, handleIceCandidate]);
 
+  // Add to both message components right after socket initialization
+  useEffect(() => {
+    // Restore online users from localStorage if available
+    const storedOnlineUsers = localStorage.getItem('onlineUsers');
+    if (storedOnlineUsers) {
+      try {
+        setOnlineUsers(new Set(JSON.parse(storedOnlineUsers)));
+      } catch (e) {
+        console.error('Failed to parse stored online users', e);
+      }
+    }
+    
+    return () => {
+      // Save current online users to localStorage before unmounting
+      localStorage.setItem('onlineUsers', JSON.stringify([...onlineUsers]));
+    };
+  }, [onlineUsers]);
+
   // Get other participant in conversation
   const getOtherParticipant = (conversation) => {
-    if (!conversation || !conversation.participants) return { name: "Loading..." };
+    if (!conversation || !conversation.participants) {
+      return { name: "Unknown" };
+    }
     
-    // Use currentUser._id directly instead of relying on localStorage
+    // Use currentUser._id directly 
     const myId = currentUser?._id;
-    if (!myId) return { name: "Loading..." };
+    if (!myId) {
+      return { name: "Unknown" };
+    }
     
     // Find the participant that isn't the current user
-    return conversation.participants.find(p => p._id !== myId) || { name: "Unknown" };
+    const otherParticipant = conversation.participants.find(p => 
+      p._id !== myId && 
+      p !== null && 
+      p !== undefined
+    );
+    
+    return otherParticipant || { name: "Unknown" };
   };
 
   // Check if a user is online
@@ -927,35 +978,36 @@ const EmployeeMessage = ({ darkMode }) => {
   const fetchMessages = async (conversationId, page = 1, append = false) => {
     try {
       setLoadingMore(true);
-      const response = await axios.get(`API_BASE_URL/messages/${conversationId}`, {
-        params: { page, limit: 20 },
-        withCredentials: true
-      });
+      
+      // Add a short delay to prevent rate limiting
+      await new Promise(r => setTimeout(r, 300));
+      
+      console.log(`Fetching messages for conversation: ${conversationId}, page: ${page}`);
+      const response = await axios.get(
+        `${API_BASE_URL}/messages/${conversationId}?page=${page}&limit=20`, 
+        { withCredentials: true }
+      );
+      
+      console.log("Messages response:", response.data);
       
       if (response.data.success) {
-        // Process messages - add stable IDs and ensure deletedFor is properly handled
-        const processedMessages = response.data.messages.map(msg => ({
-          ...msg,
-          isNew: false // Don't animate initial load
-        }));
-        
         if (append) {
-          // Adding older messages, prepend them
-          setMessages(prev => [...processedMessages.reverse(), ...prev]);
+          setMessages(prev => [...response.data.messages.reverse(), ...prev]);
         } else {
-          // New conversation, replace messages
-          setMessages(processedMessages.reverse());
+          setMessages(response.data.messages.reverse());
         }
         
         setHasMore(response.data.hasMore);
         setPage(page);
         
-        // Mark messages as read
-        markConversationAsRead(conversationId);
+        // Mark conversation as read when opening it
+        if (page === 1 && !append) {
+          markConversationAsRead(conversationId);
+        }
       }
-      setLoadingMore(false);
     } catch (error) {
-      console.error("Error fetching messages:", error);
+      console.error("Error fetching messages:", error.response?.data || error.message);
+    } finally {
       setLoadingMore(false);
     }
   };
@@ -980,7 +1032,9 @@ const EmployeeMessage = ({ darkMode }) => {
   
   // Send a new message
   const handleSendMessage = async () => {
-    if (!newMessage.trim() || !activeConversation) return;
+    if (!newMessage.trim() || !activeConversation) {
+      return;
+    }
     
     // Generate a unique temp ID
     const tempId = `temp-${Date.now()}`;
@@ -1010,46 +1064,43 @@ const EmployeeMessage = ({ darkMode }) => {
     updateConversationList(tempMessage);
     
     try {
+      console.log(`Sending message to conversation: ${activeConversation._id}`);
+      console.log(`Message content: ${newMessage.trim()}`);
+      console.log(`Other participant: ${getOtherParticipant(activeConversation)._id}`);
+      
       const response = await axios.post(
-        `${API_BASE_URL}/messages`,
+        `${API_BASE_URL}/messages`, 
         {
+          content: newMessage.trim(),
           conversationId: activeConversation._id,
-          content: newMessage,
           receiverId: getOtherParticipant(activeConversation)._id
         },
         { withCredentials: true }
       );
       
+      console.log("Send message response:", response.data);
+      
       if (response.data.success) {
-        // Add the conversationId to the real message
-        const realMessage = {
-          ...response.data.message,
-          conversationId: activeConversation._id
-        };
-        
-        // Replace the temp message with the real one
+        // Replace temp message with the actual message from server
         setMessages(prev => 
-          prev.map(msg => (msg._id === tempId || msg.tempId === tempId) ? realMessage : msg)
+          prev.map(msg => 
+            msg._id === tempId ? response.data.message : msg
+          )
         );
         
-        // Update the conversation list with the real message
-        updateConversationList(realMessage);
-        
-        // Focus back on input
-        if (messageInputRef.current) {
-          messageInputRef.current.focus();
+        // Emit to socket for real-time updates
+        if (socketRef.current) {
+          socketRef.current.emit('send_message', response.data.message);
         }
-        
-        // Emit message through socket
-        socketRef.current.emit("send_message", realMessage);
+      } else {
+        // Handle error - remove temp message
+        setMessages(prev => prev.filter(msg => msg._id !== tempId));
+        console.error("Failed to send message:", response.data.message);
       }
     } catch (error) {
-      console.error("Error sending message:", error);
-      // Remove the temp message if there was an error
-      setMessages(prev => prev.filter(msg => msg._id !== tempId && msg.tempId !== tempId));
-      
-      // Refresh conversation list to revert the temporary update
-      fetchConversations();
+      // Handle error - remove temp message
+      setMessages(prev => prev.filter(msg => msg._id !== tempId));
+      console.error("Error sending message:", error.response?.data || error.message);
     }
   };
   
@@ -2140,20 +2191,16 @@ const EmployeeMessage = ({ darkMode }) => {
               
               <div className="employee-message-chat-user">
                 <div className="employee-message-chat-avatar">
-                  {getOtherParticipant(activeConversation)?.profilePicture ? (
-                    <img 
-                      src={getOtherParticipant(activeConversation).profilePicture} 
-                      alt={getOtherParticipant(activeConversation)?.name || "User"} 
-                      onError={(e) => {
-                        e.target.onerror = null;
-                        e.target.src = "https://via.placeholder.com/40?text=?"; // Fallback image
-                      }}
-                    />
-                  ) : (
-                    <div className="employee-message-default-avatar">
-                      {getOtherParticipant(activeConversation)?.name?.charAt(0).toUpperCase() || "?"}
-                    </div>
-                  )}
+                  <img 
+                    src={getOtherParticipant(activeConversation).profilePicture} 
+                    alt={getOtherParticipant(activeConversation)?.name || "User"} 
+                    onError={(e) => {
+                      e.target.onerror = null;
+                      e.target.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(
+                        getOtherParticipant(activeConversation)?.name || 'User'
+                      )}&background=random&color=fff&size=160`;
+                    }}
+                  />
                 </div>
                 
                 <div className="employee-message-chat-user-info">

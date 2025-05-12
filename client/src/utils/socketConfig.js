@@ -1,8 +1,9 @@
 import { io } from "socket.io-client";
+import API_BASE_URL from "./apiConfig";
 
-// Get server URL from environment variables, remove '/api' suffix if present
-const SOCKET_SERVER_URL = process.env.REACT_APP_API_URL 
-  ? process.env.REACT_APP_API_URL.replace('/api', '') 
+// Get server URL from environment variables, properly removing '/api' suffix
+const SOCKET_SERVER_URL = API_BASE_URL 
+  ? API_BASE_URL.replace('/api', '') 
   : "http://localhost:4000";
 
 let socket = null;
@@ -12,35 +13,34 @@ const MAX_RECONNECT_ATTEMPTS = 5;
 export const getSocket = () => {
   if (!socket) {
     console.log('Connecting to socket server at:', SOCKET_SERVER_URL);
+    
     socket = io(SOCKET_SERVER_URL, {
       reconnection: true,
       reconnectionDelay: 1000,
       reconnectionAttempts: MAX_RECONNECT_ATTEMPTS,
-      transports: ['websocket', 'polling'], // Add polling as fallback
-      withCredentials: true // Add this for cookie support
+      transports: ['websocket', 'polling'],
+      withCredentials: true,
+      forceNew: false,
+      timeout: 10000
     });
-    
-    socket.on("connect", () => {
-      console.log("Socket connected with ID:", socket.id);
+
+    // Add reconnection handling
+    socket.on('connect', () => {
+      console.log('Socket connected with ID:', socket.id);
       reconnectAttempts = 0;
     });
 
-    socket.on("connect_error", (error) => {
-      console.error("Socket connection error:", error);
+    socket.on('connect_error', (error) => {
+      console.error('Socket connection error:', error);
       reconnectAttempts++;
-      
+
       if (reconnectAttempts > MAX_RECONNECT_ATTEMPTS) {
-        console.error("Maximum reconnection attempts reached, giving up");
+        console.error('Max reconnection attempts reached, giving up');
       }
     });
 
-    socket.on("disconnect", (reason) => {
-      console.log("Socket disconnected:", reason);
-      
-      // If the server closed the connection, don't attempt to reconnect
-      if (reason === "io server disconnect") {
-        socket.connect();
-      }
+    socket.on('disconnect', (reason) => {
+      console.log('Socket disconnected:', reason);
     });
   }
   
@@ -51,6 +51,6 @@ export const disconnectSocket = () => {
   if (socket) {
     socket.disconnect();
     socket = null;
-    console.log("Socket disconnected by user");
+    console.log('Socket disconnected manually');
   }
 };
