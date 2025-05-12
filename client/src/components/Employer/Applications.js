@@ -1,3 +1,4 @@
+import API_BASE_URL from '../../utils/apiConfig';
 import React, { useState, useEffect } from "react";
 import axios from "axios";
 import { 
@@ -33,7 +34,7 @@ const Applications = () => {
       setError(null);
       
       // Use the new endpoint specifically for employer applications
-      const response = await axios.get("http://localhost:4000/api/jobs/employer-applications", {
+      const response = await axios.get("API_BASE_URL/jobs/employer-applications", {
         withCredentials: true
       });
       
@@ -58,7 +59,7 @@ const Applications = () => {
   const updateApplicationStatus = async (applicationId, newStatus) => {
     try {
       const response = await axios.put(
-        `http://localhost:4000/api/jobs/application/${applicationId}/status`,
+        `API_BASE_URL/jobs/application/${applicationId}/status`,
         { status: newStatus },
         { withCredentials: true }
       );

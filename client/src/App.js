@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect } from "react";
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import Homepage from "./Homepages/Homepage";
 import Login from "./components/Auth/Login";
@@ -37,9 +37,17 @@ import Proposals from "./components/Employee/Proposals";
 import EmployeeHelp from "./components/Employee/EmployeeHelp";
 import EmployerMessage from "./components/Employer/EmployerMessage";
 import EmployeeMessage from "./components/Employee/EmployeeMessage";
+import { disconnectSocket } from './utils/socketConfig';
 import "./App.css";
 
 const App = () => {
+    useEffect(() => {
+        return () => {
+            // Clean up sockets when app unmounts
+            disconnectSocket();
+        };
+    }, []);
+
     return (
         <Router>
             <Routes>

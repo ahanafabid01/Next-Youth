@@ -1,3 +1,4 @@
+import API_BASE_URL from '../../utils/apiConfig';
 import React, { useState, useEffect, useCallback, memo } from "react";
 import axios from "axios";
 import { 
@@ -33,7 +34,7 @@ const JobCard = memo(({
   const fetchApplicantInfo = async (jobId) => {
     try {
       const response = await axios.get(
-        `http://localhost:4000/api/jobs/job-application/${jobId}`,
+        `API_BASE_URL/jobs/job-application/${jobId}`,
         { withCredentials: true }
       );
       if (response.data.success && response.data.application) {
@@ -281,7 +282,7 @@ const MyJobs = () => {
         const fetchJobs = async () => {
             try {
                 setLoading(true);
-                const response = await axios.get("http://localhost:4000/api/jobs", { 
+                const response = await axios.get("API_BASE_URL/jobs", { 
                     withCredentials: true 
                 });
                 if (response.data.success) {
@@ -413,7 +414,7 @@ const MyJobs = () => {
 
         try {
             const response = await axios.delete(
-                `http://localhost:4000/api/jobs/${jobId}`,
+                `API_BASE_URL/jobs/${jobId}`,
                 { withCredentials: true }
             );
             if (response.data.success) {
@@ -446,7 +447,7 @@ const MyJobs = () => {
             setUpdatingJobIds(prev => [...prev, jobId]);
             
             const response = await axios.put(
-                `http://localhost:4000/api/jobs/${jobId}/status`,
+                `API_BASE_URL/jobs/${jobId}/status`,
                 { status: newStatus },
                 { withCredentials: true }
             );

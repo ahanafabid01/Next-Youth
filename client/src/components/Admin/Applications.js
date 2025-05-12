@@ -1,3 +1,4 @@
+import API_BASE_URL from '../../utils/apiConfig';
 import React, { useState, useEffect } from "react";
 import Sidebar from "./Sidebar";
 import "./Applications.css";
@@ -58,7 +59,7 @@ const Applications = () => {
   const fetchApplications = async () => {
     try {
       setLoading(true);
-      const response = await axios.get("http://localhost:4000/api/jobs/admin/applications", {
+      const response = await axios.get("API_BASE_URL/jobs/admin/applications", {
         withCredentials: true
       });
 
@@ -113,7 +114,7 @@ const Applications = () => {
       setStatusUpdateFeedback({ type: 'loading', message: `Updating status to ${newStatus}...` });
       
       const response = await axios.put(
-        `http://localhost:4000/api/jobs/applications/${id}/status`,
+        `API_BASE_URL/jobs/applications/${id}/status`,
         { status: newStatus },
         { withCredentials: true }
       );

@@ -1,3 +1,4 @@
+import API_BASE_URL from '../../utils/apiConfig';
 import React, { useState, useEffect } from "react";
 import { FaUsers, FaChartBar, FaClipboardList, FaEnvelope, FaBriefcase, FaCheckCircle, FaCalendarAlt, FaBars, FaUserCircle, FaBell, FaRegClock } from "react-icons/fa";
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from "recharts";
@@ -84,7 +85,7 @@ const AdminDashboard = () => {
         setLoading(true);
         
         // Fetch fresh user data
-        const usersResponse = await axios.get("http://localhost:4000/api/auth/admin/users", {
+        const usersResponse = await axios.get("API_BASE_URL/auth/admin/users", {
           withCredentials: true
         });
         let users = [];
@@ -98,7 +99,7 @@ const AdminDashboard = () => {
         let jobs = dataStore.jobs;
         
         if (consultations.length === 0) {
-          const consultationsResponse = await axios.get("http://localhost:4000/api/contact/all", {
+          const consultationsResponse = await axios.get("API_BASE_URL/contact/all", {
             withCredentials: true
           });
           if (consultationsResponse.data?.success) {
@@ -108,7 +109,7 @@ const AdminDashboard = () => {
         }
         
         if (jobs.length === 0) {
-          const jobsResponse = await axios.get("http://localhost:4000/api/jobs/available", {
+          const jobsResponse = await axios.get("API_BASE_URL/jobs/available", {
             withCredentials: true
           });
           if (jobsResponse.data?.success) {

@@ -1,3 +1,4 @@
+import API_BASE_URL from '../../utils/apiConfig';
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import axios from 'axios';
@@ -68,7 +69,7 @@ const Proposals = () => {
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [applicationToDelete, setApplicationToDelete] = useState(null);
   
-  const API_BASE_URL = 'http://localhost:4000/api';
+  const API_BASE_URL = 'API_BASE_URL';
 
   // Fetch user profile data
   const fetchUserData = useCallback(async () => {

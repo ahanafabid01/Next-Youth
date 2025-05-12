@@ -1,3 +1,4 @@
+import API_BASE_URL from '../../utils/apiConfig';
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import axios from 'axios';
@@ -116,7 +117,7 @@ const EmployeeProfile = () => {
   const navigate = useNavigate();
   const profileDropdownRef = useRef(null);
   const notificationsRef = useRef(null);
-  const API_BASE_URL = 'http://localhost:4000/api';
+  const API_BASE_URL = 'API_BASE_URL';
 
   const fetchUserData = useCallback(async () => {
     try {

@@ -1,3 +1,4 @@
+import API_BASE_URL from '../../utils/apiConfig';
 import React, { useState, useEffect } from "react";
 import axios from "axios";
 import { useNavigate, Link } from "react-router-dom";
@@ -43,7 +44,7 @@ const Register = () => {
         }
 
         try {
-            const response = await axios.post("http://localhost:4000/api/auth/register", {
+            const response = await axios.post("API_BASE_URL/auth/register", {
                 name,
                 email,
                 password,
@@ -62,7 +63,7 @@ const Register = () => {
         e.preventDefault();
         setError("");
         try {
-            const response = await axios.post("http://localhost:4000/api/auth/verify-email", {
+            const response = await axios.post("API_BASE_URL/auth/verify-email", {
                 email,
                 otp: otp.join(""),
             });

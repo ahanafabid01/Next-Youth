@@ -1,3 +1,4 @@
+import API_BASE_URL from '../../utils/apiConfig';
 import React, { useState, useEffect, useRef } from "react";
 import axios from "axios";
 import { 
@@ -40,7 +41,7 @@ const MailSystem = () => {
   const [filter, setFilter] = useState("all");
   const fileInputRef = useRef(null);
   const photoInputRef = useRef(null);
-  const API_BASE_URL = 'http://localhost:4000/api';
+  const API_BASE_URL = 'API_BASE_URL';
   
   // Theme monitoring
   useEffect(() => {

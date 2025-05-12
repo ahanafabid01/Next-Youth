@@ -1,3 +1,4 @@
+import API_BASE_URL from '../../utils/apiConfig';
 import React, { useState, useEffect } from "react";
 import axios from "axios";
 import { 
@@ -41,8 +42,8 @@ const Profile = () => {
             try {
                 setLoading(true);
                 const [profileResponse, verificationResponse] = await Promise.all([
-                    axios.get("http://localhost:4000/api/auth/me", { withCredentials: true }),
-                    axios.get("http://localhost:4000/api/auth/verification-status", { withCredentials: true })
+                    axios.get("API_BASE_URL/auth/me", { withCredentials: true }),
+                    axios.get("API_BASE_URL/auth/verification-status", { withCredentials: true })
                 ]);
                 
                 if (profileResponse.data.success) {
@@ -106,7 +107,7 @@ const Profile = () => {
                 formData.append("file", profilePictureFile);
 
                 const uploadResponse = await axios.post(
-                    "http://localhost:4000/api/auth/upload-profile-picture",
+                    "API_BASE_URL/auth/upload-profile-picture",
                     formData,
                     { withCredentials: true }
                 );
@@ -122,7 +123,7 @@ const Profile = () => {
             };
             
             const response = await axios.put(
-                "http://localhost:4000/api/auth/profile",
+                "API_BASE_URL/auth/profile",
                 updatedProfile,
                 { withCredentials: true }
             );

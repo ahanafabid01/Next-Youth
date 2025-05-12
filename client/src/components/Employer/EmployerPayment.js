@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
+import API_BASE_URL from '../../utils/apiConfig';
 import paymentService from "../../services/paymentService";
 import { 
   FaCreditCard, 

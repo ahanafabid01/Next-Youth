@@ -1,0 +1,13 @@
+{
+  "env": {
+    "REACT_APP_API_URL": "https://next-youth-server.vercel.app/api"
+  },
+  "build": {
+    "env": {
+      "REACT_APP_API_URL": "https://next-youth-server.vercel.app/api"
+    }
+  },
+  "rewrites": [
+    { "source": "/(.*)", "destination": "/index.html" }
+  ]
+}

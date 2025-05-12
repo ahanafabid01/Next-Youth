@@ -1,3 +1,4 @@
+import API_BASE_URL from '../../utils/apiConfig';
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { FaSun, FaMoon, FaBars, FaTimes, FaUser, FaChevronDown, 
@@ -27,7 +28,7 @@ const EmployeeHelp = () => {
     return parseInt(localStorage.getItem("unread-notifications") || "2");
   });
   
-  const API_BASE_URL = 'http://localhost:4000/api';
+  const API_BASE_URL = 'API_BASE_URL';
 
   const navigate = useNavigate();
   const profileDropdownRef = useRef(null);

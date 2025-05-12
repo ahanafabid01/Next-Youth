@@ -1,7 +1,7 @@
 import React from "react";
 import Sidebar from "./Sidebar"; // Import the reusable Sidebar component
 import "./Messages.css"; // Optional: Add CSS for styling
-
+import API_BASE_URL from '../../utils/apiConfig';
 const Messages = () => {
   return (
     <div className="admin-dashboard">

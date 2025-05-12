@@ -1,3 +1,4 @@
+import API_BASE_URL from '../../utils/apiConfig';
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import axios from 'axios';
@@ -73,8 +74,8 @@ const EditApplication = () => {
     const fetchUserData = useCallback(async () => {
         try {
             const [userResponse, verificationResponse] = await Promise.all([
-                axios.get('http://localhost:4000/api/auth/me', { withCredentials: true }),
-                axios.get('http://localhost:4000/api/auth/verification-status', { withCredentials: true })
+                axios.get('API_BASE_URL/auth/me', { withCredentials: true }),
+                axios.get('API_BASE_URL/auth/verification-status', { withCredentials: true })
             ]);
             
             if (userResponse.data.success) {
@@ -114,7 +115,7 @@ const EditApplication = () => {
             try {
                 setLoading(true);
                 const response = await axios.get(
-                    `http://localhost:4000/api/jobs/application/${applicationId}`,
+                    `API_BASE_URL/jobs/application/${applicationId}`,
                     { withCredentials: true }
                 );
                 
@@ -189,7 +190,7 @@ const EditApplication = () => {
             });
             
             const response = await axios.put(
-                `http://localhost:4000/api/jobs/application/${applicationId}`,
+                `API_BASE_URL/jobs/application/${applicationId}`,
                 formDataToSend,
                 { 
                     withCredentials: true,
@@ -245,7 +246,7 @@ const EditApplication = () => {
     const handleLogout = async () => {
         try {
             const response = await axios.post(
-                'http://localhost:4000/api/auth/logout', 
+                'API_BASE_URL/auth/logout', 
                 {}, 
                 { withCredentials: true }
             );

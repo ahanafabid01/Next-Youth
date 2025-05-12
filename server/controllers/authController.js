@@ -10,8 +10,9 @@ dotenv.config();
 const cookieOptions = {
     httpOnly: true,
     secure: process.env.NODE_ENV === "production",
-    sameSite: process.env.NODE_ENV === "production" ? "none" : "strict",
+    sameSite: process.env.NODE_ENV === "production" ? "none" : "strict", // Important for cross-domain
     maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
+    domain: process.env.NODE_ENV === "production" ? ".vercel.app" : "localhost" // Set domain for production
 };
 
 // Registration Function

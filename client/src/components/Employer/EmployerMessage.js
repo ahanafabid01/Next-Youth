@@ -1,3 +1,4 @@
+import API_BASE_URL from '../../utils/apiConfig';
 import React, { useState, useEffect, useRef, useCallback, memo, useMemo } from "react";
 import axios from "axios";
 import io from "socket.io-client";
@@ -34,6 +35,7 @@ import {
   FaVolumeMute,
   FaDesktop
 } from "react-icons/fa";
+import { getSocket, disconnectSocket } from '../../utils/socketConfig';
 import "./EmployerMessage.css";
 import logoLight from '../../assets/images/logo-light.png';
 import logoDark from '../../assets/images/logo-dark.png';
@@ -66,7 +68,7 @@ const parseTwemoji = (text) => {
 };
 
 // Socket connection
-const ENDPOINT = "http://localhost:4000";
+const ENDPOINT = process.env.REACT_APP_API_URL || "http://localhost:4000";
 
 // Create a memoized message component to prevent unnecessary re-renders
 const MessageBubble = memo(({ message, isOwn, showSenderInfo, senderName, formatTimestamp, onContextMenu }) => {
@@ -451,7 +453,7 @@ const EmployerMessage = ({ darkMode }) => {
       if (window.__callId) {
         try {
           await axios.put(
-            `http://localhost:4000/api/calls/status/${window.__callId}`,
+            `API_BASE_URL/calls/status/${window.__callId}`,
             { status: "connected" },
             { withCredentials: true }
           );
@@ -491,7 +493,7 @@ const EmployerMessage = ({ darkMode }) => {
     try {
       if (window.__callId) {
         axios.put(
-          `http://localhost:4000/api/calls/status/${window.__callId}`,
+          `API_BASE_URL/calls/status/${window.__callId}`,
           { status: "declined" },
           { withCredentials: true }
         );
@@ -536,7 +538,7 @@ const EmployerMessage = ({ darkMode }) => {
     if (window.__callId) {
       try {
         axios.put(
-          `http://localhost:4000/api/calls/status/${window.__callId}`,
+          `API_BASE_URL/calls/status/${window.__callId}`,
           { 
             status: "ended",
             duration: callDuration 
@@ -585,7 +587,7 @@ const EmployerMessage = ({ darkMode }) => {
   const markMessageAsRead = async (messageId) => {
     try {
       await axios.put(
-        `http://localhost:4000/api/messages/mark-read/${messageId}`,
+        `API_BASE_URL/messages/mark-read/${messageId}`,
         {},
         { withCredentials: true }
       );
@@ -598,7 +600,7 @@ const EmployerMessage = ({ darkMode }) => {
   const markConversationAsRead = async (conversationId) => {
     try {
       await axios.put(
-        `http://localhost:4000/api/messages/mark-conversation-read/${conversationId}`,
+        `API_BASE_URL/messages/mark-conversation-read/${conversationId}`,
         {},
         { withCredentials: true }
       );
@@ -617,7 +619,7 @@ const EmployerMessage = ({ darkMode }) => {
   const fetchConversations = useCallback(async () => {
     try {
       setLoading(true);
-      const response = await axios.get("http://localhost:4000/api/messages/conversations", {
+      const response = await axios.get("API_BASE_URL/messages/conversations", {
         withCredentials: true
       });
       
@@ -627,7 +629,7 @@ const EmployerMessage = ({ darkMode }) => {
         // Get unread counts for each conversation
         const counts = {};
         for (const conv of response.data.conversations) {
-          const countResponse = await axios.get(`http://localhost:4000/api/messages/unread-count/${conv._id}`, {
+          const countResponse = await axios.get(`API_BASE_URL/messages/unread-count/${conv._id}`, {
             withCredentials: true
           });
           if (countResponse.data.success) {
@@ -696,30 +698,13 @@ const EmployerMessage = ({ darkMode }) => {
 
   // Effect 1: Initialize socket only once when component mounts
   useEffect(() => {
-    // Connect to socket server
-    socketRef.current = io(ENDPOINT, {
-      reconnection: true,
-      reconnectionDelay: 1000,
-      reconnectionAttempts: 10,
-      transports: ['websocket']
-    });
-    
-    socketRef.current.on("connect", () => {
-      console.log("Socket connected with ID:", socketRef.current.id);
-    });
-
-    socketRef.current.on("connect_error", (error) => {
-      console.error("Socket connection error:", error);
-    });
-    
-    socketRef.current.on("disconnect", (reason) => {
-      console.log("Socket disconnected:", reason);
-    });
+    // Get shared socket instance
+    socketRef.current = getSocket();
     
     // Get current user information
     const fetchCurrentUser = async () => {
       try {
-        const response = await axios.get("http://localhost:4000/api/auth/profile", { 
+        const response = await axios.get(`${API_BASE_URL}/auth/profile`, { 
           withCredentials: true 
         });
         if (response.data.success) {
@@ -737,28 +722,10 @@ const EmployerMessage = ({ darkMode }) => {
 
     fetchCurrentUser();
     
-    // Add listeners for online status
-    socketRef.current.on('online_users', (userIds) => {
-      setOnlineUsers(new Set(userIds));
-    });
-    
-    socketRef.current.on('user_status_changed', ({ userId, isOnline }) => {
-      setOnlineUsers(prev => {
-        const updated = new Set(prev);
-        if (isOnline) {
-          updated.add(userId);
-        } else {
-          updated.delete(userId);
-        }
-        return updated;
-      });
-    });
-    
-    // Clean up socket connection when component unmounts
+    // Clean up when component unmounts
     return () => {
       if (socketRef.current) {
-        console.log("Cleaning up socket connection");
-        socketRef.current.disconnect();
+        console.log("Cleaning up socket reference");
         socketRef.current = null;
       }
     };
@@ -1008,7 +975,7 @@ const EmployerMessage = ({ darkMode }) => {
   const fetchMessages = async (conversationId, page = 1, append = false) => {
     try {
       setLoadingMore(true);
-      const response = await axios.get(`http://localhost:4000/api/messages/${conversationId}`, {
+      const response = await axios.get(`API_BASE_URL/messages/${conversationId}`, {
         params: { page, limit: 20 },
         withCredentials: true
       });
@@ -1093,7 +1060,7 @@ const EmployerMessage = ({ darkMode }) => {
     
     try {
       const response = await axios.post(
-        "http://localhost:4000/api/messages",
+        "API_BASE_URL/messages",
         {
           conversationId: activeConversation._id,
           content: newMessage,
@@ -1226,7 +1193,7 @@ const EmployerMessage = ({ darkMode }) => {
 
     try {
       const response = await axios.post(
-        "http://localhost:4000/api/messages/attachment",
+        "API_BASE_URL/messages/attachment",
         formData,
         { 
           withCredentials: true,
@@ -1381,7 +1348,7 @@ const EmployerMessage = ({ darkMode }) => {
       
       // Make API call to delete the message
       const response = await axios.delete(
-        `http://localhost:4000/api/messages/message/${messageId}?deleteFor=${deleteFor}`,
+        `API_BASE_URL/messages/message/${messageId}?deleteFor=${deleteFor}`,
         { withCredentials: true }
       );
       
@@ -1445,7 +1412,7 @@ const EmployerMessage = ({ darkMode }) => {
       
       // Make the API call
       const response = await axios.delete(
-        `http://localhost:4000/api/messages/conversation/${conversationId}`,
+        `API_BASE_URL/messages/conversation/${conversationId}`,
         { withCredentials: true }
       );
       
@@ -1643,7 +1610,7 @@ const EmployerMessage = ({ darkMode }) => {
       setUploadProgress(0);
       
       const response = await axios.post(
-        "http://localhost:4000/api/messages/attachment",
+        "API_BASE_URL/messages/attachment",
         formData,
         { 
           withCredentials: true,
@@ -1935,7 +1902,7 @@ const EmployerMessage = ({ darkMode }) => {
       // Record call in database
       try {
         await axios.post(
-          "http://localhost:4000/api/calls",
+          "API_BASE_URL/calls",
           {
             receiverId: receiver._id,
             conversationId: activeConversation._id,
@@ -1998,7 +1965,7 @@ const EmployerMessage = ({ darkMode }) => {
       // Update call in database
       try {
         await axios.put(
-          `http://localhost:4000/api/calls/status/${window.__callId}`,
+          `API_BASE_URL/calls/status/${window.__callId}`,
           { status: "accepted" },
           { withCredentials: true }
         );
@@ -2037,7 +2004,7 @@ const EmployerMessage = ({ darkMode }) => {
     // Update call in database
     try {
       axios.put(
-        `http://localhost:4000/api/calls/status/${window.__callId}`,
+        `API_BASE_URL/calls/status/${window.__callId}`,
         { status: "declined" },
         { withCredentials: true }
       );

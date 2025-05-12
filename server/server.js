@@ -62,24 +62,34 @@ connectDB();
 // Middleware
 app.use(express.json());
 app.use(cookieParser());
+
+// Update CORS to accept requests from your Vercel frontend
 app.use(cors({
-    credentials: true,
-    origin: process.env.CLIENT_URL || "http://localhost:3000",
+  origin: [
+    process.env.CLIENT_URL || "http://localhost:3000",
+    "https://next-youth.vercel.app"
+  ],
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'x-requested-with']
 }));
 
 // Use body-parser for JSON requests only
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 
-// Create uploads directory if it doesn't exist
-const uploadDir = path.join(__dirname, 'uploads');
+// For file uploads, use a path that works in Render's environment
+const uploadDir = process.env.NODE_ENV === "production" 
+  ? '/tmp/uploads'  // Use /tmp for Render's ephemeral filesystem
+  : path.join(__dirname, "uploads");
+
 if (!fs.existsSync(uploadDir)) {
-    fs.mkdirSync(uploadDir, { recursive: true });
+  fs.mkdirSync(uploadDir, { recursive: true });
 }
 
 // Static file serving middleware
-app.use("/uploads", express.static(path.join(__dirname, "uploads")));
-app.use('/uploads/messages', express.static(path.join(__dirname, 'uploads/messages')));
+app.use("/uploads", express.static(uploadDir));
+app.use('/uploads/messages', express.static(path.join(uploadDir, 'messages')));
 
 // API routes
 app.use("/api/auth", authRouter);

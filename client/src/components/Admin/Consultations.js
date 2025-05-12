@@ -1,3 +1,4 @@
+import API_BASE_URL from '../../utils/apiConfig';
 import React, { useState, useEffect } from "react";
 import Sidebar from "./Sidebar";
 import "./Consultations.css";
@@ -116,7 +117,7 @@ const Consultations = () => {
   const fetchConsultations = async () => {
     try {
       setLoading(true);
-      const response = await axios.get("http://localhost:4000/api/contact/all", {
+      const response = await axios.get("API_BASE_URL/contact/all", {
         withCredentials: true
       });
 
@@ -160,7 +161,7 @@ const Consultations = () => {
   const sendStatusUpdateEmail = async (consultation, status) => {
     try {
       const response = await axios.post(
-        "http://localhost:4000/api/contact/notify",
+        "API_BASE_URL/contact/notify",
         {
           consultationId: consultation._id,
           status,
@@ -256,7 +257,7 @@ const Consultations = () => {
       };
       
       const response = await axios.patch(
-        `http://localhost:4000/api/contact/update/${consultationId}`,
+        `API_BASE_URL/contact/update/${consultationId}`,
         updateData,
         { withCredentials: true }
       );
@@ -355,7 +356,7 @@ const Consultations = () => {
     try {
       setActionLoading(true);
       const response = await axios.patch(
-        `http://localhost:4000/api/contact/update/${selectedConsultation._id}`,
+        `API_BASE_URL/contact/update/${selectedConsultation._id}`,
         updateData,
         { withCredentials: true }
       );

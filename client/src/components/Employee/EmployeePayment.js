@@ -1,3 +1,4 @@
+import API_BASE_URL from '../../utils/apiConfig';
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { 
@@ -74,7 +75,7 @@ const MobileBankingLogo = ({ provider }) => {
 };
 
 const EmployeePayment = () => {
-  const API_BASE_URL = 'http://localhost:4000/api';
+  const API_BASE_URL = 'API_BASE_URL';
   
   // State for payment methods
   const [paymentMethods, setPaymentMethods] = useState([]);

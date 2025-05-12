@@ -1,3 +1,4 @@
+import API_BASE_URL from '../../utils/apiConfig';
 import React, { useEffect, useState, useRef, useCallback } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import axios from 'axios';
@@ -60,7 +61,7 @@ const FindJobs = () => {
     return localStorage.getItem("dashboard-theme") === "dark";
   });
 
-  const API_BASE_URL = 'http://localhost:4000/api';
+  const API_BASE_URL = 'API_BASE_URL';
   
   // Budget range filter
   const [budgetRange, setBudgetRange] = useState({

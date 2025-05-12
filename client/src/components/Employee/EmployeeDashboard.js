@@ -1,3 +1,4 @@
+import API_BASE_URL from '../../utils/apiConfig';
 import React, { useEffect, useState, useRef, useCallback } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import axios from 'axios';
@@ -64,7 +65,7 @@ const EmployeeDashboard = () => {
     return dashboardTheme ? dashboardTheme === "dark" : loginTheme === "dark";
   });
 
-  const API_BASE_URL = 'http://localhost:4000/api';
+  const API_BASE_URL = 'API_BASE_URL';
 
   const [allAvailableJobs, setAllAvailableJobs] = useState([]);
   const [currentPage, setCurrentPage] = useState(1);

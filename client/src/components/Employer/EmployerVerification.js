@@ -1,3 +1,4 @@
+import API_BASE_URL from '../../utils/apiConfig';
 import React, { useState } from 'react';
 import axios from 'axios';
 import { 
@@ -64,7 +65,7 @@ const EmployerVerification = ({ onComplete }) => {
 
       // Use the correct API endpoint
       const response = await axios.post(
-        'http://localhost:4000/api/auth/verify-identity',
+        'API_BASE_URL/auth/verify-identity',
         formData,
         {
           headers: {

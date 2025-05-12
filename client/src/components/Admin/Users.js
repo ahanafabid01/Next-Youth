@@ -1,3 +1,4 @@
+import API_BASE_URL from '../../utils/apiConfig';
 import React, { useState, useEffect } from "react";
 import Sidebar from "./Sidebar";
 import { FaUsers, FaCheckCircle, FaIdCard, FaSearch, FaArrowLeft, FaArrowRight, FaUserAltSlash, FaFilter, FaSortAlphaDown, FaSortAlphaUp } from "react-icons/fa";
@@ -47,7 +48,7 @@ const Users = () => {
     const fetchUsers = async () => {
         try {
             setLoading(true);
-            const response = await axios.get("http://localhost:4000/api/auth/admin/users", {
+            const response = await axios.get("API_BASE_URL/auth/admin/users", {
                 withCredentials: true
             });
             
@@ -145,7 +146,7 @@ const Users = () => {
         setActionLoading(true);
         try {
             const response = await axios.post(
-                `http://localhost:4000/api/auth/admin/verify-user`,
+                `API_BASE_URL/auth/admin/verify-user`,
                 {
                     userId: selectedUser._id,
                     status: action,
@@ -183,7 +184,7 @@ const Users = () => {
             }
             
             setActionLoading(true);
-            const response = await axios.delete(`http://localhost:4000/api/auth/delete-user/${userId}`, {
+            const response = await axios.delete(`API_BASE_URL/auth/delete-user/${userId}`, {
                 withCredentials: true
             });
             

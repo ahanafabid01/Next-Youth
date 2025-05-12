@@ -1,3 +1,4 @@
+import API_BASE_URL from '../../utils/apiConfig';
 import React, { useState, useEffect } from "react";
 import Sidebar from "./Sidebar";
 import "./AdminDashboard.css";
@@ -81,7 +82,7 @@ const JobDetails = () => {
     const fetchJobs = async () => {
         try {
             setLoading(true);
-            const response = await axios.get("http://localhost:4000/api/jobs/available", {
+            const response = await axios.get("API_BASE_URL/jobs/available", {
                 withCredentials: true
             });
 
@@ -155,7 +156,7 @@ const JobDetails = () => {
         
         try {
             setLoading(true);
-            const response = await axios.delete(`http://localhost:4000/api/jobs/${jobId}`, { 
+            const response = await axios.delete(`API_BASE_URL/jobs/${jobId}`, { 
                 withCredentials: true 
             });
             
@@ -232,7 +233,7 @@ NextYouth Team
             setError(null); // Reset any previous errors
             
             const response = await axios.post(
-                "http://localhost:4000/api/notifications/job-notification", 
+                "API_BASE_URL/notifications/job-notification", 
                 {
                     jobId: selectedJob._id,
                     subject: emailData.subject,

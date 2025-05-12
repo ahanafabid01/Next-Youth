@@ -1,3 +1,4 @@
+import API_BASE_URL from '../../utils/apiConfig';
 import React, { useState, useEffect, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import { FaStar, FaTimes, FaSpinner, FaQuoteLeft, FaBriefcase, FaCalendarAlt, FaDollarSign, FaUser } from 'react-icons/fa';
@@ -205,7 +206,7 @@ const RatingModal = ({ isOpen, onClose, jobTitle, applicant, jobId, onRatingSubm
         setLoading(true);
         setError('');
         try {
-            const response = await axios.get('http://localhost:4000/api/auth/my-ratings', {
+            const response = await axios.get('API_BASE_URL/auth/my-ratings', {
                 withCredentials: true
             });
 
@@ -254,7 +255,7 @@ const RatingModal = ({ isOpen, onClose, jobTitle, applicant, jobId, onRatingSubm
             }
 
             const response = await axios.post(
-                `http://localhost:4000/api/jobs/rate-applicant`,
+                `API_BASE_URL/jobs/rate-applicant`,
                 {
                     jobId,
                     applicantId,

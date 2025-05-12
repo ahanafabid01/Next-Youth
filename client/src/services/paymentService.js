@@ -1,7 +1,8 @@
+import API_BASE_URL from '../utils/apiConfig';
 import axios from "axios";
 
 // Make sure this matches your backend server address and port
-const API_URL = "http://localhost:4000/api/payment";
+const API_URL = "API_BASE_URL/payment";
 
 // Configure axios to always include credentials
 const axiosInstance = axios.create({

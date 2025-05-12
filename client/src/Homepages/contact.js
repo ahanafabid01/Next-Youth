@@ -1,3 +1,4 @@
+import API_BASE_URL from '../utils/apiConfig';
 import React, { useState, useRef, useEffect } from "react";
 import { Link, useSearchParams } from "react-router-dom";
 import "./BusinessSolutions.css"; // Reuse existing styles
@@ -262,7 +263,7 @@ const ScheduleConsultation = () => {
         
         // Updated with the correct server URL
         const response = await axios.post(
-          "http://localhost:4000/api/contact/create", 
+          "API_BASE_URL/contact/create", 
           formData
         );
         

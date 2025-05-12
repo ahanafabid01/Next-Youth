@@ -1,3 +1,4 @@
+import API_BASE_URL from '../../utils/apiConfig';
 import React, { useState, useEffect } from "react";
 import axios from "axios";
 import { Link } from "react-router-dom";
@@ -35,7 +36,7 @@ const ForgotPassword = () => {
         setError("");
 
         try {
-            const response = await axios.post("http://localhost:4000/api/auth/reset-password", { email });
+            const response = await axios.post("API_BASE_URL/auth/reset-password", { email });
             alert(response.data.message);
             setStep(2);
         } catch (err) {
@@ -48,7 +49,7 @@ const ForgotPassword = () => {
         setError("");
 
         try {
-            const response = await axios.post("http://localhost:4000/api/auth/reset-password", {
+            const response = await axios.post("API_BASE_URL/auth/reset-password", {
                 email,
                 otp,
                 newPassword,

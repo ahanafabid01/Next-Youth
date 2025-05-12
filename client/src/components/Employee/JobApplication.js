@@ -1,3 +1,4 @@
+import API_BASE_URL from '../../utils/apiConfig';
 import React, { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import axios from 'axios';
@@ -113,8 +114,8 @@ const JobApplication = () => {
             try {
                 // Make parallel requests to get both user data and verification status
                 const [userResponse, verificationResponse] = await Promise.all([
-                    axios.get("http://localhost:4000/api/auth/me", { withCredentials: true }),
-                    axios.get("http://localhost:4000/api/auth/verification-status", { withCredentials: true })
+                    axios.get("API_BASE_URL/auth/me", { withCredentials: true }),
+                    axios.get("API_BASE_URL/auth/verification-status", { withCredentials: true })
                 ]);
                 
                 if (userResponse.data.success) {
@@ -183,7 +184,7 @@ const JobApplication = () => {
 
     const handleLogout = async () => {
         try {
-            const response = await axios.post("http://localhost:4000/api/auth/logout", {}, { 
+            const response = await axios.post("API_BASE_URL/auth/logout", {}, { 
                 withCredentials: true 
             });
             if (response.data.success) navigate('/login');
@@ -197,7 +198,7 @@ const JobApplication = () => {
         const fetchJobDetails = async () => {
             try {
                 setLoading(true);
-                const response = await axios.get(`http://localhost:4000/api/jobs/available`, { 
+                const response = await axios.get(`API_BASE_URL/jobs/available`, { 
                     withCredentials: true 
                 });
                 
@@ -293,7 +294,7 @@ const JobApplication = () => {
         try {
             setSubmitting(true);
             const response = await axios.delete(
-                `http://localhost:4000/api/jobs/application/${jobId}`,
+                `API_BASE_URL/jobs/application/${jobId}`,
                 { withCredentials: true }
             );
             
@@ -396,7 +397,7 @@ const JobApplication = () => {
             });
             
             const response = await axios.post(
-                'http://localhost:4000/api/jobs/apply-with-details',
+                'API_BASE_URL/jobs/apply-with-details',
                 formData,
                 { 
                     withCredentials: true,

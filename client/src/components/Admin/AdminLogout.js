@@ -1,3 +1,4 @@
+import API_BASE_URL from '../../utils/apiConfig';
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
@@ -9,7 +10,7 @@ const AdminLogout = () => {
 
   const handleLogout = async () => {
     try {
-      await axios.post("http://localhost:4000/api/auth/logout", {}, { withCredentials: true });
+      await axios.post("API_BASE_URL/auth/logout", {}, { withCredentials: true });
       navigate("/login");
     } catch (error) {
       console.error("Logout failed:", error);
