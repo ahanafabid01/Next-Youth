@@ -45,6 +45,7 @@ import logoLight from '../../assets/images/logo-light.png';
 import logoDark from '../../assets/images/logo-dark.png';
 import { getSocket, disconnectSocket } from '../../utils/socketConfig';
 import debounce from 'lodash.debounce';
+import { debounce } from 'lodash';
 
 const STATUS_STABILITY_DELAY = 5000; // 5 seconds delay for status stability
 const statusStabilityBuffer = {};
@@ -978,33 +979,42 @@ const EmployeeMessage = ({ darkMode }) => {
   }, [onlineUsers]);
 
   // More stable online status handler with stability buffer
-  const updateOnlineStatus = useCallback((userId, isOnline) => {
-    // Skip empty user IDs
-    if (!userId) return;
-    
-    // Clear any pending status updates for this user
-    if (statusStabilityBuffer[userId]) {
-      clearTimeout(statusStabilityBuffer[userId]);
-    }
-    
-    // Set a delayed update to ensure stability
-    statusStabilityBuffer[userId] = setTimeout(() => {
-      setOnlineUsers(prev => {
-        const newSet = new Set(prev);
-        if (isOnline) {
-          newSet.add(userId);
-        } else {
-          newSet.delete(userId);
-        }
-        
-        // Store to localStorage for persistence
-        localStorage.setItem('onlineUsers', JSON.stringify([...newSet]));
-        return newSet;
-      });
+  const updateOnlineStatus = useCallback(
+    debounce((userId, isOnline) => {
+      if (!userId) return;
       
-      delete statusStabilityBuffer[userId];
-    }, STATUS_STABILITY_DELAY); // Wait 5 seconds before changing status
-  }, []);
+      // Only update after a delay for stability
+      if (!statusStabilityBuffer[userId]) {
+        statusStabilityBuffer[userId] = { status: isOnline, timer: null };
+      }
+      
+      // Clear any existing timer
+      if (statusStabilityBuffer[userId].timer) {
+        clearTimeout(statusStabilityBuffer[userId].timer);
+      }
+      
+      // Set new timer to update status only after stability delay
+      statusStabilityBuffer[userId].timer = setTimeout(() => {
+        if (statusStabilityBuffer[userId].status === isOnline) {
+          setOnlineUsers(prev => {
+            const newSet = new Set(prev);
+            if (isOnline) {
+              newSet.add(userId);
+            } else {
+              newSet.delete(userId);
+            }
+            return newSet;
+          });
+        }
+        // Clear the timer reference
+        statusStabilityBuffer[userId].timer = null;
+      }, STATUS_STABILITY_DELAY);
+      
+      // Update the buffered status immediately
+      statusStabilityBuffer[userId].status = isOnline;
+    }, 500), // 500ms debounce delay
+    []
+  );
 
   // Update socket handler
   useEffect(() => {
@@ -1095,12 +1105,24 @@ const EmployeeMessage = ({ darkMode }) => {
   // Handle conversation selection
   const handleSelectConversation = (conversation) => {
     setActiveConversation(conversation);
-    
-    if (isMobile) {
-      setShowSidebar(false);
-    }
-    
     fetchMessages(conversation._id);
+    
+    // Mark conversation messages as read
+    markConversationAsRead(conversation._id);
+    
+    // On mobile, hide sidebar and show chat
+    if (window.innerWidth <= 768) {
+      setShowConversations(false);
+      // Apply mobile-specific classes for transition
+      const sidebar = document.querySelector('.employee-message-sidebar'); // or '.whatsapp-sidebar'
+      const chat = document.querySelector('.employee-message-chat'); // or '.whatsapp-chat'
+      
+      if (sidebar && chat) {
+        sidebar.classList.add('employee-message-sidebar-hidden'); // or 'whatsapp-sidebar-hidden'
+        chat.classList.remove('employee-message-chat-hidden'); // or 'whatsapp-chat-hidden'
+        chat.classList.add('employee-message-chat-visible'); // or 'whatsapp-chat-visible'
+      }
+    }
   };
   
   // Load more messages (pagination)
@@ -1680,6 +1702,17 @@ const EmployeeMessage = ({ darkMode }) => {
   
   // Handle exit back to dashboard
   const handleExit = () => {
+    // Clean up any active calls
+    if (callStatus) {
+      handleEndCall();
+    }
+    
+    // Clean up socket connections if needed
+    if (socketRef.current) {
+      socketRef.current.emit('leave_conversation', activeConversation?._id);
+    }
+    
+    // Navigate to dashboard
     navigate('/employee-dashboard');
   };
   
@@ -2134,11 +2167,43 @@ const EmployeeMessage = ({ darkMode }) => {
 
   // Add back button handler
   const handleBackToConversations = () => {
-    if (isMobile) {
-      setShowSidebar(true);
-      setActiveConversation(null);
+    if (window.innerWidth <= 768) {
+      // On mobile, show conversation list and hide chat
+      setShowConversations(true);
+      document.querySelector('.employee-message-sidebar').classList.remove('employee-message-sidebar-hidden');
+      document.querySelector('.employee-message-chat').classList.add('employee-message-chat-hidden');
+      document.querySelector('.employee-message-chat').classList.remove('employee-message-chat-visible');
     }
+    
+    // Reset the active conversation
+    setActiveConversation(null);
   };
+
+  // Add responsive handling for mobile vs desktop
+  useEffect(() => {
+    const handleResize = () => {
+      const isMobileView = window.innerWidth <= 768;
+      setMobileView(isMobileView);
+      
+      // Reset UI elements if needed when switching between views
+      if (!isMobileView && !showConversations) {
+        setShowConversations(true);
+        
+        // Update classes when switching to desktop
+        const prefix = 'employee-message';
+        const sidebar = document.querySelector(`.${prefix}-sidebar`);
+        const chat = document.querySelector(`.${prefix}-chat`);
+        
+        if (sidebar) sidebar.classList.remove(`${prefix}-sidebar-hidden`);
+        if (chat) chat.classList.remove(`${prefix}-chat-hidden`, `${prefix}-chat-visible`);
+      }
+    };
+
+    window.addEventListener('resize', handleResize);
+    handleResize(); // Initialize on component mount
+    
+    return () => window.removeEventListener('resize', handleResize);
+  }, [showConversations]);
 
   return (
     <div className={`employee-message-container ${darkMode ? "employee-message-dark" : ""}`}>
@@ -2155,7 +2220,11 @@ const EmployeeMessage = ({ darkMode }) => {
             <h2>Messages</h2>
           </div>
           <div className="employee-message-header-actions">
-            <button className="employee-message-icon-button" onClick={handleExit}>
+            <button 
+              className="employee-message-back-button" 
+              onClick={showConversations ? handleExit : handleBackToConversations}
+              aria-label="Back"
+            >
               <FaArrowLeft />
             </button>
           </div>

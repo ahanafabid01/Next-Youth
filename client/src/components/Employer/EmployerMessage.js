@@ -37,6 +37,7 @@ import {
   FaDesktop
 } from "react-icons/fa";
 import { getSocket } from '../../utils/socketConfig';
+import { useNavigate } from 'react-router-dom';
 import "./EmployerMessage.css";
 import logoLight from '../../assets/images/logo-light.png';
 import logoDark from '../../assets/images/logo-dark.png';
@@ -264,6 +265,8 @@ const MemoizedMessageBubble = React.memo(MessageBubble, (prevProps, nextProps) =
 });
 
 const EmployerMessage = ({ darkMode }) => {
+  const navigate = useNavigate();
+
   // State for conversations and messages
   const [conversations, setConversations] = useState([]);
   const [activeConversation, setActiveConversation] = useState(null);
@@ -898,6 +901,32 @@ const EmployerMessage = ({ darkMode }) => {
     return () => window.removeEventListener("resize", handleResize);
   }, []);
   
+  // Add responsive handling for mobile vs desktop
+  useEffect(() => {
+    const handleResize = () => {
+      const isMobileView = window.innerWidth <= 768;
+      setMobileView(isMobileView);
+      
+      // Reset UI elements if needed when switching between views
+      if (!isMobileView && !showConversations) {
+        setShowConversations(true);
+        
+        // Update classes when switching to desktop
+        const prefix = 'whatsapp';
+        const sidebar = document.querySelector(`.${prefix}-sidebar`);
+        const chat = document.querySelector(`.${prefix}-chat`);
+        
+        if (sidebar) sidebar.classList.remove(`${prefix}-sidebar-hidden`);
+        if (chat) chat.classList.remove(`${prefix}-chat-hidden`, `${prefix}-chat-visible`);
+      }
+    };
+
+    window.addEventListener('resize', handleResize);
+    handleResize(); // Initialize on component mount
+    
+    return () => window.removeEventListener('resize', handleResize);
+  }, [showConversations]);
+  
   // Scroll to bottom when messages change
   useEffect(() => {
     if (messagesEndRef.current) {
@@ -1035,13 +1064,24 @@ const EmployerMessage = ({ darkMode }) => {
   // Handle conversation selection
   const handleSelectConversation = (conversation) => {
     setActiveConversation(conversation);
-    setShowConversations(false); // Hide sidebar on mobile
-    setPage(1);
-    fetchMessages(conversation._id, 1);
-    setUnreadCounts(prev => ({
-      ...prev,
-      [conversation._id]: 0
-    }));
+    fetchMessages(conversation._id);
+    
+    // Mark conversation messages as read
+    markConversationAsRead(conversation._id);
+    
+    // On mobile, hide sidebar and show chat
+    if (window.innerWidth <= 768) {
+      setShowConversations(false);
+      // Apply mobile-specific classes for transition
+      const sidebar = document.querySelector('.whatsapp-sidebar'); // or '.whatsapp-sidebar'
+      const chat = document.querySelector('.whatsapp-chat'); // or '.whatsapp-chat'
+      
+      if (sidebar && chat) {
+        sidebar.classList.add('whatsapp-sidebar-hidden'); // or 'whatsapp-sidebar-hidden'
+        chat.classList.remove('whatsapp-chat-hidden'); // or 'whatsapp-chat-hidden'
+        chat.classList.add('whatsapp-chat-visible'); // or 'whatsapp-chat-visible'
+      }
+    }
   };
   
   // Load more messages (pagination)
@@ -2182,6 +2222,36 @@ const EmployerMessage = ({ darkMode }) => {
     };
   }, [updateOnlineStatus]);
 
+  // Replace or update the handleBackToConversations function
+  const handleBackToConversations = () => {
+    if (window.innerWidth <= 768) {
+      // On mobile, show conversation list and hide chat
+      setShowConversations(true);
+      document.querySelector('.whatsapp-sidebar').classList.remove('whatsapp-sidebar-hidden');
+      document.querySelector('.whatsapp-chat').classList.add('whatsapp-chat-hidden');
+      document.querySelector('.whatsapp-chat').classList.remove('whatsapp-chat-visible');
+    }
+    
+    // Reset the active conversation
+    setActiveConversation(null);
+  };
+
+  // Replace or update the handleExit function
+  const handleExit = () => {
+    // Clean up any active calls
+    if (callStatus) {
+      handleEndCall();
+    }
+    
+    // Clean up socket connections if needed
+    if (socketRef.current) {
+      socketRef.current.emit('leave_conversation', activeConversation?._id);
+    }
+    
+    // Navigate to dashboard
+    navigate('/employer-dashboard');
+  };
+
   return (
     <div className={`whatsapp-container ${darkMode ? "whatsapp-dark" : ""}`}>
       <div className={`whatsapp-sidebar ${mobileView && !showConversations ? "whatsapp-sidebar-hidden" : ""}`}>
@@ -2317,14 +2387,13 @@ const EmployerMessage = ({ darkMode }) => {
         {activeConversation ? (
           <>
             <div className="whatsapp-chat-header">
-              {mobileView && (
-                <button 
-                  className="whatsapp-back-button"
-                  onClick={() => setShowConversations(true)}
-                >
-                  <FaArrowLeft />
-                </button>
-              )}
+              <button 
+                className="whatsapp-back-button" 
+                onClick={showConversations ? handleExit : handleBackToConversations}
+                aria-label="Back"
+              >
+                <FaArrowLeft />
+              </button>
               
               <div className="whatsapp-chat-user" onClick={() => {}}>
                 <div className="whatsapp-chat-avatar">
