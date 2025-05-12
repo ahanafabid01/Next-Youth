@@ -272,7 +272,7 @@
 }
 
 .employee-dark-mode .employee-notification-button {
-  color: var(--light-text);
+  color: var (--light-text);
 }
 
 .employee-notification-button:hover {
@@ -720,46 +720,13 @@
   border-radius: var(--border-radius);
   padding: 0.3rem 0.8rem;
   font-size: 0.9rem;
-  transition: var(--transition);
+  transition: var (--transition);
   color: white;
 }
 
 .employee-search-tag:hover {
   background-color: rgba(255, 255, 255, 0.3);
   transform: translateY(-2px);
-}
-
-.employee-search-clear {
-  position: absolute;
-  right: 10px;
-  top: 50%;
-  transform: translateY(-50%);
-  background: rgba(0, 0, 0, 0.1);
-  border: none;
-  color: var(--dark-text);
-  width: 22px;
-  height: 22px;
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 18px;
-  line-height: 1;
-  cursor: pointer;
-  transition: var(--transition);
-}
-
-.employee-dark-mode .employee-search-clear {
-  background: rgba(255, 255, 255, 0.2);
-  color: var(--light-text);
-}
-
-.employee-search-clear:hover {
-  background: rgba(0, 0, 0, 0.2);
-}
-
-.employee-dark-mode .employee-search-clear:hover {
-  background: rgba(255, 255, 255, 0.3);
 }
 
 /* Jobs Section */
@@ -840,20 +807,6 @@
 
 .employee-dark-mode .employee-filter-button:hover {
   background-color: var(--dark-border);
-}
-
-.employee-filter-button.filter-active {
-  border-color: var(--primary-color);
-  color: var(--primary-color);
-}
-
-.employee-filter-indicator {
-  display: inline-block;
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
-  background-color: var(--primary-color);
-  margin-left: 5px;
 }
 
 .employee-filters-panel {
@@ -1707,4 +1660,96 @@
     width: 36px;
     height: 36px;
   }
+}
+
+/* Add these styles at the end of your existing CSS file */
+
+.employee-custom-skill-input {
+  display: flex;
+  gap: 0.5rem;
+  margin-top: 1rem;
+  margin-bottom: 0.5rem;
+}
+
+.employee-add-skill-button {
+  background-color: var(--primary-color);
+  color: white;
+  padding: 0.7rem 1rem;
+  border-radius: var(--border-radius);
+  font-size: 0.85rem;
+  transition: var(--transition);
+}
+
+.employee-add-skill-button:hover:not(:disabled) {
+  background-color: var(--primary-dark);
+}
+
+.employee-add-skill-button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.employee-selected-skills {
+  margin-top: 1rem;
+  border-top: 1px solid var(--light-border);
+  padding-top: 0.8rem;
+}
+
+.employee-dark-mode .employee-selected-skills {
+  border-top: 1px solid var(--dark-border);
+}
+
+.employee-selected-skills p {
+  font-size: 0.9rem;
+  margin-bottom: 0.5rem;
+  color: var(--light-text-secondary);
+}
+
+.employee-dark-mode .employee-selected-skills p {
+  color: var(--dark-text-secondary);
+}
+
+.employee-selected-skills-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.employee-selected-skill-tag {
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+  background-color: rgba(58, 134, 255, 0.1);
+  color: var(--primary-color);
+  padding: 0.3rem 0.5rem;
+  border-radius: 16px;
+  font-size: 0.85rem;
+}
+
+.employee-remove-skill {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: none;
+  border: none;
+  color: var(--primary-color);
+  font-size: 1rem;
+  font-weight: bold;
+  padding: 0 0.2rem;
+  cursor: pointer;
+  line-height: 1;
+}
+
+.employee-remove-skill:hover {
+  color: var(--secondary-color);
+}
+
+.employee-custom-skill-input.vertical {
+  flex-direction: column;
+}
+
+.employee-add-skill-button.full-width {
+  width: 100%;
+  margin-top: 0.5rem;
+  justify-content: center;
 }

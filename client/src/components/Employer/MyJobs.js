@@ -34,7 +34,7 @@ const JobCard = memo(({
   const fetchApplicantInfo = async (jobId) => {
     try {
       const response = await axios.get(
-        `API_BASE_URL/jobs/job-application/${jobId}`,
+        `${API_BASE_URL}/jobs/job-application/${jobId}`,
         { withCredentials: true }
       );
       if (response.data.success && response.data.application) {
@@ -414,7 +414,7 @@ const MyJobs = () => {
 
         try {
             const response = await axios.delete(
-                `API_BASE_URL/jobs/${jobId}`,
+                `${API_BASE_URL}/jobs/${jobId}`,
                 { withCredentials: true }
             );
             if (response.data.success) {
@@ -447,7 +447,7 @@ const MyJobs = () => {
             setUpdatingJobIds(prev => [...prev, jobId]);
             
             const response = await axios.put(
-                `API_BASE_URL/jobs/${jobId}/status`,
+                `${API_BASE_URL}/jobs/${jobId}/status`,
                 { status: newStatus },
                 { withCredentials: true }
             );

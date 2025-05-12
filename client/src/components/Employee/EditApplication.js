@@ -115,7 +115,7 @@ const EditApplication = () => {
             try {
                 setLoading(true);
                 const response = await axios.get(
-                    `API_BASE_URL/jobs/application/${applicationId}`,
+                    `${API_BASE_URL}/jobs/application/${applicationId}`,
                     { withCredentials: true }
                 );
                 
@@ -190,7 +190,7 @@ const EditApplication = () => {
             });
             
             const response = await axios.put(
-                `API_BASE_URL/jobs/application/${applicationId}`,
+                `${API_BASE_URL}/jobs/application/${applicationId}`,
                 formDataToSend,
                 { 
                     withCredentials: true,

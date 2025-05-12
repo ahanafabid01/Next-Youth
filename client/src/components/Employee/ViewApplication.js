@@ -74,7 +74,7 @@ const ViewApplication = () => {
     const handleLogout = useCallback(async () => {
         try {
             const response = await axios.post(
-                `API_BASE_URL/auth/logout`, 
+                `${API_BASE_URL}/auth/logout`, 
                 {}, 
                 { withCredentials: true }
             );
@@ -150,7 +150,7 @@ const ViewApplication = () => {
             try {
                 setLoading(true);
                 const response = await axios.get(
-                    `API_BASE_URL/jobs/application/${applicationId}`, 
+                    `${API_BASE_URL}/jobs/application/${applicationId}`, 
                     { withCredentials: true }
                 );
                 
@@ -175,7 +175,7 @@ const ViewApplication = () => {
         try {
             setLoading(true);
             const response = await axios.delete(
-                `API_BASE_URL/jobs/application/${applicationId}`,
+                `${API_BASE_URL}/jobs/application/${applicationId}`,
                 { withCredentials: true }
             );
             

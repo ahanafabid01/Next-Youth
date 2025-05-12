@@ -198,7 +198,7 @@ const JobApplication = () => {
         const fetchJobDetails = async () => {
             try {
                 setLoading(true);
-                const response = await axios.get(`API_BASE_URL/jobs/available`, { 
+                const response = await axios.get(`${API_BASE_URL}/jobs/available`, { 
                     withCredentials: true 
                 });
                 
@@ -294,7 +294,7 @@ const JobApplication = () => {
         try {
             setSubmitting(true);
             const response = await axios.delete(
-                `API_BASE_URL/jobs/application/${jobId}`,
+                `${API_BASE_URL}/jobs/application/${jobId}`,
                 { withCredentials: true }
             );
             
@@ -473,7 +473,7 @@ const JobApplication = () => {
                     <FaCheckCircle />
                     <h3>Application Submitted!</h3>
                     <p>Your application has been successfully submitted.</p>
-                    <p>Redirecting to your proposals...</p>
+                    <p>Redirecting to your Application Page...</p>
                 </div>
             </div>
         );

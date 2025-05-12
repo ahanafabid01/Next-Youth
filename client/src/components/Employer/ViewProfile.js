@@ -19,7 +19,6 @@ const ViewProfile = () => {
   const [darkMode, setDarkMode] = useState(false);
   const { userId } = useParams();
   const navigate = useNavigate();
-  const API_BASE_URL = 'API_BASE_URL';
 
   // Check for theme immediately on component mount
   useEffect(() => {

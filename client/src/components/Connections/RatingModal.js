@@ -206,7 +206,7 @@ const RatingModal = ({ isOpen, onClose, jobTitle, applicant, jobId, onRatingSubm
         setLoading(true);
         setError('');
         try {
-            const response = await axios.get('API_BASE_URL/auth/my-ratings', {
+            const response = await axios.get(`${API_BASE_URL}/auth/my-ratings`, {
                 withCredentials: true
             });
 
@@ -255,7 +255,7 @@ const RatingModal = ({ isOpen, onClose, jobTitle, applicant, jobId, onRatingSubm
             }
 
             const response = await axios.post(
-                `API_BASE_URL/jobs/rate-applicant`,
+                `${API_BASE_URL}/jobs/rate-applicant`,
                 {
                     jobId,
                     applicantId,
