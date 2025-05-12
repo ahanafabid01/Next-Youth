@@ -713,6 +713,32 @@ const EmployerMessage = ({ darkMode }) => {
     });
   }, [fetchConversations]);
 
+  // Move this outside any other functions, at the component level
+  const handleMessageDeleted = useCallback(({ messageId, deleteFor }) => {
+    if (!messageId) return;
+    
+    console.log(`Received message deletion event: ${messageId}, delete for: ${deleteFor}`);
+    
+    // Update messages based on deletion type
+    if (deleteFor === "everyone") {
+      setMessages(prev => 
+        prev.map(msg => 
+          msg._id === messageId 
+            ? { 
+                ...msg, 
+                isDeleted: true, 
+                content: "This message was deleted", 
+                attachment: null 
+              } 
+            : msg
+        )
+      );
+    }
+    
+    // Also update conversations list if this affects the last message
+    fetchConversations();
+  }, [fetchConversations]);
+
   // Effect 1: Initialize socket only once when component mounts
   useEffect(() => {
     // Get shared socket instance
@@ -790,23 +816,6 @@ const EmployerMessage = ({ darkMode }) => {
       // Update conversation list with the new message
       updateConversationList(message);
     };
-
-    // Handle deleted messages
-    const handleMessageDeleted = ({ messageId, deleteFor }) => {
-      console.log("Message deleted event:", messageId, deleteFor);
-      
-      if (deleteFor === 'everyone') {
-        setMessages(prev => 
-          prev.map(m => 
-            m._id === messageId ? 
-              { ...m, isDeleted: true, content: "This message was deleted" } : m
-          )
-        );
-      } else {
-        // Just remove from this user's view
-        setMessages(prev => prev.filter(m => m._id !== messageId));
-      }
-    };
     
     socketRef.current.on("new_message", handleNewMessage);
     socketRef.current.on("message_deleted", handleMessageDeleted);
@@ -834,7 +843,7 @@ const EmployerMessage = ({ darkMode }) => {
       socketRef.current.off("user_status_changed");
       socketRef.current.off("online_users");
     };
-  }, [activeConversation, currentUser, updateConversationList]);
+  }, [activeConversation, currentUser, updateConversationList, handleMessageDeleted]); // Add handleMessageDeleted to dependencies
 
   // Add this effect to process queued messages once user is loaded
   useEffect(() => {
@@ -1359,89 +1368,97 @@ const EmployerMessage = ({ darkMode }) => {
   
   // Handle message context menu
   const handleMessageContextMenu = (e, message) => {
-    e.preventDefault(); // Prevent the default context menu
+    e.preventDefault();
+    e.stopPropagation();
     
-    // Only allow context menu for our own messages or received messages
-    if (!message.isDeleted) {
-      setSelectedMessage(message);
-      setShowMessageMenu(true);
-      
-      // Calculate position for the menu
-      let x = e.clientX;
-      let y = e.clientY;
-      
-      // Make sure menu doesn't go off-screen
-      if (x + 200 > window.innerWidth) {
-        x = window.innerWidth - 200;
-      }
-      
-      if (y + 150 > window.innerHeight) {
-        y = window.innerHeight - 150;
-      }
-      
-      setMenuPosition({ x, y });
+    // Don't show context menu for messages that are already being processed
+    if (message.isDeleting) return;
+    
+    // Calculate position for context menu - stay within viewport
+    const menuWidth = 180; // Approximate width of context menu
+    const menuHeight = 100; // Approximate height of context menu
+    
+    let x = e.clientX;
+    let y = e.clientY;
+    
+    // Adjust position if menu would go off screen
+    if (x + menuWidth > window.innerWidth) {
+      x = window.innerWidth - menuWidth - 10;
     }
+    
+    if (y + menuHeight > window.innerHeight) {
+      y = window.innerHeight - menuHeight - 10;
+    }
+    
+    setMenuPosition({ x, y });
+    setSelectedMessage(message);
+    setShowMessageMenu(true);
   };
   
   // Update the handleDeleteMessage function for better handling
 
   const handleDeleteMessage = async (deleteFor = "me") => {
-    if (!selectedMessage) return;
-    
     try {
-      // Close the dialog immediately for better UX
-      setShowDeleteMessageDialog(false);
-      
-      // Capture the message ID before making the API call
-      const messageId = selectedMessage._id;
-      
-      if (deleteFor === "me") {
-        // For "delete for me", completely remove the message from UI
-        setMessages(prev => prev.filter(msg => msg._id !== messageId));
-      } else {
-        // For "delete for everyone", update UI to show "This message was deleted"
-        setMessages(prev => 
-          prev.map(msg => 
-            msg._id === messageId ? 
-              { ...msg, isDeleted: true, content: "This message was deleted", attachment: null } : 
-              msg
-          )
-        );
+      if (!selectedMessage || !activeConversation) {
+        // Close dialogs if there's no selected message
+        setShowMessageMenu(false);
+        setShowDeleteMessageDialog(false);
+        return;
       }
+
+      // Close the delete dialog
+      setShowDeleteMessageDialog(false);
+      setShowMessageMenu(false);
       
-      // Make API call to delete the message
+      const messageId = selectedMessage._id;
+      const conversationId = activeConversation._id;
+      
+      // Show immediate feedback in UI
+      if (deleteFor === "me") {
+        // Immediately remove the message from UI for better UX
+        setMessages(prev => prev.filter(msg => msg._id !== messageId));
+      } else if (deleteFor === "everyone") {
+        // Mark message as deleted in UI immediately for better UX
+        setMessages(prev => prev.map(msg => 
+          msg._id === messageId 
+            ? { ...msg, isDeleted: true, content: "This message was deleted", attachment: null } 
+            : msg
+        ));
+      }
+
+      // Make API call to delete the message with specified option
       const response = await axios.delete(
-        `API_BASE_URL/messages/message/${messageId}?deleteFor=${deleteFor}`,
+        `${API_BASE_URL}/messages/message/${messageId}?deleteFor=${deleteFor}`,
         { withCredentials: true }
       );
-      
-      if (response.data.success) {
-        console.log(`Message deleted successfully with option: ${deleteFor}`);
-        
-        // Emit socket event for "delete for everyone" option only (modified)
-        if (deleteFor === "everyone" && activeConversation && socketRef.current && socketRef.current.connected) {
-          socketRef.current.emit("delete_message", {
-            messageId: messageId,
-            conversationId: activeConversation._id,
-            deleteFor: "everyone"
-          });
-        }
-      } else {
-        // If API call fails, refresh messages to restore state
-        console.error("API returned error:", response.data.message);
-        fetchMessages(activeConversation._id);
-        alert("Failed to delete message: " + response.data.message);
+
+      if (!response.data.success) {
+        console.error("Failed to delete message:", response.data.message);
+        // Revert optimistic update if API call fails
+        fetchMessages(conversationId);
+        return;
       }
+
+      // For "delete for everyone", emit a socket event to notify others
+      if (deleteFor === "everyone" && socketRef.current) {
+        socketRef.current.emit("delete_message", {
+          messageId,
+          conversationId,
+          deleteFor
+        });
+      }
+      
+      // Clear the selected message
+      setSelectedMessage(null);
+      
+      // Refresh the conversation list to update last message if needed
+      fetchConversations();
     } catch (error) {
       console.error("Error deleting message:", error);
-      // Refresh messages to ensure UI is in sync with server
+      // Revert optimistic update by refetching messages
       if (activeConversation) {
         fetchMessages(activeConversation._id);
       }
-    } finally {
-      // Clean up
-      setShowMessageMenu(false);
-      setSelectedMessage(null);
     }
   };
   
@@ -2609,12 +2626,12 @@ const EmployerMessage = ({ darkMode }) => {
                   <h3>{deleteOption === "everyone" ? "Delete For Everyone" : "Delete For Me"}</h3>
                   <p>
                     {deleteOption === "everyone" 
-                      ? "Are you sure you want to delete this message for everyone?" 
-                      : "Delete this message? It will only be removed for you"}
+                      ? "This message will be deleted for everyone in this chat." 
+                      : "This message will only be deleted for you."}
                   </p>
-                  {deleteOption === "me" && (
+                  {deleteOption === "everyone" && (
                     <p className="whatsapp-dialog-note">
-                      You'll no longer see this message in this chat
+                      People may have already seen this message.
                     </p>
                   )}
                   <div className="whatsapp-dialog-actions">
