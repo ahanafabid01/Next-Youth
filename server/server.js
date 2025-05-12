@@ -65,13 +65,14 @@ app.use(cookieParser());
 
 // Update CORS to accept requests from your Vercel frontend
 app.use(cors({
+  credentials: true,
   origin: [
     process.env.CLIENT_URL || "http://localhost:3000",
-    "https://next-youth.vercel.app"
+    "https://next-youth.vercel.app",
+    "http://localhost:3000"
   ],
-  credentials: true,
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization', 'x-requested-with']
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With']
 }));
 
 // Use body-parser for JSON requests only
@@ -348,6 +349,11 @@ const getSocketByUserId = (userId) => {
 // Default route
 app.get('/', (req, res) => {
     res.status(200).send('API is running...');
+});
+
+// Add this near your other routes
+app.get('/test', (req, res) => {
+    res.status(200).json({ message: 'Server is working properly!' });
 });
 
 // Global error handling middleware
