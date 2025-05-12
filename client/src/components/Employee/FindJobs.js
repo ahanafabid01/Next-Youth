@@ -61,7 +61,7 @@ const FindJobs = () => {
     return localStorage.getItem("dashboard-theme") === "dark";
   });
 
-  const API_BASE_URL = 'API_BASE_URL';
+  
   
   // Budget range filter
   const [budgetRange, setBudgetRange] = useState({

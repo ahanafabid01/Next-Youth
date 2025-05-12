@@ -257,7 +257,7 @@ const Consultations = () => {
       };
       
       const response = await axios.patch(
-        `API_BASE_URL/contact/update/${consultationId}`,
+        `${API_BASE_URL}/contact/update/${consultationId}`,
         updateData,
         { withCredentials: true }
       );
@@ -356,7 +356,7 @@ const Consultations = () => {
     try {
       setActionLoading(true);
       const response = await axios.patch(
-        `API_BASE_URL/contact/update/${selectedConsultation._id}`,
+        `${API_BASE_URL}/contact/update/${selectedConsultation._id}`,
         updateData,
         { withCredentials: true }
       );

@@ -117,7 +117,7 @@ const EmployeeProfile = () => {
   const navigate = useNavigate();
   const profileDropdownRef = useRef(null);
   const notificationsRef = useRef(null);
-  const API_BASE_URL = 'API_BASE_URL';
+  
 
   const fetchUserData = useCallback(async () => {
     try {

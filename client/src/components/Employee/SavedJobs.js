@@ -63,7 +63,7 @@ const SavedJobs = () => {
 
   const [showRatingModal, setShowRatingModal] = useState(false);
 
-  const API_BASE_URL = 'API_BASE_URL';
+  
 
   // Fetch user data
   const fetchUserData = useCallback(async () => {

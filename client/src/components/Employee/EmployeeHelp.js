@@ -28,7 +28,7 @@ const EmployeeHelp = () => {
     return parseInt(localStorage.getItem("unread-notifications") || "2");
   });
   
-  const API_BASE_URL = 'API_BASE_URL';
+  
 
   const navigate = useNavigate();
   const profileDropdownRef = useRef(null);

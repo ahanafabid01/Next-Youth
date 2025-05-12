@@ -114,7 +114,7 @@ const Applications = () => {
       setStatusUpdateFeedback({ type: 'loading', message: `Updating status to ${newStatus}...` });
       
       const response = await axios.put(
-        `API_BASE_URL/jobs/applications/${id}/status`,
+        `${API_BASE_URL}/jobs/applications/${id}/status`,
         { status: newStatus },
         { withCredentials: true }
       );

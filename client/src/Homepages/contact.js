@@ -261,9 +261,9 @@ const ScheduleConsultation = () => {
       try {
         setSubmitted(true);
         
-        // Updated with the correct server URL
+        // Updated with template literal syntax
         const response = await axios.post(
-          "API_BASE_URL/contact/create", 
+          `${API_BASE_URL}/contact/create`, 
           formData
         );
         

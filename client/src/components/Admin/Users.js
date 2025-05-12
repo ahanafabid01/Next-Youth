@@ -146,7 +146,7 @@ const Users = () => {
         setActionLoading(true);
         try {
             const response = await axios.post(
-                `API_BASE_URL/auth/admin/verify-user`,
+                `${API_BASE_URL}/auth/admin/verify-user`,
                 {
                     userId: selectedUser._id,
                     status: action,
@@ -184,7 +184,7 @@ const Users = () => {
             }
             
             setActionLoading(true);
-            const response = await axios.delete(`API_BASE_URL/auth/delete-user/${userId}`, {
+            const response = await axios.delete(`${API_BASE_URL}/auth/delete-user/${userId}`, {
                 withCredentials: true
             });
             

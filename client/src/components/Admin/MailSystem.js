@@ -41,7 +41,7 @@ const MailSystem = () => {
   const [filter, setFilter] = useState("all");
   const fileInputRef = useRef(null);
   const photoInputRef = useRef(null);
-  const API_BASE_URL = 'API_BASE_URL';
+  
   
   // Theme monitoring
   useEffect(() => {

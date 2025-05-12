@@ -12,6 +12,7 @@ import {
     FaRegClock, FaSync, FaCheckCircle, FaTimesCircle,
     FaArrowUp, FaArrowDown, FaThumbsUp, FaInfoCircle
 } from "react-icons/fa";
+import { eventEmitter, dataStore } from '../../utils/eventEmitter';
 
 // Create an event system for real-time updates
 const updateEvents = {};

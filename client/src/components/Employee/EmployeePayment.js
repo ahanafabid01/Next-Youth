@@ -75,7 +75,7 @@ const MobileBankingLogo = ({ provider }) => {
 };
 
 const EmployeePayment = () => {
-  const API_BASE_URL = 'API_BASE_URL';
+  
   
   // State for payment methods
   const [paymentMethods, setPaymentMethods] = useState([]);

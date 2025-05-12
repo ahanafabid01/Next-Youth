@@ -54,7 +54,7 @@ const VerifyAccount = () => {
     const notificationsRef = useRef(null);
 
     // API base URL
-    const API_BASE_URL = 'API_BASE_URL';
+    
 
     // Clean up object URLs when component unmounts or when images change
     useEffect(() => {

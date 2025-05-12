@@ -15,7 +15,7 @@ import EmployeePayment from './EmployeePayment'; // Add this import
 
 const Settings = () => {
   const navigate = useNavigate();
-  const API_BASE_URL = 'API_BASE_URL';
+  
 
   // State for theme
   const [isDarkMode, setIsDarkMode] = useState(() => {

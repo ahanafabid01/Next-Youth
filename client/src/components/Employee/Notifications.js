@@ -40,7 +40,7 @@ const Notifications = () => {
     return localStorage.getItem("dashboard-theme") === "dark";
   });
 
-  const API_BASE_URL = 'API_BASE_URL';
+  
 
   // Update the fetchUserData function to check localStorage for read status
   const fetchUserData = useCallback(async () => {

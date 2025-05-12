@@ -717,66 +717,34 @@ const EmployeeMessage = ({ darkMode }) => {
     
     // Handler for incoming messages
     const handleNewMessage = (message) => {
-      console.log("Received new message event:", message);
+      console.log('Received new message:', message);
       
-      if (!message || !message.conversationId) {
-        console.error("Invalid message received:", message);
-        return;
-      }
-      
-      // Check if this message was already deleted for the current user
-      const isDeletedForCurrentUser = message.deletedFor && 
-                                     Array.isArray(message.deletedFor) && 
-                                     message.deletedFor.some(id => 
-                                       (typeof id === 'string' && id === currentUser._id) || 
-                                       (id?._id && id._id === currentUser._id)
-                                     );
-      
-      // Skip processing if the message was deleted for this user
-      if (isDeletedForCurrentUser) {
-        console.log("Message was deleted for current user, ignoring:", message);
-        return;
-      }
-      
-      const isFromCurrentUser = message.sender && 
-        ((message.sender._id && message.sender._id === currentUser._id) || 
-         (typeof message.sender === 'string' && message.sender === currentUser._id));
-
-      // For ALL messages - update the conversation list
-      updateConversationList(message);
-      
-      // Handle messages for the active conversation
-      if (activeConversation && message.conversationId === activeConversation._id) {
-        setMessages(prev => {
-          // Check for duplicates more thoroughly
-          const isDuplicate = prev.some(m => 
-            m._id === message._id || 
-            (m.tempId && m.tempId === message._id) ||
-            (m.tempId && message.tempId && m.tempId === message.tempId) ||
-            (m.isTemp && m.content === message.content && 
-             Math.abs(new Date(m.createdAt).getTime() - new Date(message.createdAt).getTime()) < 60000)
-          );
-          
-          if (isDuplicate) {
-            console.log("Duplicate message detected, not adding:", message);
-            return prev;
+      // Check if this message belongs to the current conversation
+      if (activeConversation && 
+          (message.conversation?._id === activeConversation._id || 
+           message.conversationId === activeConversation._id)) {
+        
+        // Check if message already exists in state to prevent duplicates
+        setMessages(prevMessages => {
+          if (prevMessages.some(m => m._id === message._id)) {
+            return prevMessages; // Message already exists
           }
-          
-          console.log("Adding new message to state:", message);
-          const newMessage = {...message, isNew: true};
-          return [...prev, newMessage];
+          return [...prevMessages, message]; // Add the new message
         });
-
-        if (!isFromCurrentUser) {
+        
+        // If the message is not from current user, mark as read
+        if (message.sender?._id !== currentUser?._id) {
           markMessageAsRead(message._id);
         }
-      } 
-      // Handle messages for other conversations - update unread counts
-      else if (!isFromCurrentUser) {
-        console.log("Updating unread count for conversation:", message.conversationId);
+        
+        // Update the conversation list with this new message
+        updateConversationList(message);
+      } else {
+        // If not in the current conversation, update unread counts
         setUnreadCounts(prev => ({
           ...prev,
-          [message.conversationId]: (prev[message.conversationId] || 0) + 1
+          [message.conversation?._id || message.conversationId]: 
+            (prev[message.conversation?._id || message.conversationId] || 0) + 1
         }));
       }
     };
@@ -810,20 +778,36 @@ const EmployeeMessage = ({ darkMode }) => {
 
   // Ensure this useEffect runs properly to join conversation rooms
   useEffect(() => {
-    if (activeConversation && socketRef.current && socketRef.current.connected) {
-      // Leave any previously joined rooms
-      if (previousConversation.current) {
-        console.log(`Leaving conversation: ${previousConversation.current}`);
+    if (socketRef.current && activeConversation) {
+      const conversationId = activeConversation._id;
+      console.log('Joining conversation room:', conversationId);
+      
+      // Leave previous conversation if any
+      if (previousConversation.current && 
+          previousConversation.current !== conversationId) {
         socketRef.current.emit('leave_conversation', previousConversation.current);
+        console.log('Left conversation:', previousConversation.current);
       }
       
-      // Join the new conversation room
-      console.log(`Joining conversation: ${activeConversation._id}`);
-      socketRef.current.emit('join_conversation', activeConversation._id);
+      // Join new conversation
+      socketRef.current.emit('join_conversation', conversationId);
+      previousConversation.current = conversationId;
       
-      // Update the reference to the current conversation
-      previousConversation.current = activeConversation._id;
+      // Mark conversation as read when joining
+      markConversationAsRead(conversationId);
+      
+      // Update unread counts
+      setUnreadCounts(prev => ({
+        ...prev,
+        [conversationId]: 0
+      }));
     }
+    
+    return () => {
+      if (socketRef.current && activeConversation) {
+        socketRef.current.emit('leave_conversation', activeConversation._id);
+      }
+    };
   }, [activeConversation]);
   
   // Fetch conversations on component mount

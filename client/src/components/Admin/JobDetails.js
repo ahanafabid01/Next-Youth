@@ -156,7 +156,7 @@ const JobDetails = () => {
         
         try {
             setLoading(true);
-            const response = await axios.delete(`API_BASE_URL/jobs/${jobId}`, { 
+            const response = await axios.delete(`${API_BASE_URL}/jobs/${jobId}`, { 
                 withCredentials: true 
             });
             

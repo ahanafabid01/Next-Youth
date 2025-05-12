@@ -65,7 +65,7 @@ const EmployeeDashboard = () => {
     return dashboardTheme ? dashboardTheme === "dark" : loginTheme === "dark";
   });
 
-  const API_BASE_URL = 'API_BASE_URL';
+  
 
   const [allAvailableJobs, setAllAvailableJobs] = useState([]);
   const [currentPage, setCurrentPage] = useState(1);
@@ -652,10 +652,15 @@ const EmployeeDashboard = () => {
                   <img 
                     src={user.profilePicture}
                     alt="Profile"
-                    className="employee-profile-avatar"
+                    className="profile-avatar"
+                    onError={(e) => {
+                      // If image fails to load, use placeholder
+                      e.target.onerror = null;
+                      e.target.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(user.name)}&size=128&background=random`;
+                    }}
                   />
                 ) : (
-                  <FaUserCircle className="employee-profile-avatar-icon" />
+                  <FaUserCircle className="profile-avatar-icon" />
                 )}
                 <FaChevronDown className={`employee-dropdown-icon ${showProfileDropdown ? 'rotate' : ''}`} />
               </button>
@@ -668,6 +673,11 @@ const EmployeeDashboard = () => {
                         <img 
                           src={user.profilePicture}
                           alt={`${user.name}'s profile`}
+                          onError={(e) => {
+                            // If image fails to load, use placeholder
+                            e.target.onerror = null;
+                            e.target.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(user.name)}&size=128&background=random`;
+                          }}
                         />
                       ) : (
                         <FaUserCircle />

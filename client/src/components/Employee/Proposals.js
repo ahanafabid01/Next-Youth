@@ -69,7 +69,7 @@ const Proposals = () => {
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [applicationToDelete, setApplicationToDelete] = useState(null);
   
-  const API_BASE_URL = 'API_BASE_URL';
+  
 
   // Fetch user profile data
   const fetchUserData = useCallback(async () => {

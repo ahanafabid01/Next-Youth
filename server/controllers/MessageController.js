@@ -145,7 +145,27 @@ export const sendMessage = async (req, res) => {
       }
     }
 
-    // Create the message
+    // Create the message with a check for duplicates
+    const existingMessage = await Message.findOne({
+      conversation: conversation._id,
+      sender: senderId,
+      content,
+      createdAt: { $gte: new Date(Date.now() - 5000) } // Within last 5 seconds
+    });
+
+    if (existingMessage) {
+      // Return the existing message to prevent duplicates
+      const populatedMessage = await Message.findById(existingMessage._id)
+        .populate('sender', 'name email profilePicture');
+      
+      return res.status(200).json({
+        success: true,
+        message: populatedMessage,
+        duplicate: true
+      });
+    }
+
+    // If no duplicate, create the message
     const message = await Message.create({
       conversation: conversation._id,
       sender: senderId,
@@ -221,7 +241,14 @@ export const sendAttachment = async (req, res) => {
     }
 
     // Determine file type
-    const fileUrl = `${req.protocol}://${req.get("host")}/uploads/messages/${file.filename}`;
+    let fileUrl;
+    if (process.env.NODE_ENV === "production") {
+      // For production - use full URL with protocol and host
+      fileUrl = `${req.protocol}://${req.get("host")}/uploads/messages/${file.filename}`;
+    } else {
+      // For development - use relative path
+      fileUrl = `/uploads/messages/${file.filename}`;
+    }
     const fileType = file.mimetype;
     const filename = file.originalname;
 
@@ -229,7 +256,7 @@ export const sendAttachment = async (req, res) => {
     const message = await Message.create({
       conversation: conversation._id,
       sender: senderId,
-      content: "",
+      content: req.body.caption || "",
       attachment: {
         url: fileUrl,
         type: fileType,

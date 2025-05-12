@@ -107,6 +107,7 @@ const onlineUsers = new Map();
 
 // Socket.IO connection handling
 io.on('connection', (socket) => {
+  console.log('Socket connected:', socket.id);
   console.log('a user connected', socket.id);
   
   // Handle user connection
@@ -236,8 +237,10 @@ io.on('connection', (socket) => {
   });
   
   // Handle user disconnection
-  socket.on('disconnect', async () => {
+  socket.on('disconnect', async (reason) => {
     try {
+      console.log('Socket disconnected:', socket.id, 'Reason:', reason);
+      
       // Find which user this socket belongs to
       let disconnectedUserId = null;
       for (const [userId, socketId] of onlineUsers.entries()) {
@@ -333,6 +336,11 @@ io.on('connection', (socket) => {
     if (receiverSocket) {
       receiverSocket.emit('call_end');
     }
+  });
+
+  // Add to server.js socket connection handler:
+  socket.on('error', (error) => {
+    console.error('Socket error:', error);
   });
 });
 

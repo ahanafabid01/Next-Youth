@@ -6,8 +6,15 @@ import fs from "fs";
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
+// Use the same upload directory logic as server.js
+const getUploadDir = () => {
+  return process.env.NODE_ENV === "production" 
+    ? '/tmp/uploads/messages'  // Use /tmp for Render's ephemeral filesystem
+    : path.join(path.dirname(path.dirname(__filename)), "uploads/messages");
+};
+
 // Ensure destination directory exists
-const uploadsDir = path.join(__dirname, "../uploads/messages");
+const uploadsDir = getUploadDir();
 if (!fs.existsSync(uploadsDir)) {
   fs.mkdirSync(uploadsDir, { recursive: true });
 }
