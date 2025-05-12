@@ -172,7 +172,7 @@ const PostJob = () => {
       });
 
       const response = await axios.post(
-        "API_BASE_URL/jobs",
+        `${API_BASE_URL}/jobs`,
         formDataToSend,
         { 
           withCredentials: true,

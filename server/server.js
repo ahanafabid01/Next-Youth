@@ -89,7 +89,7 @@ if (!fs.existsSync(uploadDir)) {
 }
 
 // Static file serving middleware
-app.use("/uploads", express.static(uploadDir));
+app.use("/uploads", express.static(uploadDir)); // Update these lines for consistency
 app.use('/uploads/messages', express.static(path.join(uploadDir, 'messages')));
 
 // API routes
@@ -354,6 +354,19 @@ app.get('/', (req, res) => {
 // Add this near your other routes
 app.get('/test', (req, res) => {
     res.status(200).json({ message: 'Server is working properly!' });
+});
+
+// Add to your server.js
+app.get('/test-upload', (req, res) => {
+  const uploadDir = process.env.NODE_ENV === "production" 
+    ? '/tmp/uploads'
+    : path.join(__dirname, "uploads");
+  
+  res.status(200).json({ 
+    uploadsPath: uploadDir,
+    exists: fs.existsSync(uploadDir),
+    writable: fs.existsSync(uploadDir) ? fs.accessSync(uploadDir, fs.constants.W_OK) : false
+  });
 });
 
 // Global error handling middleware

@@ -42,15 +42,28 @@ const Profile = () => {
             try {
                 setLoading(true);
                 const [profileResponse, verificationResponse] = await Promise.all([
-                    axios.get("API_BASE_URL/auth/me", { withCredentials: true }),
-                    axios.get("API_BASE_URL/auth/verification-status", { withCredentials: true })
+                    axios.get(`${API_BASE_URL}/auth/me`, { withCredentials: true }),
+                    axios.get(`${API_BASE_URL}/auth/verification-status`, { withCredentials: true })
                 ]);
                 
                 if (profileResponse.data.success) {
+                    // Check if profilePicture URL is from Render's /tmp directory
+                    let profilePic = profileResponse.data.user.profilePicture || "";
+                    
+                    // If on production and URL contains "next-youth-server.onrender.com"
+                    if (profilePic.includes("next-youth-server.onrender.com")) {
+                        // Try to load the image first to see if it exists
+                        const imgExists = await checkIfImageExists(profilePic);
+                        if (!imgExists) {
+                            // If image doesn't exist, use a default avatar
+                            profilePic = `https://ui-avatars.com/api/?name=${encodeURIComponent(profileResponse.data.user.name)}&background=random&color=fff&size=160`;
+                        }
+                    }
+                    
                     setProfile({
                         name: profileResponse.data.user.name || "",
                         email: profileResponse.data.user.email || "",
-                        profilePicture: profileResponse.data.user.profilePicture || "",
+                        profilePicture: profilePic,
                         dateOfBirth: profileResponse.data.user.dateOfBirth || "",
                         linkedInId: profileResponse.data.user.linkedInId || "",
                         otherInfo: profileResponse.data.user.otherInfo || "",
@@ -72,6 +85,15 @@ const Profile = () => {
 
         fetchUserProfile();
     }, []);
+
+    const checkIfImageExists = (url) => {
+        return new Promise((resolve) => {
+            const img = new Image();
+            img.onload = () => resolve(true);
+            img.onerror = () => resolve(false);
+            img.src = url;
+        });
+    };
 
     useEffect(() => {
         const requiredFields = ['name', 'email', 'profilePicture', 'dateOfBirth', 'linkedInId', 'otherInfo'];
@@ -107,7 +129,7 @@ const Profile = () => {
                 formData.append("file", profilePictureFile);
 
                 const uploadResponse = await axios.post(
-                    "API_BASE_URL/auth/upload-profile-picture",
+                    `${API_BASE_URL}/auth/upload-profile-picture`,
                     formData,
                     { withCredentials: true }
                 );
@@ -123,7 +145,7 @@ const Profile = () => {
             };
             
             const response = await axios.put(
-                "API_BASE_URL/auth/profile",
+                `${API_BASE_URL}/auth/profile`,
                 updatedProfile,
                 { withCredentials: true }
             );

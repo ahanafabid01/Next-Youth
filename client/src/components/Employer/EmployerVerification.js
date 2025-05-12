@@ -65,7 +65,7 @@ const EmployerVerification = ({ onComplete }) => {
 
       // Use the correct API endpoint
       const response = await axios.post(
-        'API_BASE_URL/auth/verify-identity',
+        `${API_BASE_URL}/auth/verify-identity`,
         formData,
         {
           headers: {

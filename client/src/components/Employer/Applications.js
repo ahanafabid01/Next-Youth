@@ -34,7 +34,7 @@ const Applications = () => {
       setError(null);
       
       // Use the new endpoint specifically for employer applications
-      const response = await axios.get("API_BASE_URL/jobs/employer-applications", {
+      const response = await axios.get(`${API_BASE_URL}/jobs/employer-applications`, {
         withCredentials: true
       });
       

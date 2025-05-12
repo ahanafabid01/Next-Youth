@@ -96,7 +96,7 @@ const EmployerDashboard = () => {
     useEffect(() => {
         const fetchJobs = async () => {
             try {
-                const response = await axios.get("API_BASE_URL/jobs", { withCredentials: true });
+                const response = await axios.get(`${API_BASE_URL}/jobs`, { withCredentials: true });
                 if (response.data.success) {
                     setJobPostings(response.data.jobs);
                 }
@@ -113,8 +113,8 @@ const EmployerDashboard = () => {
         const fetchUserProfile = async () => {
             try {
                 const [profileResponse, verificationResponse] = await Promise.all([
-                    axios.get("API_BASE_URL/auth/me", { withCredentials: true }),
-                    axios.get("API_BASE_URL/auth/verification-status", { withCredentials: true })
+                    axios.get(`${API_BASE_URL}/auth/me`, { withCredentials: true }),
+                    axios.get(`${API_BASE_URL}/auth/verification-status`, { withCredentials: true })
                 ]);
                 
                 if (profileResponse.data.success) {
@@ -168,12 +168,12 @@ const EmployerDashboard = () => {
                 setDashboardLoading(true);
                 
                 // Get jobs data
-                const jobsResponse = await axios.get("API_BASE_URL/jobs", { 
+                const jobsResponse = await axios.get(`${API_BASE_URL}/jobs`, { 
                     withCredentials: true 
                 });
                 
                 // Get applications data
-                const applicationsResponse = await axios.get("API_BASE_URL/jobs/employer-applications", { 
+                const applicationsResponse = await axios.get(`${API_BASE_URL}/jobs/employer-applications`, { 
                     withCredentials: true 
                 });
                 
@@ -290,7 +290,7 @@ const EmployerDashboard = () => {
         if (!newJob.trim()) return alert("Please enter a valid job title!");
         try {
             const response = await axios.post(
-                "API_BASE_URL/jobs",
+                `${API_BASE_URL}/jobs`,
                 { title: newJob },
                 { withCredentials: true }
             );
@@ -306,7 +306,7 @@ const EmployerDashboard = () => {
 
     const handleLogout = async () => {
         try {
-            await axios.post("API_BASE_URL/auth/logout", null, { withCredentials: true });
+            await axios.post(`${API_BASE_URL}/auth/logout`, null, { withCredentials: true });
             navigate("/login");
         } catch (error) {
             console.error("Logout failed:", error);

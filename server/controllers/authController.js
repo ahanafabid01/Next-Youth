@@ -481,12 +481,28 @@ export const verifyIdentity = async (req, res) => {
             });
         }
 
-        const frontImagePath = req.files.frontImage[0].path;
-        const backImagePath = req.files.backImage[0].path;
+        // Log file information for debugging
+        console.log("Front image:", req.files.frontImage[0]);
+        console.log("Back image:", req.files.backImage[0]);
 
-        // Convert local file path to URL
-        const frontImageUrl = `${req.protocol}://${req.get("host")}/${frontImagePath.replace(/\\/g, '/')}`;
-        const backImageUrl = `${req.protocol}://${req.get("host")}/${backImagePath.replace(/\\/g, '/')}`;
+        // Create URLs based on environment
+        let frontImageUrl, backImageUrl;
+        
+        if (process.env.NODE_ENV === "production") {
+            // For Render deployment
+            const frontFilename = req.files.frontImage[0].filename;
+            const backFilename = req.files.backImage[0].filename;
+            
+            frontImageUrl = `${req.protocol}://${req.get("host")}/uploads/${frontFilename}`;
+            backImageUrl = `${req.protocol}://${req.get("host")}/uploads/${backFilename}`;
+        } else {
+            // For local development
+            const frontRelativePath = req.files.frontImage[0].path.split('uploads')[1];
+            const backRelativePath = req.files.backImage[0].path.split('uploads')[1];
+            
+            frontImageUrl = `/uploads${frontRelativePath.replace(/\\/g, '/')}`;
+            backImageUrl = `/uploads${backRelativePath.replace(/\\/g, '/')}`;
+        }
 
         // Update user's verification status in the database
         const updatedUser = await userModel.findByIdAndUpdate(

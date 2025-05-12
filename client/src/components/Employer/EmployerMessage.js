@@ -619,7 +619,7 @@ const EmployerMessage = ({ darkMode }) => {
   const fetchConversations = useCallback(async () => {
     try {
       setLoading(true);
-      const response = await axios.get("API_BASE_URL/messages/conversations", {
+      const response = await axios.get(`${API_BASE_URL}/messages/conversations`, {
         withCredentials: true
       });
       
@@ -1060,7 +1060,7 @@ const EmployerMessage = ({ darkMode }) => {
     
     try {
       const response = await axios.post(
-        "API_BASE_URL/messages",
+        `${API_BASE_URL}/messages`,
         {
           conversationId: activeConversation._id,
           content: newMessage,
@@ -1193,7 +1193,7 @@ const EmployerMessage = ({ darkMode }) => {
 
     try {
       const response = await axios.post(
-        "API_BASE_URL/messages/attachment",
+        `${API_BASE_URL}/messages/attachment`,
         formData,
         { 
           withCredentials: true,
@@ -1610,7 +1610,7 @@ const EmployerMessage = ({ darkMode }) => {
       setUploadProgress(0);
       
       const response = await axios.post(
-        "API_BASE_URL/messages/attachment",
+        `${API_BASE_URL}/messages/attachment`,
         formData,
         { 
           withCredentials: true,
@@ -1902,7 +1902,7 @@ const EmployerMessage = ({ darkMode }) => {
       // Record call in database
       try {
         await axios.post(
-          "API_BASE_URL/calls",
+          `${API_BASE_URL}/calls`,
           {
             receiverId: receiver._id,
             conversationId: activeConversation._id,

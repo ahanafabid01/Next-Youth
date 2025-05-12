@@ -60,7 +60,7 @@ const EmployerSettings = () => {
     const fetchUserProfile = async () => {
       try {
         setLoading(true);
-        const response = await axios.get("API_BASE_URL/auth/me", { 
+        const response = await axios.get(`${API_BASE_URL}/auth/me`, { 
           withCredentials: true 
         });
         
@@ -143,7 +143,7 @@ const EmployerSettings = () => {
     try {
       setSaving(true);
       const response = await axios.put(
-        "API_BASE_URL/auth/update-profile",
+        `${API_BASE_URL}/auth/update-profile`,
         profile,
         { withCredentials: true }
       );
@@ -171,7 +171,7 @@ const EmployerSettings = () => {
     try {
       setSaving(true);
       const response = await axios.put(
-        "API_BASE_URL/auth/change-password",
+        `${API_BASE_URL}/auth/change-password`,
         {
           currentPassword: passwordData.currentPassword,
           newPassword: passwordData.newPassword
@@ -234,14 +234,14 @@ const EmployerSettings = () => {
     try {
       setSaving(true);
       const response = await axios.post(
-        "API_BASE_URL/auth/delete-my-account",
+        `${API_BASE_URL}/auth/delete-my-account`,
         { password: deletePassword },
         { withCredentials: true }
       );
       
       if (response.data.success) {
         // Clear any cookies/tokens
-        await axios.post("API_BASE_URL/auth/logout", {}, 
+        await axios.post(`${API_BASE_URL}/auth/logout`, {}, 
           { withCredentials: true }
         );
         

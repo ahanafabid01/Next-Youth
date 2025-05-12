@@ -282,7 +282,7 @@ const MyJobs = () => {
         const fetchJobs = async () => {
             try {
                 setLoading(true);
-                const response = await axios.get("API_BASE_URL/jobs", { 
+                const response = await axios.get(`${API_BASE_URL}/jobs`, { 
                     withCredentials: true 
                 });
                 if (response.data.success) {
