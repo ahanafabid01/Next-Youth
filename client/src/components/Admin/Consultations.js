@@ -117,7 +117,7 @@ const Consultations = () => {
   const fetchConsultations = async () => {
     try {
       setLoading(true);
-      const response = await axios.get("API_BASE_URL/contact/all", {
+      const response = await axios.get(`${API_BASE_URL}/contact/all`, {
         withCredentials: true
       });
 
@@ -161,7 +161,7 @@ const Consultations = () => {
   const sendStatusUpdateEmail = async (consultation, status) => {
     try {
       const response = await axios.post(
-        "API_BASE_URL/contact/notify",
+        `${API_BASE_URL}/contact/notify`,
         {
           consultationId: consultation._id,
           status,

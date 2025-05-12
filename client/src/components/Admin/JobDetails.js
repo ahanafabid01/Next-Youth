@@ -82,7 +82,7 @@ const JobDetails = () => {
     const fetchJobs = async () => {
         try {
             setLoading(true);
-            const response = await axios.get("API_BASE_URL/jobs/available", {
+            const response = await axios.get(`${API_BASE_URL}/jobs/available`, {
                 withCredentials: true
             });
 
@@ -233,7 +233,7 @@ NextYouth Team
             setError(null); // Reset any previous errors
             
             const response = await axios.post(
-                "API_BASE_URL/notifications/job-notification", 
+                `${API_BASE_URL}/notifications/job-notification`, 
                 {
                     jobId: selectedJob._id,
                     subject: emailData.subject,

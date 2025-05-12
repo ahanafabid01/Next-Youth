@@ -10,7 +10,7 @@ const AdminLogout = () => {
 
   const handleLogout = async () => {
     try {
-      await axios.post("API_BASE_URL/auth/logout", {}, { withCredentials: true });
+      await axios.post(`${API_BASE_URL}/auth/logout`, {}, { withCredentials: true });
       navigate("/login");
     } catch (error) {
       console.error("Logout failed:", error);

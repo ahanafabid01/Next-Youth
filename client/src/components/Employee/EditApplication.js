@@ -74,8 +74,8 @@ const EditApplication = () => {
     const fetchUserData = useCallback(async () => {
         try {
             const [userResponse, verificationResponse] = await Promise.all([
-                axios.get('API_BASE_URL/auth/me', { withCredentials: true }),
-                axios.get('API_BASE_URL/auth/verification-status', { withCredentials: true })
+                axios.get(`${API_BASE_URL}/auth/me`, { withCredentials: true }),
+                axios.get(`${API_BASE_URL}/auth/verification-status`, { withCredentials: true })
             ]);
             
             if (userResponse.data.success) {
@@ -246,7 +246,7 @@ const EditApplication = () => {
     const handleLogout = async () => {
         try {
             const response = await axios.post(
-                'API_BASE_URL/auth/logout', 
+                `${API_BASE_URL}/auth/logout`, 
                 {}, 
                 { withCredentials: true }
             );

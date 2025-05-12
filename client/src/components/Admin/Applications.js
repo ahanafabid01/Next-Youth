@@ -59,7 +59,7 @@ const Applications = () => {
   const fetchApplications = async () => {
     try {
       setLoading(true);
-      const response = await axios.get("API_BASE_URL/jobs/admin/applications", {
+      const response = await axios.get(`${API_BASE_URL}/jobs/admin/applications`, {
         withCredentials: true
       });
 

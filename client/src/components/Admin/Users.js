@@ -48,7 +48,7 @@ const Users = () => {
     const fetchUsers = async () => {
         try {
             setLoading(true);
-            const response = await axios.get("API_BASE_URL/auth/admin/users", {
+            const response = await axios.get(`${API_BASE_URL}/auth/admin/users`, {
                 withCredentials: true
             });
             

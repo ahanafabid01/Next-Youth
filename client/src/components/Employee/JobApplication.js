@@ -114,8 +114,8 @@ const JobApplication = () => {
             try {
                 // Make parallel requests to get both user data and verification status
                 const [userResponse, verificationResponse] = await Promise.all([
-                    axios.get("API_BASE_URL/auth/me", { withCredentials: true }),
-                    axios.get("API_BASE_URL/auth/verification-status", { withCredentials: true })
+                    axios.get(`${API_BASE_URL}/auth/me`, { withCredentials: true }),
+                    axios.get(`${API_BASE_URL}/auth/verification-status`, { withCredentials: true })
                 ]);
                 
                 if (userResponse.data.success) {
@@ -184,7 +184,7 @@ const JobApplication = () => {
 
     const handleLogout = async () => {
         try {
-            const response = await axios.post("API_BASE_URL/auth/logout", {}, { 
+            const response = await axios.post(`${API_BASE_URL}/auth/logout`, {}, { 
                 withCredentials: true 
             });
             if (response.data.success) navigate('/login');
@@ -397,7 +397,7 @@ const JobApplication = () => {
             });
             
             const response = await axios.post(
-                'API_BASE_URL/jobs/apply-with-details',
+                `${API_BASE_URL}/jobs/apply-with-details`,
                 formData,
                 { 
                     withCredentials: true,

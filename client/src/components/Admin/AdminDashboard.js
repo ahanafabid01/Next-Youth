@@ -85,7 +85,7 @@ const AdminDashboard = () => {
         setLoading(true);
         
         // Fetch fresh user data
-        const usersResponse = await axios.get("API_BASE_URL/auth/admin/users", {
+        const usersResponse = await axios.get(`${API_BASE_URL}/auth/admin/users`, {
           withCredentials: true
         });
         let users = [];
@@ -99,7 +99,7 @@ const AdminDashboard = () => {
         let jobs = dataStore.jobs;
         
         if (consultations.length === 0) {
-          const consultationsResponse = await axios.get("API_BASE_URL/contact/all", {
+          const consultationsResponse = await axios.get(`${API_BASE_URL}/contact/all`, {
             withCredentials: true
           });
           if (consultationsResponse.data?.success) {
@@ -109,7 +109,7 @@ const AdminDashboard = () => {
         }
         
         if (jobs.length === 0) {
-          const jobsResponse = await axios.get("API_BASE_URL/jobs/available", {
+          const jobsResponse = await axios.get(`${API_BASE_URL}/jobs/available`, {
             withCredentials: true
           });
           if (jobsResponse.data?.success) {

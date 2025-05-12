@@ -94,7 +94,7 @@ const Statistics = () => {
         setRefreshing(true);
         try {
             // Fetch users data
-            const usersResponse = await axios.get("API_BASE_URL/auth/admin/users", {
+            const usersResponse = await axios.get(`${API_BASE_URL}/auth/admin/users`, {
                 withCredentials: true
             });
             
@@ -103,7 +103,7 @@ const Statistics = () => {
             }
             
             // Fetch consultations data
-            const consultationsResponse = await axios.get("API_BASE_URL/contact/all", {
+            const consultationsResponse = await axios.get(`${API_BASE_URL}/contact/all`, {
                 withCredentials: true
             });
             
@@ -112,7 +112,7 @@ const Statistics = () => {
             }
             
             // Fetch jobs data
-            const jobsResponse = await axios.get("API_BASE_URL/jobs/available", {
+            const jobsResponse = await axios.get(`${API_BASE_URL}/jobs/available`, {
                 withCredentials: true
             });
             
@@ -135,7 +135,7 @@ const Statistics = () => {
     useEffect(() => {
         const fetchUserData = async () => {
             try {
-                const response = await axios.get("API_BASE_URL/auth/admin/users", {
+                const response = await axios.get(`${API_BASE_URL}/auth/admin/users`, {
                     withCredentials: true
                 });
                 if (response.data?.success) {
@@ -149,7 +149,7 @@ const Statistics = () => {
         
         const fetchConsultationData = async () => {
             try {
-                const response = await axios.get("API_BASE_URL/contact/all", {
+                const response = await axios.get(`${API_BASE_URL}/contact/all`, {
                     withCredentials: true
                 });
                 if (response.data?.success) {
@@ -163,7 +163,7 @@ const Statistics = () => {
         
         const fetchJobsData = async () => {
             try {
-                const response = await axios.get("API_BASE_URL/jobs/available", {
+                const response = await axios.get(`${API_BASE_URL}/jobs/available`, {
                     withCredentials: true
                 });
                 if (response.data?.success) {
