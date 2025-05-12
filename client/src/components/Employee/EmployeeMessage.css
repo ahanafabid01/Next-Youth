@@ -6,6 +6,13 @@
   background-color: #f0f2f5;
   position: relative;
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  will-change: transform;
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+  transform: translateZ(0);
+  -webkit-transform: translateZ(0);
+  perspective: 1000;
+  -webkit-perspective: 1000;
 }
 
 .employee-message-dark {
@@ -176,6 +183,9 @@
   flex: 1;
   overflow-y: auto;
   background-color: #ffffff;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior-y: contain;
+  will-change: transform;
 }
 
 .employee-message-dark .employee-message-chats {
@@ -401,6 +411,9 @@
   padding: 20px;
   position: relative;
   z-index: 1;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior-y: contain;
+  will-change: transform;
 }
 
 .employee-message-messages {
@@ -463,6 +476,8 @@
   padding: 6px 9px 8px 12px;
   border-radius: 7.5px;
   box-shadow: 0 1px 0.5px rgba(0, 0, 0, 0.13);
+  transform: translateZ(0);
+  will-change: transform, opacity;
 }
 
 .employee-message-bubble-other {
@@ -1244,6 +1259,78 @@
   .employee-message-bubble {
     max-width: 85%;
   }
+
+  /* Fix chat container layout */
+  .whatsapp-container, .employee-message-container {
+    display: flex;
+    flex-direction: column;
+    height: 100vh !important; /* Force full height */
+    overflow: hidden;
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 1000;
+  }
+
+  /* Fix sidebar width */
+  .whatsapp-sidebar, .employee-message-sidebar {
+    width: 100% !important;
+    min-width: 100% !important;
+    max-width: 100% !important;
+    height: 100% !important;
+    transition: transform 0.3s ease;
+  }
+
+  /* Fix chat area layout */
+  .whatsapp-chat, .employee-message-chat {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    height: 100vh !important;
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+  }
+
+  /* Fixed header positioning */
+  .whatsapp-chat-header, .employee-message-chat-header {
+    position: sticky;
+    top: 0;
+    width: 100%;
+    z-index: 10;
+  }
+
+  /* Fixed footer positioning */
+  .whatsapp-chat-footer, .employee-message-chat-footer {
+    position: sticky;
+    bottom: 0;
+    width: 100%;
+    z-index: 10;
+  }
+
+  /* Middle scrollable area */
+  .whatsapp-chat-body, .employee-message-chat-body {
+    flex: 1;
+    overflow-y: auto;
+    height: calc(100vh - 120px) !important; /* Header + Footer height */
+    padding-bottom: 16px;
+  }
+
+  /* Hide sidebar when chat is open */
+  .whatsapp-sidebar-hidden, .employee-message-sidebar-hidden {
+    transform: translateX(-100%);
+    display: none;
+  }
+
+  /* Show chat when active */
+  .whatsapp-chat-visible, .employee-message-chat-visible {
+    z-index: 20;
+    transform: translateX(0);
+  }
 }
 
 /* Fix Safari rendering */
@@ -1269,6 +1356,8 @@
   color: #25D366 !important;
   display: flex;
   align-items: center;
+  will-change: contents;
+  transition: color 0.3s ease-in-out;
 }
 
 .employee-message-status-online::before {
@@ -1689,4 +1778,16 @@
 /* Make sure icons in calling UI are visible in both light and dark mode */
 .employee-message-call-control svg {
   fill: currentColor;
+}
+
+/* iOS-specific fixes */
+@supports (-webkit-touch-callout: none) {
+  .whatsapp-chat-body, .employee-message-chat-body {
+    /* Fix for iOS Safari 100vh issue */
+    height: calc(100vh - 120px - env(safe-area-inset-bottom)) !important;
+  }
+  
+  .whatsapp-chat-footer, .employee-message-chat-footer {
+    padding-bottom: env(safe-area-inset-bottom);
+  }
 }

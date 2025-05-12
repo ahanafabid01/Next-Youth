@@ -44,6 +44,7 @@ import "./EmployeeMessage.css";
 import logoLight from '../../assets/images/logo-light.png';
 import logoDark from '../../assets/images/logo-dark.png';
 import { getSocket, disconnectSocket } from '../../utils/socketConfig';
+import debounce from 'lodash.debounce';
 
 // Configure twemoji for better performance
 const parseTwemoji = (text) => {
@@ -251,6 +252,18 @@ const MessageBubble = memo(({ message, isOwn, showSenderInfo, senderName, format
   );
 });
 
+// Add this near the top of both message components
+const MemoizedMessageBubble = React.memo(MessageBubble, (prevProps, nextProps) => {
+  // Strict comparison to prevent unnecessary re-renders
+  return (
+    prevProps.message._id === nextProps.message._id &&
+    prevProps.message.content === nextProps.message.content &&
+    prevProps.message.read === nextProps.message.read &&
+    prevProps.message.isDeleted === nextProps.message.isDeleted &&
+    prevProps.isOwn === nextProps.isOwn
+  );
+});
+
 const EmployeeMessage = ({ darkMode }) => {
   const navigate = useNavigate();
   // State for conversations and messages
@@ -310,6 +323,8 @@ const EmployeeMessage = ({ darkMode }) => {
   const [callTimer, setCallTimer] = useState(null);
   const [callHistory, setCallHistory] = useState([]);
   const [screenSharing, setScreenSharing] = useState(false);
+  const [showSidebar, setShowSidebar] = useState(true);
+  const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
   
   // Refs
   const messagesEndRef = useRef(null);
@@ -774,22 +789,26 @@ const EmployeeMessage = ({ darkMode }) => {
     socketRef.current.on("new_message", handleNewMessage);
     socketRef.current.on("message_deleted", handleMessageDeleted);
     socketRef.current.on("user_status_changed", (data) => {
-      console.log("User status changed:", data);
-      setOnlineUsers(prev => {
-        const newSet = new Set(prev);
-        if (data.isOnline) {
-          newSet.add(data.userId);
-        } else {
-          newSet.delete(data.userId);
-        }
-        return newSet;
-      });
+      updateOnlineStatus(data.userId, data.isOnline);
     });
     
     socketRef.current.on("online_users", (userIds) => {
-      console.log("Received online users:", userIds);
+      // Batch update all online users at once
       setOnlineUsers(new Set(userIds));
+      
+      // Cache for offline fallback
+      localStorage.setItem('onlineUsers', JSON.stringify(userIds));
     });
+    
+    // Restore from localStorage on init
+    const cachedOnlineUsers = localStorage.getItem('onlineUsers');
+    if (cachedOnlineUsers) {
+      try {
+        setOnlineUsers(new Set(JSON.parse(cachedOnlineUsers)));
+      } catch (e) {
+        console.error('Failed to parse cached online users');
+      }
+    }
     
     return () => {
       socketRef.current.off("new_message", handleNewMessage);
@@ -839,13 +858,21 @@ const EmployeeMessage = ({ darkMode }) => {
     
     // Check for mobile view
     const handleResize = () => {
-      setMobileView(window.innerWidth < 768);
+      const mobile = window.innerWidth <= 768;
+      setIsMobile(mobile);
+      
+      // On mobile, show either sidebar or chat, not both
+      if (mobile && activeConversation) {
+        setShowSidebar(false);
+      } else {
+        setShowSidebar(true);
+      }
     };
     
     handleResize();
     window.addEventListener("resize", handleResize);
     return () => window.removeEventListener("resize", handleResize);
-  }, [fetchConversations]);
+  }, [fetchConversations, activeConversation]);
   
   // Scroll to bottom when messages change
   useEffect(() => {
@@ -946,6 +973,22 @@ const EmployeeMessage = ({ darkMode }) => {
     };
   }, [onlineUsers]);
 
+  // Debounced online status handler
+  const updateOnlineStatus = useCallback(
+    debounce((userId, isOnline) => {
+      setOnlineUsers(prev => {
+        const newSet = new Set(prev);
+        if (isOnline) {
+          newSet.add(userId);
+        } else {
+          newSet.delete(userId);
+        }
+        return newSet;
+      });
+    }, 500),
+    []
+  );
+
   // Get other participant in conversation
   const getOtherParticipant = (conversation) => {
     if (!conversation || !conversation.participants) {
@@ -1015,13 +1058,12 @@ const EmployeeMessage = ({ darkMode }) => {
   // Handle conversation selection
   const handleSelectConversation = (conversation) => {
     setActiveConversation(conversation);
-    setShowConversations(false); // Hide sidebar on mobile
-    setPage(1);
-    fetchMessages(conversation._id, 1);
-    setUnreadCounts(prev => ({
-      ...prev,
-      [conversation._id]: 0
-    }));
+    
+    if (isMobile) {
+      setShowSidebar(false);
+    }
+    
+    fetchMessages(conversation._id);
   };
   
   // Load more messages (pagination)
@@ -1683,7 +1725,7 @@ const EmployeeMessage = ({ darkMode }) => {
               </div>
             )}
             
-            <MessageBubble
+            <MemoizedMessageBubble
               message={message}
               isOwn={isOwn}
               showSenderInfo={showSenderInfo}
@@ -2064,9 +2106,17 @@ const EmployeeMessage = ({ darkMode }) => {
     }
   };
 
+  // Add back button handler
+  const handleBackToConversations = () => {
+    if (isMobile) {
+      setShowSidebar(true);
+      setActiveConversation(null);
+    }
+  };
+
   return (
     <div className={`employee-message-container ${darkMode ? "employee-message-dark" : ""}`}>
-      <div className={`employee-message-sidebar ${mobileView && !showConversations ? "employee-message-sidebar-hidden" : ""}`}>
+      <div className={`employee-message-sidebar ${!showSidebar ? "employee-message-sidebar-hidden" : ""}`}>
         <div className="employee-message-header">
           <div className="employee-message-user-info">
             {currentUser?.profilePicture ? (
@@ -2176,417 +2226,415 @@ const EmployeeMessage = ({ darkMode }) => {
         </div>
       </div>
       
-      <div className={`employee-message-chat ${mobileView && showConversations ? "employee-message-chat-hidden" : ""}`}>
-        {activeConversation ? (
-          <>
-            <div className="employee-message-chat-header">
-              {mobileView && (
+      {activeConversation ? (
+        <div className={`employee-message-chat ${showSidebar && isMobile ? "employee-message-chat-hidden" : "employee-message-chat-visible"}`}>
+          <div className="employee-message-chat-header">
+            {isMobile && (
+              <button 
+                className="employee-message-back-button"
+                onClick={handleBackToConversations}
+              >
+                <FaArrowLeft />
+              </button>
+            )}
+            
+            <div className="employee-message-chat-user">
+              <div className="employee-message-chat-avatar">
+                <img 
+                  src={getOtherParticipant(activeConversation).profilePicture} 
+                  alt={getOtherParticipant(activeConversation)?.name || "User"} 
+                  onError={(e) => {
+                    e.target.onerror = null;
+                    e.target.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(
+                      getOtherParticipant(activeConversation)?.name || 'User'
+                    )}&background=random&color=fff&size=160`;
+                  }}
+                />
+              </div>
+              
+              <div className="employee-message-chat-user-info">
+                <h3>{getOtherParticipant(activeConversation).name}</h3>
+                <span className={`employee-message-user-status ${isUserOnline(getOtherParticipant(activeConversation)._id) ? "employee-message-status-online" : ""}`}>
+                  {isUserOnline(getOtherParticipant(activeConversation)._id) ? "Online" : "Offline"}
+                </span>
+              </div>
+            </div>
+            
+            <div className="employee-message-chat-actions">
+              {/* Add call buttons */}
+              <button 
+                className="employee-message-icon-button"
+                onClick={() => initiateCall(false)}
+                title="Voice Call"
+              >
+                <FaPhoneAlt />
+              </button>
+              <button 
+                className="employee-message-icon-button"
+                onClick={() => initiateCall(true)}
+                title="Video Call"
+              >
+                <FaVideo />
+              </button>
+              <button className="employee-message-icon-button">
+                <FaSearch />
+              </button>
+              <div className="employee-message-dropdown">
+                <button className="employee-message-icon-button">
+                  <FaEllipsisV />
+                </button>
+                <div className="employee-message-dropdown-menu">
+                  <button 
+                    className="employee-message-dropdown-item"
+                    onClick={() => setShowDeleteConversationDialog(true)}
+                  >
+                    <FaTrashAlt /> Delete Chat
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+          
+          <div className="employee-message-chat-body" ref={messagesContainerRef}>
+            {hasMore && (
+              <div className="employee-message-load-more">
+                <button onClick={handleLoadMore} disabled={loadingMore}>
+                  {loadingMore ? (
+                    <>
+                      <FaSpinner className="employee-message-spinner" />
+                      Loading...
+                    </>
+                  ) : (
+                    "Load older messages"
+                  )}
+                </button>
+              </div>
+            )}
+            
+            <div className="employee-message-messages">
+              {messages.length > 0 ? renderMessages() : (
+                <div className="employee-message-no-messages">
+                  <p>No messages yet. Start the conversation!</p>
+                </div>
+              )}
+              <div ref={messagesEndRef} />
+            </div>
+          </div>
+          
+          {isUploading && (
+            <div className="employee-message-upload-progress">
+              <div className="employee-message-progress-bar">
+                <div 
+                  className="employee-message-progress-fill" 
+                  style={{ width: `${uploadProgress}%` }}
+                ></div>
+              </div>
+              <span>{uploadProgress}%</span>
+            </div>
+          )}
+          
+          {/* Attachment Preview UI */}
+          {showAttachmentPreview && stagedAttachment && (
+            <div className="employee-message-attachment-preview">
+              <div className="employee-message-attachment-preview-header">
                 <button 
-                  className="employee-message-back-button"
-                  onClick={() => setShowConversations(true)}
+                  className="employee-message-icon-button" 
+                  onClick={() => {
+                    setShowAttachmentPreview(false);
+                    setStagedAttachment(null);
+                    if (stagedAttachment.previewUrl) {
+                      URL.revokeObjectURL(stagedAttachment.previewUrl);
+                    }
+                  }}
                 >
                   <FaArrowLeft />
                 </button>
-              )}
+                <h3>{stagedAttachment.fileType === 'image' ? 'Preview Image' : 'Preview Document'}</h3>
+              </div>
               
-              <div className="employee-message-chat-user">
-                <div className="employee-message-chat-avatar">
+              <div className="employee-message-attachment-preview-content">
+                {stagedAttachment.type && stagedAttachment.type.startsWith("image") ? (
                   <img 
-                    src={getOtherParticipant(activeConversation).profilePicture} 
-                    alt={getOtherParticipant(activeConversation)?.name || "User"} 
-                    onError={(e) => {
-                      e.target.onerror = null;
-                      e.target.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(
-                        getOtherParticipant(activeConversation)?.name || 'User'
-                      )}&background=random&color=fff&size=160`;
-                    }}
+                    src={stagedAttachment.previewUrl} 
+                    alt="Preview" 
+                    className="employee-message-attachment-preview-image"
+                  />
+                ) : (
+                  <div className="employee-message-attachment-preview-document">
+                    <div className="employee-message-file-icon large-icon">
+                      <FaFile />
+                    </div>
+                    <p className="employee-message-file-name">{stagedAttachment.filename}</p>
+                  </div>
+                )}
+              </div>
+              
+              <div className="employee-message-attachment-caption">
+                <div className="employee-message-input-container">
+                  <input
+                    type="text"
+                    placeholder="Add a caption..."
+                    value={attachmentCaption}
+                    onChange={(e) => setAttachmentCaption(e.target.value)}
+                    autoFocus
                   />
                 </div>
                 
-                <div className="employee-message-chat-user-info">
-                  <h3>{getOtherParticipant(activeConversation).name}</h3>
-                  <span className={`employee-message-user-status ${isUserOnline(getOtherParticipant(activeConversation)._id) ? "employee-message-status-online" : ""}`}>
-                    {isUserOnline(getOtherParticipant(activeConversation)._id) ? "Online" : "Offline"}
-                  </span>
-                </div>
-              </div>
-              
-              <div className="employee-message-chat-actions">
-                {/* Add call buttons */}
                 <button 
-                  className="employee-message-icon-button"
-                  onClick={() => initiateCall(false)}
-                  title="Voice Call"
+                  className="employee-message-icon-button employee-message-send"
+                  onClick={handleSendAttachment}
                 >
-                  <FaPhoneAlt />
+                  <FaPaperPlane />
                 </button>
-                <button 
-                  className="employee-message-icon-button"
-                  onClick={() => initiateCall(true)}
-                  title="Video Call"
-                >
-                  <FaVideo />
-                </button>
-                <button className="employee-message-icon-button">
-                  <FaSearch />
-                </button>
-                <div className="employee-message-dropdown">
-                  <button className="employee-message-icon-button">
-                    <FaEllipsisV />
-                  </button>
-                  <div className="employee-message-dropdown-menu">
-                    <button 
-                      className="employee-message-dropdown-item"
-                      onClick={() => setShowDeleteConversationDialog(true)}
-                    >
-                      <FaTrashAlt /> Delete Chat
-                    </button>
-                  </div>
-                </div>
               </div>
             </div>
-            
-            <div className="employee-message-chat-body" ref={messagesContainerRef}>
-              {hasMore && (
-                <div className="employee-message-load-more">
-                  <button onClick={handleLoadMore} disabled={loadingMore}>
-                    {loadingMore ? (
-                      <>
-                        <FaSpinner className="employee-message-spinner" />
-                        Loading...
-                      </>
-                    ) : (
-                      "Load older messages"
-                    )}
-                  </button>
-                </div>
-              )}
-              
-              <div className="employee-message-messages">
-                {messages.length > 0 ? renderMessages() : (
-                  <div className="employee-message-no-messages">
-                    <p>No messages yet. Start the conversation!</p>
-                  </div>
-                )}
-                <div ref={messagesEndRef} />
-              </div>
-            </div>
-            
-            {isUploading && (
-              <div className="employee-message-upload-progress">
-                <div className="employee-message-progress-bar">
-                  <div 
-                    className="employee-message-progress-fill" 
-                    style={{ width: `${uploadProgress}%` }}
-                  ></div>
-                </div>
-                <span>{uploadProgress}%</span>
-              </div>
-            )}
-            
-            {/* Attachment Preview UI */}
-            {showAttachmentPreview && stagedAttachment && (
-              <div className="employee-message-attachment-preview">
-                <div className="employee-message-attachment-preview-header">
-                  <button 
-                    className="employee-message-icon-button" 
-                    onClick={() => {
-                      setShowAttachmentPreview(false);
-                      setStagedAttachment(null);
-                      if (stagedAttachment.previewUrl) {
-                        URL.revokeObjectURL(stagedAttachment.previewUrl);
-                      }
-                    }}
-                  >
-                    <FaArrowLeft />
-                  </button>
-                  <h3>{stagedAttachment.fileType === 'image' ? 'Preview Image' : 'Preview Document'}</h3>
-                </div>
-                
-                <div className="employee-message-attachment-preview-content">
-                  {stagedAttachment.type && stagedAttachment.type.startsWith("image") ? (
-                    <img 
-                      src={stagedAttachment.previewUrl} 
-                      alt="Preview" 
-                      className="employee-message-attachment-preview-image"
-                    />
-                  ) : (
-                    <div className="employee-message-attachment-preview-document">
-                      <div className="employee-message-file-icon large-icon">
-                        <FaFile />
-                      </div>
-                      <p className="employee-message-file-name">{stagedAttachment.filename}</p>
-                    </div>
-                  )}
-                </div>
-                
-                <div className="employee-message-attachment-caption">
-                  <div className="employee-message-input-container">
-                    <input
-                      type="text"
-                      placeholder="Add a caption..."
-                      value={attachmentCaption}
-                      onChange={(e) => setAttachmentCaption(e.target.value)}
-                      autoFocus
-                    />
-                  </div>
-                  
-                  <button 
-                    className="employee-message-icon-button employee-message-send"
-                    onClick={handleSendAttachment}
-                  >
-                    <FaPaperPlane />
-                  </button>
-                </div>
-              </div>
-            )}
-            
-            {/* Message context menu */}
-            {showMessageMenu && selectedMessage && (
-              <div 
-                className="employee-message-context-menu"
-                style={{ top: menuPosition.y, left: menuPosition.x }}
+          )}
+          
+          {/* Message context menu */}
+          {showMessageMenu && selectedMessage && (
+            <div 
+              className="employee-message-context-menu"
+              style={{ top: menuPosition.y, left: menuPosition.x }}
+            >
+              <button 
+                className="employee-message-context-menu-item"
+                onClick={() => {
+                  setDeleteOption("me");
+                  setShowDeleteMessageDialog(true);
+                  setShowMessageMenu(false);
+                }}
               >
+                <FaTrashAlt /> Delete For Me
+              </button>
+              {isOwnMessage(selectedMessage) && !selectedMessage.isDeleted && (
                 <button 
                   className="employee-message-context-menu-item"
                   onClick={() => {
-                    setDeleteOption("me");
+                    setDeleteOption("everyone");
                     setShowDeleteMessageDialog(true);
                     setShowMessageMenu(false);
                   }}
                 >
-                  <FaTrashAlt /> Delete For Me
+                  <FaTrashAlt /> Delete For Everyone
                 </button>
-                {isOwnMessage(selectedMessage) && !selectedMessage.isDeleted && (
+              )}
+            </div>
+          )}
+
+          {/* Delete message confirmation dialog */}
+          {showDeleteMessageDialog && (
+            <div className="employee-message-dialog-overlay">
+              <div className="employee-message-dialog">
+                <h3>{deleteOption === "everyone" ? "Delete For Everyone" : "Delete For Me"}</h3>
+                <p>
+                  {deleteOption === "everyone" 
+                    ? "Are you sure you want to delete this message for everyone?" 
+                    : "Delete this message? It will only be removed for you"}
+                </p>
+                <div className="employee-message-dialog-actions">
                   <button 
-                    className="employee-message-context-menu-item"
+                    className="employee-message-dialog-btn employee-message-cancel-btn"
+                    onClick={() => setShowDeleteMessageDialog(false)}
+                  >
+                    Cancel
+                  </button>
+                  <button 
+                    className="employee-message-dialog-btn employee-message-delete-btn"
+                    onClick={() => handleDeleteMessage(deleteOption || "me")}
+                  >
+                    Delete
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Delete conversation confirmation dialog */}
+          {showDeleteConversationDialog && (
+            <div className="employee-message-dialog-overlay">
+              <div className="employee-message-dialog">
+                <h3>Delete Conversation</h3>
+                <p>Are you sure you want to delete this conversation?</p>
+                <p className="employee-message-dialog-note">
+                  Messages will be removed from this device only.
+                </p>
+                <div className="employee-message-dialog-actions">
+                  <button 
+                    className="employee-message-dialog-btn employee-message-cancel-btn"
+                    onClick={() => setShowDeleteConversationDialog(false)}
+                  >
+                    Cancel
+                  </button>
+                  <button 
+                    className="employee-message-dialog-btn employee-message-delete-btn"
+                    onClick={handleDeleteConversation}
+                  >
+                    Delete
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
+          
+          <div className="employee-message-chat-footer">
+            {isRecording ? (
+              <div className="employee-message-recording">
+                <div className="employee-message-recording-indicator">
+                  <span className="recording-dot"></span>
+                  <span className="recording-time">{formatTime(recordingTime)}</span>
+                </div>
+                <div className="employee-message-recording-actions">
+                  <button 
+                    className="employee-message-icon-button employee-message-cancel-recording"
+                    onClick={cancelRecording}
+                  >
+                    <FaTrash />
+                  </button>
+                  <button 
+                    className="employee-message-icon-button employee-message-send-recording"
+                    onClick={stopRecording}
+                  >
+                    <FaCheck />
+                  </button>
+                </div>
+              </div>
+            ) : audioBlob ? (
+              <div className="employee-message-recording-preview">
+                <div className="employee-message-voice-message">
+                  <button 
+                    className="employee-message-voice-play-btn"
                     onClick={() => {
-                      setDeleteOption("everyone");
-                      setShowDeleteMessageDialog(true);
-                      setShowMessageMenu(false);
+                      const audio = new Audio(URL.createObjectURL(audioBlob));
+                      if (audioPlayback) {
+                        audioPlayback.pause();
+                      }
+                      audio.play();
+                      setAudioPlayback(audio);
                     }}
                   >
-                    <FaTrashAlt /> Delete For Everyone
+                    <FaPlay />
                   </button>
-                )}
-              </div>
-            )}
-
-            {/* Delete message confirmation dialog */}
-            {showDeleteMessageDialog && (
-              <div className="employee-message-dialog-overlay">
-                <div className="employee-message-dialog">
-                  <h3>{deleteOption === "everyone" ? "Delete For Everyone" : "Delete For Me"}</h3>
-                  <p>
-                    {deleteOption === "everyone" 
-                      ? "Are you sure you want to delete this message for everyone?" 
-                      : "Delete this message? It will only be removed for you"}
-                  </p>
-                  <div className="employee-message-dialog-actions">
-                    <button 
-                      className="employee-message-dialog-btn employee-message-cancel-btn"
-                      onClick={() => setShowDeleteMessageDialog(false)}
-                    >
-                      Cancel
-                    </button>
-                    <button 
-                      className="employee-message-dialog-btn employee-message-delete-btn"
-                      onClick={() => handleDeleteMessage(deleteOption || "me")}
-                    >
-                      Delete
-                    </button>
-                  </div>
-                </div>
-              </div>
-            )}
-
-            {/* Delete conversation confirmation dialog */}
-            {showDeleteConversationDialog && (
-              <div className="employee-message-dialog-overlay">
-                <div className="employee-message-dialog">
-                  <h3>Delete Conversation</h3>
-                  <p>Are you sure you want to delete this conversation?</p>
-                  <p className="employee-message-dialog-note">
-                    Messages will be removed from this device only.
-                  </p>
-                  <div className="employee-message-dialog-actions">
-                    <button 
-                      className="employee-message-dialog-btn employee-message-cancel-btn"
-                      onClick={() => setShowDeleteConversationDialog(false)}
-                    >
-                      Cancel
-                    </button>
-                    <button 
-                      className="employee-message-dialog-btn employee-message-delete-btn"
-                      onClick={handleDeleteConversation}
-                    >
-                      Delete
-                    </button>
-                  </div>
-                </div>
-              </div>
-            )}
-            
-            <div className="employee-message-chat-footer">
-              {isRecording ? (
-                <div className="employee-message-recording">
-                  <div className="employee-message-recording-indicator">
-                    <span className="recording-dot"></span>
-                    <span className="recording-time">{formatTime(recordingTime)}</span>
-                  </div>
+                  <div className="employee-message-voice-waveform"></div>
                   <div className="employee-message-recording-actions">
                     <button 
                       className="employee-message-icon-button employee-message-cancel-recording"
-                      onClick={cancelRecording}
+                      onClick={() => setAudioBlob(null)}
                     >
                       <FaTrash />
                     </button>
                     <button 
                       className="employee-message-icon-button employee-message-send-recording"
-                      onClick={stopRecording}
+                      onClick={sendVoiceMessage}
                     >
-                      <FaCheck />
+                      <FaPaperPlane />
                     </button>
                   </div>
                 </div>
-              ) : audioBlob ? (
-                <div className="employee-message-recording-preview">
-                  <div className="employee-message-voice-message">
-                    <button 
-                      className="employee-message-voice-play-btn"
-                      onClick={() => {
-                        const audio = new Audio(URL.createObjectURL(audioBlob));
-                        if (audioPlayback) {
-                          audioPlayback.pause();
-                        }
-                        audio.play();
-                        setAudioPlayback(audio);
+              </div>
+            ) : (
+              <>
+                <button 
+                  className={`employee-message-icon-button employee-message-emoji ${showEmojiPicker ? 'active' : ''}`}
+                  onClick={() => setShowEmojiPicker(!showEmojiPicker)}
+                >
+                  <FaSmile />
+                </button>
+                
+                {showEmojiPicker && (
+                  <div className="employee-message-emoji-picker" ref={emojiPickerRef}>
+                    <EmojiPicker
+                      onEmojiClick={handleEmojiClick}
+                      searchPlaceholder="Search emoji"
+                      width={300}
+                      height={400}
+                      previewConfig={{
+                        showPreview: false
                       }}
-                    >
-                      <FaPlay />
-                    </button>
-                    <div className="employee-message-voice-waveform"></div>
-                    <div className="employee-message-recording-actions">
-                      <button 
-                        className="employee-message-icon-button employee-message-cancel-recording"
-                        onClick={() => setAudioBlob(null)}
-                      >
-                        <FaTrash />
-                      </button>
-                      <button 
-                        className="employee-message-icon-button employee-message-send-recording"
-                        onClick={sendVoiceMessage}
-                      >
-                        <FaPaperPlane />
-                      </button>
-                    </div>
-                  </div>
-                </div>
-              ) : (
-                <>
-                  <button 
-                    className={`employee-message-icon-button employee-message-emoji ${showEmojiPicker ? 'active' : ''}`}
-                    onClick={() => setShowEmojiPicker(!showEmojiPicker)}
-                  >
-                    <FaSmile />
-                  </button>
-                  
-                  {showEmojiPicker && (
-                    <div className="employee-message-emoji-picker" ref={emojiPickerRef}>
-                      <EmojiPicker
-                        onEmojiClick={handleEmojiClick}
-                        searchPlaceholder="Search emoji"
-                        width={300}
-                        height={400}
-                        previewConfig={{
-                          showPreview: false
-                        }}
-                        lazyLoadEmojis={false}
-                        skinTonesDisabled
-                        autoFocusSearch={false} // Prevent auto focusing search which causes more rendering
-                        categories={['suggested', 'smileys_people', 'animals_nature', 'food_drink']} // Reduce categories for better performance
-                        suggestedEmojisMode="recent"
-                      />
-                    </div>
-                  )}
-                  
-                  <button 
-                    className="employee-message-icon-button employee-message-attach"
-                    onClick={() => setShowUploadOptions(!showUploadOptions)}
-                  >
-                    <FaPaperclip />
-                  </button>
-                  
-                  {showUploadOptions && (
-                    <div className="employee-message-upload-options">
-                      <button 
-                        className="employee-message-upload-option"
-                        onClick={() => imageInputRef.current.click()}
-                      >
-                        <div className="employee-message-upload-icon employee-message-photo-icon">
-                          <FaImage />
-                        </div>
-                        <span>Photo</span>
-                      </button>
-                      <button 
-                        className="employee-message-upload-option"
-                        onClick={() => fileInputRef.current.click()}
-                      >
-                        <div className="employee-message-upload-icon employee-message-doc-icon">
-                          <FaFile />
-                        </div>
-                        <span>Document</span>
-                      </button>
-                    </div>
-                  )}
-                  
-                  <input 
-                    type="file" 
-                    ref={fileInputRef} 
-                    onChange={(e) => handleFileSelection(e, 'file')}
-                    style={{ display: 'none' }}
-                    accept=".pdf,.doc,.docx,.txt,.zip,.rar"
-                  />
-                  
-                  <input 
-                    type="file" 
-                    ref={imageInputRef} 
-                    onChange={(e) => handleFileSelection(e, 'image')}
-                    style={{ display: 'none' }}
-                    accept="image/*"
-                  />
-                  
-                  <div className="employee-message-input-container">
-                    <input
-                      type="text"
-                      placeholder="Type a message"
-                      value={newMessage}
-                      onChange={(e) => setNewMessage(e.target.value)}
-                      onKeyPress={(e) => e.key === "Enter" && handleSendMessage()}
-                      ref={messageInputRef}
+                      lazyLoadEmojis={false}
+                      skinTonesDisabled
+                      autoFocusSearch={false} // Prevent auto focusing search which causes more rendering
+                      categories={['suggested', 'smileys_people', 'animals_nature', 'food_drink']} // Reduce categories for better performance
+                      suggestedEmojisMode="recent"
                     />
                   </div>
-                  
-                  <button 
-                    className="employee-message-icon-button employee-message-send"
-                    onClick={newMessage.trim() ? handleSendMessage : startRecording}
-                  >
-                    {newMessage.trim() ? <FaPaperPlane /> : <FaMicrophone />}
-                  </button>
-                </>
-              )}
-            </div>
-          </>
-        ) : (
-          <div className="employee-message-welcome">
-            <div className="employee-message-welcome-container">
-              <div className="employee-message-welcome-image"></div>
-              <h1>Keep your phone connected</h1>
-              <p>Select a chat to start messaging</p>
-            </div>
+                )}
+                
+                <button 
+                  className="employee-message-icon-button employee-message-attach"
+                  onClick={() => setShowUploadOptions(!showUploadOptions)}
+                >
+                  <FaPaperclip />
+                </button>
+                
+                {showUploadOptions && (
+                  <div className="employee-message-upload-options">
+                    <button 
+                      className="employee-message-upload-option"
+                      onClick={() => imageInputRef.current.click()}
+                    >
+                      <div className="employee-message-upload-icon employee-message-photo-icon">
+                        <FaImage />
+                      </div>
+                      <span>Photo</span>
+                    </button>
+                    <button 
+                      className="employee-message-upload-option"
+                      onClick={() => fileInputRef.current.click()}
+                    >
+                      <div className="employee-message-upload-icon employee-message-doc-icon">
+                        <FaFile />
+                      </div>
+                      <span>Document</span>
+                    </button>
+                  </div>
+                )}
+                
+                <input 
+                  type="file" 
+                  ref={fileInputRef} 
+                  onChange={(e) => handleFileSelection(e, 'file')}
+                  style={{ display: 'none' }}
+                  accept=".pdf,.doc,.docx,.txt,.zip,.rar"
+                />
+                
+                <input 
+                  type="file" 
+                  ref={imageInputRef} 
+                  onChange={(e) => handleFileSelection(e, 'image')}
+                  style={{ display: 'none' }}
+                  accept="image/*"
+                />
+                
+                <div className="employee-message-input-container">
+                  <input
+                    type="text"
+                    placeholder="Type a message"
+                    value={newMessage}
+                    onChange={(e) => setNewMessage(e.target.value)}
+                    onKeyPress={(e) => e.key === "Enter" && handleSendMessage()}
+                    ref={messageInputRef}
+                  />
+                </div>
+                
+                <button 
+                  className="employee-message-icon-button employee-message-send"
+                  onClick={newMessage.trim() ? handleSendMessage : startRecording}
+                >
+                  {newMessage.trim() ? <FaPaperPlane /> : <FaMicrophone />}
+                </button>
+              </>
+            )}
           </div>
-        )}
-      </div>
+        </div>
+      ) : (
+        <div className="employee-message-welcome">
+          <div className="employee-message-welcome-container">
+            <div className="employee-message-welcome-image"></div>
+            <h1>Keep your phone connected</h1>
+            <p>Select a chat to start messaging</p>
+          </div>
+        </div>
+      )}
 
       {/* Incoming call UI */}
       {isIncomingCall && (

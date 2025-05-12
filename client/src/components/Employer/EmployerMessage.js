@@ -5,6 +5,7 @@ import io from "socket.io-client";
 import DOMPurify from "dompurify";
 import twemoji from "twemoji";
 import EmojiPicker from 'emoji-picker-react';
+import debounce from 'lodash.debounce';
 import { 
   FaSearch, 
   FaPaperPlane, 
@@ -241,6 +242,18 @@ const MessageBubble = memo(({ message, isOwn, showSenderInfo, senderName, format
   return (
     prevProps.message._id === nextProps.message._id &&
     prevProps.message.content === nextProps.message.content &&
+    prevProps.message.isDeleted === nextProps.message.isDeleted &&
+    prevProps.isOwn === nextProps.isOwn
+  );
+});
+
+// Add this near the top of both message components
+const MemoizedMessageBubble = React.memo(MessageBubble, (prevProps, nextProps) => {
+  // Strict comparison to prevent unnecessary re-renders
+  return (
+    prevProps.message._id === nextProps.message._id &&
+    prevProps.message.content === nextProps.message.content &&
+    prevProps.message.read === nextProps.message.read &&
     prevProps.message.isDeleted === nextProps.message.isDeleted &&
     prevProps.isOwn === nextProps.isOwn
   );
@@ -1485,7 +1498,7 @@ const EmployerMessage = ({ darkMode }) => {
               </div>
             )}
             
-            <MessageBubble
+            <MemoizedMessageBubble
               message={message}
               isOwn={isOwn}
               showSenderInfo={showSenderInfo}
@@ -2116,22 +2129,54 @@ const EmployerMessage = ({ darkMode }) => {
   };
 
   // Add to both message components right after socket initialization
+
+  // Debounced online status handler
+  const updateOnlineStatus = useCallback(
+    debounce((userId, isOnline) => {
+      setOnlineUsers(prev => {
+        const newSet = new Set(prev);
+        if (isOnline) {
+          newSet.add(userId);
+        } else {
+          newSet.delete(userId);
+        }
+        return newSet;
+      });
+    }, 500),
+    []
+  );
+
+  // Update this in your socket handling section
   useEffect(() => {
-    // Restore online users from localStorage if available
-    const storedOnlineUsers = localStorage.getItem('onlineUsers');
-    if (storedOnlineUsers) {
+    if (!socketRef.current) return;
+    
+    socketRef.current.on("user_status_changed", (data) => {
+      updateOnlineStatus(data.userId, data.isOnline);
+    });
+    
+    socketRef.current.on("online_users", (userIds) => {
+      // Batch update all online users at once
+      setOnlineUsers(new Set(userIds));
+      
+      // Cache for offline fallback
+      localStorage.setItem('onlineUsers', JSON.stringify(userIds));
+    });
+    
+    // Restore from localStorage on init
+    const cachedOnlineUsers = localStorage.getItem('onlineUsers');
+    if (cachedOnlineUsers) {
       try {
-        setOnlineUsers(new Set(JSON.parse(storedOnlineUsers)));
+        setOnlineUsers(new Set(JSON.parse(cachedOnlineUsers)));
       } catch (e) {
-        console.error('Failed to parse stored online users', e);
+        console.error('Failed to parse cached online users');
       }
     }
     
     return () => {
-      // Save current online users to localStorage before unmounting
-      localStorage.setItem('onlineUsers', JSON.stringify([...onlineUsers]));
+      socketRef.current?.off("user_status_changed");
+      socketRef.current?.off("online_users");
     };
-  }, [onlineUsers]);
+  }, [updateOnlineStatus]);
 
   return (
     <div className={`whatsapp-container ${darkMode ? "whatsapp-dark" : ""}`}>

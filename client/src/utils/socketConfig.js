@@ -9,6 +9,8 @@ const SOCKET_SERVER_URL = API_BASE_URL
 let socket = null;
 let reconnectAttempts = 0;
 const MAX_RECONNECT_ATTEMPTS = 5;
+const RECONNECTION_DELAY = 2000;
+const PING_INTERVAL = 10000;
 
 export const getSocket = () => {
   if (!socket) {
@@ -16,18 +18,34 @@ export const getSocket = () => {
     
     socket = io(SOCKET_SERVER_URL, {
       reconnection: true,
-      reconnectionDelay: 1000,
-      reconnectionAttempts: MAX_RECONNECT_ATTEMPTS,
+      reconnectionDelay: RECONNECTION_DELAY,
+      reconnectionDelayMax: RECONNECTION_DELAY * 5,
+      reconnectionAttempts: Infinity,
+      timeout: 20000,
+      pingInterval: PING_INTERVAL, // Add consistent ping to keep connection alive
+      pingTimeout: 5000,
       transports: ['websocket', 'polling'],
-      withCredentials: true,
       forceNew: false,
-      timeout: 10000
+      withCredentials: true
     });
 
-    // Add reconnection handling
+    // Prevent disconnect/reconnect cycle causing UI flicker
+    socket.io.on("reconnect_attempt", () => {
+      console.log("Socket reconnecting...");
+    });
+
+    // More stable online status tracking
     socket.on('connect', () => {
-      console.log('Socket connected with ID:', socket.id);
+      console.log('Socket connected successfully');
       reconnectAttempts = 0;
+
+      // Delay emitting user_connected to ensure connection is stable
+      setTimeout(() => {
+        const userId = localStorage.getItem('userId');
+        if (userId) {
+          socket.emit('user_connected', userId);
+        }
+      }, 500);
     });
 
     socket.on('connect_error', (error) => {
