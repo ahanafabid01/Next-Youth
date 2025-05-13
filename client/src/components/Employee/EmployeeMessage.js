@@ -1249,6 +1249,9 @@ const EmployeeMessage = ({ darkMode }) => {
       fileType: type
     });
     
+    // Prevent background scrolling when preview is open
+    document.body.classList.add('attachment-preview-open');
+    
     setShowAttachmentPreview(true);
     setShowUploadOptions(false);
   };
@@ -2232,6 +2235,84 @@ const EmployeeMessage = ({ darkMode }) => {
     return () => window.removeEventListener('resize', handleResize);
   }, [showConversations]);
 
+  // Add this to fix mobile viewport height issues
+  useEffect(() => {
+    // First we get the viewport height and multiply it by 1% to get a value for a vh unit
+    let vh = window.innerHeight * 0.01;
+    // Then we set the value in the --vh custom property to the root of the document
+    document.documentElement.style.setProperty('--vh', `${vh}px`);
+    
+    // Update the custom property when the window is resized
+    const handleResize = () => {
+      let vh = window.innerHeight * 0.01;
+      document.documentElement.style.setProperty('--vh', `${vh}px`);
+    };
+    
+    window.addEventListener('resize', handleResize);
+    window.addEventListener('orientationchange', handleResize);
+    
+    return () => {
+      window.removeEventListener('resize', handleResize);
+      window.removeEventListener('orientationchange', handleResize);
+    };
+  }, []);
+
+  // Improve handling of keyboard appearance on mobile
+  useEffect(() => {
+    const handleFocus = () => {
+      if (window.innerWidth <= 768) {
+        document.body.classList.add('keyboard-open');
+        
+        // For iOS, add a timeout to let the keyboard fully appear
+        setTimeout(() => {
+          window.scrollTo(0, 0);
+          if (messagesEndRef.current) {
+            messagesEndRef.current.scrollIntoView({ behavior: "smooth" });
+          }
+        }, 300);
+      }
+    };
+
+    const handleBlur = () => {
+      document.body.classList.remove('keyboard-open');
+      
+      // Reset scroll position after keyboard closes
+      if (window.innerWidth <= 768) {
+        setTimeout(() => {
+          if (messagesEndRef.current) {
+            messagesEndRef.current.scrollIntoView({ behavior: "smooth" });
+          }
+        }, 100);
+      }
+    };
+    
+    // Apply to all input fields in the chat footer
+    const inputElements = document.querySelectorAll('.employee-message-chat-footer input, .employee-message-chat-footer textarea');
+    
+    inputElements.forEach(element => {
+      element.addEventListener('focus', handleFocus);
+      element.addEventListener('blur', handleBlur);
+    });
+    
+    // Fix for message attachments - close preview properly when closed
+    const handleAttachmentClose = () => {
+      if (stagedAttachment?.previewUrl) {
+        URL.revokeObjectURL(stagedAttachment.previewUrl);
+      }
+      document.body.classList.remove('attachment-preview-open');
+    };
+    
+    return () => {
+      inputElements.forEach(element => {
+        element.removeEventListener('focus', handleFocus);
+        element.removeEventListener('blur', handleBlur);
+      });
+      
+      document.body.classList.remove('keyboard-open');
+      document.body.classList.remove('attachment-preview-open');
+    };
+  }, [stagedAttachment]);
+
   return (
     <div className={`employee-message-container ${darkMode ? "employee-message-dark" : ""}`}>
       <div className={`employee-message-sidebar ${!showSidebar ? "employee-message-sidebar-hidden" : ""}`}>
@@ -2463,10 +2544,11 @@ const EmployeeMessage = ({ darkMode }) => {
                   className="employee-message-icon-button" 
                   onClick={() => {
                     setShowAttachmentPreview(false);
-                    setStagedAttachment(null);
-                    if (stagedAttachment.previewUrl) {
+                    if (stagedAttachment?.previewUrl) {
                       URL.revokeObjectURL(stagedAttachment.previewUrl);
                     }
+                    document.body.classList.remove('attachment-preview-open');
+                    setStagedAttachment(null);
                   }}
                 >
                   <FaArrowLeft />

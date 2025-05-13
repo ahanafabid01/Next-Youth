@@ -1174,7 +1174,8 @@ const EmployerMessage = ({ darkMode }) => {
     }
   };
   
-  // Handle file selection (first step - just preview)
+  // Update the handleFileSelection function
+
   const handleFileSelection = (event, type) => {
     const file = event.target.files[0];
     if (!file) return;
@@ -1209,6 +1210,9 @@ const EmployerMessage = ({ darkMode }) => {
       previewUrl,
       fileType: type
     });
+    
+    // Add class to body to prevent background scrolling
+    document.body.classList.add('attachment-preview-open');
     
     setShowAttachmentPreview(true);
     setShowUploadOptions(false);
@@ -1461,7 +1465,7 @@ const EmployerMessage = ({ darkMode }) => {
       }
     }
   };
-  
+
   // Improve the handleDeleteConversation function
   const handleDeleteConversation = async () => {
     if (!activeConversation) return;
@@ -2244,13 +2248,19 @@ const EmployerMessage = ({ darkMode }) => {
     if (window.innerWidth <= 768) {
       // On mobile, show conversation list and hide chat
       setShowConversations(true);
-      document.querySelector('.whatsapp-sidebar').classList.remove('whatsapp-sidebar-hidden');
-      document.querySelector('.whatsapp-chat').classList.add('whatsapp-chat-hidden');
-      document.querySelector('.whatsapp-chat').classList.remove('whatsapp-chat-visible');
+      
+      const sidebar = document.querySelector('.whatsapp-sidebar');
+      const chat = document.querySelector('.whatsapp-chat');
+      
+      if (sidebar) sidebar.classList.remove('whatsapp-sidebar-hidden');
+      if (chat) {
+        chat.classList.add('whatsapp-chat-hidden');
+        chat.classList.remove('whatsapp-chat-visible');
+      }
+    } else {
+      // On desktop, don't hide anything, just clear the active conversation
+      setActiveConversation(null);
     }
-    
-    // Reset the active conversation
-    setActiveConversation(null);
   };
 
   // Replace or update the handleExit function
@@ -2268,6 +2278,84 @@ const EmployerMessage = ({ darkMode }) => {
     // Navigate to dashboard
     navigate('/employer-dashboard');
   };
+
+  // Add a useEffect to handle resize events specifically for fixing navigation
+  useEffect(() => {
+    resetMobileView();
+    window.addEventListener('resize', resetMobileView);
+    
+    return () => {
+      window.removeEventListener('resize', resetMobileView);
+      
+      // Ensure we clean up any body classes or fixed positioning
+      document.body.style.overflow = '';
+      document.body.style.position = '';
+    };
+  }, []);
+
+  // Add these functions to fix navigation issues
+  const resetMobileView = () => {
+    if (window.innerWidth > 768) {
+      // Make sure both sidebar and chat are visible on desktop
+      const sidebar = document.querySelector('.whatsapp-sidebar');
+      const chat = document.querySelector('.whatsapp-chat');
+      
+      if (sidebar) sidebar.classList.remove('whatsapp-sidebar-hidden');
+      if (chat) chat.classList.remove('whatsapp-chat-hidden', 'whatsapp-chat-visible');
+      
+      // Reset conversation state for desktop view
+      if (!activeConversation) {
+        setShowConversations(true);
+      }
+    }
+  };
+
+  // Add this useEffect after your other useEffect hooks
+
+  // Fix for footer positioning with keyboard
+  useEffect(() => {
+    function handleFocus() {
+      // Only apply on mobile devices
+      if (window.innerWidth <= 768) {
+        document.body.classList.add('keyboard-open');
+        
+        // For iOS, add a small timeout to let the keyboard fully appear
+        setTimeout(() => {
+          window.scrollTo(0, 0);
+          if (messagesEndRef.current) {
+            messagesEndRef.current.scrollIntoView({ behavior: "smooth" });
+          }
+        }, 300);
+      }
+    }
+
+    function handleBlur() {
+      document.body.classList.remove('keyboard-open');
+      
+      // Reset scroll position after keyboard closes
+      if (window.innerWidth <= 768) {
+        setTimeout(() => {
+          if (messagesEndRef.current) {
+            messagesEndRef.current.scrollIntoView({ behavior: "smooth" });
+          }
+        }, 100);
+      }
+    }
+
+    // Apply to the message input
+    if (messageInputRef.current) {
+      messageInputRef.current.addEventListener('focus', handleFocus);
+      messageInputRef.current.addEventListener('blur', handleBlur);
+    }
+
+    return () => {
+      // Clean up event listeners
+      if (messageInputRef.current) {
+        messageInputRef.current.removeEventListener('focus', handleFocus);
+        messageInputRef.current.removeEventListener('blur', handleBlur);
+      }
+    };
+  }, [messageInputRef.current]); // Add messageInputRef.current as a dependency
 
   return (
     <div className={`whatsapp-container ${darkMode ? "whatsapp-dark" : ""}`}>
@@ -2540,7 +2628,10 @@ const EmployerMessage = ({ darkMode }) => {
                     onClick={() => {
                       setShowAttachmentPreview(false);
                       setStagedAttachment(null);
-                      if (stagedAttachment.previewUrl) {
+                      // Remove class from body to restore scrolling
+                      document.body.classList.remove('attachment-preview-open');
+                      
+                      if (stagedAttachment?.previewUrl) {
                         URL.revokeObjectURL(stagedAttachment.previewUrl);
                       }
                     }}

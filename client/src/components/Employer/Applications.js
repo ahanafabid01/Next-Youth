@@ -59,7 +59,7 @@ const Applications = () => {
   const updateApplicationStatus = async (applicationId, newStatus) => {
     try {
       const response = await axios.put(
-        `API_BASE_URL/jobs/application/${applicationId}/status`,
+        `${API_BASE_URL}/jobs/application/${applicationId}/status`,
         { status: newStatus },
         { withCredentials: true }
       );

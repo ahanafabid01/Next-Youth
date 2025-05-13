@@ -552,7 +552,11 @@ const EmployerDashboard = () => {
             case "payment":
                 return <EmployerPayment />;
             case "messages":
-                return <EmployerMessage darkMode={darkMode} />; // Add this case
+                return (
+                    <div className="messages-container">
+                        <EmployerMessage darkMode={darkMode} />
+                    </div>
+                );
             default:
                 return (
                     <div className="dashboard-main">
@@ -660,10 +664,8 @@ const EmployerDashboard = () => {
                             <FaCog className="nav-icon" />
                             <span className="nav-text">Settings</span>
                         </li>
-                    </ul>
-                    
-                    <ul className="nav-list" style={{ marginTop: 'auto' }}>
-                        <li className="theme-toggle-item" onClick={toggleTheme}>
+
+                        <li className="nav-item" onClick={toggleTheme}>
                             {darkMode ? <FaSun className="nav-icon" /> : <FaMoon className="nav-icon" />}
                             <span className="nav-text">{darkMode ? "Light Mode" : "Dark Mode"}</span>
                         </li>

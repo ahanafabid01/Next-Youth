@@ -24,6 +24,53 @@
   color: #e9edef;
 }
 
+/* Fix for desktop integration within EmployerDashboard */
+@media (min-width: 1025px) {
+  .whatsapp-container {
+    height: calc(100vh - 8rem);
+    border-radius: 12px;
+    overflow: hidden;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  }
+  
+  .dark-theme .whatsapp-container {
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+  }
+  
+  /* Fix sidebar and chat area dimensions */
+  .whatsapp-sidebar, .whatsapp-chat {
+    height: 100%;
+  }
+  
+  /* Remove fixed positioning on desktop */
+  .whatsapp-chat {
+    position: relative;
+    top: auto;
+    left: auto;
+    right: auto;
+    bottom: auto;
+    width: auto;
+    height: 100%;
+  }
+}
+
+/* Ensure message area takes proper height */
+.whatsapp-chat-body {
+  max-height: calc(100% - 120px);
+}
+
+/* Fix transitions */
+.whatsapp-sidebar, .whatsapp-chat, .whatsapp-chat-body {
+  transition: all 0.3s ease;
+}
+
+/* On smaller screens, make sure we don't interfere with dashboard layout */
+@media (max-width: 1024px) {
+  .whatsapp-container {
+    margin-top: 1rem;
+  }
+}
+
 /* Sidebar */
 .whatsapp-sidebar {
   width: 30%;
@@ -718,21 +765,24 @@
 
 /* Attachment preview */
 .whatsapp-attachment-preview {
-  position: absolute;
+  position: fixed;
   top: 0;
   left: 0;
   right: 0;
   bottom: 0;
   background-color: #f0f2f5;
-  z-index: 10;
+  z-index: 1010;
   display: flex;
   flex-direction: column;
+  height: 100vh;
+  width: 100vw;
 }
 
 .whatsapp-dark .whatsapp-attachment-preview {
   background-color: #111b21;
 }
 
+/* Improve header styling for mobile */
 .whatsapp-attachment-preview-header {
   height: 60px;
   padding: 0 16px;
@@ -740,62 +790,107 @@
   align-items: center;
   background-color: #008069;
   color: white;
+  position: sticky;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 1020;
 }
 
-.whatsapp-dark .whatsapp-attachment-preview-header {
-  background-color: #005c4b;
-}
-
-.whatsapp-attachment-preview-header h3 {
-  margin: 0 0 0 15px;
-  font-size: 16px;
-  font-weight: 500;
-}
-
-.whatsapp-attachment-preview-header .whatsapp-icon-button {
-  color: white;
-}
-
+/* Better content area for preview */
 .whatsapp-attachment-preview-content {
   flex: 1;
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 20px;
+  padding: 10px;
   overflow: auto;
+  height: calc(100% - 120px);
+  -webkit-overflow-scrolling: touch;
 }
 
+/* Improve image preview responsiveness */
 .whatsapp-attachment-preview-image {
   max-width: 100%;
-  max-height: 70vh;
+  max-height: calc(100vh - 180px);
   object-fit: contain;
   border-radius: 4px;
+  margin: 0 auto;
 }
 
+/* Fix document preview for small screens */
 .whatsapp-attachment-preview-document {
   display: flex;
   flex-direction: column;
   align-items: center;
-  padding: 40px;
+  padding: 20px;
+  width: 100%;
+  max-width: 300px;
+  margin: 0 auto;
 }
 
-.large-icon {
-  width: 80px;
-  height: 80px;
-  font-size: 40px;
-  margin-bottom: 20px;
-}
-
+/* Improve caption area for mobile */
 .whatsapp-attachment-caption {
   display: flex;
-  padding: 8px 16px;
+  padding: 10px;
   background-color: #f0f2f5;
   border-top: 1px solid rgba(0, 0, 0, 0.1);
+  position: sticky;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  z-index: 1020;
+  padding-bottom: calc(10px + env(safe-area-inset-bottom));
 }
 
 .whatsapp-dark .whatsapp-attachment-caption {
   background-color: #202c33;
   border-top: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+/* Improve file name display */
+.whatsapp-file-name {
+  max-width: 80vw;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 16px;
+  margin-top: 10px;
+}
+
+/* Safari and iOS specific adjustments */
+@supports (-webkit-touch-callout: none) {
+  .whatsapp-attachment-preview {
+    height: -webkit-fill-available;
+  }
+  
+  .whatsapp-attachment-preview-content {
+    height: calc(100vh - 180px);
+  }
+  
+  .whatsapp-attachment-caption {
+    padding-bottom: calc(15px + env(safe-area-inset-bottom));
+  }
+}
+
+/* Improve back button touch area */
+.whatsapp-attachment-preview-header .whatsapp-icon-button {
+  min-width: 44px;
+  min-height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  border-radius: 50%;
+  margin-right: 10px;
+}
+
+/* Add this to prevent possible scrolling issues */
+body.attachment-preview-open {
+  overflow: hidden;
+  position: fixed;
+  width: 100%;
+  height: 100%;
 }
 
 /* Input Area */
@@ -1946,3 +2041,216 @@
   }
 }
 
+/* Mobile optimizations - add these at the end of your CSS file */
+@media (max-width: 768px) {
+  /* Make header content smaller and more compact */
+  .whatsapp-chat-header {
+    padding: 8px 10px;
+  }
+  
+  /* Truncate name to first word only on mobile */
+  .whatsapp-chat-user-info h3 {
+    font-size: 15px;
+    max-width: 140px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  
+  /* This will display only the first word of the name */
+  @supports (-webkit-hyphens: none) {
+    .whatsapp-chat-user-info h3::after {
+      content: attr(data-name);
+      display: none;
+    }
+    
+    .whatsapp-chat-user-info h3 {
+      display: inline-block;
+    }
+    
+    .whatsapp-chat-user-info h3::first-word {
+      display: inline-block;
+    }
+  }
+  
+  /* Make status text smaller */
+  .whatsapp-user-status {
+    font-size: 11px;
+  }
+  
+  /* Make header icons smaller and more compact */
+  .whatsapp-chat-actions .whatsapp-icon-button {
+    width: 36px;
+    height: 36px;
+    font-size: 16px;
+  }
+  
+  /* Add extra padding under footer for better mobile experience */
+  .whatsapp-chat-footer {
+    padding-bottom: calc(16px + env(safe-area-inset-bottom, 10px));
+  }
+  
+  /* Ensure text input doesn't crowd on smaller screens */
+  .whatsapp-input-container {
+    padding: 7px 10px;
+  }
+  
+  .whatsapp-input-container input {
+    font-size: 14px;
+  }
+  
+  /* For iOS Safari - increase bottom padding to avoid keyboard overlap */
+  @supports (-webkit-touch-callout: none) {
+    .whatsapp-chat-footer {
+      padding-bottom: calc(20px + env(safe-area-inset-bottom, 15px));
+    }
+  }
+  
+  /* Make attachment menu more compact on mobile */
+  .whatsapp-upload-options {
+    bottom: 65px;
+  }
+  
+  /* Make emoji picker size more appropriate for mobile */
+  .whatsapp-emoji-picker {
+    bottom: 65px;
+    left: 5px;
+    max-width: 95%;
+    height: 250px;
+  }
+}
+
+/* Add a JavaScript-based solution for first-name-only display */
+@media (max-width: 768px) {
+  /* Hide the chat user name entirely - we'll rely on JS to show first name only */
+  /* This is a fallback approach that works without changing your JS code */
+  .whatsapp-chat-user-info h3 {
+    overflow: hidden;
+    position: relative;
+  }
+  
+  /* This creates a gradient fade on the right side of the name */
+  .whatsapp-chat-user-info h3:after {
+    content: "";
+    position: absolute;
+    right: 0;
+    top: 0;
+    bottom: 0;
+    width: 40px;
+    background: linear-gradient(to right, rgba(240,242,245,0), rgba(240,242,245,1));
+    pointer-events: none;
+  }
+  
+  .whatsapp-dark .whatsapp-chat-user-info h3:after {
+    background: linear-gradient(to right, rgba(32,44,51,0), rgba(32,44,51,1));
+  }
+}
+
+
+/* Mobile footer fixes - Add this to the end of the file */
+
+/* Fix for mobile chat footer visibility */
+@media (max-width: 768px) {
+  /* Primary mobile footer fixes */
+  .whatsapp-chat-footer {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    width: 100%;
+    z-index: 200;
+    padding: 10px;
+    background-color: #f0f2f5;
+    box-shadow: 0 -1px 3px rgba(0,0,0,0.1);
+    transform: translateZ(0);
+    padding-bottom: calc(10px + env(safe-area-inset-bottom));
+  }
+  
+  .whatsapp-dark .whatsapp-chat-footer {
+    background-color: #202c33;
+  }
+  
+  /* Adjust chat body to not overlap with fixed footer */
+  .whatsapp-chat-body {
+    padding-bottom: 70px;
+    height: calc(100% - 130px) !important;
+    max-height: calc(100% - 130px) !important;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+    margin-bottom: env(safe-area-inset-bottom);
+  }
+  
+  /* Fix iOS viewport issues */
+  .whatsapp-chat {
+    height: calc(100% - env(safe-area-inset-bottom)) !important;
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+  
+  /* Fix container height for mobile */
+  .whatsapp-container {
+    height: 100vh !important;
+    height: -webkit-fill-available !important;
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    overflow: hidden;
+  }
+  
+  /* Fix for browsers that don't support env() */
+  @supports not (padding-bottom: env(safe-area-inset-bottom)) {
+    .whatsapp-chat-footer {
+      padding-bottom: 15px;
+    }
+    
+    .whatsapp-chat-body {
+      padding-bottom: 60px;
+    }
+  }
+}
+
+/* iOS specific fixes */
+@supports (-webkit-touch-callout: none) {
+  .whatsapp-container {
+    height: -webkit-fill-available !important;
+  }
+  
+  /* Fix for iPhone X and newer with notches */
+  @media screen and (min-device-width: 375px) and (max-device-width: 812px) and (-webkit-min-device-pixel-ratio: 3) {
+    .whatsapp-chat-footer {
+      padding-bottom: calc(15px + env(safe-area-inset-bottom));
+    }
+  }
+  
+  /* Fix for keyboard appearance pushing content up */
+  .whatsapp-chat {
+    position: fixed;
+  }
+  
+  .whatsapp-input-container input:focus {
+    font-size: 16px; /* Prevents iOS zoom on input focus */
+  }
+}
+
+/* Android specific fixes */
+@supports not (-webkit-touch-callout: none) {
+  @media (max-width: 768px) {
+    .whatsapp-chat-footer {
+      position: fixed;
+      bottom: 0;
+    }
+  }
+}
+
+/* Fix to prevent content shifting when keyboard appears */
+@media (max-width: 768px) {
+  body.keyboard-open .whatsapp-chat-body {
+    height: calc(100% - 60px) !important; 
+  }
+  
+  body.keyboard-open .whatsapp-chat-footer {
+    position: fixed;
+    bottom: 0;
+  }
+}

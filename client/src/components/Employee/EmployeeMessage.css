@@ -1919,3 +1919,264 @@
   }
 }
 
+/* Mobile footer fixes for employee message component */
+@media (max-width: 768px) {
+  /* Always keep the footer visible and fixed */
+  .employee-message-chat-footer {
+    position: fixed !important;
+    bottom: 0 !important;
+    left: 0 !important;
+    right: 0 !important;
+    width: 100% !important;
+    z-index: 1000 !important;
+    padding: 10px !important;
+    background-color: #f0f2f5 !important;
+    box-shadow: 0 -1px 3px rgba(0,0,0,0.1) !important;
+    /* Hardware acceleration to prevent visual glitches */
+    transform: translateZ(0);
+    -webkit-transform: translateZ(0);
+    /* iOS safe area support */
+    padding-bottom: calc(10px + env(safe-area-inset-bottom)) !important;
+  }
+  
+  .employee-message-dark .employee-message-chat-footer {
+    background-color: #202c33 !important;
+  }
+  
+  /* Add space at the bottom of the chat body to prevent messages being hidden under the footer */
+  .employee-message-chat-body {
+    padding-bottom: 70px !important;
+    margin-bottom: 60px !important;
+    height: calc(100% - 130px) !important;
+    max-height: calc(100% - 130px) !important;
+    overflow-y: auto !important;
+  }
+  
+  /* Fix chat container for mobile */
+  .employee-message-chat {
+    position: fixed !important;
+    top: 0 !important;
+    left: 0 !important;
+    right: 0 !important;
+    bottom: 0 !important;
+    height: 100% !important;
+    width: 100% !important;
+    z-index: 1001 !important;
+    display: flex !important;
+    flex-direction: column !important;
+  }
+  
+  /* Make sure chat container doesn't overflow */
+  .employee-message-container {
+    position: fixed !important;
+    top: 0 !important;
+    left: 0 !important;
+    right: 0 !important;
+    bottom: 0 !important;
+    height: 100% !important;
+    width: 100% !important;
+    overflow: hidden !important;
+  }
+  
+  /* Ensure the chat visibility class works properly */
+  .employee-message-chat-visible {
+    display: flex !important;
+  }
+  
+  /* Input field styling */
+  .employee-message-input-container {
+    background-color: white !important;
+    border-radius: 20px !important;
+    padding: 10px 12px !important;
+    margin: 0 8px !important;
+    z-index: 1001 !important;
+  }
+  
+  .employee-message-dark .employee-message-input-container {
+    background-color: #2a3942 !important;
+  }
+}
+
+/* iOS specific adjustments */
+@supports (-webkit-touch-callout: none) {
+  @media (max-width: 768px) {
+    /* Handle the safe area on iPhones with notches/home indicators */
+    .employee-message-chat-footer {
+      padding-bottom: calc(15px + env(safe-area-inset-bottom)) !important;
+    }
+    
+    /* Prevent zoom on input focus */
+    .employee-message-input-container input {
+      font-size: 16px !important;
+    }
+    
+    /* Fix height calculation for iOS */
+    .employee-message-container, 
+    .employee-message-chat {
+      height: -webkit-fill-available !important;
+    }
+    
+    /* Adjust body height for iOS safe areas */
+    .employee-message-chat-body {
+      height: calc(100% - 120px - env(safe-area-inset-bottom)) !important;
+    }
+  }
+}
+
+/* Custom height calculation for all mobile browsers */
+@media (max-width: 768px) {
+  .employee-message-container, 
+  .employee-message-chat,
+  .employee-message-sidebar {
+    height: calc(var(--vh, 1vh) * 100) !important;
+  }
+  
+  .employee-message-chat-body {
+    height: calc((var(--vh, 1vh) * 100) - 130px) !important;
+  }
+}
+
+/* Attachment preview responsiveness for small screens */
+@media (max-width: 768px) {
+  /* Full screen overlay for attachment preview */
+  .employee-message-attachment-preview {
+    position: fixed !important;
+    top: 0 !important;
+    left: 0 !important;
+    right: 0 !important;
+    bottom: 0 !important;
+    z-index: 2000 !important;
+    background-color: #f0f2f5 !important;
+    display: flex !important;
+    flex-direction: column !important;
+    height: 100% !important;
+    width: 100% !important;
+  }
+
+  .employee-message-dark .employee-message-attachment-preview {
+    background-color: #111b21 !important;
+  }
+
+  /* Improved header for preview */
+  .employee-message-attachment-preview-header {
+    height: 60px !important;
+    padding: 0 16px !important;
+    display: flex !important;
+    align-items: center !important;
+    background-color: #008069 !important;
+    color: white !important;
+    position: sticky !important;
+    top: 0 !important;
+    z-index: 2010 !important;
+  }
+  
+  .employee-message-dark .employee-message-attachment-preview-header {
+    background-color: #1f2c34 !important;
+  }
+  
+  /* Make the preview content area flexible */
+  .employee-message-attachment-preview-content {
+    flex: 1 !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    padding: 10px !important;
+    overflow: auto !important;
+    height: calc(100% - 120px) !important;
+    -webkit-overflow-scrolling: touch !important;
+  }
+  
+  /* Better image sizing for mobile */
+  .employee-message-attachment-preview-image {
+    max-width: 100% !important;
+    max-height: calc(100vh - 180px) !important;
+    object-fit: contain !important;
+    border-radius: 4px !important;
+    margin: 0 auto !important;
+  }
+  
+  /* Document preview styling */
+  .employee-message-attachment-preview-document {
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: center !important;
+    padding: 20px !important;
+    width: 100% !important;
+    max-width: 300px !important;
+    margin: 0 auto !important;
+  }
+  
+  /* Style for the caption area */
+  .employee-message-attachment-caption {
+    display: flex !important;
+    padding: 10px !important;
+    background-color: #f0f2f5 !important;
+    border-top: 1px solid rgba(0, 0, 0, 0.1) !important;
+    position: sticky !important;
+    bottom: 0 !important;
+    z-index: 2010 !important;
+    padding-bottom: calc(10px + env(safe-area-inset-bottom)) !important;
+  }
+  
+  .employee-message-dark .employee-message-attachment-caption {
+    background-color: #202c33 !important;
+    border-top: 1px solid rgba(255, 255, 255, 0.1) !important;
+  }
+  
+  /* Improve file name display */
+  .employee-message-file-name {
+    max-width: 80vw !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+    white-space: nowrap !important;
+    font-size: 16px !important;
+    margin-top: 10px !important;
+  }
+  
+  /* Make back button easier to tap */
+  .employee-message-attachment-preview-header .employee-message-icon-button {
+    min-width: 44px !important;
+    min-height: 44px !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    color: white !important;
+    border-radius: 50% !important;
+    margin-right: 10px !important;
+  }
+}
+
+/* Fix for document preview in Safari */
+@supports (-webkit-touch-callout: none) {
+  .employee-message-attachment-preview {
+    height: -webkit-fill-available !important;
+  }
+  
+  .employee-message-attachment-preview-content {
+    height: calc(100vh - 180px) !important;
+  }
+  
+  .employee-message-attachment-caption {
+    padding-bottom: calc(15px + env(safe-area-inset-bottom)) !important;
+  }
+}
+
+/* Fix to prevent content shifting when keyboard appears */
+@media (max-width: 768px) {
+  body.keyboard-open .employee-message-chat-body {
+    height: calc(100% - 60px) !important; 
+  }
+  
+  body.keyboard-open .employee-message-chat-footer {
+    position: fixed !important;
+    bottom: 0 !important;
+  }
+  
+  body.attachment-preview-open {
+    overflow: hidden !important;
+    position: fixed !important;
+    width: 100% !important;
+    height: 100% !important;
+  }
+}
+

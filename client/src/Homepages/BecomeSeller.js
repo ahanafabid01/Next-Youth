@@ -277,7 +277,7 @@ const BecomeSeller = () => {
           <nav className="desktop-nav">
             <ul>
               <li><Link to="/business-solutions"><i className="fas fa-briefcase"></i>Business Solutions</Link></li>
-              <li><a href="#"><i className="fas fa-compass"></i>Explore</a></li>
+              <li><a href="/explore"><i className="fas fa-compass"></i>Explore</a></li>
               <li><a href="#"><i className="fas fa-globe"></i>English</a></li>
               <li><Link to="/become-seller" className="active"><i className="fas fa-store"></i>Become a Seller</Link></li>
               <li>
@@ -322,7 +322,7 @@ const BecomeSeller = () => {
         >
           <ul>
             <li className="nav-fade-in"><Link to="/business-solutions" onClick={handleMenuClick}><i className="fas fa-briefcase"></i>Business Solutions</Link></li>
-            <li className="nav-fade-in"><a href="#" onClick={handleMenuClick}><i className="fas fa-compass"></i>Explore</a></li>
+            <li className="nav-fade-in"><a href="/explore" onClick={handleMenuClick}><i className="fas fa-compass"></i>Explore</a></li>
             <li className="nav-fade-in"><a href="#" onClick={handleMenuClick}><i className="fas fa-globe"></i>English</a></li>
             <li className="nav-fade-in"><Link to="/become-seller" onClick={handleMenuClick} className="active"><i className="fas fa-store"></i>Become a Seller</Link></li>
             <li className="nav-fade-in"><Link to="/login" className="login" onClick={handleMenuClick}><i className="fas fa-sign-in-alt"></i>Log In</Link></li>
