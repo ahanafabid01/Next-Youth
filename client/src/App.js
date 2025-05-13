@@ -1,6 +1,7 @@
 import React, { useEffect } from "react";
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import Homepage from "./Homepages/Homepage";
+import Explore from './Homepages/Explore'; // Add this import
 import Login from "./components/Auth/Login";
 import Register from "./components/Auth/Register";
 import AdminDashboard from "./components/Admin/AdminDashboard";
@@ -91,6 +92,7 @@ const App = () => {
                 <Route path="/help" element={<EmployeeHelp />} />
                 <Route path="/employer-dashboard/messages" element={<EmployerMessage />} />
                 <Route path="/employee-dashboard/messages" element={<EmployeeMessage />} />
+                <Route path="/explore" element={<Explore />} /> {/* Added Explore route */}
             </Routes>
         </Router>
     );

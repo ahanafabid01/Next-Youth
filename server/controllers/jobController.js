@@ -790,3 +790,89 @@ export const getAllApplications = async (req, res) => {
         });
     }
 };
+
+// Add this new controller function at the end of the file
+
+export const getPublicJobs = async (req, res) => {
+  try {
+    const { page = 1, limit = 10, search, category } = req.query;
+    const skip = (parseInt(page) - 1) * parseInt(limit);
+    
+    // Build the query for available jobs only
+    const query = { status: "Available" };
+    
+    // Add category filter if provided
+    if (category && category !== "All") {
+      query.category = category;
+    }
+    
+    // Add search if provided
+    if (search) {
+      query.$or = [
+        { title: { $regex: search, $options: 'i' } },
+        { description: { $regex: search, $options: 'i' } },
+        { skills: { $in: [new RegExp(search, 'i')] } }
+      ];
+    }
+    
+    // Get jobs with pagination
+    const jobs = await jobModel.find(query)
+      .sort({ createdAt: -1 })
+      .skip(skip)
+      .limit(parseInt(limit))
+      .populate('employer', 'companyName');
+    
+    // Get total count for pagination
+    const total = await jobModel.countDocuments(query);
+    
+    return res.status(200).json({
+      success: true,
+      jobs,
+      total,
+      currentPage: parseInt(page),
+      totalPages: Math.ceil(total / parseInt(limit))
+    });
+  } catch (error) {
+    console.error("Error in getPublicJobs:", error);
+    return res.status(500).json({
+      success: false, 
+      message: "Error fetching jobs",
+      error: error.message
+    });
+  }
+};
+
+// Add this controller function
+
+export const getJobSuggestions = async (req, res) => {
+  try {
+    const { query } = req.query;
+    
+    if (!query || query.length < 2) {
+      return res.status(200).json({
+        success: true,
+        suggestions: []
+      });
+    }
+    
+    // Find jobs with titles matching the query
+    const suggestions = await jobModel.find({
+      title: { $regex: query, $options: 'i' },
+      status: "Available"
+    })
+    .select('_id title')
+    .limit(8);
+    
+    return res.status(200).json({
+      success: true,
+      suggestions
+    });
+  } catch (error) {
+    console.error("Error in getJobSuggestions:", error);
+    return res.status(500).json({
+      success: false,
+      message: "Error fetching suggestions",
+      error: error.message
+    });
+  }
+};
