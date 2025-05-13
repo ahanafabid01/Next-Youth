@@ -1,5 +1,6 @@
 import React, { useState, useRef, useEffect } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
+import axios from 'axios'; // Add this import for API calls
 import "./Homepage.css";
 import { initFaqToggle } from "../utils/faqToggle"; // Add this import
 import heroImage from '../assets/images/hero.jpg';
@@ -18,9 +19,15 @@ const Homepage = () => {
   });
   const [showToast, setShowToast] = useState(false);
   const [toastMessage, setToastMessage] = useState("");
+  const [searchSuggestions, setSearchSuggestions] = useState([]);
+  const [showSuggestions, setShowSuggestions] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
   const hamburgerRef = useRef(null);
   const menuRef = useRef(null);
-  const faqContainerRef = useRef(null); // Add this ref
+  const faqContainerRef = useRef(null);
+  const searchContainerRef = useRef(null);
+  const API_BASE_URL = process.env.REACT_APP_API_BASE_URL || "http://localhost:4000/api";
+  const navigate = useNavigate();
 
   // Handle click outside menu
   useEffect(() => {
@@ -29,6 +36,18 @@ const Homepage = () => {
         if (hamburgerRef.current && !hamburgerRef.current.contains(event.target)) {
           setIsMenuOpen(false);
         }
+      }
+    };
+
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
+  // Handle click outside search suggestions
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (searchContainerRef.current && !searchContainerRef.current.contains(event.target)) {
+        setShowSuggestions(false);
       }
     };
 
@@ -163,6 +182,70 @@ const Homepage = () => {
       document.body.style.overflow = '';
     };
   }, [isMenuOpen]);
+
+  // Fetch job suggestions as user types
+  const fetchSearchSuggestions = async (query) => {
+    if (!query.trim()) {
+      setSearchSuggestions([]);
+      setShowSuggestions(false);
+      return;
+    }
+    
+    try {
+      const response = await axios.get(`${API_BASE_URL}/jobs/suggestions`, {
+        params: { query }
+      });
+      
+      if (response.data.success) {
+        setSearchSuggestions(response.data.suggestions);
+        setShowSuggestions(true);
+      }
+    } catch (error) {
+      console.error("Error fetching suggestions:", error);
+      // Use some default suggestions if API fails
+      setSearchSuggestions([
+        { _id: "1", title: "Web Development" },
+        { _id: "2", title: "Mobile App Development" },
+        { _id: "3", title: "Graphic Design" }
+      ]);
+      setShowSuggestions(true);
+    }
+  };
+
+  // Debounce function to delay API calls while typing
+  const debounce = (func, delay) => {
+    let timeout;
+    return (...args) => {
+      clearTimeout(timeout);
+      timeout = setTimeout(() => func(...args), delay);
+    };
+  };
+
+  // Create debounced search function
+  const debouncedSearch = useRef(
+    debounce((value) => {
+      fetchSearchSuggestions(value);
+    }, 300)
+  ).current;
+
+  // Handle search input change
+  const handleSearchInputChange = (e) => {
+    const value = e.target.value;
+    setSearchQuery(value);
+    debouncedSearch(value);
+  };
+
+  // Handle suggestion click
+  const handleSuggestionClick = (suggestion) => {
+    setSearchQuery(suggestion.title);
+    setShowSuggestions(false);
+    navigate(`/explore?search=${encodeURIComponent(suggestion.title)}&highlight=${suggestion._id}`);
+  };
+
+  const handleSearchSubmit = (e) => {
+    e.preventDefault();
+    navigate(`/explore?search=${encodeURIComponent(searchQuery)}`);
+  };
 
   // Categories for the services section
   const serviceCategories = [
@@ -309,12 +392,38 @@ const Homepage = () => {
             <h1 className="hero-title">Find the perfect <span className="highlight">freelance</span> services for your business</h1>
             <p className="hero-subtitle">Connect with talented professionals from around the world to get your projects done quickly and efficiently.</p>
             
-            <div className="search-container">
-              <input type="text" placeholder="What service are you looking for today?" className="search-input" />
-              <button className="search-button">
-                <i className="fas fa-search"></i>
-                Search
-              </button>
+            {/* Updated search container with suggestions */}
+            <div className="search-container" ref={searchContainerRef}>
+              <form onSubmit={handleSearchSubmit}>
+                <input 
+                  type="text" 
+                  placeholder="What service are you looking for today?" 
+                  className="search-input"
+                  value={searchQuery}
+                  onChange={handleSearchInputChange}
+                  onFocus={() => searchQuery && setShowSuggestions(true)}
+                />
+                <button type="submit" className="search-button">
+                  <i className="fas fa-search"></i>
+                  Search
+                </button>
+              </form>
+              
+              {/* Search suggestions dropdown */}
+              {showSuggestions && searchSuggestions.length > 0 && (
+                <div className="search-suggestions">
+                  {searchSuggestions.map((suggestion) => (
+                    <div 
+                      key={suggestion._id} 
+                      className="suggestion-item"
+                      onClick={() => handleSuggestionClick(suggestion)}
+                    >
+                      <i className="fas fa-search"></i>
+                      <span>{suggestion.title}</span>
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
             
             <div className="popular-searches">

@@ -37,6 +37,7 @@ import Proposals from "./components/Employee/Proposals";
 import EmployeeHelp from "./components/Employee/EmployeeHelp";
 import EmployerMessage from "./components/Employer/EmployerMessage";
 import EmployeeMessage from "./components/Employee/EmployeeMessage";
+import Explore from './Homepages/Explore'; // Add this import
 import "./App.css";
 
 const App = () => {
@@ -83,6 +84,7 @@ const App = () => {
                 <Route path="/help" element={<EmployeeHelp />} />
                 <Route path="/employer-dashboard/messages" element={<EmployerMessage />} />
                 <Route path="/employee-dashboard/messages" element={<EmployeeMessage />} />
+                <Route path="/explore" element={<Explore />} /> {/* Added Explore route */}
             </Routes>
         </Router>
     );

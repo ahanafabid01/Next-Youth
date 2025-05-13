@@ -1,9 +1,11 @@
 import express from "express";
-import { addJob, getJobs, deleteJob, updateJobStatus, getAvailableJobs, saveJob, applyForJob, getSavedJobs, getAppliedJobs, removeSavedJob, applyWithDetails, getApplicationById, deleteApplication, getUserApplications, getApplicationByJobId, getEmployerApplications, updateApplicationStatus, getAllJobs, isAdmin, rateApplicant, updateApplication, getAllApplications } from "../controllers/jobController.js";
+import { addJob, getJobs, deleteJob, updateJobStatus, getAvailableJobs, saveJob, applyForJob, getSavedJobs, getAppliedJobs, removeSavedJob, applyWithDetails, getApplicationById, deleteApplication, getUserApplications, getApplicationByJobId, getEmployerApplications, updateApplicationStatus, getAllJobs, isAdmin, rateApplicant, updateApplication, getAllApplications, getPublicJobs, getJobSuggestions } from "../controllers/jobController.js";
 import userAuth from "../middleware/userAuth.js";
 import upload from "../middleware/uploadMiddleware.js";
 
 const router = express.Router();
+
+router.get("/public", getPublicJobs); // Get jobs for public viewing without auth
 
 router.get("/", userAuth, getJobs); // Get employer's own jobs
 router.get("/available", userAuth, getAvailableJobs); // Get all available jobs
@@ -26,5 +28,8 @@ router.put("/application/:id", userAuth, upload.array("attachments", 5), updateA
 router.get("/admin/all-jobs", userAuth, isAdmin, getAllJobs); // Get all jobs for admin
 router.post('/rate-applicant', userAuth, rateApplicant); // Rate an applicant
 router.get("/admin/applications", userAuth, getAllApplications); // Get all applications for admin
+
+// Public endpoint for search suggestions
+router.get("/suggestions", getJobSuggestions);
 
 export default router;
