@@ -1290,19 +1290,24 @@
     padding: 0.8rem 1rem;
   }
   
+  .employee-saved-logo-image {
+    height: 40px;
+  }
+  
   .employee-saved-nav {
+    display: none;
     position: fixed;
     top: 0;
-    left: 0;
-    width: 270px;
+    left: -100%; /* Start off-screen */
+    width: 80%;
+    max-width: 320px;
     height: 100vh;
     background-color: var(--light-card);
     box-shadow: var(--shadow-light);
-    z-index: 1000;
-    flex-direction: column;
+    z-index: 1010;
     padding: 5rem 2rem 2rem;
-    transform: translateX(-100%);
-    transition: transform 0.3s ease;
+    overflow-y: auto;
+    transition: left 0.3s ease;
   }
   
   .employee-saved-dark-mode .employee-saved-nav {
@@ -1311,7 +1316,10 @@
   }
   
   .employee-saved-nav.active {
-    transform: translateX(0);
+    display: flex;
+    flex-direction: column;
+    left: 0; /* Slide in from left */
+    gap: 1.2rem;
   }
   
   .employee-saved-nav-toggle {
@@ -1320,61 +1328,70 @@
     justify-content: center;
   }
   
-  .employee-saved-main {
-    padding: 1rem;
+  /* Fix the nav links in mobile view */
+  .employee-saved-nav-link {
+    font-size: 1.1rem;
+    padding: 0.7rem 0;
+    opacity: 0;
+    transform: translateX(-10px);
+    animation: employee-saved-fade-in 0.3s forwards;
+    animation-delay: calc(0.1s * var(--item-index, 0));
   }
   
-  .employee-saved-job-header {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 1rem;
-  }
-  
-  .employee-saved-job-actions {
-    width: 100%;
-    justify-content: flex-end;
-  }
-  
-  .employee-saved-job-footer {
-    flex-direction: column;
-  }
-  
-  .employee-saved-job-footer button,
-  .employee-saved-job-footer a {
-    width: 100%;
-    justify-content: center;
+  @keyframes employee-saved-fade-in {
+    to {
+      opacity: 1;
+      transform: translateX(0);
+    }
   }
 }
 
 @media (max-width: 576px) {
-  .employee-saved-title {
-    font-size: 1.5rem;
+  .employee-saved-header-right {
+    gap: 0.5rem;
   }
   
-  .employee-saved-subtitle {
-    font-size: 0.95rem;
+  .employee-saved-logo-image {
+    height: 36px;
   }
   
-  .employee-saved-job-details {
-    flex-direction: column;
-    gap: 0.8rem;
-  }
-  
-  .employee-saved-notification-container,
-  .employee-saved-profile-dropdown-container {
-    position: static;
-  }
-  
-  .employee-saved-notifications-dropdown,
-  .employee-saved-profile-dropdown {
-    position: fixed;
-    top: auto;
-    left: 0;
-    bottom: 0;
-    width: 100%;
-    max-height: 80vh;
-    border-radius: var(--border-radius) var(--border-radius) 0 0;
-    transform-origin: bottom center;
+  .employee-saved-notification-button,
+  .employee-saved-theme-toggle-button {
+    padding: 0.4rem;
+    font-size: 1.1rem;
   }
 }
 
+@media (max-width: 360px) {
+  .employee-saved-header-container {
+    padding: 0.6rem;
+  }
+  
+  .employee-saved-logo-image {
+    height: 32px;
+  }
+  
+  .employee-saved-dropdown-icon {
+    display: none;
+  }
+  
+  .employee-saved-notification-button,
+  .employee-saved-theme-toggle-button {
+    padding: 0.3rem;
+    font-size: 1rem;
+  }
+  
+  .employee-saved-profile-avatar,
+  .employee-saved-profile-avatar-icon {
+    width: 32px;
+    height: 32px;
+  }
+}
+
+/* Fix body overflow when mobile nav is active */
+body.employee-saved-mobile-nav-active {
+  overflow: hidden;
+  position: fixed;
+  width: 100%;
+  height: 100%;
+}

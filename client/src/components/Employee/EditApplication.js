@@ -161,6 +161,16 @@ const EditApplication = () => {
         }
     };
 
+    const handleBidChange = (value) => {
+        const newBid = Math.max(0, Number(value));
+        const fee = (newBid * serviceFeePercentage) / 100;
+        setFormData(prev => ({
+            ...prev,
+            bid: newBid.toString(),
+            receivedAmount: (newBid - fee).toFixed(2)
+        }));
+    };
+
     const handleFileChange = (e) => {
         const selectedFiles = Array.from(e.target.files);
         setFiles(prev => [...prev, ...selectedFiles]);
@@ -564,9 +574,9 @@ const EditApplication = () => {
                                         id="bid"
                                         name="bid"
                                         value={formData.bid}
-                                        onChange={handleInputChange}
-                                        step="0.01"
+                                        onChange={(e) => handleBidChange(e.target.value)}
                                         min="1"
+                                        step="1"
                                         required
                                     />
                                 </div>

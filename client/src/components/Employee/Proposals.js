@@ -469,7 +469,7 @@ const Proposals = () => {
             </Link>
             
             <nav className={`emp-proposals-nav ${showMobileNav ? 'active' : ''}`}>
-              <Link to="/find-jobs" className="emp-nav-link" style={{"--item-index": 0}}>Find Jobs</Link>
+              <Link to="/find-jobs" className="emp-nav-link" style={{"--item-index": 0}}>Find Work</Link>
               <Link to="/find-jobs/saved" className="emp-nav-link" style={{"--item-index": 1}}>Saved Jobs</Link>
               <Link to="/proposals" className="emp-nav-link active" style={{"--item-index": 2}}>Proposals</Link>
               <Link to="/help" className="emp-nav-link" style={{"--item-index": 3}}>Help</Link>

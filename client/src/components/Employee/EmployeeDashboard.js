@@ -58,7 +58,10 @@ const EmployeeDashboard = () => {
   });
 
   const [isDarkMode, setIsDarkMode] = useState(() => {
-    return localStorage.getItem("dashboard-theme") === "dark";
+    const dashboardTheme = localStorage.getItem("dashboard-theme");
+    const loginTheme = localStorage.getItem("theme");
+    // First check dashboard-theme, then fall back to theme
+    return dashboardTheme ? dashboardTheme === "dark" : loginTheme === "dark";
   });
 
   const API_BASE_URL = 'http://localhost:4000/api';
@@ -235,7 +238,8 @@ const EmployeeDashboard = () => {
     if (profileDropdownRef.current && !profileDropdownRef.current.contains(event.target)) {
       setShowProfileDropdown(false);
     }
-    if (!event.target.closest('.employee-dashboard-nav')) {
+    if (!event.target.closest('.employee-dashboard-nav') && 
+        !event.target.closest('.employee-dashboard-nav-toggle')) {
       setShowMobileNav(false);
     }
     if (!event.target.closest('.employee-filter-panel') && 
@@ -246,7 +250,17 @@ const EmployeeDashboard = () => {
 
   const toggleMobileNav = useCallback((e) => {
     e.stopPropagation();
-    setShowMobileNav(prev => !prev);
+    
+    // When opening nav, close other dropdowns
+    setShowMobileNav(prev => {
+      if (!prev) {
+        setShowNotifications(false);
+        setShowProfileDropdown(false);
+        setShowJobsDropdown(false);
+        setShowFilters(false);
+      }
+      return !prev;
+    });
   }, []);
 
   const toggleJobsDropdown = useCallback((e) => {
@@ -311,7 +325,13 @@ const EmployeeDashboard = () => {
   }, [navigate]);
 
   const toggleDarkMode = useCallback(() => {
-    setIsDarkMode(prev => !prev);
+    setIsDarkMode(prevMode => {
+      const newMode = !prevMode;
+      // Update both theme keys for consistency
+      localStorage.setItem("dashboard-theme", newMode ? "dark" : "light");
+      localStorage.setItem("theme", newMode ? "dark" : "light");
+      return newMode;
+    });
   }, []);
 
   const formatBudget = useCallback((job) => {
@@ -386,28 +406,37 @@ const EmployeeDashboard = () => {
 
   useEffect(() => {
     const dashboardElement = document.querySelector('.employee-dashboard-container');
-    const headerElement = document.querySelector('.employee-dashboard-header');
-    
     if (dashboardElement) {
       dashboardElement.classList.toggle('employee-dark-mode', isDarkMode);
     }
-    
-    if (headerElement) {
-      if (isDarkMode) {
-        headerElement.style.backgroundColor = 'var(--dark-card)';
-        headerElement.style.borderBottom = '1px solid var(--dark-border)';
-      } else {
-        headerElement.style.backgroundColor = 'var(--light-card)';
-        headerElement.style.borderBottom = '1px solid var(--light-border)';
-      }
-    }
-    
+    // Update both keys
     localStorage.setItem("dashboard-theme", isDarkMode ? "dark" : "light");
+    localStorage.setItem("theme", isDarkMode ? "dark" : "light");
   }, [isDarkMode]);
 
   useEffect(() => {
     localStorage.setItem("unread-notifications", unreadNotifications.toString());
   }, [unreadNotifications]);
+
+  useEffect(() => {
+    if (showMobileNav) {
+      document.body.classList.add('mobile-nav-active');
+    } else {
+      document.body.classList.remove('mobile-nav-active');
+    }
+    
+    return () => {
+      document.body.classList.remove('mobile-nav-active');
+    };
+  }, [showMobileNav]);
+
+  useEffect(() => {
+    // On initial load, check if user came from login with dark mode
+    const loginTheme = localStorage.getItem("theme");
+    if (loginTheme === "dark" && !isDarkMode) {
+      setIsDarkMode(true);
+    }
+  }, []);
 
   const currentYear = new Date().getFullYear();
   const totalPages = Math.ceil(totalJobs / jobsPerPage);
@@ -534,6 +563,7 @@ const EmployeeDashboard = () => {
               <Link to="/find-jobs/saved" className="employee-nav-link" style={{"--item-index": 1}}>Saved Jobs</Link>
               <Link to="/proposals" className="employee-nav-link" style={{"--item-index": 2}}>Proposals</Link>
               <Link to="/help" className="employee-nav-link" style={{"--item-index": 3}}>Help</Link>
+              <Link to="/employee-dashboard/messages" className="employee-nav-link" style={{"--item-index": 4}}>Messages</Link>
             </nav>
           </div>
           

@@ -302,6 +302,11 @@
   height: 36px;
   border-radius: 50%;
   object-fit: cover;
+  border: 1px solid var(--light-border);
+}
+
+.employee-dark-mode .employee-help-profile-avatar {
+  border: 1px solid var(--dark-border);
 }
 
 .employee-help-profile-avatar-icon {
@@ -361,8 +366,6 @@
 .employee-help-profile-dropdown-avatar {
   width: 48px;
   height: 48px;
-  border-radius: 50%;
-  overflow: hidden;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -372,6 +375,7 @@
   width: 100%;
   height: 100%;
   object-fit: cover;
+  border-radius: 50%;
 }
 
 .employee-help-profile-dropdown-avatar svg {
@@ -440,6 +444,196 @@
 
 .employee-dark-mode .employee-help-profile-dropdown-link:hover {
   background-color: rgba(255, 255, 255, 0.05);
+}
+
+/* Notification Styling */
+.employee-help-notification-container {
+  position: relative;
+}
+
+.employee-help-notification-button {
+  background: none;
+  border: none;
+  font-size: 1.2rem;
+  color: var(--dark-text);
+  padding: 0.5rem;
+  position: relative;
+  border-radius: 50%;
+  transition: var(--transition);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.employee-dark-mode .employee-help-notification-button {
+  color: var(--light-text);
+}
+
+.employee-help-notification-button:hover {
+  background-color: rgba(0, 0, 0, 0.05);
+}
+
+.employee-dark-mode .employee-help-notification-button:hover {
+  background-color: rgba(255, 255, 255, 0.1);
+}
+
+.employee-help-notification-badge {
+  position: absolute;
+  top: 0;
+  right: 0;
+  background-color: var(--secondary-color);
+  color: white;
+  font-size: 0.7rem;
+  font-weight: 600;
+  border-radius: 50%;
+  width: 18px;
+  height: 18px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transform: translate(40%, -20%);
+}
+
+/* Notification Dropdown */
+.employee-help-notifications-dropdown {
+  position: absolute;
+  top: 100%;
+  right: 0;
+  width: 320px;
+  background-color: var(--light-card);
+  border-radius: var(--border-radius);
+  box-shadow: var(--shadow-light);
+  overflow: hidden;
+  z-index: 1000;
+  transform-origin: top right;
+  animation: employee-help-dropdown-fade-in 0.2s ease forwards;
+}
+
+.employee-dark-mode .employee-help-notifications-dropdown {
+  background-color: var(--dark-card);
+  box-shadow: var(--shadow-dark);
+}
+
+.employee-help-notification-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1rem;
+  border-bottom: 1px solid var(--light-border);
+}
+
+.employee-dark-mode .employee-help-notification-header {
+  border-bottom: 1px solid var(--dark-border);
+}
+
+.employee-help-notification-header h3 {
+  font-weight: 600;
+  font-size: 1rem;
+  margin: 0;
+  color: var(--dark-text);
+}
+
+.employee-dark-mode .employee-help-notification-header h3 {
+  color: var(--light-text);
+}
+
+.employee-help-mark-all-read {
+  color: var(--primary-color);
+  font-size: 0.85rem;
+  font-weight: 500;
+  background: none;
+  border: none;
+  cursor: pointer;
+  transition: var(--transition);
+}
+
+.employee-help-mark-all-read:hover {
+  text-decoration: underline;
+}
+
+.employee-help-notification-list {
+  max-height: 350px;
+  overflow-y: auto;
+}
+
+.employee-help-notification-item {
+  display: flex;
+  padding: 1rem;
+  gap: 1rem;
+  border-bottom: 1px solid var(--light-border);
+  transition: var(--transition);
+}
+
+.employee-dark-mode .employee-help-notification-item {
+  border-bottom: 1px solid var(--dark-border);
+}
+
+.employee-help-notification-item:last-child {
+  border-bottom: none;
+}
+
+.employee-help-notification-item:hover {
+  background-color: rgba(0, 0, 0, 0.02);
+}
+
+.employee-dark-mode .employee-help-notification-item:hover {
+  background-color: rgba(255, 255, 255, 0.05);
+}
+
+.employee-help-notification-item.employee-help-unread {
+  background-color: rgba(58, 134, 255, 0.05);
+}
+
+.employee-dark-mode .employee-help-notification-item.employee-help-unread {
+  background-color: rgba(58, 134, 255, 0.1);
+}
+
+.employee-help-notification-icon {
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  font-size: 1.2rem;
+  color: var(--primary-color);
+  padding-top: 0.2rem;
+}
+
+.employee-help-notification-content p {
+  margin-bottom: 0.3rem;
+  font-size: 0.9rem;
+  color: var(--dark-text);
+}
+
+.employee-dark-mode .employee-help-notification-content p {
+  color: var(--light-text);
+}
+
+.employee-help-notification-time {
+  font-size: 0.8rem;
+  color: var(--light-text-secondary);
+}
+
+.employee-dark-mode .employee-help-notification-time {
+  color: var(--dark-text-secondary);
+}
+
+.employee-help-notification-footer {
+  padding: 0.8rem;
+  text-align: center;
+  border-top: 1px solid var(--light-border);
+}
+
+.employee-dark-mode .employee-help-notification-footer {
+  border-top: 1px solid var(--dark-border);
+}
+
+.employee-help-notification-footer a {
+  color: var(--primary-color);
+  font-size: 0.9rem;
+  font-weight: 500;
+}
+
+.employee-help-notification-footer a:hover {
+  text-decoration: underline;
 }
 
 /* Main Content */
@@ -596,6 +790,10 @@
 .employee-help-category-button span {
   font-size: 0.9rem;
   font-weight: 500;
+}
+
+.employee-dark-mode .employee-help-category-button span {
+  color: var(--light-text);
 }
 
 .employee-help-category-button:hover {
@@ -858,6 +1056,7 @@
 
 .employee-dark-mode .employee-help-footer {
   border-top: 1px solid var(--dark-border);
+  background-color: var(--dark-card);
 }
 
 .employee-help-footer-container {
@@ -1028,4 +1227,7 @@
     padding: 1rem;
     font-size: 0.9rem;
   }
+}
+.employee-dark-mode .employee-profile-dropdown-links {
+  background-color: var(--dark-card) !important;
 }

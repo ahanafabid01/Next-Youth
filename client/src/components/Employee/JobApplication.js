@@ -72,6 +72,16 @@ const JobApplication = () => {
             if (notificationsRef.current && !notificationsRef.current.contains(e.target)) {
                 setShowNotifications(false);
             }
+            if (!e.target.closest('.employee-find-jobs-nav') && 
+                !e.target.closest('.employee-find-jobs-nav-toggle')) {
+                setShowMobileNav(false);
+                
+                // Also remove active class from hamburger when clicked outside
+                const navToggle = document.querySelector('.employee-find-jobs-nav-toggle');
+                if (navToggle) navToggle.classList.remove('active');
+                
+                document.body.classList.remove('job-application-mobile-nav-active');
+            }
         };
         
         document.addEventListener('click', handleOutsideClick);
@@ -89,34 +99,72 @@ const JobApplication = () => {
         localStorage.setItem("dashboard-theme", isDarkMode ? "dark" : "light");
     }, [isDarkMode]);
 
+    // Add this useEffect to handle body class and cleanup
+    useEffect(() => {
+        // Clean up function for when component unmounts or mobile nav closes
+        return () => {
+            document.body.classList.remove('job-application-mobile-nav-active');
+        };
+    }, []);
+
     // Fetch user data for header
     useEffect(() => {
         const fetchUserData = async () => {
             try {
-                const employeeResponse = await axios.get("http://localhost:4000/api/auth/employee-profile", { 
-                    withCredentials: true 
-                });
+                // Make parallel requests to get both user data and verification status
+                const [userResponse, verificationResponse] = await Promise.all([
+                    axios.get("http://localhost:4000/api/auth/me", { withCredentials: true }),
+                    axios.get("http://localhost:4000/api/auth/verification-status", { withCredentials: true })
+                ]);
                 
-                if (employeeResponse.data.success) {
-                    const userData = employeeResponse.data.profile;
+                if (userResponse.data.success) {
+                    const userData = userResponse.data.user;
+                    
+                    // Process verification data properly
+                    let verificationData = null;
+                    let verificationStatus = null;
+                    
+                    if (verificationResponse.data.success) {
+                        if (verificationResponse.data.verification) {
+                            verificationData = verificationResponse.data.verification;
+                            verificationStatus = verificationData.status;
+                        }
+                    }
+                    
+                    // Update user data state with proper verification structure
                     setUserData({
-                        name: userData.name || '',
-                        profilePicture: userData.profilePicture || '',
-                        idVerification: userData.idVerification || null
+                        ...userData,
+                        idVerification: verificationData,
+                        isVerified: verificationStatus === 'verified'
                     });
                 }
             } catch (error) {
                 console.error('Error fetching user data:', error);
+                if (error.response?.status === 401) {
+                    navigate('/login');
+                }
             }
         };
 
         fetchUserData();
-    }, []);
+    }, [navigate]);
 
     // Header functions
     const toggleMobileNav = (e) => {
         e.stopPropagation();
+        
+        // Toggle active class on nav toggle button for animation
+        const navToggle = document.querySelector('.employee-find-jobs-nav-toggle');
+        navToggle.classList.toggle('active');
+        
         setShowMobileNav(prev => !prev);
+        
+        // Update body class to prevent scrolling when nav is open
+        if (!showMobileNav) {
+            document.body.classList.add('job-application-mobile-nav-active');
+        } else {
+            document.body.classList.remove('job-application-mobile-nav-active');
+        }
     };
 
     const toggleProfileDropdown = (e) => {
@@ -476,47 +524,54 @@ const JobApplication = () => {
                                 )}
                             </button>
                             
+                            {/* Updated notification content */}
                             {showNotifications && (
-                                <div className="employee-notifications-dropdown">
-                                    <div className="employee-notification-header">
+                                <div className="employee-profile-notifications-dropdown">
+                                    <div className="employee-profile-notification-header">
                                         <h3>Notifications</h3>
-                                        <button className="employee-mark-all-read" onClick={handleMarkAllAsRead}>Mark all as read</button>
+                                        <button className="employee-profile-mark-all-read" onClick={handleMarkAllAsRead}>Mark all as read</button>
                                     </div>
-                                    <div className="employee-notification-list">
-                                        <div className="employee-notification-item employee-unread">
-                                            <div className="employee-notification-icon">
-                                                {(!userData.idVerification || userData.idVerification?.status === 'rejected') ? (
+                                    <div className="employee-profile-notification-list">
+                                        <div className="employee-profile-notification-item employee-profile-unread">
+                                            <div className="employee-profile-notification-icon">
+                                                {(!userData.idVerification || 
+                                                  !userData.idVerification.frontImage || 
+                                                  !userData.idVerification.backImage || 
+                                                  userData.idVerification.status === 'rejected') ? (
                                                     <FaRegFileAlt />
-                                                ) : userData.idVerification?.status === 'verified' ? (
+                                                ) : userData.idVerification.status === 'verified' ? (
                                                     <FaCheckCircle />
                                                 ) : (
                                                     <FaClock />
                                                 )}
                                             </div>
-                                            <div className="employee-notification-content">
+                                            <div className="employee-profile-notification-content">
                                                 <p>
-                                                    {(!userData.idVerification || userData.idVerification?.status === 'rejected') ? (
+                                                    {(!userData.idVerification || 
+                                                      !userData.idVerification.frontImage || 
+                                                      !userData.idVerification.backImage || 
+                                                      userData.idVerification.status === 'rejected') ? (
                                                         "Please verify your account"
-                                                    ) : userData.idVerification?.status === 'verified' ? (
+                                                    ) : userData.idVerification.status === 'verified' ? (
                                                         "Your profile has been verified!"
                                                     ) : (
                                                         "Your verification is pending approval"
                                                     )}
                                                 </p>
-                                                <span className="employee-notification-time">2 hours ago</span>
+                                                <span className="employee-profile-notification-time">2 hours ago</span>
                                             </div>
                                         </div>
-                                        <div className="employee-notification-item employee-unread">
-                                            <div className="employee-notification-icon">
+                                        <div className="employee-profile-notification-item employee-profile-unread">
+                                            <div className="employee-profile-notification-icon">
                                                 <FaRegFileAlt />
                                             </div>
-                                            <div className="employee-notification-content">
+                                            <div className="employee-profile-notification-content">
                                                 <p>New job matching your skills is available</p>
-                                                <span className="employee-notification-time">1 day ago</span>
+                                                <span className="employee-profile-notification-time">1 day ago</span>
                                             </div>
                                         </div>
                                     </div>
-                                    <div className="employee-notification-footer">
+                                    <div className="employee-profile-notification-footer">
                                         <Link to="/notifications">View all notifications</Link>
                                     </div>
                                 </div>
@@ -549,6 +604,7 @@ const JobApplication = () => {
                                 <FaChevronDown className={`employee-dropdown-icon ${showProfileDropdown ? 'rotate' : ''}`} />
                             </button>
                             
+                            {/* Updated verification status display in profile dropdown */}
                             {showProfileDropdown && (
                                 <div className="employee-profile-dropdown">
                                     <div className="employee-profile-dropdown-header">
@@ -569,8 +625,12 @@ const JobApplication = () => {
                                                     'Not Verified'
                                                 ) : userData.idVerification.status === 'verified' ? (
                                                     <><FaCheckCircle className="employee-verified-icon" /> Verified</>
-                                                ) : userData.idVerification.status === 'pending' ? (
+                                                ) : userData.idVerification.status === 'pending' && 
+                                                    userData.idVerification.frontImage && 
+                                                    userData.idVerification.backImage ? (
                                                     <><FaClock className="employee-pending-icon" /> Verification Pending</>
+                                                ) : userData.idVerification.status === 'rejected' ? (
+                                                    <>Verification Rejected</>
                                                 ) : (
                                                     'Not Verified'
                                                 )}
@@ -584,6 +644,19 @@ const JobApplication = () => {
                                         >
                                             <FaUserCircle /> View Profile
                                         </button>
+                                        
+                                        {(!userData.idVerification || 
+                                          !userData.idVerification.frontImage || 
+                                          !userData.idVerification.backImage || 
+                                          userData.idVerification.status === 'rejected') && (
+                                            <button 
+                                                className="employee-profile-dropdown-link"
+                                                onClick={() => navigate('/verify-account')}
+                                            >
+                                                <FaRegFileAlt /> Verify Account
+                                            </button>
+                                        )}
+                                        
                                         <button 
                                             className="employee-profile-dropdown-link"
                                             onClick={() => {

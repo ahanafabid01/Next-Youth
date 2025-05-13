@@ -1,0 +1,2774 @@
+import React, { useState, useEffect, useRef, useCallback, memo, useMemo } from "react";
+import axios from "axios";
+import io from "socket.io-client";
+import { 
+  FaSearch, 
+  FaPaperPlane, 
+  FaEllipsisV, 
+  formatCallDuration,
+  toggleVideo,
+  toggleMute,
+  toggleSpeaker,
+  FaUser, 
+  FaCheck, 
+  FaCheckDouble, 
+  FaFile, 
+  FaPaperclip,
+  FaSmile,
+  FaSpinner,
+  FaArrowLeft,
+  FaDownload,
+  FaImage,
+  FaCircle,
+  FaMicrophone,
+  FaTrashAlt,
+  FaEllipsisH,
+  FaPlay,
+  FaPause,
+  FaTrash,
+  FaPhoneAlt,
+  FaVideo,
+  FaMicrophoneSlash,
+  FaVideoSlash,
+  FaPhone,
+  FaVolumeUp,
+  FaVolumeMute,
+  FaDesktop
+} from "react-icons/fa";
+import DOMPurify from "dompurify";
+import twemoji from "twemoji";
+import { useNavigate } from "react-router-dom";
+import EmojiPicker from 'emoji-picker-react';
+import "./EmployeeMessage.css";
+import logoLight from '../../assets/images/logo-light.png';
+import logoDark from '../../assets/images/logo-dark.png';
+
+// Socket connection
+const ENDPOINT = "http://localhost:4000";
+
+// Configure twemoji for better performance
+const parseTwemoji = (text) => {
+  if (!text) return '';
+  
+  // Use cache for parsed emoji html content
+  if (window.__emojiCache === undefined) {
+    window.__emojiCache = new Map();
+  }
+  
+  // Return cached version if available
+  if (window.__emojiCache.has(text)) {
+    return window.__emojiCache.get(text);
+  }
+  
+  // Parse and cache for future use
+  const parsed = twemoji.parse(text, {
+    folder: 'svg',
+    ext: '.svg',
+    className: 'emoji-icon',
+    size: 16,
+    callback: () => true
+  });
+  
+  window.__emojiCache.set(text, parsed);
+  return parsed;
+};
+
+// Create a memoized message component to prevent unnecessary re-renders
+const MessageBubble = memo(({ message, isOwn, showSenderInfo, senderName, formatTimestamp, onContextMenu }) => {
+  const [isPlaying, setIsPlaying] = useState(false);
+  const [currentTime, setCurrentTime] = useState(0);
+  const [duration, setDuration] = useState(0);
+  const audioRef = useRef(null);
+  
+  // Add memoization for content to prevent unnecessary re-renders
+  const sanitizedContent = useMemo(() => {
+    if (!message.content || message.isDeleted) return null;
+    return DOMPurify.sanitize(parseTwemoji(message.content));
+  }, [message.content, message.isDeleted]);
+  
+  // Set up audio event listeners
+  useEffect(() => {
+    if (audioRef.current) {
+      const audio = audioRef.current;
+      
+      const handleTimeUpdate = () => setCurrentTime(audio.currentTime);
+      const handleDurationChange = () => setDuration(audio.duration);
+      const handleEnded = () => setIsPlaying(false);
+      
+      audio.addEventListener('timeupdate', handleTimeUpdate);
+      audio.addEventListener('durationchange', handleDurationChange);
+      audio.addEventListener('ended', handleEnded);
+      
+      return () => {
+        audio.removeEventListener('timeupdate', handleTimeUpdate);
+        audio.removeEventListener('durationchange', handleDurationChange);
+        audio.removeEventListener('ended', handleEnded);
+      };
+    }
+  }, [message]);
+  
+  // Format audio time
+  const formatAudioTime = (time) => {
+    const minutes = Math.floor(time / 60).toString().padStart(2, '0');
+    const seconds = Math.floor(time % 60).toString().padStart(2, '0');
+    return `${minutes}:${seconds}`;
+  };
+  
+  // Play/pause audio
+  const togglePlay = (e) => {
+    e.stopPropagation();
+    const audio = audioRef.current;
+    if (!audio) return;
+    
+    if (isPlaying) {
+      audio.pause();
+    } else {
+      audio.play();
+    }
+    setIsPlaying(!isPlaying);
+  };
+  
+  return (
+    <div 
+      className={`employee-message-message ${isOwn ? "employee-message-message-own" : "employee-message-message-other"}`}
+      onContextMenu={(e) => onContextMenu(e, message)}
+    >
+      <div className={`employee-message-bubble ${isOwn ? "employee-message-bubble-own" : "employee-message-bubble-other"}`}>
+        {!isOwn && showSenderInfo && (
+          <div className="employee-message-sender-name">
+            {senderName}
+          </div>
+        )}
+        
+        <div className="employee-message-content">
+          {message.isDeleted ? (
+            <span className="employee-message-deleted-message">This message was deleted</span>
+          ) : (
+            <>
+              {message.content && (
+                <span 
+                  dangerouslySetInnerHTML={{ __html: sanitizedContent }} 
+                  className="employee-message-text-content"
+                />
+              )}
+              
+              {message.attachment && (
+                <div className="employee-message-attachment">
+                  {/* Handle voice messages */}
+                  {message.attachment.isVoiceMessage || 
+                   (message.attachment.type && message.attachment.type.startsWith("audio")) ? (
+                    <div className="employee-message-voice-message">
+                      <button 
+                        className={`employee-message-voice-play-btn ${isPlaying ? 'playing' : ''}`}
+                        onClick={togglePlay}
+                      >
+                        {isPlaying ? <FaPause /> : <FaPlay />}
+                      </button>
+                      
+                      <div className="employee-message-voice-waveform">
+                        <div className="employee-message-voice-progress" style={{ 
+                          width: `${duration ? (currentTime / duration) * 100 : 0}%` 
+                        }}></div>
+                      </div>
+                      
+                      <div className="employee-message-voice-time">
+                        {formatAudioTime(duration - currentTime)}
+                      </div>
+                      
+                      <audio 
+                        ref={audioRef} 
+                        src={message.attachment.url} 
+                        preload="metadata" 
+                        style={{ display: 'none' }}
+                      ></audio>
+                    </div>
+                  ) : message.attachment.type && message.attachment.type.startsWith("image") ? (
+                    <div className="employee-message-image-attachment">
+                      <img 
+                        src={message.attachment.url} 
+                        alt="Attachment" 
+                        onError={(e) => {
+                          e.target.onerror = null;
+                          e.target.src = "https://via.placeholder.com/300x200?text=Image+Not+Available";
+                        }}
+                      />
+                      <div className="employee-message-attachment-info">
+                        <span>{message.attachment.filename || "Image"}</span>
+                        <a 
+                          href={message.attachment.url} 
+                          download 
+                          target="_blank" 
+                          rel="noreferrer" 
+                          className="employee-message-download-btn"
+                          onClick={(e) => e.stopPropagation()}
+                        >
+                          <FaDownload />
+                        </a>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="employee-message-file-attachment">
+                      <div className="employee-message-file-icon">
+                        <FaFile />
+                      </div>
+                      <div className="employee-message-file-details">
+                        <span className="employee-message-file-name">{message.attachment.filename || "File"}</span>
+                        <a 
+                          href={message.attachment.url} 
+                          download 
+                          target="_blank" 
+                          rel="noreferrer"
+                          onClick={(e) => e.stopPropagation()}
+                        >
+                          <FaDownload />
+                        </a>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
+            </>
+          )}
+          
+          <div className="employee-message-meta">
+            <span className="employee-message-time">{formatTimestamp(message.createdAt)}</span>
+            {isOwn && (
+              <span className="employee-message-status">
+                {message.read ? <FaCheckDouble /> : <FaCheck />}
+              </span>
+            )}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}, (prevProps, nextProps) => {
+  // Custom comparison function to prevent unnecessary re-renders
+  return (
+    prevProps.message._id === nextProps.message._id &&
+    prevProps.message.content === nextProps.message.content &&
+    prevProps.message.isDeleted === nextProps.message.isDeleted &&
+    prevProps.isOwn === nextProps.isOwn
+  );
+});
+
+const EmployeeMessage = ({ darkMode }) => {
+  const navigate = useNavigate();
+  // State for conversations and messages
+  const [conversations, setConversations] = useState([]);
+  const [activeConversation, setActiveConversation] = useState(null);
+  const [messages, setMessages] = useState([]);
+  const [newMessage, setNewMessage] = useState("");
+  const [loading, setLoading] = useState(true);
+  const [page, setPage] = useState(1);
+  const [hasMore, setHasMore] = useState(true);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [loadingMore, setLoadingMore] = useState(false);
+  const [mobileView, setMobileView] = useState(false);
+  const [showConversations, setShowConversations] = useState(true);
+  const [unreadCounts, setUnreadCounts] = useState({});
+  const [showUploadOptions, setShowUploadOptions] = useState(false);
+  const [currentUser, setCurrentUser] = useState(null);
+  const [uploadProgress, setUploadProgress] = useState(0);
+  const [isUploading, setIsUploading] = useState(false);
+  // New state variables for staged attachments
+  const [stagedAttachment, setStagedAttachment] = useState(null);
+  const [attachmentCaption, setAttachmentCaption] = useState("");
+  const [showAttachmentPreview, setShowAttachmentPreview] = useState(false);
+  // State variables for message menu and deletion
+  const [selectedMessage, setSelectedMessage] = useState(null);
+  const [showMessageMenu, setShowMessageMenu] = useState(false);
+  const [menuPosition, setMenuPosition] = useState({ x: 0, y: 0 });
+  const [showDeleteMessageDialog, setShowDeleteMessageDialog] = useState(false);
+  const [deleteOption, setDeleteOption] = useState(null); // "me" or "everyone"
+  const [showDeleteConversationDialog, setShowDeleteConversationDialog] = useState(false);
+  // State variable for online users
+  const [onlineUsers, setOnlineUsers] = useState(new Set());
+  // State variables for audio recording
+  const [isRecording, setIsRecording] = useState(false);
+  const [audioBlob, setAudioBlob] = useState(null);
+  const [audioRecorder, setAudioRecorder] = useState(null);
+  const [recordingTime, setRecordingTime] = useState(0);
+  const [audioPlayback, setAudioPlayback] = useState(null);
+  const recordingTimerRef = useRef(null);
+  // State variables for emoji picker
+  const [showEmojiPicker, setShowEmojiPicker] = useState(false);
+  const emojiPickerRef = useRef(null);
+  // State variables for call functionality
+  const [callStatus, setCallStatus] = useState(null); // "ringing", "ongoing", "ended"
+  const [isIncomingCall, setIsIncomingCall] = useState(false);
+  const [isMakingCall, setIsMakingCall] = useState(false);
+  const [isCallAccepted, setIsCallAccepted] = useState(false);
+  const [isVideoCall, setIsVideoCall] = useState(false);
+  const [callerId, setCallerId] = useState(null);
+  const [callerName, setCallerName] = useState(null);
+  const [callerAvatar, setCallerAvatar] = useState(null);
+  const [calleeId, setCalleeId] = useState(null);
+  const [isMuted, setIsMuted] = useState(false);
+  const [isVideoOff, setIsVideoOff] = useState(false);
+  const [isSpeakerOn, setIsSpeakerOn] = useState(true);
+  const [callDuration, setCallDuration] = useState(0);
+  const [callTimer, setCallTimer] = useState(null);
+  const [callHistory, setCallHistory] = useState([]);
+  const [screenSharing, setScreenSharing] = useState(false);
+  
+  // Refs
+  const messagesEndRef = useRef(null);
+  const messagesContainerRef = useRef(null);
+  const messageInputRef = useRef(null);
+  const fileInputRef = useRef(null);
+  const imageInputRef = useRef(null);
+  const previousConversation = useRef(null);
+  const socketRef = useRef(null);
+  const pendingMessagesRef = useRef([]);
+  const localVideoRef = useRef(null);
+  const remoteVideoRef = useRef(null);
+  const peerConnectionRef = useRef(null);
+  const localStreamRef = useRef(null);
+  const screenStreamRef = useRef(null);
+  
+  // Add a debounced preview for the input field
+  const debouncedNewMessage = useMemo(() => {
+    return newMessage;
+  }, [newMessage]);
+  
+  // Mark a message as read
+  const markMessageAsRead = async (messageId) => {
+    try {
+      await axios.put(
+        `http://localhost:4000/api/messages/mark-read/${messageId}`,
+        {},
+        { withCredentials: true }
+      );
+    } catch (error) {
+      console.error("Error marking message as read:", error);
+    }
+  };
+  
+  // Mark all messages in a conversation as read
+  const markConversationAsRead = async (conversationId) => {
+    try {
+      await axios.put(
+        `http://localhost:4000/api/messages/mark-conversation-read/${conversationId}`,
+        {},
+        { withCredentials: true }
+      );
+      
+      // Update unread counts
+      setUnreadCounts(prev => ({
+        ...prev,
+        [conversationId]: 0
+      }));
+    } catch (error) {
+      console.error("Error marking conversation as read:", error);
+    }
+  };
+  
+  // Fetch conversations
+  const fetchConversations = useCallback(async () => {
+    try {
+      setLoading(true);
+      const response = await axios.get("http://localhost:4000/api/messages/conversations", {
+        withCredentials: true
+      });
+      
+      if (response.data.success) {
+        setConversations(response.data.conversations);
+        
+        // Get unread counts for each conversation
+        const counts = {};
+        for (const conv of response.data.conversations) {
+          const countResponse = await axios.get(`http://localhost:4000/api/messages/unread-count/${conv._id}`, {
+            withCredentials: true
+          });
+          if (countResponse.data.success) {
+            counts[conv._id] = countResponse.data.count;
+          }
+        }
+        setUnreadCounts(counts);
+        
+        // Set active conversation if none is selected
+        if (!activeConversation && response.data.conversations.length > 0) {
+          setActiveConversation(response.data.conversations[0]);
+          fetchMessages(response.data.conversations[0]._id, 1);
+        }
+      }
+      setLoading(false);
+    } catch (error) {
+      console.error("Error fetching conversations:", error);
+      setLoading(false);
+    }
+  }, [activeConversation]);
+  
+  // Helper function to update the conversation list
+  const updateConversationList = useCallback((newMessage) => {
+    setConversations(prev => {
+      // Find if the conversation exists in the list
+      const existingConversation = prev.find(conv => conv._id === newMessage.conversationId);
+      
+      if (!existingConversation) {
+        // If this is a new conversation that's not in our list yet, we'll need to fetch conversations
+        console.log("New conversation detected, refreshing conversation list");
+        fetchConversations();
+        return prev;
+      }
+      
+      // Update the existing conversation with the latest message
+      const updatedConversations = prev.map(conv => {
+        if (conv._id === newMessage.conversationId) {
+          return {
+            ...conv,
+            lastMessage: {
+              _id: newMessage._id,
+              content: newMessage.content,
+              createdAt: newMessage.createdAt,
+              attachment: newMessage.attachment,
+              read: newMessage.read
+            },
+            updatedAt: new Date().toISOString() // Ensure this conversation sorts to the top
+          };
+        }
+        return conv;
+      });
+      
+      // Sort conversations to show the one with the new message at the top
+      return [...updatedConversations].sort((a, b) => {
+        // Use updatedAt or lastMessage.createdAt for sorting
+        const aTime = a.updatedAt 
+          ? new Date(a.updatedAt).getTime() 
+          : (a.lastMessage?.createdAt ? new Date(a.lastMessage.createdAt).getTime() : 0);
+        const bTime = b.updatedAt 
+          ? new Date(b.updatedAt).getTime() 
+          : (b.lastMessage?.createdAt ? new Date(b.lastMessage.createdAt).getTime() : 0);
+        return bTime - aTime;
+      });
+    });
+  }, [fetchConversations]);
+
+  // Clean up call resources
+  const cleanupCallResources = () => {
+    // Stop call timer
+    if (callTimer) {
+      clearInterval(callTimer);
+      setCallTimer(null);
+    }
+    
+    // Stop local stream
+    if (localStreamRef.current) {
+      localStreamRef.current.getTracks().forEach(track => track.stop());
+      localStreamRef.current = null;
+    }
+    
+    // Stop screen sharing
+    if (screenStreamRef.current) {
+      screenStreamRef.current.getTracks().forEach(track => track.stop());
+      screenStreamRef.current = null;
+    }
+    
+    // Close peer connection
+    if (peerConnectionRef.current) {
+      peerConnectionRef.current.close();
+      peerConnectionRef.current = null;
+    }
+    
+    // Clear video elements
+    if (localVideoRef.current) {
+      localVideoRef.current.srcObject = null;
+    }
+    
+    if (remoteVideoRef.current) {
+      remoteVideoRef.current.srcObject = null;
+    }
+    
+    // Reset screen sharing state
+    setScreenSharing(false);
+  };
+
+  // Handle when call is ended by either party
+  const handleCallEnded = useCallback(() => {
+    // Just clean up if we've already ended
+    if (callStatus === 'ended') {
+      return;
+    }
+    
+    // Update status
+    setCallStatus('ended');
+    
+    // Show ended message
+    const callLength = callDuration;
+    
+    // Clean up resources
+    cleanupCallResources();
+    
+    // Update call history with duration
+    if (window.__currentCallId) {
+      setCallHistory(prev => 
+        prev.map(call => 
+          call.id === window.__currentCallId 
+            ? { ...call, status: 'completed', duration: callLength } 
+            : call
+        )
+      );
+    }
+    
+    // Reset state after a delay
+    setTimeout(() => {
+      setCallStatus(null);
+      setIsCallAccepted(false);
+      setIsMakingCall(false);
+      setIsIncomingCall(false);
+      setCallerId(null);
+      setCallerName(null);
+      setCallerAvatar(null);
+      setCalleeId(null);
+      setCallDuration(0);
+    }, 3000);
+  }, [callStatus, callDuration]);
+
+  // Handle when call is accepted
+  const handleCallAccepted = useCallback(async (data) => {
+    if (!peerConnectionRef.current) return;
+    
+    try {
+      // Set remote description from answer
+      await peerConnectionRef.current.setRemoteDescription(
+        new RTCSessionDescription(data.sdp)
+      );
+      
+      // Update call state
+      setIsMakingCall(false);
+      setIsCallAccepted(true);
+      setCallStatus('ongoing');
+      
+      // Start call timer
+      startCallTimer();
+      
+      // Update call in database - only if callId exists
+      if (window.__callId) {
+        try {
+          await axios.put(
+            `http://localhost:4000/api/calls/status/${window.__callId}`,
+            { status: "connected" },
+            { withCredentials: true }
+          );
+        } catch (error) {
+          console.error("Error updating call status:", error);
+        }
+      }
+      
+    } catch (error) {
+      console.error('Error handling accepted call:', error);
+      handleEndCall();
+    }
+  }, []);
+
+  // Handle when call is declined
+  const handleCallDeclined = useCallback(() => {
+    // Update call state
+    setIsMakingCall(false);
+    setCallStatus('ended');
+    
+    // Clean up resources
+    cleanupCallResources();
+    
+    // Show declined message
+    alert('Call was declined');
+    
+    // Update call history
+    setCallHistory(prev => 
+      prev.map(call => 
+        call.id === window.__currentCallId 
+          ? { ...call, status: 'declined' } 
+          : call
+      )
+    );
+    
+    // Update call in database
+    try {
+      axios.put(
+        `http://localhost:4000/api/calls/status/${window.__callId}`,
+        { status: "declined" },
+        { withCredentials: true }
+      );
+    } catch (error) {
+      console.error("Error updating call status:", error);
+    }
+    
+    // Reset state after a delay
+    setTimeout(() => {
+      setCallStatus(null);
+      setCalleeId(null);
+    }, 3000);
+  }, []);
+
+  // Handle ICE candidate from remote peer
+  const handleIceCandidate = useCallback((data) => {
+    if (peerConnectionRef.current && data.candidate) {
+      try {
+        peerConnectionRef.current.addIceCandidate(new RTCIceCandidate(data.candidate))
+          .catch(e => console.error('Error adding ICE candidate:', e));
+      } catch (error) {
+        console.error('Error handling ICE candidate:', error);
+      }
+    }
+  }, []);
+
+  // Handle incoming call
+  const handleIncomingCall = useCallback(async (callData) => {
+    // Set call state
+    setIsIncomingCall(true);
+    setCallerId(callData.callerId);
+    setCallerName(callData.callerName);
+    setCallerAvatar(callData.callerAvatar);
+    setIsVideoCall(callData.isVideoCall);
+    setCallStatus('ringing');
+    
+    // Play ringtone
+    const audio = new Audio('/sounds/ringtone.mp3');
+    audio.loop = true;
+    audio.play().catch(e => console.log('Could not play ringtone', e));
+    
+    // Save reference to stop later
+    window.__ringtone = audio;
+  }, []);
+
+  // End the current call
+  const handleEndCall = () => {
+    // Notify the other party
+    if (calleeId) {
+      socketRef.current.emit('call_end', {
+        receiverId: calleeId
+      });
+    } else if (callerId) {
+      socketRef.current.emit('call_end', {
+        receiverId: callerId
+      });
+    }
+    
+    // Update call in database - only if callId exists
+    if (window.__callId) {
+      try {
+        axios.put(
+          `http://localhost:4000/api/calls/status/${window.__callId}`,
+          { 
+            status: "ended",
+            duration: callDuration 
+          },
+          { withCredentials: true }
+        );
+      } catch (error) {
+        console.error("Error updating call status:", error);
+      }
+    }
+    
+    // Handle the rest of cleanup
+    handleCallEnded();
+  };
+
+  // Start call timer
+  const startCallTimer = () => {
+    const timer = setInterval(() => {
+      setCallDuration(prev => prev + 1);
+    }, 1000);
+    
+    setCallTimer(timer);
+  };
+
+  // Effect 1: Initialize socket only once when component mounts
+  useEffect(() => {
+    // Connect to socket server with better configuration
+    socketRef.current = io(ENDPOINT, {
+      reconnection: true,
+      reconnectionDelay: 1000,
+      reconnectionAttempts: 10,
+      transports: ['websocket']
+    });
+    
+    socketRef.current.on("connect", () => {
+      console.log("Socket connected with ID:", socketRef.current.id);
+    });
+
+    socketRef.current.on("connect_error", (error) => {
+      console.error("Socket connection error:", error);
+    });
+    
+    socketRef.current.on("disconnect", (reason) => {
+      console.log("Socket disconnected:", reason);
+    });
+    
+    // Get current user information
+    const fetchCurrentUser = async () => {
+      try {
+        const response = await axios.get("http://localhost:4000/api/auth/profile", { 
+          withCredentials: true 
+        });
+        if (response.data.success) {
+          setCurrentUser(response.data.user);
+          
+          // Tell the server this user is now online
+          if (response.data.user?._id && socketRef.current) {
+            socketRef.current.emit('user_connected', response.data.user._id);
+          }
+        }
+      } catch (error) {
+        console.error("Error fetching current user:", error);
+      }
+    };
+
+    fetchCurrentUser();
+    
+    // Add listeners for online status
+    socketRef.current.on('online_users', (userIds) => {
+      setOnlineUsers(new Set(userIds));
+    });
+    
+    socketRef.current.on('user_status_changed', ({ userId, isOnline }) => {
+      setOnlineUsers(prev => {
+        const updated = new Set(prev);
+        if (isOnline) {
+          updated.add(userId);
+        } else {
+          updated.delete(userId);
+        }
+        return updated;
+      });
+    });
+    
+    // Clean up socket connection when component unmounts
+    return () => {
+      if (socketRef.current) {
+        console.log("Cleaning up socket connection");
+        socketRef.current.disconnect();
+        socketRef.current = null;
+      }
+    };
+  }, []); // Empty dependency array - only runs once
+
+  // Effect 2: Set up message event handlers separately
+  useEffect(() => {
+    if (!socketRef.current || !currentUser) return;
+    
+    // Handler for incoming messages
+    const handleNewMessage = (message) => {
+      console.log("Received new message event:", message);
+      
+      if (!message || !message.conversationId) {
+        console.error("Invalid message received:", message);
+        return;
+      }
+      
+      // Check if this message was already deleted for the current user
+      const isDeletedForCurrentUser = message.deletedFor && 
+                                     Array.isArray(message.deletedFor) && 
+                                     message.deletedFor.some(id => 
+                                       (typeof id === 'string' && id === currentUser._id) || 
+                                       (id?._id && id._id === currentUser._id)
+                                     );
+      
+      // Skip processing if the message was deleted for this user
+      if (isDeletedForCurrentUser) {
+        console.log("Message was deleted for current user, ignoring:", message);
+        return;
+      }
+      
+      const isFromCurrentUser = message.sender && 
+        ((message.sender._id && message.sender._id === currentUser._id) || 
+         (typeof message.sender === 'string' && message.sender === currentUser._id));
+
+      // For ALL messages - update the conversation list
+      updateConversationList(message);
+      
+      // Handle messages for the active conversation
+      if (activeConversation && message.conversationId === activeConversation._id) {
+        setMessages(prev => {
+          // Check for duplicates more thoroughly
+          const isDuplicate = prev.some(m => 
+            m._id === message._id || 
+            (m.tempId && m.tempId === message._id) ||
+            (m.tempId && message.tempId && m.tempId === message.tempId) ||
+            (m.isTemp && m.content === message.content && 
+             Math.abs(new Date(m.createdAt).getTime() - new Date(message.createdAt).getTime()) < 60000)
+          );
+          
+          if (isDuplicate) {
+            console.log("Duplicate message detected, not adding:", message);
+            return prev;
+          }
+          
+          console.log("Adding new message to state:", message);
+          const newMessage = {...message, isNew: true};
+          return [...prev, newMessage];
+        });
+
+        if (!isFromCurrentUser) {
+          markMessageAsRead(message._id);
+        }
+      } 
+      // Handle messages for other conversations - update unread counts
+      else if (!isFromCurrentUser) {
+        console.log("Updating unread count for conversation:", message.conversationId);
+        setUnreadCounts(prev => ({
+          ...prev,
+          [message.conversationId]: (prev[message.conversationId] || 0) + 1
+        }));
+      }
+    };
+
+    const handleMessageDeleted = ({ messageId, deleteFor }) => {
+      console.log("Received message_deleted event:", { messageId, deleteFor });
+      
+      if (deleteFor === "everyone") {
+        setMessages(prev => 
+          prev.map(msg => 
+            msg._id === messageId ? 
+              { ...msg, isDeleted: true, content: "This message was deleted", attachment: null } : 
+              msg
+          )
+        );
+      }
+    };
+
+    console.log("Setting up socket event handlers");
+    socketRef.current.on("new_message", handleNewMessage);
+    socketRef.current.on("message_deleted", handleMessageDeleted);
+    
+    return () => {
+      if (socketRef.current) {
+        console.log("Cleaning up socket event handlers");
+        socketRef.current.off("new_message", handleNewMessage);
+        socketRef.current.off("message_deleted", handleMessageDeleted);
+      }
+    };
+  }, [activeConversation, currentUser, markMessageAsRead, updateConversationList]);
+
+  // Ensure this useEffect runs properly to join conversation rooms
+  useEffect(() => {
+    if (activeConversation && socketRef.current && socketRef.current.connected) {
+      // Leave any previously joined rooms
+      if (previousConversation.current) {
+        console.log(`Leaving conversation: ${previousConversation.current}`);
+        socketRef.current.emit('leave_conversation', previousConversation.current);
+      }
+      
+      // Join the new conversation room
+      console.log(`Joining conversation: ${activeConversation._id}`);
+      socketRef.current.emit('join_conversation', activeConversation._id);
+      
+      // Update the reference to the current conversation
+      previousConversation.current = activeConversation._id;
+    }
+  }, [activeConversation]);
+  
+  // Fetch conversations on component mount
+  useEffect(() => {
+    fetchConversations();
+    
+    // Check for mobile view
+    const handleResize = () => {
+      setMobileView(window.innerWidth < 768);
+    };
+    
+    handleResize();
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, [fetchConversations]);
+  
+  // Scroll to bottom when messages change
+  useEffect(() => {
+    if (messagesEndRef.current) {
+      messagesEndRef.current.scrollIntoView({ behavior: "smooth" });
+    }
+  }, [messages]);
+  
+  // Handle clicks outside context menus
+  useEffect(() => {
+    const handleClickOutside = (e) => {
+      // For message menu
+      if (showMessageMenu) {
+        setShowMessageMenu(false);
+      }
+      
+      // For emoji picker
+      if (showEmojiPicker && 
+          emojiPickerRef.current && 
+          !emojiPickerRef.current.contains(e.target) && 
+          !e.target.closest('.employee-message-emoji')) {
+        setShowEmojiPicker(false);
+      }
+    };
+    
+    document.addEventListener('click', handleClickOutside);
+    return () => {
+      document.removeEventListener('click', handleClickOutside);
+    };
+  }, [showMessageMenu, showEmojiPicker]);
+  
+  // Add this effect to preload common emojis
+  useEffect(() => {
+    // Preload common emoji sets to improve first render performance
+    const commonEmojis = ['😀', '😂', '👍', '❤️', '🙏', '👋', '😊', '🎉', '👏', '🔥',
+                          '😁', '😄', '😆', '😅', '😂', '🤣', '😇', '😉', '😘', '🥰',
+                          '😗', '😍', '🤔', '🤫', '🤐', '🤨', '😐', '😑', '🙄', '😬'];
+    
+    // Batch process to avoid blocking the main thread
+    const preloadEmojis = (index = 0) => {
+      if (index >= commonEmojis.length) return;
+      
+      const emoji = commonEmojis[index];
+      if (typeof twemoji !== 'undefined') {
+        twemoji.parse(emoji, {
+          folder: 'svg',
+          ext: '.svg'
+        });
+      }
+      
+      // Process next emoji in the next idle period
+      if (window.requestIdleCallback) {
+        window.requestIdleCallback(() => preloadEmojis(index + 1));
+      } else {
+        setTimeout(() => preloadEmojis(index + 1), 0);
+      }
+    };
+    
+    // Start preloading
+    preloadEmojis();
+  }, []);
+  
+  // Add this useEffect with your other socket-related useEffects
+  useEffect(() => {
+    if (!socketRef.current) return;
+
+    // Call offer received
+    socketRef.current.on('call_offer', async (data) => {
+      console.log('Call offer received:', data);
+      if (data.sdp) {
+        window.__lastOffer = data.sdp;
+      }
+      if (data.callId) {
+        window.__callId = data.callId;
+        console.log('Stored call ID:', window.__callId);
+      }
+      handleIncomingCall(data);
+    });
+
+    // Same for the other socket event listeners...
+  }, [handleIncomingCall, handleCallAccepted, handleCallDeclined, handleCallEnded, handleIceCandidate]);
+
+  // Get other participant in conversation
+  const getOtherParticipant = (conversation) => {
+    if (!conversation || !conversation.participants) return { name: "Loading..." };
+    
+    // Use currentUser._id directly instead of relying on localStorage
+    const myId = currentUser?._id;
+    if (!myId) return { name: "Loading..." };
+    
+    // Find the participant that isn't the current user
+    return conversation.participants.find(p => p._id !== myId) || { name: "Unknown" };
+  };
+
+  // Check if a user is online
+  const isUserOnline = useCallback((userId) => {
+    if (!userId) return false;
+    return onlineUsers.has(userId);
+  }, [onlineUsers]);
+  
+  // Fetch messages
+  const fetchMessages = async (conversationId, page = 1, append = false) => {
+    try {
+      setLoadingMore(true);
+      const response = await axios.get(`http://localhost:4000/api/messages/${conversationId}`, {
+        params: { page, limit: 20 },
+        withCredentials: true
+      });
+      
+      if (response.data.success) {
+        // Process messages - add stable IDs and ensure deletedFor is properly handled
+        const processedMessages = response.data.messages.map(msg => ({
+          ...msg,
+          isNew: false // Don't animate initial load
+        }));
+        
+        if (append) {
+          // Adding older messages, prepend them
+          setMessages(prev => [...processedMessages.reverse(), ...prev]);
+        } else {
+          // New conversation, replace messages
+          setMessages(processedMessages.reverse());
+        }
+        
+        setHasMore(response.data.hasMore);
+        setPage(page);
+        
+        // Mark messages as read
+        markConversationAsRead(conversationId);
+      }
+      setLoadingMore(false);
+    } catch (error) {
+      console.error("Error fetching messages:", error);
+      setLoadingMore(false);
+    }
+  };
+  
+  // Handle conversation selection
+  const handleSelectConversation = (conversation) => {
+    setActiveConversation(conversation);
+    setShowConversations(false); // Hide sidebar on mobile
+    setPage(1);
+    fetchMessages(conversation._id, 1);
+    setUnreadCounts(prev => ({
+      ...prev,
+      [conversation._id]: 0
+    }));
+  };
+  
+  // Load more messages (pagination)
+  const handleLoadMore = () => {
+    if (loadingMore || !hasMore) return;
+    fetchMessages(activeConversation._id, page + 1, true);
+  };
+  
+  // Send a new message
+  const handleSendMessage = async () => {
+    if (!newMessage.trim() || !activeConversation) return;
+    
+    // Generate a unique temp ID
+    const tempId = `temp-${Date.now()}`;
+    
+    // Current timestamp for consistency
+    const currentTimestamp = new Date().toISOString();
+    
+    // Create the message locally first for immediate display
+    const tempMessage = {
+      _id: tempId,
+      tempId: tempId,
+      content: newMessage,
+      createdAt: currentTimestamp,
+      sender: currentUser,
+      read: false,
+      isTemp: true,
+      conversationId: activeConversation._id
+    };
+    
+    // Clear input immediately for better UX
+    setNewMessage("");
+    
+    // Add to messages for immediate display
+    setMessages(prev => [...prev, tempMessage]);
+    
+    // Update the conversation list immediately to show the temp message
+    updateConversationList(tempMessage);
+    
+    try {
+      const response = await axios.post(
+        "http://localhost:4000/api/messages",
+        {
+          conversationId: activeConversation._id,
+          content: newMessage,
+          receiverId: getOtherParticipant(activeConversation)._id
+        },
+        { withCredentials: true }
+      );
+      
+      if (response.data.success) {
+        // Add the conversationId to the real message
+        const realMessage = {
+          ...response.data.message,
+          conversationId: activeConversation._id
+        };
+        
+        // Replace the temp message with the real one
+        setMessages(prev => 
+          prev.map(msg => (msg._id === tempId || msg.tempId === tempId) ? realMessage : msg)
+        );
+        
+        // Update the conversation list with the real message
+        updateConversationList(realMessage);
+        
+        // Focus back on input
+        if (messageInputRef.current) {
+          messageInputRef.current.focus();
+        }
+        
+        // Emit message through socket
+        socketRef.current.emit("send_message", realMessage);
+      }
+    } catch (error) {
+      console.error("Error sending message:", error);
+      // Remove the temp message if there was an error
+      setMessages(prev => prev.filter(msg => msg._id !== tempId && msg.tempId !== tempId));
+      
+      // Refresh conversation list to revert the temporary update
+      fetchConversations();
+    }
+  };
+  
+  // Handle file selection (first step - just preview)
+  const handleFileSelection = (event, type) => {
+    const file = event.target.files[0];
+    if (!file) return;
+
+    // Check file size
+    const maxSize = 5 * 1024 * 1024; // 5MB
+    if (file.size > maxSize) {
+      alert("File is too large. Maximum allowed size is 5MB.");
+      return;
+    }
+
+    // Validate file type
+    const allowedImageTypes = ['image/jpeg', 'image/png', 'image/gif'];
+    const allowedDocTypes = ['application/pdf', 'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document', 'text/plain'];
+    
+    if (type === 'image' && !allowedImageTypes.includes(file.type)) {
+      alert("Only JPEG, PNG and GIF images are allowed.");
+      return;
+    } else if (type === 'file' && !allowedDocTypes.includes(file.type)) {
+      alert("Only PDF, DOC, DOCX, and TXT files are allowed.");
+      return;
+    }
+
+    // Create object URL for preview
+    const previewUrl = file.type.startsWith('image/') ? URL.createObjectURL(file) : null;
+
+    // Stage the attachment for preview
+    setStagedAttachment({
+      file,
+      type: file.type,
+      filename: file.name,
+      previewUrl,
+      fileType: type
+    });
+    
+    setShowAttachmentPreview(true);
+    setShowUploadOptions(false);
+  };
+
+  // Send an attachment
+  const handleSendAttachment = async () => {
+    if (!stagedAttachment || !activeConversation) return;
+    
+    const file = stagedAttachment.file;
+    const tempId = `temp-${Date.now()}`;
+    const currentTimestamp = new Date().toISOString();
+    
+    setIsUploading(true);
+    setUploadProgress(0);
+
+    // Create temporary message for immediate display
+    const tempAttachment = {
+      type: file.type,
+      filename: file.name,
+      url: stagedAttachment.previewUrl
+    };
+    
+    const tempMessage = {
+      _id: tempId,
+      tempId, 
+      content: attachmentCaption || '',
+      attachment: tempAttachment,
+      createdAt: currentTimestamp,
+      sender: currentUser,
+      read: false,
+      isTemp: true,
+      conversationId: activeConversation._id
+    };
+    
+    // Add to messages for immediate display
+    setMessages(prev => [...prev, tempMessage]);
+    
+    // Update the conversation list immediately
+    updateConversationList(tempMessage);
+    
+    // Hide attachment preview
+    setShowAttachmentPreview(false);
+
+    const formData = new FormData();
+    formData.append('file', file);
+    formData.append('conversationId', activeConversation._id);
+    formData.append('receiverId', getOtherParticipant(activeConversation)._id);
+    
+    if (attachmentCaption) {
+      formData.append('content', attachmentCaption);
+    }
+
+    try {
+      const response = await axios.post(
+        "http://localhost:4000/api/messages/attachment",
+        formData,
+        { 
+          withCredentials: true,
+          headers: { 'Content-Type': 'multipart/form-data' },
+          onUploadProgress: (progressEvent) => {
+            const percentCompleted = Math.round((progressEvent.loaded * 100) / progressEvent.total);
+            setUploadProgress(percentCompleted);
+          }
+        }
+      );
+      
+      if (response.data.success) {
+        // Add conversationId to the real message
+        const realMessage = {
+          ...response.data.message,
+          conversationId: activeConversation._id
+        };
+        
+        // Replace the temp message with the real one
+        setMessages(prev => 
+          prev.map(msg => (msg._id === tempId || msg.tempId === tempId) ? realMessage : msg)
+        );
+        
+        // Update the conversation list with the real message
+        updateConversationList(realMessage);
+        
+        // Clean up any blob URLs
+        if (stagedAttachment.previewUrl) {
+          URL.revokeObjectURL(stagedAttachment.previewUrl);
+        }
+        
+        socketRef.current.emit("send_message", realMessage);
+      }
+    } catch (error) {
+      console.error("Error uploading file:", error);
+      alert("Failed to upload file. Please try again.");
+      
+      // Remove the temp message
+      setMessages(prev => prev.filter(msg => msg._id !== tempId && msg.tempId !== tempId));
+      
+      // Refresh conversation list to revert the temporary update
+      fetchConversations();
+    } finally {
+      setIsUploading(false);
+      setStagedAttachment(null);
+      setAttachmentCaption("");
+    }
+  };
+  
+  // Start recording
+  const startRecording = async () => {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      const mediaRecorder = new MediaRecorder(stream);
+      const audioChunks = [];
+      
+      mediaRecorder.addEventListener("dataavailable", event => {
+        audioChunks.push(event.data);
+      });
+      
+      mediaRecorder.addEventListener("stop", () => {
+        const audioBlob = new Blob(audioChunks, { type: 'audio/webm' });
+        setAudioBlob(audioBlob);
+        
+        // Stop all tracks in the stream to release the microphone
+        stream.getTracks().forEach(track => track.stop());
+      });
+      
+      // Start recording
+      mediaRecorder.start();
+      setAudioRecorder(mediaRecorder);
+      setIsRecording(true);
+      
+      // Start timer
+      setRecordingTime(0);
+      recordingTimerRef.current = setInterval(() => {
+        setRecordingTime(prev => prev + 1);
+      }, 1000);
+      
+    } catch (error) {
+      console.error("Error starting recording:", error);
+      alert("Could not access microphone. Please check permissions.");
+    }
+  };
+
+  // Stop recording
+  const stopRecording = () => {
+    if (audioRecorder && audioRecorder.state !== "inactive") {
+      audioRecorder.stop();
+      setIsRecording(false);
+      
+      // Clear timer
+      if (recordingTimerRef.current) {
+        clearInterval(recordingTimerRef.current);
+        recordingTimerRef.current = null;
+      }
+    }
+  };
+
+  // Cancel recording
+  const cancelRecording = () => {
+    if (audioRecorder && audioRecorder.state !== "inactive") {
+      audioRecorder.stop();
+    }
+    
+    setIsRecording(false);
+    setAudioBlob(null);
+    
+    // Clear timer
+    if (recordingTimerRef.current) {
+      clearInterval(recordingTimerRef.current);
+      recordingTimerRef.current = null;
+    }
+    
+    setRecordingTime(0);
+  };
+
+  // Send voice message
+  const sendVoiceMessage = async () => {
+    if (!audioBlob || !activeConversation) return;
+    
+    // Generate a unique temp ID
+    const tempId = `temp-${Date.now()}`;
+    const currentTimestamp = new Date().toISOString();
+    
+    // Create a temp URL for immediate display
+    const audioUrl = URL.createObjectURL(audioBlob);
+    
+    // Create temporary message for immediate display
+    const tempAttachment = {
+      type: 'audio/webm',
+      filename: 'Voice message',
+      url: audioUrl,
+      isVoiceMessage: true
+    };
+    
+    const tempMessage = {
+      _id: tempId,
+      tempId,
+      content: '',
+      attachment: tempAttachment,
+      createdAt: currentTimestamp,
+      sender: currentUser,
+      read: false,
+      isTemp: true,
+      conversationId: activeConversation._id
+    };
+    
+    // Add to messages for immediate display
+    setMessages(prev => [...prev, tempMessage]);
+    updateConversationList(tempMessage);
+    
+    // Reset audio state
+    setAudioBlob(null);
+    
+    // Create form data for upload
+    const formData = new FormData();
+    formData.append('file', audioBlob, 'voice-message.webm');
+    formData.append('conversationId', activeConversation._id);
+    formData.append('receiverId', getOtherParticipant(activeConversation)._id);
+    formData.append('messageType', 'voice');
+    
+    try {
+      setIsUploading(true);
+      setUploadProgress(0);
+      
+      const response = await axios.post(
+        "http://localhost:4000/api/messages/attachment",
+        formData,
+        { 
+          withCredentials: true,
+          headers: { 'Content-Type': 'multipart/form-data' },
+          onUploadProgress: (progressEvent) => {
+            const percentCompleted = Math.round((progressEvent.loaded * 100) / progressEvent.total);
+            setUploadProgress(percentCompleted);
+          }
+        }
+      );
+      
+      if (response.data.success) {
+        // Add conversationId to the real message
+        const realMessage = {
+          ...response.data.message,
+          conversationId: activeConversation._id
+        };
+        
+        // Replace the temp message with the real one
+        setMessages(prev => 
+          prev.map(msg => (msg._id === tempId || msg.tempId === tempId) ? realMessage : msg)
+        );
+        
+        // Update the conversation list with the real message
+        updateConversationList(realMessage);
+        
+        // Clean up the blob URL
+        URL.revokeObjectURL(audioUrl);
+        
+        // Emit to socket
+        socketRef.current.emit("send_message", realMessage);
+      }
+    } catch (error) {
+      console.error("Error sending voice message:", error);
+      alert("Failed to send voice message. Please try again.");
+      
+      // Remove the temp message
+      setMessages(prev => prev.filter(msg => msg._id !== tempId && msg.tempId !== tempId));
+      
+      // Revoke the blob URL
+      URL.revokeObjectURL(audioUrl);
+      
+      // Refresh conversation list
+      fetchConversations();
+    } finally {
+      setIsUploading(false);
+    }
+  };
+
+  // Format recording time
+  const formatTime = (seconds) => {
+    const mins = Math.floor(seconds / 60).toString().padStart(2, '0');
+    const secs = (seconds % 60).toString().padStart(2, '0');
+    return `${mins}:${secs}`;
+  };
+
+  // Handle search
+  const handleSearch = (e) => {
+    setSearchTerm(e.target.value);
+  };
+  
+  // Filter conversations based on search term
+  const filteredConversations = conversations.filter(conv => {
+    // Only run this if we have the currentUser properly loaded
+    if (!currentUser) return true;
+    
+    const otherParticipant = getOtherParticipant(conv);
+    
+    return otherParticipant?.name?.toLowerCase().includes(searchTerm.toLowerCase());
+  });
+  
+  // Format timestamp
+  const formatTimestamp = (timestamp) => {
+    const date = new Date(timestamp);
+    const today = new Date();
+    
+    if (date.toDateString() === today.toDateString()) {
+      return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    }
+    
+    if (today.getTime() - date.getTime() < 7 * 24 * 60 * 60 * 1000) {
+      return date.toLocaleDateString([], { weekday: 'short' });
+    }
+    
+    return date.toLocaleDateString([], { month: 'short', day: 'numeric' });
+  };
+  
+  // Check if a message is from the current user
+  const isOwnMessage = (message) => {
+    if (!currentUser || !message) return false;
+    
+    // Handle case where message is the temp message we created
+    if (message.isTemp) return true;
+    
+    // Handle populated sender object case
+    if (message.sender && message.sender._id) {
+      return message.sender._id === currentUser._id;
+    }
+    
+    // Handle string sender ID case
+    if (typeof message.sender === 'string') {
+      return message.sender === currentUser._id;
+    }
+    
+    return false;
+  };
+  
+  // Handle message context menu
+  const handleMessageContextMenu = (e, message) => {
+    e.preventDefault(); // Prevent the default context menu
+    
+    // Only allow context menu for our own messages or received messages
+    if (!message.isDeleted) {
+      setSelectedMessage(message);
+      setShowMessageMenu(true);
+      
+      // Calculate position for the menu
+      let x = e.clientX;
+      let y = e.clientY;
+      
+      // Make sure menu doesn't go off-screen
+      if (x + 200 > window.innerWidth) {
+        x = window.innerWidth - 200;
+      }
+      
+      if (y + 150 > window.innerHeight) {
+        y = window.innerHeight - 150;
+      }
+      
+      setMenuPosition({ x, y });
+    }
+  };
+  
+  // Handle message deletion
+  const handleDeleteMessage = async (deleteFor = "me") => {
+    if (!selectedMessage) return;
+    
+    try {
+      // Close the dialog immediately for better UX
+      setShowDeleteMessageDialog(false);
+      
+      // Capture the message ID before making the API call
+      const messageId = selectedMessage._id;
+      
+      if (deleteFor === "me") {
+        // For "delete for me", completely remove the message from UI
+        setMessages(prev => prev.filter(msg => msg._id !== messageId));
+      } else {
+        // For "delete for everyone", update UI to show "This message was deleted"
+        setMessages(prev => 
+          prev.map(msg => 
+            msg._id === messageId ? 
+              { ...msg, isDeleted: true, content: "This message was deleted", attachment: null } : 
+              msg
+          )
+        );
+      }
+      
+      // Make API call to delete the message
+      const response = await axios.delete(
+        `http://localhost:4000/api/messages/message/${messageId}?deleteFor=${deleteFor}`,
+        { withCredentials: true }
+      );
+      
+      if (response.data.success) {
+        console.log(`Message deleted successfully with option: ${deleteFor}`);
+        
+        // Emit socket event for "delete for everyone" option only
+        if (deleteFor === "everyone" && activeConversation) {
+          socketRef.current.emit("delete_message", {
+            messageId: messageId,
+            conversationId: activeConversation._id,
+            deleteFor: "everyone"
+          });
+        }
+      } else {
+        // If API call fails, refresh messages to restore state
+        console.error("API returned error:", response.data.message);
+        fetchMessages(activeConversation._id);
+        alert("Failed to delete message: " + response.data.message);
+      }
+    } catch (error) {
+      console.error("Error deleting message:", error);
+      // Refresh messages to ensure UI is in sync with server
+      if (activeConversation) {
+        fetchMessages(activeConversation._id);
+      }
+    } finally {
+      // Clean up
+      setShowMessageMenu(false);
+      setSelectedMessage(null);
+    }
+  };
+  
+  // Handle conversation deletion
+  const handleDeleteConversation = async () => {
+    if (!activeConversation) return;
+    
+    try {
+      setShowDeleteConversationDialog(false); // Close dialog immediately for better UX
+      
+      // Save current conversation ID and list before deletion
+      const conversationId = activeConversation._id;
+      const currentConversations = [...conversations];
+      
+      // Optimistically update UI
+      setConversations(prev => 
+        prev.filter(conv => conv._id !== conversationId)
+      );
+      
+      // Get the next available conversation if any
+      const remainingConversations = currentConversations.filter(c => c._id !== conversationId);
+      
+      if (remainingConversations.length > 0) {
+        const nextConversation = remainingConversations[0]; // Get first available
+        setActiveConversation(nextConversation);
+        fetchMessages(nextConversation._id);
+      } else {
+        setActiveConversation(null);
+        setMessages([]);
+      }
+      
+      // Make the API call
+      const response = await axios.delete(
+        `http://localhost:4000/api/messages/conversation/${conversationId}`,
+        { withCredentials: true }
+      );
+      
+      if (!response.data.success) {
+        console.error("API returned error:", response.data.message);
+        // Restore previous state
+        setConversations(currentConversations);
+        alert(`Failed to delete conversation: ${response.data.message}`);
+      } else {
+        console.log("Conversation deleted successfully");
+      }
+      
+    } catch (error) {
+      console.error("Error deleting conversation:", error);
+      // Provide more detailed error information
+      const errorMessage = error.response?.data?.message || error.message || "Unknown error";
+      alert(`Failed to delete conversation: ${errorMessage}`);
+      // Refresh conversation list to ensure UI is in sync with server
+      fetchConversations();
+    }
+  };
+  
+  // Handle exit back to dashboard
+  const handleExit = () => {
+    navigate('/employee-dashboard');
+  };
+  
+  // Handle emoji click
+  const handleEmojiClick = (emojiData) => {
+    const emoji = emojiData.emoji;
+    
+    // Use requestAnimationFrame for smoother UI updates
+    window.requestAnimationFrame(() => {
+      setNewMessage(prev => prev + emoji);
+      
+      // Preload emoji
+      if (typeof twemoji !== 'undefined') {
+        twemoji.parse(emoji, {
+          folder: 'svg',
+          ext: '.svg'
+        });
+      }
+      
+      // Focus back on input in the next frame
+      window.requestAnimationFrame(() => {
+        if (messageInputRef.current) {
+          messageInputRef.current.focus();
+        }
+      });
+    });
+  };
+
+  // Render messages with memoized component
+  const renderMessages = useCallback(() => {
+    let lastDate = null;
+    let lastSenderId = null;
+    
+    return messages
+      // Improved filter to properly handle both types of message deletion
+      .filter(message => {
+        // If the message is in the user's deletedFor array, filter it out completely
+        const isDeletedForCurrentUser = message.deletedFor && 
+                                       Array.isArray(message.deletedFor) && 
+                                       message.deletedFor.some(id => 
+                                         (typeof id === 'string' && id === currentUser?._id) || 
+                                         (id?._id && id._id === currentUser?._id)
+                                       );
+        
+        // Skip the message entirely if it was deleted for current user
+        if (isDeletedForCurrentUser) {
+          return false;
+        }
+        
+        // Keep all other messages (including those deleted for everyone)
+        return true;
+      })
+      .map((message, index) => {
+        const isOwn = isOwnMessage(message);
+        const messageDate = new Date(message.createdAt).toDateString();
+        const showDate = lastDate !== messageDate;
+        if (showDate) lastDate = messageDate;
+        
+        const showSenderInfo = lastSenderId !== message.sender?._id;
+        lastSenderId = message.sender?._id;
+        
+        const senderName = isOwn ? 'You' : (message.sender ? message.sender.name : 'Unknown');
+        
+        return (
+          <React.Fragment key={message._id || message.tempId || index}>
+            {showDate && (
+              <div className="employee-message-date-divider">
+                <span>{new Date(message.createdAt).toLocaleDateString()}</span>
+              </div>
+            )}
+            
+            <MessageBubble
+              message={message}
+              isOwn={isOwn}
+              showSenderInfo={showSenderInfo}
+              senderName={senderName}
+              formatTimestamp={formatTimestamp}
+              onContextMenu={handleMessageContextMenu}
+            />
+          </React.Fragment>
+        );
+      });
+  }, [messages, currentUser, isOwnMessage, handleMessageContextMenu]);
+
+  // Initialize WebRTC peer connection
+  const initializePeerConnection = useCallback(() => {
+    // Close any existing connections
+    if (peerConnectionRef.current) {
+      peerConnectionRef.current.close();
+    }
+    
+    // Create new connection with STUN/TURN servers for NAT traversal
+    peerConnectionRef.current = new RTCPeerConnection({
+      iceServers: [
+        { urls: 'stun:stun.l.google.com:19302' },
+        { urls: 'stun:stun1.l.google.com:19302' },
+        // You should add proper TURN servers in production
+        // { urls: 'turn:your-turn-server.com', username: 'username', credential: 'credential' }
+      ]
+    });
+    
+    // Handle ICE candidates
+    peerConnectionRef.current.onicecandidate = (event) => {
+      if (event.candidate) {
+        // Send the ICE candidate to the remote peer via signaling
+        socketRef.current.emit('ice_candidate', {
+          candidate: event.candidate,
+          receiverId: isIncomingCall ? callerId : calleeId
+        });
+      }
+    };
+    
+    // Handle connection state changes
+    peerConnectionRef.current.onconnectionstatechange = () => {
+      console.log('Connection state:', peerConnectionRef.current.connectionState);
+      if (peerConnectionRef.current.connectionState === 'disconnected' || 
+          peerConnectionRef.current.connectionState === 'failed') {
+        handleEndCall();
+      }
+    };
+    
+    // Handle incoming tracks from remote peer
+    peerConnectionRef.current.ontrack = (event) => {
+      console.log('Received remote track');
+      if (remoteVideoRef.current) {
+        remoteVideoRef.current.srcObject = event.streams[0];
+      }
+    };
+    
+    return peerConnectionRef.current;
+  }, [callerId, calleeId, isIncomingCall]);
+
+  // Initialize media stream
+  const initializeMediaStream = async (isVideo = false) => {
+    try {
+      // Get user's media based on call type
+      const stream = await navigator.mediaDevices.getUserMedia({
+        audio: true,
+        video: isVideo ? {
+          width: { ideal: 1280 },
+          height: { ideal: 720 },
+          facingMode: 'user'
+        } : false
+      });
+      
+      // Save the stream reference
+      localStreamRef.current = stream;
+      
+      // Set local video
+      if (localVideoRef.current) {
+        localVideoRef.current.srcObject = stream;
+      }
+      
+      // Add tracks to peer connection
+      if (peerConnectionRef.current) {
+        stream.getTracks().forEach(track => {
+          peerConnectionRef.current.addTrack(track, stream);
+        });
+      }
+      
+      return stream;
+    } catch (error) {
+      console.error('Error getting media stream:', error);
+      alert('Could not access camera/microphone. Please check your permissions.');
+      handleEndCall();
+      return null;
+    }
+  };
+
+  // Handle screen sharing
+  const toggleScreenSharing = async () => {
+    try {
+      if (screenSharing) {
+        // Stop screen sharing
+        if (screenStreamRef.current) {
+          screenStreamRef.current.getTracks().forEach(track => {
+            track.stop();
+            
+            // Remove screen track from peer connection
+            if (peerConnectionRef.current) {
+              const senders = peerConnectionRef.current.getSenders();
+              const sender = senders.find(s => s.track.kind === 'video');
+              if (sender) {
+                // Replace screen track with camera track
+                if (localStreamRef.current) {
+                  const videoTrack = localStreamRef.current.getVideoTracks()[0];
+                  if (videoTrack) {
+                    sender.replaceTrack(videoTrack);
+                    
+                    // Update local video
+                    if (localVideoRef.current) {
+                      localVideoRef.current.srcObject = localStreamRef.current;
+                    }
+                  }
+                }
+              }
+            }
+          });
+        }
+        screenStreamRef.current = null;
+      } else {
+        // Start screen sharing
+        const screenStream = await navigator.mediaDevices.getDisplayMedia({
+          video: true,
+          audio: true
+        });
+        
+        screenStreamRef.current = screenStream;
+        
+        // Replace video track in peer connection
+        if (peerConnectionRef.current) {
+          const senders = peerConnectionRef.current.getSenders();
+          const sender = senders.find(s => s.track.kind === 'video');
+          if (sender) {
+            const screenVideoTrack = screenStream.getVideoTracks()[0];
+            await sender.replaceTrack(screenVideoTrack);
+          }
+        }
+        
+        // Update local video
+        if (localVideoRef.current) {
+          localVideoRef.current.srcObject = screenStream;
+        }
+        
+        // Handle when user stops sharing screen via browser UI
+        screenStream.getVideoTracks()[0].onended = () => {
+          toggleScreenSharing();
+        };
+      }
+      
+      setScreenSharing(!screenSharing);
+    } catch (error) {
+      console.error('Error during screen sharing:', error);
+      alert('Could not start screen sharing. Please try again.');
+    }
+  };
+
+  // Format call duration
+  const formatCallDuration = (seconds) => {
+    const hrs = Math.floor(seconds / 3600);
+    const mins = Math.floor((seconds % 3600) / 60);
+    const secs = seconds % 60;
+    
+    return [
+      hrs > 0 ? String(hrs).padStart(2, '0') : null,
+      String(mins).padStart(2, '0'),
+      String(secs).padStart(2, '0')
+    ]
+      .filter(Boolean)
+      .join(':');
+  };
+
+  // Initiate a call
+  const initiateCall = async (isVideo = false) => {
+    if (!activeConversation) return;
+    
+    const receiver = getOtherParticipant(activeConversation);
+    
+    // Initialize call state
+    setIsVideoCall(isVideo);
+    setIsMakingCall(true);
+    setCallStatus('ringing');
+    setCalleeId(receiver._id);
+    
+    // Initialize WebRTC
+    initializePeerConnection();
+    
+    try {
+      // Get media stream
+      const stream = await initializeMediaStream(isVideo);
+      if (!stream) return;
+      
+      // Create offer
+      const offer = await peerConnectionRef.current.createOffer({
+        offerToReceiveAudio: true,
+        offerToReceiveVideo: isVideo
+      });
+      
+      // Set local description
+      await peerConnectionRef.current.setLocalDescription(offer);
+      
+      // Send call offer via socket
+      socketRef.current.emit('call_offer', {
+        callerId: currentUser._id,
+        callerName: currentUser.name,
+        callerAvatar: currentUser.profilePicture || null,
+        receiverId: receiver._id,
+        sdp: offer,
+        conversationId: activeConversation._id,
+        isVideoCall: isVideo
+      });
+      
+      // Save call to history
+      const newCall = {
+        id: Date.now().toString(),
+        participantId: receiver._id,
+        participantName: receiver.name,
+        participantAvatar: receiver.profilePicture || null,
+        timestamp: new Date().toISOString(),
+        duration: 0,
+        status: 'outgoing',
+        isVideoCall: isVideo
+      };
+      
+      setCallHistory(prev => [newCall, ...prev]);
+      
+      // Record call in database
+      try {
+        await axios.post(
+          "http://localhost:4000/api/calls",
+          {
+            receiverId: receiver._id,
+            conversationId: activeConversation._id,
+            callType: isVideo ? "video" : "audio",
+            status: "initiated"
+          },
+          { withCredentials: true }
+        );
+      } catch (error) {
+        console.error("Error saving call record:", error);
+      }
+      
+    } catch (error) {
+      console.error('Error initiating call:', error);
+      handleEndCall();
+    }
+  };
+
+  // Accept incoming call
+  const acceptCall = async () => {
+    try {
+      // Stop ringtone
+      if (window.__ringtone) {
+        window.__ringtone.pause();
+        window.__ringtone = null;
+      }
+      
+      // Initialize WebRTC
+      initializePeerConnection();
+      
+      // Get media stream
+      const stream = await initializeMediaStream(isVideoCall);
+      if (!stream) return;
+      
+      // Set call as accepted
+      setIsIncomingCall(false);
+      setIsCallAccepted(true);
+      setCallStatus('ongoing');
+      
+      // Start call timer
+      startCallTimer();
+      
+      // Set remote description from offer
+      await peerConnectionRef.current.setRemoteDescription(new RTCSessionDescription(window.__lastOffer));
+      
+      // Create answer
+      const answer = await peerConnectionRef.current.createAnswer();
+      
+      // Set local description
+      await peerConnectionRef.current.setLocalDescription(answer);
+      
+      // Send answer to caller
+      socketRef.current.emit('call_answer', {
+        calleeId: currentUser._id,
+        callerId: callerId,
+        sdp: answer,
+        accepted: true
+      });
+      
+      // Update call in database
+      try {
+        await axios.put(
+          `http://localhost:4000/api/calls/status/${window.__callId}`,
+          { status: "accepted" },
+          { withCredentials: true }
+        );
+      } catch (error) {
+        console.error("Error updating call status:", error);
+      }
+      
+    } catch (error) {
+      console.error('Error accepting call:', error);
+      handleEndCall();
+    }
+  };
+
+  // Decline incoming call
+  const declineCall = () => {
+    // Stop ringtone
+    if (window.__ringtone) {
+      window.__ringtone.pause();
+      window.__ringtone = null;
+    }
+    
+    // Send decline message
+    socketRef.current.emit('call_answer', {
+      calleeId: currentUser._id,
+      callerId: callerId,
+      accepted: false
+    });
+    
+    // Reset call state
+    setIsIncomingCall(false);
+    setCallerId(null);
+    setCallerName(null);
+    setCallerAvatar(null);
+    setCallStatus(null);
+    
+    // Update call in database
+    try {
+      axios.put(
+        `http://localhost:4000/api/calls/status/${window.__callId}`,
+        { status: "declined" },
+        { withCredentials: true }
+      );
+    } catch (error) {
+      console.error("Error updating call status:", error);
+    }
+  };
+
+  // Toggle mute
+  const toggleMute = () => {
+    if (localStreamRef.current) {
+      const audioTracks = localStreamRef.current.getAudioTracks();
+      audioTracks.forEach(track => {
+        track.enabled = isMuted;
+      });
+      setIsMuted(!isMuted);
+    }
+  };
+
+  // Toggle video
+  const toggleVideo = () => {
+    if (localStreamRef.current) {
+      const videoTracks = localStreamRef.current.getVideoTracks();
+      videoTracks.forEach(track => {
+        track.enabled = isVideoOff;
+      });
+      setIsVideoOff(!isVideoOff);
+    }
+  };
+
+  // Toggle speaker
+  const toggleSpeaker = () => {
+    if (remoteVideoRef.current && remoteVideoRef.current.srcObject) {
+      const audioEl = document.createElement('audio');
+      audioEl.srcObject = remoteVideoRef.current.srcObject;
+      audioEl.setSinkId(isSpeakerOn ? 'default' : '');
+      setIsSpeakerOn(!isSpeakerOn);
+    }
+  };
+
+  return (
+    <div className={`employee-message-container ${darkMode ? "employee-message-dark" : ""}`}>
+      <div className={`employee-message-sidebar ${mobileView && !showConversations ? "employee-message-sidebar-hidden" : ""}`}>
+        <div className="employee-message-header">
+          <div className="employee-message-user-info">
+            {currentUser?.profilePicture ? (
+              <img src={currentUser.profilePicture} alt="Profile" className="employee-message-profile-image" />
+            ) : (
+              <div className="employee-message-default-avatar employee-message-header-avatar">
+                {currentUser?.name ? currentUser.name.charAt(0).toUpperCase() : "U"}
+              </div>
+            )}
+            <h2>Messages</h2>
+          </div>
+          <div className="employee-message-header-actions">
+            <button className="employee-message-icon-button" onClick={handleExit}>
+              <FaArrowLeft />
+            </button>
+          </div>
+        </div>
+        
+        <div className="employee-message-search">
+          <div className="employee-message-search-container">
+            <FaSearch className="employee-message-search-icon" />
+            <input 
+              type="text" 
+              placeholder="Search or start new chat" 
+              value={searchTerm}
+              onChange={handleSearch}
+            />
+          </div>
+        </div>
+        
+        <div className="employee-message-chats">
+          {loading ? (
+            <div className="employee-message-loading">
+              <FaSpinner className="employee-message-spinner" />
+              <p>Loading conversations...</p>
+            </div>
+          ) : filteredConversations.length > 0 ? (
+            filteredConversations.map(conversation => {
+              const otherParticipant = getOtherParticipant(conversation);
+              const isActive = activeConversation && conversation._id === activeConversation._id;
+              const unreadCount = unreadCounts[conversation._id] || 0;
+              
+              // Get appropriate preview text for the conversation
+              const getPreviewText = () => {
+                if (!conversation.lastMessage) return "Start a conversation";
+                
+                if (conversation.lastMessage.attachment) {
+                  if (conversation.lastMessage.attachment.type?.startsWith("image")) {
+                    return "📷 Photo";
+                  }
+                  return "📎 Document";
+                }
+                
+                if (!conversation.lastMessage.content) return "No message";
+                
+                return conversation.lastMessage.content.length > 40
+                  ? `${conversation.lastMessage.content.substring(0, 40)}...`
+                  : conversation.lastMessage.content;
+              };
+              
+              // Determine if this is a new message that just arrived
+              const isNewMessage = conversation.lastMessage && 
+                                   new Date().getTime() - new Date(conversation.lastMessage.createdAt).getTime() < 10000;
+              
+              return (
+                <div 
+                  key={conversation._id}
+                  className={`employee-message-chat-item ${isActive ? "employee-message-active-chat" : ""} ${isNewMessage ? "employee-message-new-message-highlight" : ""}`}
+                  onClick={() => handleSelectConversation(conversation)}
+                >
+                  <div className="employee-message-chat-avatar">
+                    {otherParticipant.profilePicture ? (
+                      <img src={otherParticipant.profilePicture} alt={otherParticipant.name} />
+                    ) : (
+                      <div className="employee-message-default-avatar">
+                        {otherParticipant.name ? otherParticipant.name.charAt(0).toUpperCase() : "?"}
+                      </div>
+                    )}
+                  </div>
+                  
+                  <div className="employee-message-chat-details">
+                    <div className="employee-message-chat-header">
+                      <h4>{otherParticipant.name}</h4>
+                      <span className="employee-message-chat-time">
+                        {conversation.lastMessage ? formatTimestamp(conversation.lastMessage.createdAt) : ""}
+                      </span>
+                    </div>
+                    
+                    <div className="employee-message-chat-message">
+                      <p className={unreadCount > 0 ? "employee-message-unread-text" : ""}>
+                        {getPreviewText()}
+                      </p>
+                      
+                      {unreadCount > 0 && (
+                        <div className="employee-message-unread-count">{unreadCount}</div>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              );
+            })
+          ) : (
+            <div className="employee-message-empty">
+              <p>No conversations found</p>
+            </div>
+          )}
+        </div>
+      </div>
+      
+      <div className={`employee-message-chat ${mobileView && showConversations ? "employee-message-chat-hidden" : ""}`}>
+        {activeConversation ? (
+          <>
+            <div className="employee-message-chat-header">
+              {mobileView && (
+                <button 
+                  className="employee-message-back-button"
+                  onClick={() => setShowConversations(true)}
+                >
+                  <FaArrowLeft />
+                </button>
+              )}
+              
+              <div className="employee-message-chat-user">
+                <div className="employee-message-chat-avatar">
+                  {getOtherParticipant(activeConversation)?.profilePicture ? (
+                    <img 
+                      src={getOtherParticipant(activeConversation).profilePicture} 
+                      alt={getOtherParticipant(activeConversation)?.name || "User"} 
+                      onError={(e) => {
+                        e.target.onerror = null;
+                        e.target.src = "https://via.placeholder.com/40?text=?"; // Fallback image
+                      }}
+                    />
+                  ) : (
+                    <div className="employee-message-default-avatar">
+                      {getOtherParticipant(activeConversation)?.name?.charAt(0).toUpperCase() || "?"}
+                    </div>
+                  )}
+                </div>
+                
+                <div className="employee-message-chat-user-info">
+                  <h3>{getOtherParticipant(activeConversation).name}</h3>
+                  <span className={`employee-message-user-status ${isUserOnline(getOtherParticipant(activeConversation)._id) ? "employee-message-status-online" : ""}`}>
+                    {isUserOnline(getOtherParticipant(activeConversation)._id) ? "Online" : "Offline"}
+                  </span>
+                </div>
+              </div>
+              
+              <div className="employee-message-chat-actions">
+                {/* Add call buttons */}
+                <button 
+                  className="employee-message-icon-button"
+                  onClick={() => initiateCall(false)}
+                  title="Voice Call"
+                >
+                  <FaPhoneAlt />
+                </button>
+                <button 
+                  className="employee-message-icon-button"
+                  onClick={() => initiateCall(true)}
+                  title="Video Call"
+                >
+                  <FaVideo />
+                </button>
+                <button className="employee-message-icon-button">
+                  <FaSearch />
+                </button>
+                <div className="employee-message-dropdown">
+                  <button className="employee-message-icon-button">
+                    <FaEllipsisV />
+                  </button>
+                  <div className="employee-message-dropdown-menu">
+                    <button 
+                      className="employee-message-dropdown-item"
+                      onClick={() => setShowDeleteConversationDialog(true)}
+                    >
+                      <FaTrashAlt /> Delete Chat
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+            
+            <div className="employee-message-chat-body" ref={messagesContainerRef}>
+              {hasMore && (
+                <div className="employee-message-load-more">
+                  <button onClick={handleLoadMore} disabled={loadingMore}>
+                    {loadingMore ? (
+                      <>
+                        <FaSpinner className="employee-message-spinner" />
+                        Loading...
+                      </>
+                    ) : (
+                      "Load older messages"
+                    )}
+                  </button>
+                </div>
+              )}
+              
+              <div className="employee-message-messages">
+                {messages.length > 0 ? renderMessages() : (
+                  <div className="employee-message-no-messages">
+                    <p>No messages yet. Start the conversation!</p>
+                  </div>
+                )}
+                <div ref={messagesEndRef} />
+              </div>
+            </div>
+            
+            {isUploading && (
+              <div className="employee-message-upload-progress">
+                <div className="employee-message-progress-bar">
+                  <div 
+                    className="employee-message-progress-fill" 
+                    style={{ width: `${uploadProgress}%` }}
+                  ></div>
+                </div>
+                <span>{uploadProgress}%</span>
+              </div>
+            )}
+            
+            {/* Attachment Preview UI */}
+            {showAttachmentPreview && stagedAttachment && (
+              <div className="employee-message-attachment-preview">
+                <div className="employee-message-attachment-preview-header">
+                  <button 
+                    className="employee-message-icon-button" 
+                    onClick={() => {
+                      setShowAttachmentPreview(false);
+                      setStagedAttachment(null);
+                      if (stagedAttachment.previewUrl) {
+                        URL.revokeObjectURL(stagedAttachment.previewUrl);
+                      }
+                    }}
+                  >
+                    <FaArrowLeft />
+                  </button>
+                  <h3>{stagedAttachment.fileType === 'image' ? 'Preview Image' : 'Preview Document'}</h3>
+                </div>
+                
+                <div className="employee-message-attachment-preview-content">
+                  {stagedAttachment.type && stagedAttachment.type.startsWith("image") ? (
+                    <img 
+                      src={stagedAttachment.previewUrl} 
+                      alt="Preview" 
+                      className="employee-message-attachment-preview-image"
+                    />
+                  ) : (
+                    <div className="employee-message-attachment-preview-document">
+                      <div className="employee-message-file-icon large-icon">
+                        <FaFile />
+                      </div>
+                      <p className="employee-message-file-name">{stagedAttachment.filename}</p>
+                    </div>
+                  )}
+                </div>
+                
+                <div className="employee-message-attachment-caption">
+                  <div className="employee-message-input-container">
+                    <input
+                      type="text"
+                      placeholder="Add a caption..."
+                      value={attachmentCaption}
+                      onChange={(e) => setAttachmentCaption(e.target.value)}
+                      autoFocus
+                    />
+                  </div>
+                  
+                  <button 
+                    className="employee-message-icon-button employee-message-send"
+                    onClick={handleSendAttachment}
+                  >
+                    <FaPaperPlane />
+                  </button>
+                </div>
+              </div>
+            )}
+            
+            {/* Message context menu */}
+            {showMessageMenu && selectedMessage && (
+              <div 
+                className="employee-message-context-menu"
+                style={{ top: menuPosition.y, left: menuPosition.x }}
+              >
+                <button 
+                  className="employee-message-context-menu-item"
+                  onClick={() => {
+                    setDeleteOption("me");
+                    setShowDeleteMessageDialog(true);
+                    setShowMessageMenu(false);
+                  }}
+                >
+                  <FaTrashAlt /> Delete For Me
+                </button>
+                {isOwnMessage(selectedMessage) && !selectedMessage.isDeleted && (
+                  <button 
+                    className="employee-message-context-menu-item"
+                    onClick={() => {
+                      setDeleteOption("everyone");
+                      setShowDeleteMessageDialog(true);
+                      setShowMessageMenu(false);
+                    }}
+                  >
+                    <FaTrashAlt /> Delete For Everyone
+                  </button>
+                )}
+              </div>
+            )}
+
+            {/* Delete message confirmation dialog */}
+            {showDeleteMessageDialog && (
+              <div className="employee-message-dialog-overlay">
+                <div className="employee-message-dialog">
+                  <h3>{deleteOption === "everyone" ? "Delete For Everyone" : "Delete For Me"}</h3>
+                  <p>
+                    {deleteOption === "everyone" 
+                      ? "Are you sure you want to delete this message for everyone?" 
+                      : "Delete this message? It will only be removed for you"}
+                  </p>
+                  <div className="employee-message-dialog-actions">
+                    <button 
+                      className="employee-message-dialog-btn employee-message-cancel-btn"
+                      onClick={() => setShowDeleteMessageDialog(false)}
+                    >
+                      Cancel
+                    </button>
+                    <button 
+                      className="employee-message-dialog-btn employee-message-delete-btn"
+                      onClick={() => handleDeleteMessage(deleteOption || "me")}
+                    >
+                      Delete
+                    </button>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Delete conversation confirmation dialog */}
+            {showDeleteConversationDialog && (
+              <div className="employee-message-dialog-overlay">
+                <div className="employee-message-dialog">
+                  <h3>Delete Conversation</h3>
+                  <p>Are you sure you want to delete this conversation?</p>
+                  <p className="employee-message-dialog-note">
+                    Messages will be removed from this device only.
+                  </p>
+                  <div className="employee-message-dialog-actions">
+                    <button 
+                      className="employee-message-dialog-btn employee-message-cancel-btn"
+                      onClick={() => setShowDeleteConversationDialog(false)}
+                    >
+                      Cancel
+                    </button>
+                    <button 
+                      className="employee-message-dialog-btn employee-message-delete-btn"
+                      onClick={handleDeleteConversation}
+                    >
+                      Delete
+                    </button>
+                  </div>
+                </div>
+              </div>
+            )}
+            
+            <div className="employee-message-chat-footer">
+              {isRecording ? (
+                <div className="employee-message-recording">
+                  <div className="employee-message-recording-indicator">
+                    <span className="recording-dot"></span>
+                    <span className="recording-time">{formatTime(recordingTime)}</span>
+                  </div>
+                  <div className="employee-message-recording-actions">
+                    <button 
+                      className="employee-message-icon-button employee-message-cancel-recording"
+                      onClick={cancelRecording}
+                    >
+                      <FaTrash />
+                    </button>
+                    <button 
+                      className="employee-message-icon-button employee-message-send-recording"
+                      onClick={stopRecording}
+                    >
+                      <FaCheck />
+                    </button>
+                  </div>
+                </div>
+              ) : audioBlob ? (
+                <div className="employee-message-recording-preview">
+                  <div className="employee-message-voice-message">
+                    <button 
+                      className="employee-message-voice-play-btn"
+                      onClick={() => {
+                        const audio = new Audio(URL.createObjectURL(audioBlob));
+                        if (audioPlayback) {
+                          audioPlayback.pause();
+                        }
+                        audio.play();
+                        setAudioPlayback(audio);
+                      }}
+                    >
+                      <FaPlay />
+                    </button>
+                    <div className="employee-message-voice-waveform"></div>
+                    <div className="employee-message-recording-actions">
+                      <button 
+                        className="employee-message-icon-button employee-message-cancel-recording"
+                        onClick={() => setAudioBlob(null)}
+                      >
+                        <FaTrash />
+                      </button>
+                      <button 
+                        className="employee-message-icon-button employee-message-send-recording"
+                        onClick={sendVoiceMessage}
+                      >
+                        <FaPaperPlane />
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              ) : (
+                <>
+                  <button 
+                    className={`employee-message-icon-button employee-message-emoji ${showEmojiPicker ? 'active' : ''}`}
+                    onClick={() => setShowEmojiPicker(!showEmojiPicker)}
+                  >
+                    <FaSmile />
+                  </button>
+                  
+                  {showEmojiPicker && (
+                    <div className="employee-message-emoji-picker" ref={emojiPickerRef}>
+                      <EmojiPicker
+                        onEmojiClick={handleEmojiClick}
+                        searchPlaceholder="Search emoji"
+                        width={300}
+                        height={400}
+                        previewConfig={{
+                          showPreview: false
+                        }}
+                        lazyLoadEmojis={false}
+                        skinTonesDisabled
+                        autoFocusSearch={false} // Prevent auto focusing search which causes more rendering
+                        categories={['suggested', 'smileys_people', 'animals_nature', 'food_drink']} // Reduce categories for better performance
+                        suggestedEmojisMode="recent"
+                      />
+                    </div>
+                  )}
+                  
+                  <button 
+                    className="employee-message-icon-button employee-message-attach"
+                    onClick={() => setShowUploadOptions(!showUploadOptions)}
+                  >
+                    <FaPaperclip />
+                  </button>
+                  
+                  {showUploadOptions && (
+                    <div className="employee-message-upload-options">
+                      <button 
+                        className="employee-message-upload-option"
+                        onClick={() => imageInputRef.current.click()}
+                      >
+                        <div className="employee-message-upload-icon employee-message-photo-icon">
+                          <FaImage />
+                        </div>
+                        <span>Photo</span>
+                      </button>
+                      <button 
+                        className="employee-message-upload-option"
+                        onClick={() => fileInputRef.current.click()}
+                      >
+                        <div className="employee-message-upload-icon employee-message-doc-icon">
+                          <FaFile />
+                        </div>
+                        <span>Document</span>
+                      </button>
+                    </div>
+                  )}
+                  
+                  <input 
+                    type="file" 
+                    ref={fileInputRef} 
+                    onChange={(e) => handleFileSelection(e, 'file')}
+                    style={{ display: 'none' }}
+                    accept=".pdf,.doc,.docx,.txt,.zip,.rar"
+                  />
+                  
+                  <input 
+                    type="file" 
+                    ref={imageInputRef} 
+                    onChange={(e) => handleFileSelection(e, 'image')}
+                    style={{ display: 'none' }}
+                    accept="image/*"
+                  />
+                  
+                  <div className="employee-message-input-container">
+                    <input
+                      type="text"
+                      placeholder="Type a message"
+                      value={newMessage}
+                      onChange={(e) => setNewMessage(e.target.value)}
+                      onKeyPress={(e) => e.key === "Enter" && handleSendMessage()}
+                      ref={messageInputRef}
+                    />
+                  </div>
+                  
+                  <button 
+                    className="employee-message-icon-button employee-message-send"
+                    onClick={newMessage.trim() ? handleSendMessage : startRecording}
+                  >
+                    {newMessage.trim() ? <FaPaperPlane /> : <FaMicrophone />}
+                  </button>
+                </>
+              )}
+            </div>
+          </>
+        ) : (
+          <div className="employee-message-welcome">
+            <div className="employee-message-welcome-container">
+              <div className="employee-message-welcome-image"></div>
+              <h1>Keep your phone connected</h1>
+              <p>Select a chat to start messaging</p>
+            </div>
+          </div>
+        )}
+      </div>
+
+      {/* Incoming call UI */}
+      {isIncomingCall && (
+        <div className="employee-message-call-overlay">
+          <div className="employee-message-incoming-call">
+            <div className="employee-message-call-header">
+              <h3>{isVideoCall ? 'Incoming Video Call' : 'Incoming Call'}</h3>
+            </div>
+            <div className="employee-message-caller-info">
+              <div className="employee-message-caller-avatar">
+                {callerAvatar ? (
+                  <img src={callerAvatar} alt={callerName} />
+                ) : (
+                  <div className="employee-message-default-avatar employee-message-large-avatar">
+                    {callerName ? callerName.charAt(0).toUpperCase() : "U"}
+                  </div>
+                )}
+              </div>
+              <h2>{callerName}</h2>
+              <p className="employee-message-calling-status">Calling...</p>
+            </div>
+            <div className="employee-message-call-actions">
+              <button 
+                className="employee-message-call-action employee-message-decline-call"
+                onClick={declineCall}
+              >
+                <FaPhoneAlt />
+              </button>
+              <button 
+                className="employee-message-call-action employee-message-accept-call"
+                onClick={acceptCall}
+              >
+                <FaPhoneAlt />
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Outgoing call UI */}
+      {isMakingCall && !isCallAccepted && (
+        <div className="employee-message-call-overlay">
+          <div className="employee-message-outgoing-call">
+            <div className="employee-message-call-header">
+              <h3>{isVideoCall ? 'Video Call' : 'Voice Call'}</h3>
+            </div>
+            <div className="employee-message-callee-info">
+              {activeConversation && (
+                <>
+                  <div className="employee-message-callee-avatar">
+                    {getOtherParticipant(activeConversation).profilePicture ? (
+                      <img 
+                        src={getOtherParticipant(activeConversation).profilePicture} 
+                        alt={getOtherParticipant(activeConversation).name} 
+                      />
+                    ) : (
+                      <div className="employee-message-default-avatar employee-message-large-avatar">
+                        {getOtherParticipant(activeConversation).name.charAt(0).toUpperCase()}
+                      </div>
+                    )}
+                  </div>
+                  <h2>{getOtherParticipant(activeConversation).name}</h2>
+                  <p className="employee-message-calling-status">Calling...</p>
+                </>
+              )}
+            </div>
+            <div className="employee-message-call-actions">
+              <button 
+                className="employee-message-call-action employee-message-end-call"
+                onClick={handleEndCall}
+              >
+                <FaPhoneAlt />
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Active call UI */}
+      {isCallAccepted && (
+        <div className="employee-message-call-overlay">
+          <div className={`employee-message-active-call ${isVideoCall ? 'employee-message-video-call' : 'employee-message-audio-call'}`}>
+            {isVideoCall ? (
+              <div className="employee-message-video-container">
+                <video 
+                  ref={remoteVideoRef} 
+                  autoPlay 
+                  playsInline 
+                  className="employee-message-remote-video"
+                />
+                <video 
+                  ref={localVideoRef} 
+                  autoPlay 
+                  playsInline 
+                  muted 
+                  className="employee-message-local-video"
+                />
+              </div>
+            ) : (
+              <div className="employee-message-audio-call-container">
+                <div className="employee-message-call-avatar">
+                  {isIncomingCall ? (
+                    callerAvatar ? (
+                      <img src={callerAvatar} alt={callerName} />
+                    ) : (
+                      <div className="employee-message-default-avatar employee-message-large-avatar">
+                        {callerName ? callerName.charAt(0).toUpperCase() : "U"}
+                      </div>
+                    )
+                  ) : (
+                    getOtherParticipant(activeConversation).profilePicture ? (
+                      <img 
+                        src={getOtherParticipant(activeConversation).profilePicture} 
+                        alt={getOtherParticipant(activeConversation).name} 
+                      />
+                    ) : (
+                      <div className="employee-message-default-avatar employee-message-large-avatar">
+                        {getOtherParticipant(activeConversation).name.charAt(0).toUpperCase()}
+                      </div>
+                    )
+                  )}
+                </div>
+                <h2>
+                  {isIncomingCall ? callerName : getOtherParticipant(activeConversation).name}
+                </h2>
+              </div>
+            )}
+            
+            <div className="employee-message-call-info">
+              <p className="employee-message-call-duration">{formatCallDuration(callDuration)}</p>
+            </div>
+            
+            <div className="employee-message-call-controls">
+              {isVideoCall && (
+                <>
+                  <button 
+                    className={`employee-message-call-control ${isVideoOff ? 'active' : ''}`}
+                    onClick={toggleVideo}
+                  >
+                    {isVideoOff ? <FaVideoSlash /> : <FaVideo />}
+                  </button>
+                  <button 
+                    className={`employee-message-call-control ${screenSharing ? 'active' : ''}`}
+                    onClick={toggleScreenSharing}
+                  >
+                    <FaDesktop />
+                  </button>
+                </>
+              )}
+              <button 
+                className={`employee-message-call-control ${isMuted ? 'active' : ''}`}
+                onClick={toggleMute}
+              >
+                {isMuted ? <FaMicrophoneSlash /> : <FaMicrophone />}
+              </button>
+              <button 
+                className={`employee-message-call-control ${!isSpeakerOn ? 'active' : ''}`}
+                onClick={toggleSpeaker}
+              >
+                {isSpeakerOn ? <FaVolumeUp /> : <FaVolumeMute />}
+              </button>
+              <button 
+                className="employee-message-call-control employee-message-end-call"
+                onClick={handleEndCall}
+              >
+                <FaPhone />
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Call ended UI */}
+      {callStatus === 'ended' && (
+        <div className="employee-message-call-ended">
+          <p>Call ended</p>
+        </div>
+      )}
+    </div>
+  );
+};
+
+export default EmployeeMessage;

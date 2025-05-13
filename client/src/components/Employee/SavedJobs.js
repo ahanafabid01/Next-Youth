@@ -200,8 +200,20 @@ const SavedJobs = () => {
   
   const toggleMobileNav = useCallback((e) => {
     e.stopPropagation();
+    
+    // Toggle active class on the nav toggle button for animation
+    const navToggle = document.querySelector('.employee-saved-nav-toggle');
+    navToggle.classList.toggle('active');
+    
     setShowMobileNav(prev => !prev);
-  }, []);
+    
+    // Prevent body scrolling when menu is open
+    if (!showMobileNav) {
+      document.body.classList.add('employee-saved-mobile-nav-active');
+    } else {
+      document.body.classList.remove('employee-saved-mobile-nav-active');
+    }
+  }, [showMobileNav]);
 
   const toggleFilters = useCallback((e) => {
     e.stopPropagation();
@@ -220,8 +232,15 @@ const SavedJobs = () => {
     if (profileDropdownRef.current && !profileDropdownRef.current.contains(event.target)) {
       setShowProfileDropdown(false);
     }
-    if (!event.target.closest('.employee-saved-nav')) {
+    if (!event.target.closest('.employee-saved-nav') && 
+        !event.target.closest('.employee-saved-nav-toggle')) {
       setShowMobileNav(false);
+      
+      // Also remove active class from hamburger when clicked outside
+      const navToggle = document.querySelector('.employee-saved-nav-toggle');
+      if (navToggle) navToggle.classList.remove('active');
+      
+      document.body.classList.remove('employee-saved-mobile-nav-active');
     }
     if (!event.target.closest('.employee-saved-filter-panel') && 
         !event.target.closest('.employee-saved-filter-toggle')) {
@@ -261,6 +280,13 @@ const SavedJobs = () => {
     }
     localStorage.setItem("dashboard-theme", isDarkMode ? "dark" : "light");
   }, [isDarkMode]);
+
+  // Add this useEffect to clean up the body class when component unmounts
+  useEffect(() => {
+    return () => {
+      document.body.classList.remove('employee-saved-mobile-nav-active');
+    };
+  }, []);
 
   // Effect for fetching initial data
   useEffect(() => {

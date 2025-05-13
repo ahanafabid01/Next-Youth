@@ -724,9 +724,45 @@ const MyProfile = () => {
                         </div>
                         <div className="employee-profile-card-content">
                           <div className="employee-profile-resume-container">
-                            <a href={profileData.resumeUrl} download className="employee-profile-download-button">
+                            <button 
+                              className="employee-profile-download-button"
+                              onClick={async () => {
+                                try {
+                                  // Construct proper URL
+                                  const url = profileData.resumeUrl.startsWith('http') 
+                                    ? profileData.resumeUrl 
+                                    : `${API_BASE_URL}${profileData.resumeUrl}`;
+                                  
+                                  // Fetch the file directly
+                                  const response = await axios.get(url, {
+                                    responseType: 'blob',
+                                    withCredentials: true
+                                  });
+                                  
+                                  // Create blob URL
+                                  const blob = new Blob([response.data], { 
+                                    type: response.headers['content-type'] 
+                                  });
+                                  const blobUrl = window.URL.createObjectURL(blob);
+                                  
+                                  // Create download link
+                                  const a = document.createElement('a');
+                                  a.href = blobUrl;
+                                  a.download = `${profileData.name ? profileData.name.replace(/\s+/g, '_') : 'resume'}.pdf`;
+                                  document.body.appendChild(a);
+                                  a.click();
+                                  
+                                  // Cleanup
+                                  window.URL.revokeObjectURL(blobUrl);
+                                  document.body.removeChild(a);
+                                } catch (error) {
+                                  console.error('Error downloading resume:', error);
+                                  toast.error('Failed to download resume');
+                                }
+                              }}
+                            >
                               <FaDownload /> Download Resume
-                            </a>
+                            </button>
                           </div>
                         </div>
                       </div>

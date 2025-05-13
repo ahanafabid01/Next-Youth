@@ -2,7 +2,8 @@ import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { FaSun, FaMoon, FaBars, FaTimes, FaUser, FaChevronDown, 
          FaEnvelope, FaQuestionCircle, FaFileAlt, FaHeadset, 
-         FaPhone, FaBook, FaTools, FaUserShield } from 'react-icons/fa';
+         FaPhone, FaBook, FaTools, FaUserShield, FaBell,
+         FaRegFileAlt, FaCheckCircle, FaClock } from 'react-icons/fa';
 import './EmployeeHelp.css';
 import axios from 'axios';
 
@@ -20,6 +21,11 @@ const EmployeeHelp = () => {
   const [loading, setLoading] = useState(true);
   const [activeCategory, setActiveCategory] = useState('general');
   const [searchQuery, setSearchQuery] = useState('');
+  const [showNotifications, setShowNotifications] = useState(false);
+  const notificationsRef = useRef(null);
+  const [unreadNotifications, setUnreadNotifications] = useState(() => {
+    return parseInt(localStorage.getItem("unread-notifications") || "2");
+  });
   
   const API_BASE_URL = 'http://localhost:4000/api';
 
@@ -83,19 +89,40 @@ const EmployeeHelp = () => {
     ) {
       setMobileNavActive(false);
     }
-  }, [mobileNavActive]);
 
-  // Toggle dark mode
-  const toggleDarkMode = () => {
-    setIsDarkMode(prev => !prev);
-    localStorage.setItem("dashboard-theme", !isDarkMode ? "dark" : "light");
-  };
+    if (
+      showNotifications &&
+      notificationsRef.current &&
+      !notificationsRef.current.contains(e.target)
+    ) {
+      setShowNotifications(false);
+    }
+  }, [mobileNavActive, showNotifications]);
 
   // Effect for outside clicks
   useEffect(() => {
     document.addEventListener('click', handleOutsideClick);
     return () => document.removeEventListener('click', handleOutsideClick);
   }, [handleOutsideClick]);
+
+  // Toggle notifications
+  const toggleNotifications = useCallback((e) => {
+    e.stopPropagation();
+    setShowNotifications(prev => !prev);
+  }, []);
+
+  // Mark all notifications as read
+  const handleMarkAllAsRead = useCallback((e) => {
+    e.stopPropagation();
+    setUnreadNotifications(0);
+    localStorage.setItem("unread-notifications", "0");
+  }, []);
+
+  // Toggle dark mode
+  const toggleDarkMode = () => {
+    setIsDarkMode(prev => !prev);
+    localStorage.setItem("dashboard-theme", !isDarkMode ? "dark" : "light");
+  };
 
   // Effect to fetch user data
   useEffect(() => {
@@ -211,48 +238,96 @@ const EmployeeHelp = () => {
               className={`employee-help-nav-toggle ${mobileNavActive ? 'active' : ''}`} 
               onClick={() => setMobileNavActive(!mobileNavActive)}
               aria-label="Toggle navigation"
+              aria-expanded={mobileNavActive}
             >
               <span className="employee-help-hamburger-icon"></span>
             </button>
             
             <Link to="/employee-dashboard" className="employee-help-logo">
-              {/* Use logo image if available, otherwise fallback to text */}
-              {isDarkMode ? (
-                logoDark ? (
-                  <img 
-                    src={logoDark} 
-                    alt="Next Youth" 
-                    className="employee-help-logo-image" 
-                  />
-                ) : (
-                  <span className="employee-help-logo-text">Next Youth</span>
-                )
-              ) : (
-                logoLight ? (
-                  <img 
-                    src={logoLight} 
-                    alt="Next Youth" 
-                    className="employee-help-logo-image" 
-                  />
-                ) : (
-                  <span className="employee-help-logo-text">Next Youth</span>
-                )
-              )}
+              <img 
+                src={isDarkMode ? logoDark : logoLight} 
+                alt="Next Youth" 
+                className="employee-help-logo-image" 
+              />
             </Link>
             
             <nav 
               ref={mobileNavRef}
               className={`employee-help-nav ${mobileNavActive ? 'active' : ''}`}
             >
-              <Link to="/employee-dashboard" className="employee-help-nav-link">Dashboard</Link>
-              <Link to="/find-jobs" className="employee-help-nav-link">Find Jobs</Link>
-              <Link to="/find-jobs/saved" className="employee-help-nav-link">Saved Jobs</Link>
-              <Link to="/proposals" className="employee-help-nav-link">Proposals</Link>
-              <Link to="/help" className="employee-help-nav-link active">Help</Link>
+              <Link to="/find-jobs" className="employee-help-nav-link" style={{"--item-index": 0}}>Find Work</Link>
+              <Link to="/find-jobs/saved" className="employee-help-nav-link" style={{"--item-index": 1}}>Saved Jobs</Link>
+              <Link to="/proposals" className="employee-help-nav-link" style={{"--item-index": 2}}>Proposals</Link>
+              <Link to="/help" className="employee-help-nav-link active" style={{"--item-index": 3}}>Help</Link>
             </nav>
           </div>
           
           <div className="employee-help-header-right">
+            <div className="employee-help-notification-container" ref={notificationsRef}>
+              <button 
+                className="employee-help-notification-button"
+                onClick={toggleNotifications}
+                aria-label="Notifications"
+              >
+                <FaBell />
+                {unreadNotifications > 0 && (
+                  <span className="employee-help-notification-badge">{unreadNotifications}</span>
+                )}
+              </button>
+              
+              {showNotifications && (
+                <div className="employee-help-notifications-dropdown">
+                  <div className="employee-help-notification-header">
+                    <h3>Notifications</h3>
+                    <button className="employee-help-mark-all-read" onClick={handleMarkAllAsRead}>Mark all as read</button>
+                  </div>
+                  <div className="employee-help-notification-list">
+                    <div className="employee-help-notification-item employee-help-unread">
+                      <div className="employee-help-notification-icon">
+                        {(!userData.idVerification || 
+                          !userData.idVerification.frontImage || 
+                          !userData.idVerification.backImage || 
+                          userData.idVerification.status === 'rejected') ? (
+                          <FaRegFileAlt />
+                        ) : userData.idVerification.status === 'verified' ? (
+                          <FaCheckCircle />
+                        ) : (
+                          <FaClock />
+                        )}
+                      </div>
+                      <div className="employee-help-notification-content">
+                        <p>
+                          {(!userData.idVerification || 
+                            !userData.idVerification.frontImage || 
+                            !userData.idVerification.backImage || 
+                            userData.idVerification.status === 'rejected') ? (
+                            "Please verify your account"
+                          ) : userData.idVerification.status === 'verified' ? (
+                            "Your profile has been verified!"
+                          ) : (
+                            "Your verification is pending approval"
+                          )}
+                        </p>
+                        <span className="employee-help-notification-time">2 hours ago</span>
+                      </div>
+                    </div>
+                    <div className="employee-help-notification-item employee-help-unread">
+                      <div className="employee-help-notification-icon">
+                        <FaRegFileAlt />
+                      </div>
+                      <div className="employee-help-notification-content">
+                        <p>New job matching your skills is available</p>
+                        <span className="employee-help-notification-time">1 day ago</span>
+                      </div>
+                    </div>
+                  </div>
+                  <div className="employee-help-notification-footer">
+                    <Link to="/notifications">View all notifications</Link>
+                  </div>
+                </div>
+              )}
+            </div>
+            
             <button 
               className="employee-help-theme-toggle-button" 
               onClick={toggleDarkMode}
@@ -261,15 +336,16 @@ const EmployeeHelp = () => {
               {isDarkMode ? <FaSun /> : <FaMoon />}
             </button>
             
-            <div className="employee-help-profile-dropdown-container">
+            <div className="employee-help-profile-dropdown-container" ref={profileDropdownRef}>
               <button 
                 className="employee-help-profile-button" 
                 onClick={() => setProfileDropdownActive(!profileDropdownActive)}
+                aria-label="User profile"
               >
-                {userData.profileImage ? (
+                {userData.profilePicture ? (
                   <img 
-                    src={userData.profileImage} 
-                    alt={userData.name} 
+                    src={userData.profilePicture} 
+                    alt={userData.name || "User"} 
                     className="employee-help-profile-avatar" 
                   />
                 ) : (
@@ -282,8 +358,8 @@ const EmployeeHelp = () => {
                 <div className="employee-help-profile-dropdown" ref={profileDropdownRef}>
                   <div className="employee-help-profile-dropdown-header">
                     <div className="employee-help-profile-dropdown-avatar">
-                      {userData.profileImage ? (
-                        <img src={userData.profileImage} alt={userData.name} />
+                      {userData.profilePicture ? (
+                        <img src={userData.profilePicture} alt={userData.name || "User"} />
                       ) : (
                         <FaUser />
                       )}

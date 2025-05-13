@@ -408,7 +408,7 @@
   background: none;
   border: none;
   font-size: 1.2rem;
-  color: var(--dark-text);
+  color: var (--dark-text);
   padding: 0.5rem;
   border-radius: 50%;
   transition: var(--transition);
@@ -1489,21 +1489,51 @@
 
 .employee-edit-profile-rate-input {
   padding-left: 2rem;
+  padding-right: 2.5rem;
+  width: 100%;
+}
+
+.employee-edit-profile-rate-input::-webkit-outer-spin-button,
+.employee-edit-profile-rate-input::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+.employee-edit-profile-rate-input[type=number] {
+  -moz-appearance: textfield;
 }
 
 .employee-edit-profile-increment-buttons {
+  position: absolute;
+  right: 1px;
+  top: 1px;
+  bottom: 1px;
+  width: 24px;
   display: flex;
   flex-direction: column;
-  position: absolute;
-  right: 0.5rem;
+  border-left: 1px solid var(--light-border);
+  border-top-right-radius: var(--border-radius);
+  border-bottom-right-radius: var(--border-radius);
+  overflow: hidden;
+  background-color: var(--light-card);
+}
+
+.dark-theme .employee-edit-profile-increment-buttons {
+  border-left-color: var(--dark-border);
+  background-color: var(--dark-card);
 }
 
 .employee-edit-profile-increment-button {
-  background: none;
+  height: 50%;
+  padding: 0;
   border: none;
-  font-size: 0.8rem;
+  background: none;
   color: var(--light-text-secondary);
-  padding: 0.1rem 0.4rem;
+  font-size: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
   transition: var(--transition);
 }
 
@@ -1511,8 +1541,21 @@
   color: var(--dark-text-secondary);
 }
 
+.employee-edit-profile-increment-button:first-child {
+  border-bottom: 1px solid var(--light-border);
+}
+
+.dark-theme .employee-edit-profile-increment-button:first-child {
+  border-bottom-color: var(--dark-border);
+}
+
 .employee-edit-profile-increment-button:hover {
+  background-color: rgba(0, 0, 0, 0.05);
   color: var(--primary-color);
+}
+
+.dark-theme .employee-edit-profile-increment-button:hover {
+  background-color: rgba(255, 255, 255, 0.05);
 }
 
 .employee-edit-profile-rate-hint {

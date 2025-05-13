@@ -432,7 +432,10 @@ const VerifyAccount = () => {
                                         <h2>Front of ID</h2>
                                         <div 
                                             className={`verify-upload-area ${frontPreview ? 'has-preview' : ''}`}
-                                            onClick={() => document.getElementById('front-id-input').click()}
+                                            onClick={(e) => {
+                                                e.stopPropagation();
+                                                document.getElementById('front-id-input').click();
+                                            }}
                                         >
                                             {frontPreview ? (
                                                 <img src={frontPreview} alt="Front of ID preview" className="verify-id-preview" />
@@ -448,6 +451,7 @@ const VerifyAccount = () => {
                                                 accept="image/*" 
                                                 onChange={handleFrontImageChange}
                                                 className="verify-file-input"
+                                                onClick={(e) => e.stopPropagation()} // Prevent event bubbling
                                             />
                                         </div>
                                         {frontPreview && (
@@ -469,7 +473,10 @@ const VerifyAccount = () => {
                                         <h2>Back of ID</h2>
                                         <div 
                                             className={`verify-upload-area ${backPreview ? 'has-preview' : ''}`}
-                                            onClick={() => document.getElementById('back-id-input').click()}
+                                            onClick={(e) => {
+                                                e.stopPropagation();
+                                                document.getElementById('back-id-input').click();
+                                            }}
                                         >
                                             {backPreview ? (
                                                 <img src={backPreview} alt="Back of ID preview" className="verify-id-preview" />
@@ -485,6 +492,7 @@ const VerifyAccount = () => {
                                                 accept="image/*" 
                                                 onChange={handleBackImageChange}
                                                 className="verify-file-input"
+                                                onClick={(e) => e.stopPropagation()} // Prevent event bubbling
                                             />
                                         </div>
                                         {backPreview && (
