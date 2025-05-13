@@ -2512,3 +2512,65 @@
     height: 36px;
   }
 }
+
+/* Remove any global max-width constraints and update container width */
+.view-application-container {
+    width: 100%;
+    max-width: 100%;
+    margin: 0;
+    padding: 0;
+    overflow-x: hidden;
+}
+
+/* Update main content area */
+.view-application-main {
+    width: 100%;
+    max-width: 1440px;
+    margin: 0 auto;
+    padding: 2rem;
+}
+
+/* Header container */
+.view-application-header-container {
+    width: 100%;
+    max-width: 1440px;
+    margin: 0 auto;
+    padding: 0.8rem 2rem;
+}
+
+/* Content wrapper */
+.view-application-content {
+    width: 100%;
+    max-width: 1440px;
+    margin: 0 auto;
+    padding: 0 2rem;
+}
+
+/* Responsive adjustments */
+@media (max-width: 1480px) {
+    .view-application-main,
+    .view-application-header-container,
+    .view-application-content {
+        max-width: 100%;
+        padding-left: 2rem;
+        padding-right: 2rem;
+    }
+}
+
+@media (max-width: 768px) {
+    .view-application-main,
+    .view-application-header-container,
+    .view-application-content {
+        padding-left: 1.5rem;
+        padding-right: 1.5rem;
+    }
+}
+
+@media (max-width: 576px) {
+    .view-application-main,
+    .view-application-header-container,
+    .view-application-content {
+        padding-left: 1rem;
+        padding-right: 1rem;
+    }
+}

@@ -596,26 +596,6 @@ const Settings = () => {
                   </button>
                 </div>
               </form>
-              
-              <div className="employee-settings-section">
-                <h3>Two-Factor Authentication</h3>
-                <p className="employee-settings-description">
-                  Add an extra layer of security to your account
-                </p>
-                
-                <div className="employee-settings-action-card">
-                  <div className="employee-settings-action-content">
-                    <FaUserShield className="employee-settings-action-icon" />
-                    <div>
-                      <h4>Two-Factor Authentication</h4>
-                      <p>Protect your account by requiring a second form of verification when signing in</p>
-                    </div>
-                  </div>
-                  <button className="employee-settings-action-button">
-                    Enable
-                  </button>
-                </div>
-              </div>
             </div>
           )}
           
