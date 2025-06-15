@@ -771,9 +771,43 @@ const EmployerMessage = ({ darkMode }) => {
     
     // Clean up when component unmounts
     return () => {
-      if (socketRef.current) {
-        console.log("Cleaning up socket reference");
-        socketRef.current = null;
+      const socket = socketRef.current;
+      if (socket) {
+        console.log("Cleaning up socket connection");
+        
+        try {
+          // First check if socket exists and is connected
+          if (socket.connected) {
+            // Remove all event listeners safely
+            const events = [
+              "new_message",
+              "message_deleted", 
+              "call_offer", 
+              "call_answer", 
+              "call_declined", 
+              "call_ended", 
+              "ice_candidate",
+              "user_status_changed",
+              "online_users"
+            ];
+            
+            events.forEach(event => {
+              try {
+                socket.off(event);
+              } catch (err) {
+                console.warn(`Error removing listener for ${event}:`, err);
+              }
+            });
+            
+            // Then disconnect after removing listeners
+            socket.disconnect();
+          }
+        } catch (error) {
+          console.error("Error during socket cleanup:", error);
+        } finally {
+          // Always set to null after cleanup attempt
+          socketRef.current = null;
+        }
       }
     };
   }, []); // Empty dependency array - only runs once
@@ -817,31 +851,32 @@ const EmployerMessage = ({ darkMode }) => {
       updateConversationList(message);
     };
     
-    socketRef.current.on("new_message", handleNewMessage);
-    socketRef.current.on("message_deleted", handleMessageDeleted);
-    socketRef.current.on("user_status_changed", (data) => {
-      console.log("User status changed:", data);
-      setOnlineUsers(prev => {
-        const newSet = new Set(prev);
-        if (data.isOnline) {
-          newSet.add(data.userId);
-        } else {
-          newSet.delete(data.userId);
-        }
-        return newSet;
-      });
-    });
+    // Handler for deleted messages
+    const handleDeletedMessage = (messageId) => {
+      console.log("Received deleted message ID:", messageId);
+      
+      // Optimistically remove the message from UI
+      setMessages(prev => prev.filter(msg => msg._id !== messageId));
+      
+      // Also update conversations list
+      fetchConversations();
+    };
     
-    socketRef.current.on("online_users", (userIds) => {
-      console.log("Received online users:", userIds);
-      setOnlineUsers(new Set(userIds));
-    });
+    // Attach event handlers
+    const socket = socketRef.current;
+    socket.on("new_message", handleNewMessage);
+    socket.on("message_deleted", handleMessageDeleted);
     
     return () => {
-      socketRef.current.off("new_message", handleNewMessage);
-      socketRef.current.off("message_deleted", handleMessageDeleted);
-      socketRef.current.off("user_status_changed");
-      socketRef.current.off("online_users");
+      try {
+        // Check if socket still exists and is connected before removing listeners
+        if (socketRef.current && socketRef.current.connected) {
+          socketRef.current.off("new_message", handleNewMessage);
+          socketRef.current.off("message_deleted", handleMessageDeleted);
+        }
+      } catch (error) {
+        console.warn("Error removing socket event handlers:", error);
+      }
     };
   }, [activeConversation, currentUser, updateConversationList, handleMessageDeleted]); // Add handleMessageDeleted to dependencies
 
@@ -1112,7 +1147,7 @@ const EmployerMessage = ({ darkMode }) => {
     // Current timestamp for consistency
     const currentTimestamp = new Date().toISOString();
     
-    // Create the message locally first for immediate display
+    // Create the message locally for immediate display
     const tempMessage = {
       _id: tempId,
       tempId: tempId,
@@ -2138,10 +2173,20 @@ const EmployerMessage = ({ darkMode }) => {
 
     return () => {
       if (socketRef.current) {
-        socketRef.current.off('call_offer');
-        socketRef.current.off('call_answer');
-        socketRef.current.off('call_end');
-        socketRef.current.off('ice_candidate');
+        console.log("Cleaning up socket connection");
+        // First remove all event listeners
+        if (socketRef.current.connected) {
+          socketRef.current.off("new_message");
+          socketRef.current.off("message_deleted");
+          socketRef.current.off("call_offer");
+          socketRef.current.off("call_answer");
+          socketRef.current.off("call_declined");
+          socketRef.current.off("call_ended");
+          socketRef.current.off("ice_candidate");
+          // Disconnect after removing listeners
+          socketRef.current.disconnect();
+        }
+        socketRef.current = null;
       }
     };
   }, [handleIncomingCall, handleCallAccepted, handleCallDeclined, handleCallEnded, handleIceCandidate]);
@@ -2185,12 +2230,10 @@ const EmployerMessage = ({ darkMode }) => {
 
   // Toggle speaker
   const toggleSpeaker = () => {
-    if (remoteVideoRef.current && remoteVideoRef.current.srcObject) {
-      const audioEl = document.createElement('audio');
-      audioEl.srcObject = remoteVideoRef.current.srcObject;
-      audioEl.setSinkId(isSpeakerOn ? 'default' : '');
-      setIsSpeakerOn(!isSpeakerOn);
-    }
+    const audioEl = document.createElement('audio');
+    audioEl.srcObject = remoteVideoRef.current.srcObject;
+    audioEl.setSinkId(isSpeakerOn ? 'default' : '');
+    setIsSpeakerOn(!isSpeakerOn);
   };
 
   // Add to both message components right after socket initialization
@@ -2271,8 +2314,12 @@ const EmployerMessage = ({ darkMode }) => {
     }
     
     // Clean up socket connections if needed
-    if (socketRef.current) {
-      socketRef.current.emit('leave_conversation', activeConversation?._id);
+    try {
+      if (socketRef.current && activeConversation) {
+        socketRef.current.emit('leave_conversation', activeConversation._id);
+      }
+    } catch (error) {
+      console.warn("Error leaving conversation:", error);
     }
     
     // Navigate to dashboard
@@ -2430,7 +2477,6 @@ const EmployerMessage = ({ darkMode }) => {
                   }
                   return "📎 Document";
                 }
-                
                 
                 if (!conversation.lastMessage.content) return "No message";
                 
