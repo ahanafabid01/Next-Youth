@@ -34,7 +34,10 @@ import {
   FaPhone,
   FaVolumeUp,
   FaVolumeMute,
-  FaDesktop
+  FaDesktop,
+  FaBars,
+  FaSun,
+  FaMoon
 } from "react-icons/fa";
 import { getSocket } from '../../utils/socketConfig';
 import { useNavigate } from 'react-router-dom';
@@ -264,7 +267,7 @@ const MemoizedMessageBubble = React.memo(MessageBubble, (prevProps, nextProps) =
   );
 });
 
-const EmployerMessage = ({ darkMode }) => {
+const EmployerMessage = ({ darkMode, setDarkMode }) => {
   const navigate = useNavigate();
 
   // State for conversations and messages
@@ -2313,6 +2316,8 @@ const EmployerMessage = ({ darkMode }) => {
       handleEndCall();
     }
     
+
+    
     // Clean up socket connections if needed
     try {
       if (socketRef.current && activeConversation) {
@@ -2404,42 +2409,35 @@ const EmployerMessage = ({ darkMode }) => {
     };
   }, [messageInputRef.current]); // Add messageInputRef.current as a dependency
 
+  // Add toggleTheme for theme switching
+  const toggleTheme = () => {
+    if (typeof setDarkMode === 'function') {
+      setDarkMode(prev => !prev);
+    }
+  };
+
   return (
-    <div className={`whatsapp-container ${darkMode ? "whatsapp-dark" : ""}`}>
-      <div className={`whatsapp-sidebar ${mobileView && !showConversations ? "whatsapp-sidebar-hidden" : ""}`}>
-        <div className="whatsapp-header">
-          <div className="whatsapp-user-info">
-            {currentUser ? (
-              currentUser.profilePicture ? (
-                <img 
-                  src={currentUser.profilePicture} 
-                  alt="Profile" 
-                  className="whatsapp-profile-image" 
-                  onError={(e) => {
-                    console.log("Failed to load current user avatar:", e);
-                    e.target.onerror = null;
-                    e.target.src = "https://via.placeholder.com/40?text=U";
-                  }}
-                />
-              ) : (
-                <div className="whatsapp-default-avatar whatsapp-header-avatar">
-                  {currentUser.name ? currentUser.name.charAt(0).toUpperCase() : "U"}
-                </div>
-              )
-            ) : (
-              <div className="whatsapp-default-avatar whatsapp-header-avatar">
-                <FaUser />
-              </div>
-            )}
-            <h2>Messages</h2>
+    <div className={`whatsapp-container ${darkMode ? "whatsapp-dark" : ""}`}>  
+      {/* MOBILE HEADER: Only show on mobile (<=768px) */}
+      {mobileView && (
+        <div className="mobile-header">
+          <button className="hamburger" onClick={() => setShowConversations(true)}>
+            <FaBars size={22} />
+          </button>
+          <div className="logo">
+            <img 
+              src={darkMode ? logoDark : logoLight}
+              alt="Next Youth"
+            />
           </div>
-          <div className="whatsapp-header-actions">
-            <button className="whatsapp-icon-button">
-              <FaEllipsisV />
-            </button>
+          <div className="theme-toggle-mobile" onClick={toggleTheme}>
+            {darkMode ? <FaSun size={20} /> : <FaMoon size={20} />}
           </div>
         </div>
-        
+      )}
+      <div className={`whatsapp-sidebar ${mobileView && !showConversations ? "whatsapp-sidebar-hidden" : ""}`}>  
+        {/* DESKTOP: No header, start from search bar */}
+        {!mobileView && null}
         <div className="whatsapp-search">
           <div className="whatsapp-search-container">
             <FaSearch className="whatsapp-search-icon" />
@@ -2451,7 +2449,6 @@ const EmployerMessage = ({ darkMode }) => {
             />
           </div>
         </div>
-        
         <div className="whatsapp-chats">
           {loading ? (
             <div className="whatsapp-loading">
@@ -2533,7 +2530,6 @@ const EmployerMessage = ({ darkMode }) => {
           )}
         </div>
       </div>
-      
       <div className={`whatsapp-chat ${mobileView && showConversations ? "whatsapp-chat-hidden" : ""}`}>
         {activeConversation ? (
           <>

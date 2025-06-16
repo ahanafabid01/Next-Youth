@@ -411,6 +411,7 @@
 }
 
 .whatsapp-back-button {
+  display: none; /* Hide by default on all devices */
   background: none;
   border: none;
   cursor: pointer;
@@ -420,8 +421,11 @@
   font-size: 18px;
 }
 
-.whatsapp-dark .whatsapp-back-button {
-  color: #aebac1;
+/* Only show the back button on smaller screens */
+@media (max-width: 768px) {
+  .whatsapp-back-button {
+    display: block; /* Show only on mobile */
+  }
 }
 
 .whatsapp-chat-user {
